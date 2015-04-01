@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.CodeAnalysis.EditorFeatures.Text</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.FindCorrespondingEditorTextSnapshot(Microsoft.CodeAnalysis.Text.SourceText)">
+            <summary>
+            Returns the ITextSnapshot behind this SourceText, or null if it wasn't created from one.
+            
+            Note that multiple ITextSnapshots may map to the same SourceText instance if
+            ITextSnapshot.Version.ReiteratedVersionNumber doesn't change.
+            </summary>
+            <returns>The underlying ITextSnapshot.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetWorkspace(Microsoft.VisualStudio.Text.ITextBuffer)">
+            <summary>
+            Gets the workspace corresponding to the text buffer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetRelatedDocumentsWithChanges(Microsoft.VisualStudio.Text.ITextSnapshot)">
+            <summary>
+            Gets the <see cref="T:Microsoft.CodeAnalysis.Document"/>s from the corresponding <see cref="P:Microsoft.CodeAnalysis.Workspace.CurrentSolution"/> that are associated with the <see cref="T:Microsoft.VisualStudio.Text.ITextSnapshot"/>'s buffer,
+            updated to contain the same text as the snapshot if necessary. There may be multiple <see cref="T:Microsoft.CodeAnalysis.Document"/>s associated with the buffer
+            if the file is linked into multiple projects or is part of a Shared Project.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetOpenDocumentInCurrentContextWithChanges(Microsoft.VisualStudio.Text.ITextSnapshot)">
+            <summary>
+            Gets the <see cref="T:Microsoft.CodeAnalysis.Document"/> from the corresponding <see cref="P:Microsoft.CodeAnalysis.Workspace.CurrentSolution"/> that is associated with the <see cref="T:Microsoft.VisualStudio.Text.ITextSnapshot"/>'s buffer
+            in its current project context, updated to contain the same text as the snapshot if necessary. There may be multiple <see cref="T:Microsoft.CodeAnalysis.Document"/>s
+            associated with the buffer if it is linked into multiple projects or is part of a Shared Project. In this case, the <see cref="T:Microsoft.CodeAnalysis.Workspace"/>
+            is responsible for keeping track of which of these <see cref="T:Microsoft.CodeAnalysis.Document"/>s is in the current project context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetRelatedDocuments(Microsoft.VisualStudio.Text.ITextBuffer)">
+            <summary>
+            Gets the <see cref="T:Microsoft.CodeAnalysis.Document"/>s from the corresponding <see cref="P:Microsoft.CodeAnalysis.Workspace.CurrentSolution"/> that are associated with the <see cref="T:Microsoft.VisualStudio.Text.ITextBuffer"/>.
+            There may be multiple <see cref="T:Microsoft.CodeAnalysis.Document"/>s associated with the buffer if it is linked into multiple projects or is part of a Shared Project. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetDocumentWithFrozenPartialSemanticsAsync(Microsoft.CodeAnalysis.Text.SourceText,System.Threading.CancellationToken)">
+            <summary>
+            Tries to get the document corresponding to the text from the current partial solution 
+            associated with the text's container. If the document does not contain the exact text a document 
+            from a new solution containing the specified text is constructed. If no document is associated
+            with the specified text's container, or the text's container isn't associated with a workspace,
+            then the method returns false.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Extensions.GetEncodingOrUTF8(Microsoft.VisualStudio.Text.ITextBuffer)">
+            <summary>
+            Get the encoding used to load this <see cref="T:Microsoft.VisualStudio.Text.ITextBuffer"/> if possible.
+            <para>
+            Note that this will return <see cref="P:System.Text.Encoding.UTF8"/> if the <see cref="T:Microsoft.VisualStudio.Text.ITextBuffer"/>
+            didn't come from an <see cref="T:Microsoft.VisualStudio.Text.ITextDocument"/>, or if the <see cref="T:Microsoft.VisualStudio.Text.ITextDocument"/>
+            is already closed.
+            </para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.Extensions.SnapshotSourceText">
+            <summary>
+            ITextSnapshot implementation of SourceText
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.Extensions.SnapshotSourceText.ClosedSnapshotSourceText">
+            <summary>
+            Use a separate class for closed files to simplify memory leak investigations
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.Extensions.SnapshotSourceText.RoslynSnapshot">
+            <summary>
+            The ITextSnapshot backing the SourceText instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.Extensions.SnapshotSourceText.s_textSnapshotMap">
+            <summary>
+            A weak map of all Editor ITextSnapshots and their associated SourceText
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.Extensions.SnapshotSourceText.ChangedSourceText">
+            <summary>
+            Perf: Optimize calls to GetChangeRanges after WithChanges by using editor snapshots
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.Extensions.TextBufferContainer">
+            <summary>
+            ITextBuffer implementation of SourceTextContainer
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.Extensions.TextBufferContainer.s_textContainerMap">
+            <summary>
+            A weak map of all Editor ITextBuffers and their associated SourceTextContainer
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.Extensions.TextBufferMapper">
+            <summary>
+            mapper between editor text buffer to our text buffer
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotExtensions.GetTextSpan(Microsoft.VisualStudio.Text.ITextSnapshot,Microsoft.CodeAnalysis.Text.LinePositionSpan)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.LinePositionSpan"/> to <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotExtensions.GetLeadingWhitespaceOfLineAtPosition(Microsoft.VisualStudio.Text.ITextSnapshot,System.Int32)">
+            <summary>
+            Returns the leading whitespace of the line located at the specified position in the given snapshot.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotExtensions.CharAt(Microsoft.VisualStudio.Text.ITextSnapshot,System.Int32)">
+            <summary>
+            Get the character at the given position.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotLineExtensions.GetFirstNonWhitespacePosition(Microsoft.VisualStudio.Text.ITextSnapshotLine)">
+            <summary>
+            Returns the first non-whitespace position on the given line, or null if 
+            the line is empty or contains only whitespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotLineExtensions.GetFirstNonWhitespaceOffset(Microsoft.VisualStudio.Text.ITextSnapshotLine)">
+            <summary>
+            Returns the first non-whitespace position on the given line as an offset
+            from the start of the line, or null if the line is empty or contains only
+            whitespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotLineExtensions.GetLastNonWhitespacePosition(Microsoft.VisualStudio.Text.ITextSnapshotLine)">
+            <summary>
+            Returns the last non-whitespace position on the given line, or null if 
+            the line is empty or contains only whitespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.ITextSnapshotLineExtensions.IsEmptyOrWhitespace(Microsoft.VisualStudio.Text.ITextSnapshotLine)">
+            <summary>
+            Determines whether the specified line is empty or contains whitespace only.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.TextSpanExtensions.ToSpan(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> instance to an <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.Shared.Extensions.TextSpanExtensions.ToSnapshotSpan(Microsoft.CodeAnalysis.Text.TextSpan,Microsoft.VisualStudio.Text.ITextSnapshot)">
+            <summary>
+            Convert a <see cref="T:Microsoft.CodeAnalysis.Text.TextSpan"/> to a <see cref="T:Microsoft.VisualStudio.Text.SnapshotSpan"/> on the given <see cref="T:Microsoft.VisualStudio.Text.ITextSnapshot"/> instance
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.TextEditorResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextEditorResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextEditorResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.TextEditorResources.TextContainerNotFromTextBuffer">
+            <summary>
+              Looks up a localized string similar to textContainer is not a SourceTextContainer that was created from an ITextBuffer..
+            </summary>
+        </member>
+    </members>
+</doc>

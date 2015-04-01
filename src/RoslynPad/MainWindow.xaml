@@ -1,0 +1,57 @@
+﻿<Window x:Class="RoslynPad.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:editor="clr-namespace:RoslynPad.Editor"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
+        FontFamily="Consolas"
+        Title="RoslynPad"
+        Height="350"
+        Width="525">
+    <FrameworkElement.CommandBindings>
+        <CommandBinding Command="Play"
+                        Executed="OnPlayCommand" />
+    </FrameworkElement.CommandBindings>
+    <FrameworkElement.InputBindings>
+        <KeyBinding Key="F5"
+                    Command="Play" />
+    </FrameworkElement.InputBindings>
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock DataContext="{Binding ElementName=Editor, Path=TextArea.Caret.Position}">
+                    Ln <Run Text="{Binding Line}" /> 
+                    Col <Run Text="{Binding Column}" />
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+                <RowDefinition Height="5" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <ToolBar>
+                <Button Content="Go"
+                        Command="Play" />
+            </ToolBar>
+            <editor:CodeTextEditor x:Name="Editor"
+                                   x:FieldModifier="private"
+                                   Grid.Row="1" />
+            <GridSplitter Grid.Row="2"
+                          Background="Gray"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch" />
+            <TreeView Name="Results"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      Grid.Row="3">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <TextBlock Text="{Binding Header}" />
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Grid>
+    </DockPanel>
+</Window>

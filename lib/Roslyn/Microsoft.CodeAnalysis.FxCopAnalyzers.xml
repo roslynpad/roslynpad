@@ -1,0 +1,751 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.CodeAnalysis.FxCopAnalyzers</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1008DiagnosticAnalyzer">
+            <summary>
+            CA1008: Enums should have zero value
+            
+            Cause:
+            An enumeration without an applied System.FlagsAttribute does not define a member that has a value of zero;
+            or an enumeration that has an applied FlagsAttribute defines a member that has a value of zero but its name is not 'None',
+            or the enumeration defines multiple zero-valued members.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1012DiagnosticAnalyzer">
+            <summary>
+            CA1012: Abstract classes should not have public constructors
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1024DiagnosticAnalyzer`1">
+            <summary>
+            CA1024: Use properties where appropriate
+            
+            Cause:
+            A public or protected method has a name that starts with Get, takes no parameters, and returns a value that is not an array.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1060DiagnosticAnalyzer">
+            <summary>
+            CA1060 - Move P/Invokes to native methods class
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1008CodeFixProviderBase">
+            <summary>
+            CA1008: Enums should have zero value
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.CA1012CodeFixProvider">
+            <summary>
+            CA1012: Abstract classes should not have public constructors
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.EnumWithFlagsCodeFixProviderBase">
+            <summary>
+            CA1027: Mark enums with FlagsAttribute
+            CA2217: Do not mark enums with FlagsAttribute
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.EnumWithFlagsDiagnosticAnalyzer">
+            <summary>
+            Implements CA1027 and CA2217
+            
+            1) CA1027: Mark enums with FlagsAttribute
+            
+            Cause:
+            The values of a public enumeration are powers of two or are combinations of other values that are defined in the enumeration,
+            and the System.FlagsAttribute attribute is not present.
+            To reduce false positives, this rule does not report a violation for enumerations that have contiguous values.
+            
+            2) CA2217: Do not mark enums with FlagsAttribute
+            
+            Cause:
+            An externally visible enumeration is marked with FlagsAttribute and it has one or more values that are not powers of two or
+            a combination of the other defined values on the enumeration.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Design.StaticTypeRulesDiagnosticAnalyzer">
+            <summary>
+            CA1025: Static holder types should be sealed
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AbstractTypesShouldNotHavePublicConstructors">
+            <summary>
+              Looks up a localized string similar to Abstract classes should not have public constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AbstractTypesShouldNotHavePublicConstructorsCodeFix">
+            <summary>
+              Looks up a localized string similar to Change the accessibility of all public contructors in this class to protected..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AddNonSerializedAttribute">
+            <summary>
+              Looks up a localized string similar to Add the &apos;NonSerialized&apos; attribute to this field..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AddSerializableAttribute">
+            <summary>
+              Looks up a localized string similar to Add Serializable attribute.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AvoidUnsealedAttributes">
+            <summary>
+              Looks up a localized string similar to Avoid unsealed attributes..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.AvoidUnsealedAttributesCodeFix">
+            <summary>
+              Looks up a localized string similar to Seal attribute type..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.DisposableFieldsShouldBeDisposed">
+            <summary>
+              Looks up a localized string similar to Disposable fields should be disposed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.DoNotMarkEnumsWithFlagsCodeFix">
+            <summary>
+              Looks up a localized string similar to Remove FlagsAttribute from enum..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.EnumsShouldZeroValueFlagsMultipleZeroCodeFix">
+            <summary>
+              Looks up a localized string similar to Remove all members that have the value zero except for one member that is named &apos;None&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.EnumsShouldZeroValueFlagsRenameCodeFix">
+            <summary>
+              Looks up a localized string similar to Rename zero-valued enum field to &apos;None&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.EnumsShouldZeroValueNotFlagsNoZeroValueCodeFix">
+            <summary>
+              Looks up a localized string similar to Add a zero-valued member &apos;None&apos; to enum..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.ImplementSerializationConstructor">
+            <summary>
+              Looks up a localized string similar to Implement Serialization constructor.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.MarkEnumsWithFlagsCodeFix">
+            <summary>
+              Looks up a localized string similar to Apply FlagsAttribute to enum..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.RemoveEmptyFinalizers">
+            <summary>
+              Looks up a localized string similar to Remove empty finalizers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.SpecifyMarshalingForPInvokeStringArguments">
+            <summary>
+              Looks up a localized string similar to Specify marshaling for P/Invoke string arguments.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopFixersResources.StringComparisonShouldBeOrdinalOrOrdinalIgnoreCase">
+            <summary>
+              Looks up a localized string similar to String comparison should use StringComparison.Ordinal or StringComparison.OrdinalIgnoreCase.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.AbstractTypesShouldNotHavePublicConstructors">
+            <summary>
+              Looks up a localized string similar to Abstract classes should not have public constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.AbstractTypesShouldNotHavePublicConstructorsCodeFix">
+            <summary>
+              Looks up a localized string similar to Change the accessibility of all public contructors in this class to protected..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.AddSerializableAttributeToType">
+            <summary>
+              Looks up a localized string similar to Add [Serializable] to {0} as this type implements ISerializable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.AvoidUnsealedAttributes">
+            <summary>
+              Looks up a localized string similar to Avoid unsealed attributes..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryDesign">
+            <summary>
+              Looks up a localized string similar to Design.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryGlobalization">
+            <summary>
+              Looks up a localized string similar to Globalization.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryInteroperability">
+            <summary>
+              Looks up a localized string similar to Interoperability.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryNaming">
+            <summary>
+              Looks up a localized string similar to Naming.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryPerformance">
+            <summary>
+              Looks up a localized string similar to Performance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryReliability">
+            <summary>
+              Looks up a localized string similar to Reliability.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.CategoryUsage">
+            <summary>
+              Looks up a localized string similar to Usage.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.ChangeToAPropertyIfAppropriate">
+            <summary>
+              Looks up a localized string similar to Change &apos;{0}&apos; to a property if appropriate..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DisposableFieldsShouldBeDisposed">
+            <summary>
+              Looks up a localized string similar to Disposable fields should be disposed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotCallOverridableMethodsInConstructors">
+            <summary>
+              Looks up a localized string similar to Do not call overridable methods in constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotCallOverridableMethodsInConstructorsDescription">
+            <summary>
+              Looks up a localized string similar to Virtual methods defined on the class should not be called from constructors. If a derived class has overridden the method, the derived class version will be called (before the derived class constructor is called)..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotLockOnObjectsWithWeakIdentity">
+            <summary>
+              Looks up a localized string similar to Do not lock on objects with weak identity..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotLockOnWeakIdentity">
+            <summary>
+              Looks up a localized string similar to Do not lock on a reference of type &apos;{0}&apos; as it has weak identity. Replace that with a lock against an object with strong identity..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotMarkEnumsWithFlags">
+            <summary>
+              Looks up a localized string similar to Do not mark Enum with FlagsAttribute.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotMarkEnumsWithFlagsDescription">
+            <summary>
+              Looks up a localized string similar to The enumeration does not appear to contain a consistent set values that can be combined using  the OR (|) and AND (&amp;amp;amp;amp;) operators. Using the Flags attribute on an enumeration suggests that the enumeration values are meant to be combined using the AND and OR operators. Typically, a flags enumeration uses values that are either powers of two, or combine other values that are powers of two..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.DoNotMarkEnumsWithFlagsMessage">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is marked with FlagsAttribute but a discrete member cannot be found for every settable bit that is used across the range of enum values. Remove FlagsAttribute from the type or define new members for the following (currently missing) values: &apos;{1}&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.EnumsShouldHaveZeroValue">
+            <summary>
+              Looks up a localized string similar to Enums should have zero value..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.EnumsShouldHaveZeroValueDescription">
+            <summary>
+              Looks up a localized string similar to An enum should generally have a zero value. If the enum is not decorated with the Flags attribute, it should have a member with a value of zero that represents the empty state. Optionally, this value is named &apos;None&apos;. For a Flags-attributed enum, a zero-valued member is optional and, if it exists, should always be named &apos;None&apos;. This value should indicate that no values have been set in the enum. Using a zero-valued member for other purposes is contrary to the use of the Flags attribute in that the bitwise AN [rest of string was truncated]&quot;;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.EnumsShouldZeroValueFlagsMultipleZero">
+            <summary>
+              Looks up a localized string similar to Remove all members that have the value zero from &apos;{0}&apos; except for one member that is named &apos;None&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.EnumsShouldZeroValueFlagsRename">
+            <summary>
+              Looks up a localized string similar to In enum &apos;{0}&apos;, change the name of &apos;{1}&apos; to &apos;None&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.EnumsShouldZeroValueNotFlagsNoZeroValue">
+            <summary>
+              Looks up a localized string similar to Add a member to &apos;{0}&apos; that has a value of zero with a suggested name of &apos;None&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.FieldIsOfNonSerializableType">
+            <summary>
+              Looks up a localized string similar to Field {0} is a member of type {1} which is serializable but is of type {2} which is not serializable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.IdentifierNamesShouldDifferMoreThanCase">
+            <summary>
+              Looks up a localized string similar to {0} &apos;{1}&apos; have identical names in a case-insensitive manner..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.IdentifiersShouldDifferByMoreThanCase">
+            <summary>
+              Looks up a localized string similar to Identifier names should differ by more than case.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.IdentifiersShouldDifferByMoreThanCaseDescription">
+            <summary>
+              Looks up a localized string similar to Do not use names that require case sensitivity for uniqueness. Components must be fully usable from both case-sensitive and case-insensitive languages. Since case-insensitive languages cannot distinguish between two names within the same context that differ only by case, components must avoid this situation..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.ImplementSerializationConstructor">
+            <summary>
+              Looks up a localized string similar to Implement Serialization constructor.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.ImplementSerializationConstructorDescription">
+            <summary>
+              Looks up a localized string similar to The constructor signature accepts the same arguments as ISerializable.GetObjectData, namely, a SerializationInfo instance and a StreamingContext instance. The constructor should be protected for non-sealed classes and private for sealed classes. Failure to implement a serialization constructor will cause deserialization to fail, and throw a SerializationException..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.InterfaceNamesShouldStartWithI">
+            <summary>
+              Looks up a localized string similar to Interface names should be prefixed with &apos;I&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkAllNonSerializableFields">
+            <summary>
+              Looks up a localized string similar to Mark all non-serializable fields..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkAllNonSerializableFieldsDescription">
+            <summary>
+              Looks up a localized string similar to All fields that cannot be serialized directly should have the NonSerializedAttribute. Types that have the SerializableAttribute should not have fields of types that do not have the SerializableAttribute unless the fields are marked with the NonSerializedAttribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkEnumsWithFlags">
+            <summary>
+              Looks up a localized string similar to Mark Enum with FlagsAttribute.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkEnumsWithFlagsDescription">
+            <summary>
+              Looks up a localized string similar to The enumeration appears to be made up of combinable flags. If this true, apply the Flags attribute to the enumeration..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkEnumsWithFlagsMessage">
+            <summary>
+              Looks up a localized string similar to The constituent members of &apos;{0}&apos; appear to represent flags that can be combined rather than discrete values. If this is correct, mark the enumeration with FlagsAttribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkISerializableTypesWithAttribute">
+            <summary>
+              Looks up a localized string similar to Mark ISerializable types with SerializableAttribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MarkISerializableTypesWithAttributeDescription">
+            <summary>
+              Looks up a localized string similar to The System.Runtime.Serialization.ISerializable interface allows the type to customize its serialization, while the Serializable attribute enables the runtime to recognize the type as being serializable..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.MovePInvokesToNativeMethodsClass">
+            <summary>
+              Looks up a localized string similar to Move P/Invokes to native methods class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.PInvokeMethodShouldNotBeVisible">
+            <summary>
+              Looks up a localized string similar to P/Invoke method &apos;{0}&apos; should not be visible.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.PInvokesShouldNotBeVisible">
+            <summary>
+              Looks up a localized string similar to P/Invokes should not be visible..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.RemoveEmptyFinalizers">
+            <summary>
+              Looks up a localized string similar to Remove empty finalizers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.RemoveEmptyFinalizersDescription">
+            <summary>
+              Looks up a localized string similar to Finalizers should be avoided where possible, to avoid the additional performance overhead involved in tracking object lifetime..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.RethrowException">
+            <summary>
+              Looks up a localized string similar to Re-throwing caught exception changes stack information..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.RethrowToPreserveStackDetails">
+            <summary>
+              Looks up a localized string similar to Rethrow to preserve stack details..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SealAttributeTypesForImprovedPerf">
+            <summary>
+              Looks up a localized string similar to Seal attribute types for improved performance. Sealing attribute types speeds up performance during reflection on custom attributes..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SerializableTypeDoesntHaveCtor">
+            <summary>
+              Looks up a localized string similar to Serializable type {0} doesn&apos;t have a serialization constructor.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SerializationCtorAccessibilityForSealedType">
+            <summary>
+              Looks up a localized string similar to Declare serialization constructor for sealed type {0} as private.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SerializationCtorAccessibilityForUnSealedType">
+            <summary>
+              Looks up a localized string similar to Declare serialization constructor for unsealed type {0} as protected.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SpecifyMarshalingForPInvokeStringArguments">
+            <summary>
+              Looks up a localized string similar to Specify marshaling for P/Invoke string arguments.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.SpecifyMarshalingForPInvokeStringArgumentsDescription">
+            <summary>
+              Looks up a localized string similar to When marshaling strings as ANSI (or as Auto on Win9x), some characters may be changed. If best-fit mapping is on, strings that appear different in Unicode will be marshaled to identical ANSI strings, which may lead to incorrect security decisions. Turning best-fit mapping off reduces this risk, as all characters without equivalents are mapped to &apos;?&apos;. Also, note that CharSet.Ansi is the default setting for all string marshaling; Unicode marshaling must be specified explicitly, either as a CharSet setting of  [rest of string was truncated]&quot;;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StaticHolderTypeIsNotStatic">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; is a static holder type but is neither static nor NotInheritable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StaticHolderTypesShouldBeStaticOrNotInheritable">
+            <summary>
+              Looks up a localized string similar to Static holder types should be Static or NotInheritable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StaticHolderTypesShouldNotHaveConstructors">
+            <summary>
+              Looks up a localized string similar to Static holder types should not have instance constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StaticHolderTypesShouldNotHaveConstructorsMessage">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; is a static holder type and should not contain Instance Constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StringComparisonShouldBeOrdinalDescription">
+            <summary>
+              Looks up a localized string similar to For non-linguistic comparisons, StringComparison.Ordinal or StringComparison.OrdinalIgnoreCase should be used instead of the linguistically-sensitive StringComparison.InvariantCulture..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.StringComparisonShouldBeOrdinalOrOrdinalIgnoreCase">
+            <summary>
+              Looks up a localized string similar to String comparison should use StringComparison.Ordinal or StringComparison.OrdinalIgnoreCase.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.TypeIsAbstractButHasPublicConstructors">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; is abstract but has public constructors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.TypeOwnsDisposableFieldButIsNotDisposable">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; owns disposable fields but is not disposable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.TypeParameterNamesShouldStartWithT">
+            <summary>
+              Looks up a localized string similar to Type parameter names should be prefixed with &apos;T&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.TypesThatOwnDisposableFieldsShouldBeDisposable">
+            <summary>
+              Looks up a localized string similar to Types that own disposable fields should be disposable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.UseGenericEventHandlerInstances">
+            <summary>
+              Looks up a localized string similar to Use System.EventHandler&lt;T&gt; where T inherits System.EventArgs or use System.EventHandler.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.UsePropertiesWhereAppropriate">
+            <summary>
+              Looks up a localized string similar to Use properties where appropriate..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCopAnalyzers.FxCopRulesResources.UsePropertiesWhereAppropriateDescription">
+            <summary>
+              Looks up a localized string similar to Properties should be used instead of Get/Set methods in most situations. Methods are preferable to properties in the following situations: the operation is a conversion, is expensive or has an observable side-effect; the order of execution is important; calling the member twice in succession creates different results; a member is static but returns a mutable value; or the member returns an array..
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Performance.CA1813DiagnosticAnalyzer">
+            <summary>
+            CA1813: Seal attribute types for improved performance. Sealing attribute types speeds up performance during reflection on custom attributes.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Performance.CA1813CodeFixProviderBase">
+            <summary>
+            CA1813: Avoid unsealed attributes
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Performance.CA1821CodeFixProvider">
+            <summary>
+            CA1821: Remove empty finalizers
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Reliability.CA2002DiagnosticAnalyzer">
+            <summary>
+            CA2002: Do not lock on objects with weak identities
+            
+            Cause:
+            A thread that attempts to acquire a lock on an object that has a weak identity could cause hangs.
+            
+            Description:
+            An object is said to have a weak identity when it can be directly accessed across application domain boundaries. 
+            A thread that tries to acquire a lock on an object that has a weak identity can be blocked by a second thread in 
+            a different application domain that has a lock on the same object. 
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser">
+            <summary>
+                Provides <see langword="static"/> methods for parsing words from text.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.#ctor(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions)">
+            <summary>
+                Initializes a new instance of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser"/> class with the specified text and options.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to parse.
+            </param>
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.#ctor(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions,System.Char)">
+            <summary>
+                Initializes a new instance of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser"/> class with the specified text, options and prefix.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to parse.
+            </param>
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <param name="prefix">
+                A <see cref="T:System.Char"/> representing an optional prefix of <paramref name="text"/>, that if present,
+                will be returned as a separate token.
+            </param>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.Parse(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions)">
+            <summary>
+                Returns the words contained in the specified text, delimiting based on the specified options.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to parse.
+            </param>
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <returns>
+                A <see cref="T:System.Collections.ObjectModel.Collection`1"/> of strings containing the words contained in <paramref name="text"/>.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.Parse(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions,System.Char)">
+            <summary>
+                Returns the words contained in the specified text, delimiting based on the specified options.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to parse.
+            </param>
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <param name="prefix">
+                A <see cref="T:System.Char"/> representing an optional prefix of <paramref name="text"/>, that if present,
+                will be returned as a separate token.
+            </param>
+            <returns>
+                A <see cref="T:System.Collections.ObjectModel.Collection`1"/> of strings containing the words contained in <paramref name="text"/>.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.ContainsWord(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions,System.String[])">
+            <summary>
+                Returns a value indicating whether at least one of the specified words occurs, using a case-insensitive ordinal comparision, within the specified text.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to check.
+            </param>    
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <param name="words">
+                A <see cref="T:System.String"/> array containing the words to seek.
+            </param>
+            <returns>
+                <see langword="true"/> if at least one of the elements within <paramref name="words"/> occurs within <paramref name="text"/>, otherwise, <see langword="false"/>.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+                <para>
+                 -or-  
+                </para>
+                <paramref name="words"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.ContainsWord(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions,System.Char,System.String[])">
+            <summary>
+                Returns a value indicating whether at least one of the specified words occurs, using a case-insensitive ordinal comparision, within the specified text.
+            </summary>
+            <param name="text">
+                A <see cref="T:System.String"/> containing the text to check.
+            </param>    
+            <param name="options">
+                One or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> specifying parsing and delimiting options.
+            </param>
+            <param name="prefix">
+                A <see cref="T:System.Char"/> representing an optional prefix of <paramref name="text"/>, that if present,
+                will be returned as a separate token.
+            </param>
+            <param name="words">
+                A <see cref="T:System.String"/> array containing the words to seek.
+            </param>
+            <returns>
+                <see langword="true"/> if at least one of the elements within <paramref name="words"/> occurs within <paramref name="text"/>, otherwise, <see langword="false"/>.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+                <paramref name="text"/> is <see langword="null"/>.
+                <para>
+                 -or-  
+                </para>
+                <paramref name="words"/> is <see langword="null"/>.
+            </exception>
+            <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
+                <paramref name="options"/> is not one or more of the <see cref="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions"/> values.
+            </exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.NextWord">
+            <summary>
+                Returns the next word in the text.
+            </summary>
+            <returns>
+                A <see cref="T:System.String"/> containing the next word or <see langword="null"/> if there are no more words.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.PeekWord">
+            <summary>
+                Returns the next word in the text without consuming it.
+            </summary>
+            <returns>
+                A <see cref="T:System.String"/> containing the next word or <see langword="null"/> if there are no more words.
+            </returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions">
+            <summary>
+              Defines the word parsing and delimiting options for use with <see cref="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.Parse(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions)"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions.None">
+            <summary>
+              Indicates the default options for word parsing.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions.IgnoreMnemonicsIndicators">
+            <summary>
+              Indicates that <see cref="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.Parse(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions)"/> should ignore the mnemonic indicator characters (&amp;) embedded within words.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions.SplitCompoundWords">
+            <summary>
+              Indicates that <see cref="M:Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParser.Parse(System.String,Microsoft.CodeAnalysis.FxCopAnalyzers.Utilities.WordParserOptions)"/> should split compound words.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Usage.CA2213DiagnosticAnalyzer">
+            <summary>
+            CA2213: Disposable fields should be disposed
+            
+            TODO: this needs to be re-implemented because it requires flow analysis to determine if the
+            dispose operations occur on every path through the dispose method. Flow analysis
+            is not yet implemented.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Usage.CA2214DiagnosticAnalyzer`1">
+            <summary>
+            CA2214: Do not call overridable methods in constructors
+            
+            Cause: The constructor of an unsealed type calls a virtual method defined in its class.
+            
+            Description: When a virtual method is called, the actual type that executes the method is not selected 
+            until run time. When a constructor calls a virtual method, it is possible that the constructor for the 
+            instance that invokes the method has not executed. 
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.FxCopAnalyzers.Usage.CA2213CodeFixProviderBase">
+            <summary>
+            CA2213: Disposable fields should be disposed
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.DiagnosticCustomTags.s_microsoftCustomTags">
+            <summary>
+            it is string[] because DiagnosticDescriptor expects string[]. 
+            </summary>
+        </member>
+    </members>
+</doc>

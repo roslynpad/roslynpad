@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.CodeAnalysis.Analyzers</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.AddLanguageSupportToAnalyzerDescription">
+            <summary>
+              Looks up a localized string similar to Diagnostic analyzer is marked as supporting only one language, but the analyzer assembly doesn&apos;t seem to refer to any language specific CodeAnalysis assemblies, and so is likely to work for more than one language. Consider adding an additional language argument to DiagnosticAnalyzerAttribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.AddLanguageSupportToAnalyzerMessage">
+            <summary>
+              Looks up a localized string similar to Diagnostic analyzer &apos;{0}&apos; may be able to support both C# and Visual Basic. Consider adding an argument to DiagnosticAnalyzerAttribute for &apos;{1}&apos; language support..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.AddLanguageSupportToAnalyzerTitle">
+            <summary>
+              Looks up a localized string similar to Recommend adding language support to diagnostic analyzer..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.ApplyDiagnosticAnalyzerAttribute_1">
+            <summary>
+              Looks up a localized string similar to Apply DiagnosticAnalyzer attribute for &apos;{0}&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.ApplyDiagnosticAnalyzerAttribute_2">
+            <summary>
+              Looks up a localized string similar to Apply DiagnosticAnalyzer attribute for both &apos;{0}&apos; and &apos;{1}&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.DoNotStorePerCompilationDataOntoFieldsDescription">
+            <summary>
+              Looks up a localized string similar to Instance of a diagnostic analyzer might outlive the lifetime of compilation. Hence, storing per-compilation data, such as symbols, into the fields of a diagnostic analyzer might cause stale compilations to stay alive and cause memory leaks.  Instead, you should store this data on a separate type instantiatied in a compilation start action, registered using &apos;{0}.{1}&apos; API. An instance of this type will be created per-compilation and it won&apos;t outlive compilation&apos;s lifetime, hence avoiding memory leaks..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.DoNotStorePerCompilationDataOntoFieldsMessage">
+            <summary>
+              Looks up a localized string similar to Avoid storing per-compilation data of type &apos;{0}&apos; into the fields of a diagnostic analyzer..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.DoNotStorePerCompilationDataOntoFieldsTitle">
+            <summary>
+              Looks up a localized string similar to Avoid storing per-compilation data into the fields of a diagnostic analyzer..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InternalImplementationOnlyDescription">
+            <summary>
+              Looks up a localized string similar to The author of this interface did not intend to have third party implementations of this interface and reserves the right to change it. Implementing this interface could therefore result in a source or binary compatibility issue with a future version of this interface..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InternalImplementationOnlyMessage">
+            <summary>
+              Looks up a localized string similar to Type {0} cannot implement interface {1} because {1} is not available for public implementation..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InternalImplementationOnlyTitle">
+            <summary>
+              Looks up a localized string similar to &quot;Only internal implementations of this interface are allowed.&quot;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidReportDiagnosticDescription">
+            <summary>
+              Looks up a localized string similar to ReportDiagnostic should only be invoked with supported DiagnosticDescriptors that are returned from DiagnosticAnalyzer.SupportedDiagnostics property. Otherwise, the reported diagnostic will be filtered out by the analysis engine..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidReportDiagnosticMessage">
+            <summary>
+              Looks up a localized string similar to ReportDiagnostic invoked with an unsupported DiagnosticDescriptor &apos;{0}&apos;..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidReportDiagnosticTitle">
+            <summary>
+              Looks up a localized string similar to ReportDiagnostic invoked with an unsupported DiagnosticDescriptor..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidSyntaxKindTypeArgumentDescription">
+            <summary>
+              Looks up a localized string similar to DiagnosticAnalyzer&apos;s language-specific Register methods, such as RegisterSyntaxNodeAction, RegisterCodeBlockStartAction and RegisterCodeBlockEndAction, expect a language-specific &apos;SyntaxKind&apos; type argument for it&apos;s &apos;{0}&apos; type parameter. Otherwise, the registered analyzer action can never be invoked during analysis..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidSyntaxKindTypeArgumentMessage">
+            <summary>
+              Looks up a localized string similar to Type argument &apos;{0}&apos; for type parameter &apos;{1}&apos; of method &apos;{2}&apos; is not a SyntaxKind enum..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.InvalidSyntaxKindTypeArgumentTitle">
+            <summary>
+              Looks up a localized string similar to Invalid type argument for DiagnosticAnalyzer&apos;s Register method..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingAttributeMessage">
+            <summary>
+              Looks up a localized string similar to Missing &apos;{0}&apos; attribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingDiagnosticAnalyzerAttributeDescription">
+            <summary>
+              Looks up a localized string similar to Non-abstract sub-types of DiagnosticAnalyzer should be marked with DiagnosticAnalyzerAttribute(s). The argument to this attribute(s), if any, determine the supported languages for the analyzer. Analyzer types without this attribute will be ignored by the analysis engine..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingDiagnosticAnalyzerAttributeTitle">
+            <summary>
+              Looks up a localized string similar to Missing diagnostic analyzer attribute..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingKindArgumentToRegisterActionDescription">
+            <summary>
+              Looks up a localized string similar to You must specify at least one syntax/symbol kinds of interest while registering a syntax/symbol analyzer action. Otherwise, the registered action will be dead code and will never be invoked during analysis..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingKindArgumentToRegisterActionMessage">
+            <summary>
+              Looks up a localized string similar to Specify at least one &apos;{0}&apos; of interest while registering a {1} analyzer action..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.MissingKindArgumentToRegisterActionTitle">
+            <summary>
+              Looks up a localized string similar to Missing kind argument while registering an analyzer action..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.UnsupportedSymbolKindArgumentToRegisterActionMessage">
+            <summary>
+              Looks up a localized string similar to SymbolKind &apos;{0}&apos; is not supported for symbol analyzer actions..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.UnsupportedSymbolKindArgumentToRegisterActionTitle">
+            <summary>
+              Looks up a localized string similar to Unsupported SymbolKind argument while registering a symbol analyzer action..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.UseLocalizableStringsInDescriptorDescription">
+            <summary>
+              Looks up a localized string similar to If your diagnostic analyzer and it&apos;s reported diagnostics need to be localizable, then the supported DiagnosticDescriptors used for constructing the diagnostics must also be localizable. If so, then localizable argument(s) must be provided for parameter &apos;title&apos; (and optionally &apos;description&apos;) to the diagnostic descriptor constructor to ensure that the descriptor is localizable..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.UseLocalizableStringsInDescriptorMessage">
+            <summary>
+              Looks up a localized string similar to Consider providing localizable arguments of type &apos;{0}&apos; to diagnostic descriptor constructor to ensure the descriptor is localizable..
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Analyzers.CodeAnalysisDiagnosticsResources.UseLocalizableStringsInDescriptorTitle">
+            <summary>
+              Looks up a localized string similar to Provide localizable arguments to diagnostic descriptor constructor..
+            </summary>
+        </member>
+    </members>
+</doc>
