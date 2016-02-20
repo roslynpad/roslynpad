@@ -2,8 +2,8 @@
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Completion;
+using RoslynPad.Formatting;
+using RoslynPad.Roslyn;
 
 namespace RoslynPad.Editor
 {
@@ -22,24 +22,25 @@ namespace RoslynPad.Editor
 
         public void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
         {
-            var change = _item.CompletionProvider.GetTextChange(_item);
-            textArea.Document.Replace(completionSegment, change.NewText);
+            var change = _item.Rules.GetTextChange(_item);
+            if (change == null) return;
+            textArea.Document.Replace(completionSegment, change.Value.NewText);
         }
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public ImageSource Image { get; private set; }
 
-        public string Text { get; private set; }
+        public string Text { get; }
 
-        public object Content { get; private set; }
-
+        public object Content { get; }
+        
         public object Description
         {
             get
             {
                 if (_description == null)
                 {
-                    _description = _item.GetDescriptionAsync().Result.ToDisplayString();
+                    _description = _item.GetDescriptionAsync().Result.ToTextBlock();
                 }
                 return _description;
             }
@@ -48,14 +49,8 @@ namespace RoslynPad.Editor
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public double Priority { get; private set; }
 
-        public bool IsSelected
-        {
-            get { return _item.Preselect; }
-        }
+        public bool IsSelected => _item.Preselect;
 
-        public string SortText
-        {
-            get { return _item.SortText; }
-        }
+        public string SortText => _item.SortText;
     }
 }

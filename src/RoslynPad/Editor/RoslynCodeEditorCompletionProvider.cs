@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.Editor;
 using RoslynPad.Annotations;
 using RoslynPad.Formatting;
 using RoslynPad.Roslyn;
@@ -58,7 +56,7 @@ namespace RoslynPad.Editor
             };
             if (_item.Parameters != null)
             {
-                for (int index = 0; index < _item.Parameters.Length; index++)
+                for (var index = 0; index < _item.Parameters.Length; index++)
                 {
                     var param = _item.Parameters[index];
                     panel.Children.Add(ToTextBlock(param.DisplayParts));
@@ -70,19 +68,16 @@ namespace RoslynPad.Editor
             }
             panel.Children.Add(ToTextBlock(_item.SuffixDisplayParts));
             CurrentHeader = panel;
-            CurrentContent = ToTextBlock(_item.DocumenationFactory(CancellationToken.None));
+            CurrentContent = ToTextBlock(_item.DocumentationFactory(CancellationToken.None));
         }
 
-        private TextBlock ToTextBlock(IEnumerable<SymbolDisplayPart> parts)
+        private static TextBlock ToTextBlock(IEnumerable<SymbolDisplayPart> parts)
         {
             if (parts == null) return new TextBlock();
             return parts.ToTextBlock();
         }
 
-        public int Count
-        {
-            get { return _signatureHelp.Items.Count; }
-        }
+        public int Count => _signatureHelp.Items.Count;
 
         // ReSharper disable once UnusedMember.Local
         public string CurrentIndexText
@@ -121,8 +116,7 @@ namespace RoslynPad.Editor
         [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            var handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 
@@ -135,19 +129,22 @@ namespace RoslynPad.Editor
             _interactiveManager = interactiveManager;
         }
 
-        public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar)
+        public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
         {
             IList<ICompletionDataEx> completionData = null;
             IOverloadProvider overloadProvider = null;
             bool? isCompletion = null;
 
-            if (triggerChar != null)
+            if (useSignatureHelp || triggerChar != null)
             {
-                var isSignatureHelp = await _interactiveManager.IsSignatureHelpTriggerCharacter(position - 1).ConfigureAwait(false);
+                var isSignatureHelp = useSignatureHelp || await _interactiveManager.IsSignatureHelpTriggerCharacter(position - 1).ConfigureAwait(false);
                 if (isSignatureHelp)
                 {
                     var signatureHelp = await _interactiveManager.GetSignatureHelp(
-                        new SignatureHelpTriggerInfo(SignatureHelpTriggerReason.TypeCharCommand, triggerChar.Value), position)
+                        new SignatureHelpTriggerInfo(
+                            useSignatureHelp
+                                ? SignatureHelpTriggerReason.InvokeSignatureHelpCommand
+                                : SignatureHelpTriggerReason.TypeCharCommand, triggerChar), position)
                         .ConfigureAwait(false);
                     if (signatureHelp != null)
                     {
@@ -162,12 +159,13 @@ namespace RoslynPad.Editor
 
             if (overloadProvider == null && isCompletion != false)
             {
-                var items = await _interactiveManager.GetCompletion(
+                var data = await _interactiveManager.GetCompletion(
                     triggerChar != null
                         ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
                         : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo(),
                     position).ConfigureAwait(false);
-                completionData = items.Select(item => new AvalonEditCompletionData(item)).ToArray<ICompletionDataEx>();
+                completionData = data?.Items.Select(item => new AvalonEditCompletionData(item)).ToArray<ICompletionDataEx>() 
+                    ?? (IList<ICompletionDataEx>) new List<ICompletionDataEx>();
             }
 
             return new CompletionResult(completionData, overloadProvider);

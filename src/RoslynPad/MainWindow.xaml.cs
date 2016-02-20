@@ -122,7 +122,7 @@ namespace RoslynPad
             {
                 var enumerableChildren = e.Cast<object>().Select(x => new ResultObject(x)).ToArray();
                 _children = enumerableChildren;
-                _header = string.Format("<enumerable count={0}>", enumerableChildren.Length);
+                _header = $"<enumerable count={enumerableChildren.Length}>";
                 return;
             }
 

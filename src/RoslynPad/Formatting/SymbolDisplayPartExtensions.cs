@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Formatting
@@ -39,8 +40,20 @@ namespace RoslynPad.Formatting
 
             var run = new Run(text);
 
-            //var format = formatMap.GetTextProperties(typeMap.GetClassificationType(part.Kind.ToClassificationTypeName()));
-            //run.SetTextProperties(format);
+            switch (part.Kind)
+            {
+                case SymbolDisplayPartKind.Keyword:
+                    run.Foreground = Brushes.Blue;
+                    break;
+                case SymbolDisplayPartKind.StructName:
+                case SymbolDisplayPartKind.EnumName:
+                case SymbolDisplayPartKind.TypeParameterName:
+                case SymbolDisplayPartKind.ClassName:
+                case SymbolDisplayPartKind.DelegateName:
+                case SymbolDisplayPartKind.InterfaceName:
+                    run.Foreground = Brushes.Teal;
+                    break;
+            }
 
             return run;
         }
@@ -53,10 +66,7 @@ namespace RoslynPad.Formatting
         public static TextBlock ToTextBlock(this IEnumerable<SymbolDisplayPart> parts)
         {
             var result = new TextBlock();
-
-            //var formatMap = typeMap.ClassificationFormatMapService.GetClassificationFormatMap("tooltip");
-            //result.SetDefaultTextProperties(formatMap);
-
+            
             foreach (var part in parts)
             {
                 result.Inlines.Add(part.ToRun());

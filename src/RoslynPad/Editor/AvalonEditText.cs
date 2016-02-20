@@ -15,25 +15,16 @@ namespace RoslynPad.Editor
 
         public override void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
         {
-            for (int i = 0; i < count; ++i)
+            for (var i = 0; i < count; ++i)
             {
                 destination[i + destinationIndex] = _editor.Document.GetCharAt(sourceIndex);
             }
         }
 
-        public override Encoding Encoding
-        {
-            get { return Encoding.UTF8; }
-        }
+        public override Encoding Encoding => Encoding.UTF8;
 
-        public override int Length
-        {
-            get { return _editor.Document.TextLength; }
-        }
+        public override int Length => _editor.Document.TextLength;
 
-        public override char this[int position]
-        {
-            get { return _editor.Document.GetCharAt(position); }
-        }
+        public override char this[int position] => _editor.Document.GetCharAt(position);
     }
 }

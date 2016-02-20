@@ -9,12 +9,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editor;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Scripting;
-using Microsoft.CodeAnalysis.Scripting.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Runtime;
 
@@ -39,7 +37,7 @@ namespace RoslynPad.Roslyn
         private readonly InteractiveWorkspace _workspace;
         private readonly CSharpParseOptions _parseOptions;
         private readonly CSharpCompilationOptions _compilationOptions;
-        private readonly MetadataReference[] _references;
+        private readonly ImmutableArray<MetadataReference> _references;
         private readonly ISignatureHelpProvider[] _signatureHelpProviders;
 
         private int _documentNumber;
@@ -47,10 +45,7 @@ namespace RoslynPad.Roslyn
 
         #endregion
 
-        public Solution Solution
-        {
-            get { return _workspace.CurrentSolution; }
-        }
+        public Solution Solution => _workspace.CurrentSolution;
 
         public InteractiveManager()
         {
@@ -60,16 +55,19 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
             }));
             _workspace = new InteractiveWorkspace(host);
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Interactive);
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
             _references = _assemblyTypes.Select(t =>
-                MetadataReference.CreateFromAssembly(t.Assembly)).ToArray();
+                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location)).ToImmutableArray();
             _compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
-            var container = new CompositionContainer(new AssemblyCatalog(typeof(ISignatureHelpProvider).Assembly),
+            var container = new CompositionContainer(new AggregateCatalog(
+                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
                 CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
-            _signatureHelpProviders = container.GetExportedValues<ISignatureHelpProvider>().ToArray();
+            var getMethod = typeof(CompositionContainer).GetMethod(nameof(CompositionContainer.GetExportedValues), Type.EmptyTypes).MakeGenericMethod(SignatureHelperProvider.InterfaceType);
+            _signatureHelpProviders = ((IEnumerable<object>)getMethod.Invoke(container, null))
+                .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x)).ToArray();
         }
 
         #region Documents
@@ -93,8 +91,8 @@ namespace RoslynPad.Roslyn
 
         private Project CreateSubmissionProject(Solution solution)
         {
-            string name = "Program" + _documentNumber++;
-            ProjectId id = ProjectId.CreateNewId(name);
+            var name = "Program" + _documentNumber++;
+            var id = ProjectId.CreateNewId(name);
             solution = solution.AddProject(ProjectInfo.Create(id, VersionStamp.Create(), name, name, LanguageNames.CSharp,
                 parseOptions: _parseOptions,
                 compilationOptions: _compilationOptions.WithScriptClassName(name),
@@ -110,15 +108,12 @@ namespace RoslynPad.Roslyn
 
         #region Completion
 
-        public async Task<IList<CompletionItem>> GetCompletion(CompletionTriggerInfo trigger, int position)
+        public async Task<CompletionList> GetCompletion(CompletionTriggerInfo trigger, int position)
         {
-            var groups = await CompletionService.GetCompletionItemGroupsAsync(
-                GetCurrentDocument(), position, trigger).ConfigureAwait(false);
-            if (groups == null)
-            {
-                return new CompletionItem[0];
-            }
-            return groups.SelectMany(t => t.Items).ToArray();
+            var document = GetCurrentDocument();
+            var list = await CompletionService.GetCompletionListAsync(
+                document, position, trigger).ConfigureAwait(false);
+            return list;
         }
 
         private Document GetCurrentDocument()
@@ -164,9 +159,9 @@ namespace RoslynPad.Roslyn
             SourceText text;
             if (GetCurrentDocument().TryGetText(out text))
             {
-                CSharpScript.Run(text.ToString(),
+                CSharpScript.RunAsync(text.ToString(),
                     ScriptOptions.Default
-                        .AddNamespaces(_assemblyTypes.Select(x => x.Namespace))
+                        .AddImports(_assemblyTypes.Select(x => x.Namespace))
                         .AddReferences(_assemblyTypes.Select(x => x.Assembly)));
             }
         }

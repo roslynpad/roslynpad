@@ -13,10 +13,7 @@ namespace RoslynPad.Editor
         private SourceText _before;
         private SourceText _current;
 
-        public TextDocument Document
-        {
-            get { return _editor.Document; }
-        }
+        public TextDocument Document => _editor.Document;
 
         public AvalonEditTextContainer(TextEditor editor)
         {
@@ -49,15 +46,11 @@ namespace RoslynPad.Editor
 
         public override event EventHandler<TextChangeEventArgs> TextChanged;
 
-        public override SourceText CurrentText
-        {
-            get { return _current; }
-        }
+        public override SourceText CurrentText => _current;
 
         protected virtual void OnTextChanged(TextChangeEventArgs e)
         {
-            var handler = TextChanged;
-            if (handler != null) handler(this, e);
+            TextChanged?.Invoke(this, e);
         }
     }
 }

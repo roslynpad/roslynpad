@@ -48,8 +48,19 @@ namespace RoslynPad.Editor
             {
                 e.Handled = true;
                 // ReSharper disable once UnusedVariable
-                var task = ShowCompletion(controlSpace: true);
+                var mode = e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Shift)
+                    ? TriggerMode.SignatureHelp
+                    : TriggerMode.Completion;
+                // ReSharper disable once UnusedVariable
+                var task = ShowCompletion(mode);
             }
+        }
+
+        enum TriggerMode
+        {
+            Text,
+            Completion,
+            SignatureHelp,
         }
 
         #region Open & Save File
@@ -96,10 +107,10 @@ namespace RoslynPad.Editor
         private void OnTextEntered(object sender, TextCompositionEventArgs textCompositionEventArgs)
         {
             // ReSharper disable once UnusedVariable
-            var task = ShowCompletion(controlSpace: false);
+            var task = ShowCompletion(TriggerMode.Text);
         }
 
-        private async Task ShowCompletion(bool controlSpace)
+        private async Task ShowCompletion(TriggerMode triggerMode)
         {
             if (CompletionProvider == null)
             {
@@ -110,8 +121,8 @@ namespace RoslynPad.Editor
             {
                 int offset;
                 GetCompletionDocument(out offset);
-                var completionChar = controlSpace ? (char?)null : Document.GetCharAt(offset - 1);
-                var results = await CompletionProvider.GetCompletionData(offset, completionChar).ConfigureAwait(true);
+                var completionChar = triggerMode == TriggerMode.Text ? Document.GetCharAt(offset - 1) : (char?)null;
+                var results = await CompletionProvider.GetCompletionData(offset, completionChar, triggerMode == TriggerMode.SignatureHelp).ConfigureAwait(true);
                 if (_insightWindow == null && results.OverloadProvider != null)
                 {
                     _insightWindow = new OverloadInsightWindow(TextArea)
@@ -130,7 +141,7 @@ namespace RoslynPad.Editor
                     _completionWindow = new CompletionWindow(TextArea)
                     {
                         Background = CompletionBackground,
-                        CloseWhenCaretAtBeginning = controlSpace
+                        CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion
                     };
                     if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
                     {

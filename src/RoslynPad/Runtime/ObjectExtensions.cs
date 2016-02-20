@@ -6,8 +6,7 @@ namespace RoslynPad.Runtime
     {
         public static T Dump<T>(this T o)
         {
-            var handler = Dumped;
-            if (handler != null) handler(o);
+            Dumped?.Invoke(o);
             return o;
         }
 

@@ -23,10 +23,7 @@ namespace RoslynPad.Roslyn
             RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
         }
 
-        public override bool CanOpenDocuments
-        {
-            get { return true; }
-        }
+        public override bool CanOpenDocuments => true;
 
         public override bool CanApplyChange(ApplyChangesKind feature)
         {
