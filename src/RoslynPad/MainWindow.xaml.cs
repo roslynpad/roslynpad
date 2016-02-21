@@ -17,7 +17,7 @@ namespace RoslynPad
     /// </summary>
     public partial class MainWindow
     {
-        private const string DefaultSessionText = @"Enumerable.Range(0, 100).Select(t => new { M = t }).Dump();";
+        private const string DefaultSessionText = @"Enumerable.Range(0, 100).Select(t => new { M = t }.DumpToPropertyGrid()).Dump();";
 
         private readonly ObservableCollection<ResultObject> _objects;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -32,7 +32,17 @@ namespace RoslynPad
             _objects = new ObservableCollection<ResultObject>();
             Results.ItemsSource = _objects;
 
-            ObjectExtensions.Dumped += o => _objects.Add(new ResultObject(o));
+            ObjectExtensions.Dumped += (o, mode) =>
+            {
+                if (mode == DumpMode.PropertyGrid)
+                {
+                    ThePropertyGrid.SelectedObject = o;
+                }
+                else
+                {
+                    _objects.Add(new ResultObject(o));
+                }
+            };
 
             _interactiveManager = new InteractiveManager();
             _interactiveManager.SetDocument(Editor.AsTextContainer());
@@ -113,7 +123,14 @@ namespace RoslynPad
             {
                 var value = _property.GetValue(_o);
                 _header = _property.Name + " = " + value;
-                _children = new[] { value };
+                _children = new[] { new ResultObject(value)  };
+                return;
+            }
+
+            var s = _o as string;
+            if (s != null)
+            {
+                _header = s;
                 return;
             }
 

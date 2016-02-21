@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:editor="clr-namespace:RoslynPad.Editor"
         xmlns:roslynPad="clr-namespace:RoslynPad"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         FontFamily="Consolas"
@@ -33,19 +34,31 @@
                 <RowDefinition Height="5" />
                 <RowDefinition />
             </Grid.RowDefinitions>
-            <ToolBar>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ToolBar Grid.ColumnSpan="2">
                 <Button Content="Go"
                         Command="Play" />
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"
-                                   Grid.Row="1" />
+                                   Grid.Row="1"
+                                   Grid.Column="0"
+                                   Grid.ColumnSpan="2" />
             <GridSplitter Grid.Row="2"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="2"
                           Background="Gray"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch" />
+            <xctk:PropertyGrid Name="ThePropertyGrid"
+                               Grid.Row="3"
+                               Grid.Column="1"/>
             <TreeView Name="Results"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      Grid.Column="0"
                       Grid.Row="3">
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type roslynPad:ResultObject}"

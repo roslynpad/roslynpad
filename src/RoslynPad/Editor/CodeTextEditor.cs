@@ -72,14 +72,8 @@ namespace RoslynPad.Editor
                 throw new FileNotFoundException(fileName);
             }
 
-            if (_completionWindow != null)
-            {
-                _completionWindow.Close();
-            }
-            if (_insightWindow != null)
-            {
-                _insightWindow.Close();
-            }
+            _completionWindow?.Close();
+            _insightWindow?.Close();
 
             Load(fileName);
             Document.FileName = fileName;
@@ -135,7 +129,7 @@ namespace RoslynPad.Editor
                     return;
                 }
 
-                if (_completionWindow == null && results.CompletionData.Any())
+                if (_completionWindow == null && results.CompletionData?.Any() == true)
                 {
                     // Open code completion after the user has pressed dot:
                     _completionWindow = new CompletionWindow(TextArea)
