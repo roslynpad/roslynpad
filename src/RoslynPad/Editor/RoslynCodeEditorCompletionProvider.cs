@@ -15,11 +15,11 @@ namespace RoslynPad.Editor
 {
     internal sealed class RoslynOverloadProvider : IOverloadProvider
     {
-        private readonly SignatureHelpItems _signatureHelp;
+        private readonly IList<SignatureHelpItem> _items; 
 
-        public RoslynOverloadProvider(SignatureHelpItems signatureHelp)
+        public RoslynOverloadProvider(IList<SignatureHelpItems> signatureHelp)
         {
-            _signatureHelp = signatureHelp;
+            _items = signatureHelp.SelectMany(x => x.Items).ToArray();
             SelectItem();
         }
 
@@ -45,7 +45,7 @@ namespace RoslynPad.Editor
 
         private void SelectItem()
         {
-            _item = _signatureHelp.Items[_selectedIndex];
+            _item = _items[_selectedIndex];
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -77,7 +77,7 @@ namespace RoslynPad.Editor
             return parts.ToTextBlock();
         }
 
-        public int Count => _signatureHelp.Items.Count;
+        public int Count => _items.Count;
 
         // ReSharper disable once UnusedMember.Local
         public string CurrentIndexText

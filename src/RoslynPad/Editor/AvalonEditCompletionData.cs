@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -17,7 +18,10 @@ namespace RoslynPad.Editor
             _item = item;
             Text = item.DisplayText;
             Content = item.DisplayText;
-            // Image = item.Glyph;
+            if (item.Glyph != null)
+            {
+                Image = Application.Current.TryFindResource(item.Glyph.Value) as ImageSource;
+            }
         }
 
         public void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
@@ -27,8 +31,7 @@ namespace RoslynPad.Editor
             textArea.Document.Replace(completionSegment, change.Value.NewText);
         }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        public ImageSource Image { get; private set; }
+        public ImageSource Image { get; }
 
         public string Text { get; }
 

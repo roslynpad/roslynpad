@@ -110,11 +110,11 @@ namespace RoslynPad.Roslyn
 
     public struct CompletionTriggerInfo
     {
+        internal object Inner { get; set; }
+
         public CompletionTriggerReason TriggerReason { get; }
 
         public char? TriggerCharacter { get; }
-
-        public object Inner { get; set; }
 
         private static readonly Func<int, char?, object> _completionTriggerInfoCtor =
             CreateCompletionTriggerInfoFunc();
@@ -180,7 +180,7 @@ namespace RoslynPad.Roslyn
         // ReSharper disable once NotAccessedField.Local
         private readonly object _inner;
 
-        public CompletionRules(object inner)
+        internal CompletionRules(object inner)
         {
             _inner = inner;
         }
@@ -190,7 +190,7 @@ namespace RoslynPad.Roslyn
     {
         private readonly object _inner;
 
-        public CompletionItemRules(object inner)
+        internal CompletionItemRules(object inner)
         {
             _inner = inner;
         }
@@ -204,7 +204,7 @@ namespace RoslynPad.Roslyn
     [DebuggerDisplay("{DisplayText}")]
     public class CompletionItem : IComparable<CompletionItem>
     {
-        public object Inner { get; set; }
+        internal object Inner { get; set; }
 
         public Glyph? Glyph { get; }
 
@@ -226,7 +226,7 @@ namespace RoslynPad.Roslyn
 
         public bool ShouldFormatOnCommit { get; }
 
-        public CompletionItem(object inner)
+        internal CompletionItem(object inner)
         {
             Inner = inner;
             Glyph = (Glyph)inner.GetPropertyValue<int>(nameof(Glyph));

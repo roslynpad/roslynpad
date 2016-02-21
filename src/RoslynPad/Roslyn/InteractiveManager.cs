@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -54,11 +55,15 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.Features"),
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
             }));
+
             _workspace = new InteractiveWorkspace(host);
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
+            var documentationProviderFactory = GetDocumentationProviderFactory();
+
             _references = _assemblyTypes.Select(t =>
-                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location)).ToImmutableArray();
+                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location,
+                    documentation: documentationProviderFactory(t.Assembly.Location))).ToImmutableArray();
             _compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
@@ -68,6 +73,19 @@ namespace RoslynPad.Roslyn
             var getMethod = typeof(CompositionContainer).GetMethod(nameof(CompositionContainer.GetExportedValues), Type.EmptyTypes).MakeGenericMethod(SignatureHelperProvider.InterfaceType);
             _signatureHelpProviders = ((IEnumerable<object>)getMethod.Invoke(container, null))
                 .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x)).ToArray();
+        }
+
+        private static Func<string, DocumentationProvider> GetDocumentationProviderFactory()
+        {
+            var docProviderType = Type.GetType("Microsoft.CodeAnalysis.Host.DocumentationProviderServiceFactory+DocumentationProviderService, Microsoft.CodeAnalysis.Workspaces.Desktop",
+                    throwOnError: true);
+            var docProvider = Activator.CreateInstance(docProviderType);
+            var p = Expression.Parameter(typeof (string));
+            var docProviderFunc =
+                Expression.Lambda<Func<string, DocumentationProvider>>(
+                    Expression.Call(Expression.Constant(docProvider, docProviderType),
+                        docProviderType.GetMethod("GetDocumentationProvider"), p), p).Compile();
+            return docProviderFunc;
         }
 
         #region Documents
@@ -137,8 +155,9 @@ namespace RoslynPad.Roslyn
             return _signatureHelpProviders.Any(p => p.IsTriggerCharacter(character));
         }
 
-        public async Task<SignatureHelpItems> GetSignatureHelp(SignatureHelpTriggerInfo trigger, int position)
+        public async Task<IList<SignatureHelpItems>> GetSignatureHelp(SignatureHelpTriggerInfo trigger, int position)
         {
+            var list = new List<SignatureHelpItems>();
             var document = GetCurrentDocument();
             foreach (var provider in _signatureHelpProviders)
             {
@@ -146,10 +165,10 @@ namespace RoslynPad.Roslyn
                             .ConfigureAwait(false);
                 if (items != null)
                 {
-                    return items;
+                    list.Add(items);
                 }
             }
-            return null;
+            return list;
         }
 
         #endregion
