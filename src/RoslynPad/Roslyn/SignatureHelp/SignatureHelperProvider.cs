@@ -17,7 +17,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
         public static IReadOnlyList<ISignatureHelpProvider> LoadProviders()
         {
             var container = new CompositionContainer(new AggregateCatalog(
-                new AssemblyCatalog(InterfaceType.Assembly)),
+                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
                 CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
             var getMethod = typeof(CompositionContainer).GetMethod(nameof(CompositionContainer.GetExportedValues), Type.EmptyTypes).MakeGenericMethod(InterfaceType);
             var signatureHelpProviders = ((IEnumerable<object>)getMethod.Invoke(container, null))
