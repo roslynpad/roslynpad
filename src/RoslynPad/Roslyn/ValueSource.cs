@@ -5,14 +5,18 @@ using System.Threading.Tasks;
 
 namespace RoslynPad.Roslyn
 {
+    internal static class ValueSource
+    {
+        internal static readonly Type Type = Type.GetType("Roslyn.Utilities.ValueSource`1, Microsoft.CodeAnalysis.Workspaces", throwOnError: true);
+    }
+
     internal static class ValueSource<T>
     {
         private static readonly Func<object, CancellationToken, Task<T>> _getValueAsync = CreateGetValueAsyncFunc();
 
         private static Func<object, CancellationToken, Task<T>> CreateGetValueAsyncFunc()
         {
-            var type = Type.GetType("Roslyn.Utilities.ValueSource`1, Microsoft.CodeAnalysis.Workspaces", throwOnError: true);
-            type = type.MakeGenericType(typeof(T));
+            var type = ValueSource.Type.MakeGenericType(typeof(T));
 
             var param = new[]
             {
@@ -20,7 +24,7 @@ namespace RoslynPad.Roslyn
                 Expression.Parameter(typeof(CancellationToken))
             };
             return Expression.Lambda<Func<object, CancellationToken, Task<T>>>(
-                Expression.Call(Expression.Convert(param[0], type), type.GetMethod("GetValueAsync"), param[1]),
+                Expression.Call(Expression.Convert(param[0], type), type.GetMethod(nameof(GetValueAsync)), param[1]),
                 param).Compile();
         }
 

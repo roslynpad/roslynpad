@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using ICSharpCode.AvalonEdit.Highlighting;
+using Microsoft.CodeAnalysis.Scripting;
 using RoslynPad.Editor;
 using RoslynPad.Properties;
 using RoslynPad.Roslyn;
 using RoslynPad.Runtime;
+using Xceed.Wpf.Toolkit.PropertyGrid;
 
 namespace RoslynPad
 {
@@ -34,9 +34,18 @@ namespace RoslynPad
 
             ObjectExtensions.Dumped += (o, mode) =>
             {
-                if (mode == DumpMode.PropertyGrid)
+                if (mode == DumpTarget.PropertyGrid)
                 {
                     ThePropertyGrid.SelectedObject = o;
+                    
+                    foreach (var prop in ThePropertyGrid.Properties.OfType<PropertyItem>())
+                    {
+                        var propertyType = prop.PropertyType;
+                        if (!propertyType.IsPrimitive && propertyType != typeof (string))
+                        {
+                            prop.IsExpandable = true;
+                        }
+                    }
                 }
                 else
                 {
@@ -61,94 +70,24 @@ namespace RoslynPad
                                             };
         }
 
-        private void OnPlayCommand(object sender, RoutedEventArgs e)
+        private async void OnPlayCommand(object sender, RoutedEventArgs e)
         {
             _objects.Clear();
 
             try
             {
-                _interactiveManager.Execute();
+                await _interactiveManager.Execute().ConfigureAwait(true);
+            }
+            catch (CompilationErrorException ex)
+            {
+                foreach (var diagnostic in ex.Diagnostics)
+                {
+                    _objects.Add(new ResultObject(diagnostic));
+                }
             }
             catch (Exception ex)
             {
                 _objects.Add(new ResultObject(ex));
-            }
-        }
-    }
-
-    class ResultObject
-    {
-        private readonly object _o;
-        private readonly PropertyDescriptor _property;
-        private bool _initialized;
-        private string _header;
-        private IEnumerable _children;
-
-        public ResultObject(object o, PropertyDescriptor property = null)
-        {
-            _o = o;
-            _property = property;
-        }
-
-        public string Header
-        {
-            get
-            {
-                Initialize();
-                return _header;
-            }
-        }
-
-        public IEnumerable Children
-        {
-            get
-            {
-                Initialize();
-                return _children;
-            }
-        }
-
-        private void Initialize()
-        {
-            if (_initialized) return;
-            _initialized = true;
-
-            if (_o == null)
-            {
-                _header = "<null>";
-                return;
-            }
-
-            if (_property != null)
-            {
-                var value = _property.GetValue(_o);
-                _header = _property.Name + " = " + value;
-                _children = new[] { new ResultObject(value)  };
-                return;
-            }
-
-            var s = _o as string;
-            if (s != null)
-            {
-                _header = s;
-                return;
-            }
-
-            var e = _o as IEnumerable;
-            if (e != null)
-            {
-                var enumerableChildren = e.Cast<object>().Select(x => new ResultObject(x)).ToArray();
-                _children = enumerableChildren;
-                _header = $"<enumerable count={enumerableChildren.Length}>";
-                return;
-            }
-
-            var properties = TypeDescriptor.GetProperties(_o).Cast<PropertyDescriptor>()
-                .Select(p => new ResultObject(_o, p)).ToArray();
-            _header = _o.ToString();
-            if (properties.Length > 0)
-            {
-                _children = properties;
             }
         }
     }

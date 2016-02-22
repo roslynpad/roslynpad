@@ -6,51 +6,40 @@ using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
 namespace RoslynPad.Editor
 {
-    class AvalonEditTextContainer : SourceTextContainer
+    internal sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {
         private readonly TextEditor _editor;
 
-        private SourceText _before;
-        private SourceText _current;
+        private SourceText _currentText;
 
         public TextDocument Document => _editor.Document;
+
+        public override SourceText CurrentText => _currentText;
 
         public AvalonEditTextContainer(TextEditor editor)
         {
             _editor = editor;
-            SetCurrent();
+            _currentText = SourceText.From(_editor.Text);
 
-            _editor.Document.Changing += DocumentOnChanging;
             _editor.Document.Changed += DocumentOnChanged;
         }
 
-        private void SetCurrent()
+        public void Dispose()
         {
-            _current = SourceText.From(_editor.Text);
-        }
-
-        private void DocumentOnChanging(object sender, DocumentChangeEventArgs e)
-        {
-            _before = CurrentText;
+            _editor.Document.Changed -= DocumentOnChanged;
         }
 
         private void DocumentOnChanged(object sender, DocumentChangeEventArgs e)
         {
-            SetCurrent();
+            var oldText = _currentText;
 
-            var textChangeRange = new TextChangeRange(
-                new TextSpan(e.Offset, e.RemovalLength),
-                e.RemovalLength == 0 ? e.InsertionLength : e.RemovalLength);
-            OnTextChanged(new TextChangeEventArgs(_before, CurrentText, textChangeRange));
+            var textSpan = new TextSpan(e.Offset, e.RemovalLength);
+            var textChangeRange = new TextChangeRange(textSpan, e.InsertionLength);
+            _currentText = _currentText.WithChanges(new TextChange(textSpan, e.InsertedText?.Text ?? string.Empty));
+
+            TextChanged?.Invoke(this, new TextChangeEventArgs(oldText, _currentText, textChangeRange));
         }
 
         public override event EventHandler<TextChangeEventArgs> TextChanged;
-
-        public override SourceText CurrentText => _current;
-
-        protected virtual void OnTextChanged(TextChangeEventArgs e)
-        {
-            TextChanged?.Invoke(this, e);
-        }
     }
 }

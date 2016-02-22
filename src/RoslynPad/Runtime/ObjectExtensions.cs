@@ -6,20 +6,20 @@ namespace RoslynPad.Runtime
     {
         public static T Dump<T>(this T o)
         {
-            Dumped?.Invoke(o, DumpMode.Text);
+            Dumped?.Invoke(o, DumpTarget.Text);
             return o;
         }
 
         public static T DumpToPropertyGrid<T>(this T o)
         {
-            Dumped?.Invoke(o, DumpMode.PropertyGrid);
+            Dumped?.Invoke(o, DumpTarget.PropertyGrid);
             return o;
         }
 
-        internal static event Action<object, DumpMode> Dumped;
+        internal static event Action<object, DumpTarget> Dumped;
     }
 
-    internal enum DumpMode
+    internal enum DumpTarget
     {
         Text,
         PropertyGrid,

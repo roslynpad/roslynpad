@@ -4,6 +4,7 @@
         xmlns:editor="clr-namespace:RoslynPad.Editor"
         xmlns:roslynPad="clr-namespace:RoslynPad"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:runtime="clr-namespace:RoslynPad.Runtime"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         FontFamily="Consolas"
@@ -35,10 +36,11 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="5" />
                 <ColumnDefinition />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <ToolBar Grid.ColumnSpan="2">
+            <ToolBar Grid.ColumnSpan="3">
                 <Button Content="Go"
                         Command="Play" />
             </ToolBar>
@@ -46,22 +48,33 @@
                                    x:FieldModifier="private"
                                    Grid.Row="1"
                                    Grid.Column="0"
-                                   Grid.ColumnSpan="2" />
+                                   Grid.ColumnSpan="3" />
             <GridSplitter Grid.Row="2"
                           Grid.Column="0"
-                          Grid.ColumnSpan="2"
-                          Background="Gray"
+                          Grid.ColumnSpan="3"
+                          Background="#ccc"
+                          ResizeBehavior="PreviousAndNext"
+                          ResizeDirection="Rows"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch" />
+
+            <GridSplitter Grid.Row="3"
+                          Grid.Column="1"
+                          Background="#ccc"
+                          ResizeBehavior="PreviousAndNext"
+                          ResizeDirection="Columns"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch" />
+            
             <xctk:PropertyGrid Name="ThePropertyGrid"
                                Grid.Row="3"
-                               Grid.Column="1"/>
+                               Grid.Column="2"/>
             <TreeView Name="Results"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                       Grid.Column="0"
                       Grid.Row="3">
                 <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate DataType="{x:Type roslynPad:ResultObject}"
+                    <HierarchicalDataTemplate DataType="{x:Type runtime:ResultObject}"
                                               ItemsSource="{Binding Children}">
                         <TextBlock Text="{Binding Header}" />
                     </HierarchicalDataTemplate>

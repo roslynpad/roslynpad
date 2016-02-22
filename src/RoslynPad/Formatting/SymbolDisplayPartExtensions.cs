@@ -74,6 +74,5 @@ namespace RoslynPad.Formatting
 
             return result;
         }
-
     }
 }

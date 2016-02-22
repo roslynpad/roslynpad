@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,7 +24,7 @@ namespace RoslynPad.Editor
         }
 
         public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(
-            "CompletionBackground", typeof (Brush), typeof (CodeTextEditor), new FrameworkPropertyMetadata(CreateDefaultCompletionBackground()));
+            "CompletionBackground", typeof(Brush), typeof(CodeTextEditor), new FrameworkPropertyMetadata(CreateDefaultCompletionBackground()));
 
         private static SolidColorBrush CreateDefaultCompletionBackground()
         {
@@ -36,7 +35,7 @@ namespace RoslynPad.Editor
 
         public Brush CompletionBackground
         {
-            get { return (Brush) GetValue(CompletionBackgroundProperty); }
+            get { return (Brush)GetValue(CompletionBackgroundProperty); }
             set { SetValue(CompletionBackgroundProperty, value); }
         }
 
@@ -47,7 +46,6 @@ namespace RoslynPad.Editor
             if (e.Key == Key.Space && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
             {
                 e.Handled = true;
-                // ReSharper disable once UnusedVariable
                 var mode = e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Shift)
                     ? TriggerMode.SignatureHelp
                     : TriggerMode.Completion;
@@ -56,7 +54,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        enum TriggerMode
+        private enum TriggerMode
         {
             Text,
             Completion,
@@ -83,7 +81,7 @@ namespace RoslynPad.Editor
 
         public bool SaveFile()
         {
-            if (String.IsNullOrEmpty(Document.FileName))
+            if (string.IsNullOrEmpty(Document.FileName))
             {
                 return false;
             }
@@ -111,13 +109,18 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            if (_completionWindow == null)
+            int offset;
+            GetCompletionDocument(out offset);
+            var completionChar = triggerMode == TriggerMode.Text ? Document.GetCharAt(offset - 1) : (char?)null;
+            var results = await CompletionProvider.GetCompletionData(offset, completionChar,
+                        triggerMode == TriggerMode.SignatureHelp).ConfigureAwait(true);
+            if (results.OverloadProvider != null)
             {
-                int offset;
-                GetCompletionDocument(out offset);
-                var completionChar = triggerMode == TriggerMode.Text ? Document.GetCharAt(offset - 1) : (char?)null;
-                var results = await CompletionProvider.GetCompletionData(offset, completionChar, triggerMode == TriggerMode.SignatureHelp).ConfigureAwait(true);
-                if (_insightWindow == null && results.OverloadProvider != null)
+                if (_insightWindow != null && _insightWindow.IsVisible)
+                {
+                    _insightWindow.Provider = results.OverloadProvider;
+                }
+                else
                 {
                     _insightWindow = new OverloadInsightWindow(TextArea)
                     {
@@ -126,62 +129,42 @@ namespace RoslynPad.Editor
                     };
                     _insightWindow.Show();
                     _insightWindow.Closed += (o, args) => _insightWindow = null;
-                    return;
                 }
-
-                if (_completionWindow == null && results.CompletionData?.Any() == true)
-                {
-                    // Open code completion after the user has pressed dot:
-                    _completionWindow = new CompletionWindow(TextArea)
-                    {
-                        Background = CompletionBackground,
-                        CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion
-                    };
-                    if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
-                    {
-                        _completionWindow.StartOffset -= 1;
-                    }
-
-                    var data = _completionWindow.CompletionList.CompletionData;
-                    ICompletionDataEx selected = null;
-                    foreach (var completion in results.CompletionData) //.OrderBy(item => item.SortText))
-                    {
-                        if (completion.IsSelected)
-                        {
-                            selected = completion;
-                        }
-                        data.Add(completion);
-                    }
-                    if (selected != null)
-                    {
-                        _completionWindow.CompletionList.SelectedItem = selected;
-                    }
-                    _completionWindow.Show();
-                    _completionWindow.Closed += (o, args) =>
-                    {
-                        _completionWindow = null;
-                    };
-                }
+                return;
             }
 
-            //if (!string.IsNullOrEmpty(enteredText) && _insightWindow != null)
-            //{
-            //    //whenver text is entered update the provider
-            //    var provider = _insightWindow.Provider as CSharpOverloadProvider;
-            //    if (provider != null)
-            //    {
-            //        //since the text has not been added yet we need to tread it as if the char has already been inserted
-            //        var offset = 0;
-            //        var doc = GetCompletionDocument(out offset);
-            //        provider.Update(doc, offset);
-            //        //if the windows is requested to be closed we do it here
-            //        if (provider.RequestClose)
-            //        {
-            //            _insightWindow.Close();
-            //            _insightWindow = null;
-            //        }
-            //    }
-            //}
+            if (_completionWindow == null && results.CompletionData?.Any() == true)
+            {
+                _insightWindow?.Close();
+
+                // Open code completion after the user has pressed dot:
+                _completionWindow = new CompletionWindow(TextArea)
+                {
+                    Background = CompletionBackground,
+                    CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion
+                };
+                if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
+                {
+                    _completionWindow.StartOffset -= 1;
+                }
+
+                var data = _completionWindow.CompletionList.CompletionData;
+                ICompletionDataEx selected = null;
+                foreach (var completion in results.CompletionData) //.OrderBy(item => item.SortText))
+                {
+                    if (completion.IsSelected)
+                    {
+                        selected = completion;
+                    }
+                    data.Add(completion);
+                }
+                if (selected != null)
+                {
+                    _completionWindow.CompletionList.SelectedItem = selected;
+                }
+                _completionWindow.Show();
+                _completionWindow.Closed += (o, args) => { _completionWindow = null; };
+            }
         }
 
         private void OnTextEntering(object sender, TextCompositionEventArgs args)

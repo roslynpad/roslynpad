@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.ComponentModel.Composition.Hosting;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -15,11 +15,13 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Roslyn.Completion;
+using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Runtime;
 
 namespace RoslynPad.Roslyn
 {
-    public class InteractiveManager
+    public sealed class InteractiveManager
     {
         #region Fields
 
@@ -39,14 +41,16 @@ namespace RoslynPad.Roslyn
         private readonly CSharpParseOptions _parseOptions;
         private readonly CSharpCompilationOptions _compilationOptions;
         private readonly ImmutableArray<MetadataReference> _references;
-        private readonly ISignatureHelpProvider[] _signatureHelpProviders;
+        private readonly IReadOnlyList<ISignatureHelpProvider> _signatureHelpProviders;
+        private readonly Func<string, DocumentationProvider> _documentationProviderFactory;
+        private readonly string _referenceAssembliesPath;
 
-        private int _documentNumber;
         private DocumentId _currentDocumenId;
+        private int _documentNumber;
 
         #endregion
 
-        public Solution Solution => _workspace.CurrentSolution;
+        #region Constructors
 
         public InteractiveManager()
         {
@@ -59,20 +63,46 @@ namespace RoslynPad.Roslyn
             _workspace = new InteractiveWorkspace(host);
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
-            var documentationProviderFactory = GetDocumentationProviderFactory();
+            _referenceAssembliesPath = GetReferenceAssembliesPath();
+            _documentationProviderFactory = GetDocumentationProviderFactory();
 
             _references = _assemblyTypes.Select(t =>
-                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location,
-                    documentation: documentationProviderFactory(t.Assembly.Location))).ToImmutableArray();
+                (MetadataReference) MetadataReference.CreateFromFile(t.Assembly.Location,
+                    documentation: GetDocumentationProvider(t.Assembly.Location))).ToImmutableArray();
             _compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
-            var container = new CompositionContainer(new AggregateCatalog(
-                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
-                CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
-            var getMethod = typeof(CompositionContainer).GetMethod(nameof(CompositionContainer.GetExportedValues), Type.EmptyTypes).MakeGenericMethod(SignatureHelperProvider.InterfaceType);
-            _signatureHelpProviders = ((IEnumerable<object>)getMethod.Invoke(container, null))
-                .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x)).ToArray();
+            _signatureHelpProviders = SignatureHelperProvider.LoadProviders();
+        }
+
+        #endregion
+
+        #region Documentation
+
+        private static string GetReferenceAssembliesPath()
+        {
+            var programFiles =
+                Environment.GetFolderPath(Environment.Is64BitOperatingSystem
+                    ? Environment.SpecialFolder.ProgramFilesX86
+                    : Environment.SpecialFolder.ProgramFiles);
+            var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
+            var directories = Directory.EnumerateDirectories(path).OrderByDescending(Path.GetFileName);
+            return directories.FirstOrDefault();
+        }
+
+        private DocumentationProvider GetDocumentationProvider(string location)
+        {
+            if (_referenceAssembliesPath != null)
+            {
+                var fileName = Path.GetFileName(location);
+                // ReSharper disable once AssignNullToNotNullAttribute
+                var referenceLocation = Path.Combine(_referenceAssembliesPath, fileName);
+                if (File.Exists(referenceLocation))
+                {
+                    location = referenceLocation;
+                }
+            }
+            return _documentationProviderFactory(location);
         }
 
         private static Func<string, DocumentationProvider> GetDocumentationProviderFactory()
@@ -80,13 +110,15 @@ namespace RoslynPad.Roslyn
             var docProviderType = Type.GetType("Microsoft.CodeAnalysis.Host.DocumentationProviderServiceFactory+DocumentationProviderService, Microsoft.CodeAnalysis.Workspaces.Desktop",
                     throwOnError: true);
             var docProvider = Activator.CreateInstance(docProviderType);
-            var p = Expression.Parameter(typeof (string));
+            var p = Expression.Parameter(typeof(string));
             var docProviderFunc =
                 Expression.Lambda<Func<string, DocumentationProvider>>(
                     Expression.Call(Expression.Constant(docProvider, docProviderType),
                         docProviderType.GetMethod("GetDocumentationProvider"), p), p).Compile();
             return docProviderFunc;
         }
+
+        #endregion
 
         #region Documents
 
@@ -155,9 +187,8 @@ namespace RoslynPad.Roslyn
             return _signatureHelpProviders.Any(p => p.IsTriggerCharacter(character));
         }
 
-        public async Task<IList<SignatureHelpItems>> GetSignatureHelp(SignatureHelpTriggerInfo trigger, int position)
+        public async Task<SignatureHelpItems> GetSignatureHelp(SignatureHelpTriggerInfo trigger, int position)
         {
-            var list = new List<SignatureHelpItems>();
             var document = GetCurrentDocument();
             foreach (var provider in _signatureHelpProviders)
             {
@@ -165,24 +196,28 @@ namespace RoslynPad.Roslyn
                             .ConfigureAwait(false);
                 if (items != null)
                 {
-                    list.Add(items);
+                    return items;
                 }
             }
-            return list;
+            return null;
         }
 
         #endregion
 
-        public void Execute()
+        #region Scripting
+
+        public async Task Execute()
         {
             SourceText text;
             if (GetCurrentDocument().TryGetText(out text))
             {
-                CSharpScript.RunAsync(text.ToString(),
+                await CSharpScript.RunAsync(text.ToString(),
                     ScriptOptions.Default
                         .AddImports(_assemblyTypes.Select(x => x.Namespace))
-                        .AddReferences(_assemblyTypes.Select(x => x.Assembly)));
+                        .AddReferences(_assemblyTypes.Select(x => x.Assembly))).ConfigureAwait(false);
             }
         }
+
+        #endregion
     }
 }

@@ -4,11 +4,11 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using RoslynPad.Formatting;
-using RoslynPad.Roslyn;
+using RoslynPad.Roslyn.Completion;
 
 namespace RoslynPad.Editor
 {
-    public class AvalonEditCompletionData : ICompletionDataEx
+    internal sealed class AvalonEditCompletionData : ICompletionDataEx
     {
         private readonly CompletionItem _item;
         private object _description;

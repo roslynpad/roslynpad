@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:roslyn="clr-namespace:RoslynPad.Roslyn">
+                    xmlns:roslyn="clr-namespace:RoslynPad.Roslyn"
+                    xmlns:completion="clr-namespace:RoslynPad.Roslyn.Completion">
     <!-- Licensed from the Visual Studio Image Library -->
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EnumPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -21,7 +22,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EnumProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -41,7 +42,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EnumMember}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMember}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -63,7 +64,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Assembly}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Assembly}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -79,7 +80,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ClassInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ClassInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -95,7 +96,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ClassPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ClassPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -113,7 +114,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ClassProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ClassProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -129,7 +130,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ClassPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ClassPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -143,7 +144,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ConstantInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ConstantInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -165,7 +166,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ConstantPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ConstantPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -191,7 +192,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ConstantProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ConstantProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -213,7 +214,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ConstantPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ConstantPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -233,7 +234,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.DelegateInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.DelegateInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -251,7 +252,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.DelegatePrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.DelegatePrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -273,7 +274,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.DelegateProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.DelegateProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -293,7 +294,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.DelegatePublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.DelegatePublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -311,7 +312,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EnumInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -331,7 +332,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EnumPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -355,7 +356,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EventInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EventInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -373,7 +374,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EventPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EventPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -395,7 +396,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EventPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EventPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -451,15 +452,15 @@
                              Geometry="F1M11,7L13,7 13,6 11,6z" />
         </DrawingGroup.Children>
     </DrawingGroup>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ExtensionMethodPublic}"
+    <DrawingImage x:Key="{x:Static completion:Glyph.ExtensionMethodPublic}"
                   Drawing="{StaticResource ExtensionMethodDrawing}"/>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ExtensionMethodInternal}"
+    <DrawingImage x:Key="{x:Static completion:Glyph.ExtensionMethodInternal}"
                   Drawing="{StaticResource ExtensionMethodDrawing}"/>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ExtensionMethodPrivate}"
+    <DrawingImage x:Key="{x:Static completion:Glyph.ExtensionMethodPrivate}"
                   Drawing="{StaticResource ExtensionMethodDrawing}"/>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ExtensionMethodProtected}"
+    <DrawingImage x:Key="{x:Static completion:Glyph.ExtensionMethodProtected}"
                   Drawing="{StaticResource ExtensionMethodDrawing}"/>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.FieldInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.FieldInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -477,7 +478,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.FieldPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.FieldPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -501,7 +502,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.FieldPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.FieldPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -517,7 +518,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.InterfaceInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.InterfaceInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -535,7 +536,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.InterfacePrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.InterfacePrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -557,7 +558,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.InterfacePublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.InterfacePublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -573,7 +574,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Label}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Label}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -587,7 +588,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.MethodInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.MethodInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -629,7 +630,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.MethodPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.MethodPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -677,7 +678,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.MethodPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.MethodPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -715,7 +716,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ModulePrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ModulePrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -739,7 +740,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ModulePublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ModulePublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -757,7 +758,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Namespace}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Namespace}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -771,7 +772,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.OpenFolder}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.OpenFolder}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -791,7 +792,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Operator}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Operator}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -815,7 +816,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Parameter}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Parameter}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -833,7 +834,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.PropertyInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.PropertyInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -849,7 +850,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.PropertyPrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.PropertyPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -869,7 +870,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.PropertyPublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.PropertyPublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -883,7 +884,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Reference}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Reference}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -901,7 +902,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Snippet}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Snippet}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -929,7 +930,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.StructureInternal}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.StructureInternal}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -947,7 +948,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.StructurePrivate}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.StructurePrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -969,7 +970,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.StructurePublic}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.StructurePublic}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -987,7 +988,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.EventProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EventProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1005,7 +1006,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.FieldProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.FieldProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1025,7 +1026,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.InterfaceProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.InterfaceProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1043,7 +1044,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.MethodProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.MethodProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1085,7 +1086,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.ModuleProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.ModuleProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1103,7 +1104,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.PropertyProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.PropertyProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1119,7 +1120,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.StructureProtected}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.StructureProtected}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
@@ -1137,7 +1138,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static roslyn:Glyph.Keyword}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.Keyword}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>

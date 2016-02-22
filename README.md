@@ -1,5 +1,7 @@
 # RoslynPad
 
+![RoslynPad](src/RoslynPad/Resources/RoslynPad.png)
+
 A simple C# editor based on Roslyn and AvalonEdit
 
 ## Notes

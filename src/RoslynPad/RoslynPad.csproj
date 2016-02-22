@@ -36,6 +36,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.AvalonEdit">
       <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
@@ -192,7 +195,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Editor\AvalonEditCompletionData.cs" />
-    <Compile Include="Editor\AvalonEditText.cs" />
     <Compile Include="Editor\AvalonEditTextContainer.cs" />
     <Compile Include="Editor\CodeTextEditor.cs" />
     <Compile Include="Editor\CompletionResult.cs" />
@@ -200,13 +202,27 @@
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />
     <Compile Include="Editor\RoslynCodeEditorCompletionProvider.cs" />
-    <Compile Include="Formatting\ObjectFormatter.cs" />
+    <Compile Include="Editor\RoslynOverloadProvider.cs" />
     <Compile Include="Formatting\SymbolDisplayPartExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="Roslyn\Completion.cs" />
+    <Compile Include="Runtime\ResultObject.cs" />
+    <Compile Include="Roslyn\Completion\CompletionService.cs" />
+    <Compile Include="Roslyn\Completion\CompletionItem.cs" />
+    <Compile Include="Roslyn\Completion\CompletionItemRules.cs" />
+    <Compile Include="Roslyn\Completion\CompletionList.cs" />
+    <Compile Include="Roslyn\Completion\CompletionRules.cs" />
+    <Compile Include="Roslyn\Completion\CompletionTriggerInfo.cs" />
+    <Compile Include="Roslyn\Completion\CompletionTriggerReason.cs" />
+    <Compile Include="Roslyn\Completion\Glyph.cs" />
     <Compile Include="Roslyn\InteractiveManager.cs" />
     <Compile Include="Roslyn\InteractiveWorkspace.cs" />
-    <Compile Include="Roslyn\SignatureHelp.cs" />
+    <Compile Include="Roslyn\SignatureHelp\ISignatureHelpProvider.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelperProvider.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpItem.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpItems.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpParameter.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpTriggerInfo.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="Roslyn\ValueSource.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
@@ -261,7 +277,9 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Resources\RoslynPad.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

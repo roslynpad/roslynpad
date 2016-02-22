@@ -6,9 +6,8 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn
 {
-    internal class InteractiveWorkspace : Workspace
+    internal sealed class InteractiveWorkspace : Workspace
     {
-        //private SourceTextContainer _openTextContainer;
         private DocumentId _openDocumentId;
 
         internal InteractiveWorkspace(HostServices host)
@@ -31,7 +30,6 @@ namespace RoslynPad.Roslyn
             {
                 case ApplyChangesKind.ChangeDocument:
                     return true;
-
                 default:
                     return false;
             }
@@ -50,20 +48,6 @@ namespace RoslynPad.Roslyn
             {
                 return;
             }
-
-            //ITextSnapshot appliedText;
-            //using (var edit = _openTextContainer.GetTextBuffer().CreateEdit(EditOptions.DefaultMinimalChange, reiteratedVersionNumber: null, editTag: null))
-            //{
-            //    var oldText = _openTextContainer.CurrentText;
-            //    var changes = newText.GetTextChanges(oldText);
-
-            //    foreach (var change in changes)
-            //    {
-            //        edit.Replace(change.Span.Start, change.Span.Length, change.NewText);
-            //    }
-
-            //    appliedText = edit.Apply();
-            //}
 
             OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
         }

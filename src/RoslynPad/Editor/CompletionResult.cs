@@ -3,7 +3,7 @@ using ICSharpCode.AvalonEdit.CodeCompletion;
 
 namespace RoslynPad.Editor
 {
-    public class CompletionResult
+    public sealed class CompletionResult
     {
         public CompletionResult(IList<ICompletionDataEx> completionData, IOverloadProvider overloadProvider)
         {
