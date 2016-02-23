@@ -1,7 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
@@ -11,6 +13,8 @@ using ICSharpCode.AvalonEdit.Highlighting;
 
 namespace RoslynPad.Editor
 {
+    public delegate void ToolTipRequestEventHandler(object sender, ToolTipRequestEventArgs args);
+
     public class CodeTextEditor : TextEditor
     {
         private CompletionWindow _completionWindow;
@@ -18,13 +22,19 @@ namespace RoslynPad.Editor
 
         public CodeTextEditor()
         {
+            MouseHover += OnMouseHover;
+            MouseHoverStopped += OnMouseHoverStopped;
+            TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
             TextArea.TextEntered += OnTextEntered;
             ShowLineNumbers = true;
+            ToolTipService.SetInitialShowDelay(this, 0);
         }
 
         public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(
             "CompletionBackground", typeof(Brush), typeof(CodeTextEditor), new FrameworkPropertyMetadata(CreateDefaultCompletionBackground()));
+
+        private ToolTip _toolTip;
 
         private static SolidColorBrush CreateDefaultCompletionBackground()
         {
@@ -58,7 +68,79 @@ namespace RoslynPad.Editor
         {
             Text,
             Completion,
-            SignatureHelp,
+            SignatureHelp
+        }
+
+        public static readonly RoutedEvent ToolTipRequestEvent = EventManager.RegisterRoutedEvent("ToolTipRequest",
+            RoutingStrategy.Bubble, typeof(ToolTipRequestEventHandler), typeof(CodeTextEditor));
+
+        public event ToolTipRequestEventHandler ToolTipRequest
+        {
+            add { AddHandler(ToolTipRequestEvent, value); }
+            remove { RemoveHandler(ToolTipRequestEvent, value); }
+        }
+
+        private void OnVisualLinesChanged(object sender, EventArgs e)
+        {
+            if (_toolTip != null)
+            {
+                _toolTip.IsOpen = false;
+            }
+        }
+
+        private void OnMouseHoverStopped(object sender, MouseEventArgs e)
+        {
+            if (_toolTip != null)
+            {
+                _toolTip.IsOpen = false;
+                e.Handled = true;
+            }
+        }
+
+        private void OnMouseHover(object sender, MouseEventArgs e)
+        {
+            var position = TextArea.TextView.GetPositionFloor(e.GetPosition(TextArea.TextView) + TextArea.TextView.ScrollOffset);
+            var args = new ToolTipRequestEventArgs { InDocument = position.HasValue };
+            if (!position.HasValue || position.Value.Location.IsEmpty)
+            {
+                return;
+            }
+
+            args.LogicalPosition = position.Value.Location;
+
+            RaiseEvent(args);
+
+            if (args.ContentToShow == null) return;
+
+            if (_toolTip == null)
+            {
+                _toolTip = new ToolTip { MaxWidth = 300 };
+                _toolTip.Closed += ToolTipClosed;
+                ToolTipService.SetInitialShowDelay(_toolTip, 0);
+            }
+            _toolTip.PlacementTarget = this; // required for property inheritance
+
+            var stringContent = args.ContentToShow as string;
+            if (stringContent != null)
+            {
+                _toolTip.Content = new TextBlock
+                {
+                    Text = stringContent,
+                    TextWrapping = TextWrapping.Wrap
+                };
+            }
+            else
+            {
+                _toolTip.Content = args.ContentToShow;
+            }
+
+            e.Handled = true;
+            _toolTip.IsOpen = true;
+        }
+
+        private void ToolTipClosed(object sender, EventArgs e)
+        {
+            _toolTip = null;
         }
 
         #region Open & Save File
@@ -125,7 +207,7 @@ namespace RoslynPad.Editor
                     _insightWindow = new OverloadInsightWindow(TextArea)
                     {
                         Provider = results.OverloadProvider,
-                        Background = CompletionBackground,
+                        Background = CompletionBackground
                     };
                     _insightWindow.Show();
                     _insightWindow.Closed += (o, args) => _insightWindow = null;

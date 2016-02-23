@@ -40,8 +40,28 @@
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Castle.Core, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.DynamicProxy2, Version=2.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.DynamicProxy.2.2.0\lib\Castle.DynamicProxy2.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.Services.Logging.log4netIntegration, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Services.Logging.log4netIntegration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.Services.Logging.NLogIntegration, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Services.Logging.NLogIntegration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="ICSharpCode.AvalonEdit">
       <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.1.2.10\lib\2.0\log4net.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.2.0-beta1-20160220-01\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
@@ -105,6 +125,10 @@
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.2.0-beta1-20160220-01\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NLog, Version=1.0.0.505, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.1.0.0.505\lib\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -198,13 +222,30 @@
     <Compile Include="Editor\AvalonEditTextContainer.cs" />
     <Compile Include="Editor\CodeTextEditor.cs" />
     <Compile Include="Editor\CompletionResult.cs" />
+    <Compile Include="Editor\TextMarker.cs" />
+    <Compile Include="Editor\TextMarkerService.cs" />
     <Compile Include="Editor\EditorExtensions.cs" />
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />
     <Compile Include="Editor\RoslynCodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\RoslynOverloadProvider.cs" />
+    <Compile Include="Editor\TextMarkerToolTipProvider.cs" />
     <Compile Include="Formatting\SymbolDisplayPartExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="Roslyn\AnalyzerAssemblyLoader.cs" />
+    <Compile Include="Roslyn\Diagnostics\DiagnosticData.cs" />
+    <Compile Include="Roslyn\Diagnostics\DiagnosticDataLocation.cs" />
+    <Compile Include="Roslyn\Diagnostics\DiagnosticsService.cs" />
+    <Compile Include="Roslyn\Diagnostics\DiagnosticsUpdatedArgs.cs" />
+    <Compile Include="Roslyn\Diagnostics\DiagnosticsUpdatedKind.cs" />
+    <Compile Include="Roslyn\Diagnostics\HostDiagnosticAnalyzerPackageFactory.cs" />
+    <Compile Include="Roslyn\Diagnostics\IDiagnosticService.cs" />
+    <Compile Include="Roslyn\Diagnostics\SolutionCrawlerRegistrationService.cs" />
+    <Compile Include="Roslyn\Diagnostics\UpdatedEventArgs.cs" />
+    <Compile Include="Roslyn\Diagnostics\WorkspaceDiagnosticAnalyzerProviderServiceProxy.cs" />
+    <Compile Include="Roslyn\DocumentTrackingServiceProxy.cs" />
+    <Compile Include="Roslyn\HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="Roslyn\RoslynInterfaceProxy.cs" />
     <Compile Include="Runtime\ResultObject.cs" />
     <Compile Include="Roslyn\Completion\CompletionService.cs" />
     <Compile Include="Roslyn\Completion\CompletionItem.cs" />
@@ -224,6 +265,7 @@
     <Compile Include="Roslyn\SignatureHelp\SignatureHelpTriggerInfo.cs" />
     <Compile Include="Roslyn\SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="Roslyn\ValueSource.cs" />
+    <Compile Include="Utilities\CompositionContainerExtensions.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\TaskExtensions.cs" />

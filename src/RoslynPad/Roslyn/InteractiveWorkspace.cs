@@ -6,12 +6,12 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn
 {
-    internal sealed class InteractiveWorkspace : Workspace
+    public sealed class InteractiveWorkspace : Workspace
     {
-        private DocumentId _openDocumentId;
+        public DocumentId OpenDocumentId { get; private set; }
 
         internal InteractiveWorkspace(HostServices host)
-            : base(host, "Interactive")
+            : base(host, WorkspaceKind.Interactive)
         {
         }
 
@@ -37,14 +37,14 @@ namespace RoslynPad.Roslyn
 
         public void OpenDocument(DocumentId documentId, SourceTextContainer textContainer)
         {
-            //_openTextContainer = textContainer;
-            _openDocumentId = documentId;
+            OpenDocumentId = documentId;
             OnDocumentOpened(documentId, textContainer);
+            OnDocumentContextUpdated(documentId);
         }
 
         protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
         {
-            if (_openDocumentId != document)
+            if (OpenDocumentId != document)
             {
                 return;
             }

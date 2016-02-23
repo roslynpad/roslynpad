@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.SignatureHelp
 {
@@ -14,13 +15,9 @@ namespace RoslynPad.Roslyn.SignatureHelp
     {
         private static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.Editor.ISignatureHelpProvider, Microsoft.CodeAnalysis.EditorFeatures", throwOnError: true);
 
-        public static IReadOnlyList<ISignatureHelpProvider> LoadProviders()
+        public static IReadOnlyList<ISignatureHelpProvider> LoadProviders(CompositionContainer container)
         {
-            var container = new CompositionContainer(new AggregateCatalog(
-                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
-                CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
-            var getMethod = typeof(CompositionContainer).GetMethod(nameof(CompositionContainer.GetExportedValues), Type.EmptyTypes).MakeGenericMethod(InterfaceType);
-            var signatureHelpProviders = ((IEnumerable<object>)getMethod.Invoke(container, null))
+            var signatureHelpProviders = container.GetExportedValues(InterfaceType)
                 .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x)).ToArray();
             return Array.AsReadOnly(signatureHelpProviders);
         }
@@ -61,7 +58,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
         }
 
         private static readonly Func<object, Document, int, object, CancellationToken, Task<object>> _getItemsAsync = CreateGetItemsAsync();
-        
+
         private static Func<object, Document, int, object, CancellationToken, Task<object>> CreateGetItemsAsync()
         {
             var param = new[]
@@ -76,7 +73,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
             return Expression.Lambda<Func<object, Document, int, object, CancellationToken, Task<object>>>(
                 Expression.Call(typeof(Utilities.TaskExtensions).GetMethod(nameof(Utilities.TaskExtensions.Cast), BindingFlags.Static | BindingFlags.Public)
                     .MakeGenericMethod(methodInfo.ReturnType.GetGenericArguments()[0], typeof(object)),
-                    Expression.Call(Expression.Convert(param[0], InterfaceType), methodInfo, param[1], param[2], 
+                    Expression.Call(Expression.Convert(param[0], InterfaceType), methodInfo, param[1], param[2],
                         Expression.Convert(param[3], methodInfo.GetParameters()[2].ParameterType), param[4])),
                 param).Compile();
         }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel.Composition.Hosting;
+using System.Composition.Convention;
+using System.Composition.Hosting;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -16,12 +18,14 @@ using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Completion;
+using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Runtime;
+using Expression = System.Linq.Expressions.Expression;
 
 namespace RoslynPad.Roslyn
 {
-    public sealed class InteractiveManager
+    internal sealed class InteractiveManager
     {
         #region Fields
 
@@ -44,6 +48,8 @@ namespace RoslynPad.Roslyn
         private readonly IReadOnlyList<ISignatureHelpProvider> _signatureHelpProviders;
         private readonly Func<string, DocumentationProvider> _documentationProviderFactory;
         private readonly string _referenceAssembliesPath;
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly IDiagnosticService _diagnosticsService;
 
         private DocumentId _currentDocumenId;
         private int _documentNumber;
@@ -52,27 +58,72 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
+        class AttributeFilterProvider : AttributedModelProvider
+        {
+            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
+            {
+                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+            }
+
+            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
+            {
+                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+            }
+        }
+
         public InteractiveManager()
         {
-            var host = MefHostServices.Create(MefHostServices.DefaultAssemblies.Concat(new[]
+            var documentTrackingServiceType = DocumentTrackingServiceProxy.GeneratedType.Value;
+            // ReSharper disable once UnusedVariable
+            var workspaceDiagnosticAnalyzerProviderServiceType =
+                WorkspaceDiagnosticAnalyzerProviderServiceProxy.GeneratedType.Value;
+
+            var assemblies = new[]
             {
+                Assembly.Load("Microsoft.CodeAnalysis"),
+                Assembly.Load("Microsoft.CodeAnalysis.CSharp"),
                 Assembly.Load("Microsoft.CodeAnalysis.Features"),
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
-            }));
+                //Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures"),
+                //Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures")
+                documentTrackingServiceType.Assembly,
+            };
+            var compositionHost = new ContainerConfiguration()
+                .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
+                .WithDefaultConventions(new AttributeFilterProvider())
+                .CreateContainer();
+
+            var host = MefHostServices.Create(compositionHost);
 
             _workspace = new InteractiveWorkspace(host);
+            var documentTrackingService = _workspace.Services.GetService(DocumentTrackingServiceProxy.InterfaceType);
+            RoslynInterfaceProxy.Initialize(documentTrackingService, new DocumentTrackingServiceProxy(), _workspace);
+
+            var workspaceDiagnosticAnalyzerProviderService = compositionHost.GetExport(WorkspaceDiagnosticAnalyzerProviderServiceProxy.InterfaceType);
+            RoslynInterfaceProxy.Initialize(workspaceDiagnosticAnalyzerProviderService, new WorkspaceDiagnosticAnalyzerProviderServiceProxy(), _workspace);
+
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderFactory = GetDocumentationProviderFactory();
 
             _references = _assemblyTypes.Select(t =>
-                (MetadataReference) MetadataReference.CreateFromFile(t.Assembly.Location,
+                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location,
                     documentation: GetDocumentationProvider(t.Assembly.Location))).ToImmutableArray();
-            _compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+            _compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
-            _signatureHelpProviders = SignatureHelperProvider.LoadProviders();
+            SolutionCrawlerRegistrationService.Register(_workspace);
+
+            _diagnosticsService = DiagnosticsService.Load(compositionHost);
+            _diagnosticsService.DiagnosticsUpdated += (sender, args) => DiagnosticsUpdated?.Invoke(this, args);
+
+            var container = new CompositionContainer(new AggregateCatalog(
+                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
+                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
+                CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
+
+            _signatureHelpProviders = SignatureHelperProvider.LoadProviders(container);
         }
 
         #endregion
@@ -120,6 +171,12 @@ namespace RoslynPad.Roslyn
 
         #endregion
 
+        #region Diagnostics
+
+        public event EventHandler<DiagnosticsUpdatedArgs> DiagnosticsUpdated;
+
+        #endregion
+
         #region Documents
 
         public void SetDocument(SourceTextContainer textContainer)
@@ -147,10 +204,6 @@ namespace RoslynPad.Roslyn
                 parseOptions: _parseOptions,
                 compilationOptions: _compilationOptions.WithScriptClassName(name),
                 metadataReferences: _references));
-            //if (_previousProjectId != null)
-            //{
-            //    solution = solution.AddProjectReference(id, new ProjectReference(_previousProjectId));
-            //}
             return solution.GetProject(id);
         }
 
