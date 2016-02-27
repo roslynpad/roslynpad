@@ -4,7 +4,25 @@
 
 A simple C# editor based on Roslyn and AvalonEdit
 
-## Notes
+## Features
 
-* This project uses internal members for completion (`Microsoft.CodeAnalysis.Completion.ICompletionService`) and method signature help (`Microsoft.CodeAnalysis.Editor.ISignatureHelpProvider`) - aka "Intellisense" - via *Reflection* (instead of the previous private build of Roslyn)
+### Completion
+
+![Completion](docs/Completion.png)
+
+### Signature Help
+
+![Signature Help](docs/SignatureHelp.png)
+
+### Diagnostics
+
+![Diagnostics](docs/Diagnostics.png)
+
+### Code Fixes
+
+![Code Fixes](docs/CodeFixes.png)
+
+## Nodes
+
+* Most of the Roslyn APIs required to make RoslynPad work are internal and may change with future releases
 * It's intended only for play and for learning how to use some Roslyn APIs
