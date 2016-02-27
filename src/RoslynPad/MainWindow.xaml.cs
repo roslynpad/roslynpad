@@ -12,14 +12,12 @@ using RoslynPad.Editor;
 using RoslynPad.Properties;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
 using Xceed.Wpf.Toolkit.PropertyGrid;
 
 namespace RoslynPad
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow
     {
         private const string DefaultSessionText = @"Enumerable.Range(0, 100).Select(t => new { M = t }.DumpToPropertyGrid()).Dump();";
@@ -27,8 +25,10 @@ namespace RoslynPad
         private readonly object _lock;
         private readonly ObservableCollection<ResultObject> _objects;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly InteractiveManager _interactiveManager;
+        private readonly RoslynHost _roslynHost;
         private readonly TextMarkerService _textMarkerService;
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly ContextActionsRenderer _contextActionsRenderer;
 
         public MainWindow()
         {
@@ -42,49 +42,56 @@ namespace RoslynPad
 
             _lock = new object();
             _objects = new ObservableCollection<ResultObject>();
-            BindingOperations.EnableCollectionSynchronization(_objects, _objects);
+            BindingOperations.EnableCollectionSynchronization(_objects, _lock);
             Results.ItemsSource = _objects;
 
-            ObjectExtensions.Dumped += (o, mode) =>
-            {
-                if (mode == DumpTarget.PropertyGrid)
-                {
-                    ThePropertyGrid.SelectedObject = o;
-
-                    foreach (var prop in ThePropertyGrid.Properties.OfType<PropertyItem>())
-                    {
-                        var propertyType = prop.PropertyType;
-                        if (!propertyType.IsPrimitive && propertyType != typeof(string))
-                        {
-                            prop.IsExpandable = true;
-                        }
-                    }
-                }
-                else
-                {
-                    lock (_lock)
-                    {
-                        _objects.Add(new ResultObject(o));
-                    }
-                }
-            };
+            ObjectExtensions.Dumped += OnDumped;
 
             var syncContext = SynchronizationContext.Current;
 
-            _interactiveManager = new InteractiveManager();
-            _interactiveManager.DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
-            _interactiveManager.SetDocument(Editor.AsTextContainer());
+            _roslynHost = new RoslynHost();
+            _roslynHost.DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
+            var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
+            _roslynHost.SetDocument(avalonEditTextContainer);
+            _roslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
 
-            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_interactiveManager);
+            _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
+            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_roslynHost));
+
+            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_roslynHost);
+        }
+
+        private void OnDumped(object o, DumpTarget mode)
+        {
+            if (mode == DumpTarget.PropertyGrid)
+            {
+                ThePropertyGrid.SelectedObject = o;
+
+                foreach (var prop in ThePropertyGrid.Properties.OfType<PropertyItem>())
+                {
+                    var propertyType = prop.PropertyType;
+                    if (!propertyType.IsPrimitive && propertyType != typeof (string))
+                    {
+                        prop.IsExpandable = true;
+                    }
+                }
+            }
+            else
+            {
+                AddResult(o);
+            }
+        }
+
+        private void AddResult(object o)
+        {
+            lock (_lock)
+            {
+                _objects.Add(new ResultObject(o));
+            }
         }
 
         private void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
         {
-            //lock (_lock)
-            //{
-            //    _objects.Add(new ResultObject(args));
-            //}
-
             _textMarkerService.RemoveAll(x => true);
 
             foreach (var diagnosticData in args.Diagnostics)
@@ -136,7 +143,7 @@ namespace RoslynPad
 
             try
             {
-                await _interactiveManager.Execute().ConfigureAwait(true);
+                await _roslynHost.Execute().ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -150,10 +157,7 @@ namespace RoslynPad
             }
             catch (Exception ex)
             {
-                lock (_lock)
-                {
-                    _objects.Add(new ResultObject(ex));
-                }
+                AddResult(ex);
             }
         }
     }

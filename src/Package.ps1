@@ -9,6 +9,8 @@ try
 	$archive = [System.IO.Compression.ZipFile]::Open($archiveFile, [System.IO.Compression.ZipArchiveMode]::Create)
 	$files =
 	@(
+		"Castle.Core.dll",
+		"Castle.DynamicProxy2.dll",
 		"ICSharpCode.AvalonEdit.dll",
 		"Microsoft.CodeAnalysis.CSharp.dll",
 		"Microsoft.CodeAnalysis.CSharp.EditorFeatures.dll",
@@ -39,7 +41,7 @@ try
 
 	foreach ($file in $files)
 	{
-		$target = "$location\bin\Release\$file"
+		$target = "$location\RoslynPad\bin\Release\$file"
 		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $target, $file) | Out-Null
 		$file
 	}

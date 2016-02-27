@@ -13,7 +13,7 @@ namespace RoslynPad.Roslyn
 
         void IInterceptor.Intercept(IInvocation invocation)
         {
-            var workspace = invocation.Proxy.GetFieldValue<InteractiveWorkspace>(RoslynInterfaceProxy.WorkspaceField);
+            var workspace = invocation.Proxy.GetFieldValue<RoslynWorkspace>(RoslynInterfaceProxy.WorkspaceField);
             switch (invocation.Method.Name)
             {
                 case "GetActiveDocument":

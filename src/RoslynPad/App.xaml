@@ -1,12 +1,39 @@
 ﻿<Application x:Class="RoslynPad.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes"
+             xmlns:formatting="clr-namespace:RoslynPad.Formatting"
+             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Glyphs.xaml" />
+                <ResourceDictionary Source="Resources/Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
+                                      ItemsSource="{Binding Fixes}">
+                <TextBlock Text="{Binding Provider}" />
+            </HierarchicalDataTemplate>
+
+            <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFix}"
+                                      ItemsSource="{Binding Action, Converter={formatting:CodeActionsConverter}}">
+                <ContentPresenter Content="{Binding Action}" />
+            </HierarchicalDataTemplate>
+
+            <DataTemplate DataType="{x:Type codeActions:CodeAction}">
+                <DockPanel>
+                    <Image Source="{Binding Converter={formatting:CodeActionToGlyphConverter}}" />
+                    <TextBlock Text="{Binding Title}" />
+                </DockPanel>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
+                <TextBlock Text="{Binding Descriptor.Title}" />
+            </DataTemplate>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -17,6 +17,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Roslyn.CodeFixes;
 using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.SignatureHelp;
@@ -25,7 +26,7 @@ using Expression = System.Linq.Expressions.Expression;
 
 namespace RoslynPad.Roslyn
 {
-    internal sealed class InteractiveManager
+    internal sealed class RoslynHost
     {
         #region Fields
 
@@ -41,7 +42,7 @@ namespace RoslynPad.Roslyn
             typeof (ObjectExtensions)
         };
 
-        private readonly InteractiveWorkspace _workspace;
+        private readonly RoslynWorkspace _workspace;
         private readonly CSharpParseOptions _parseOptions;
         private readonly CSharpCompilationOptions _compilationOptions;
         private readonly ImmutableArray<MetadataReference> _references;
@@ -50,9 +51,12 @@ namespace RoslynPad.Roslyn
         private readonly string _referenceAssembliesPath;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly IDiagnosticService _diagnosticsService;
+        private readonly ICodeFixService _codeFixService;
 
         private DocumentId _currentDocumenId;
         private int _documentNumber;
+
+        public Workspace Workspace => _workspace;
 
         #endregion
 
@@ -71,7 +75,7 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        public InteractiveManager()
+        public RoslynHost()
         {
             var documentTrackingServiceType = DocumentTrackingServiceProxy.GeneratedType.Value;
             // ReSharper disable once UnusedVariable
@@ -84,18 +88,25 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp"),
                 Assembly.Load("Microsoft.CodeAnalysis.Features"),
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
-                //Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures"),
-                //Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures")
                 documentTrackingServiceType.Assembly,
             };
+
+            // we can't import this entire assembly due to composition errors
+            // and we don't need all the VS services
+            var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
+            var types = editorFeaturesAssembly.GetTypes().Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes");
+
             var compositionHost = new ContainerConfiguration()
                 .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
+                .WithParts(types)
                 .WithDefaultConventions(new AttributeFilterProvider())
                 .CreateContainer();
 
             var host = MefHostServices.Create(compositionHost);
 
-            _workspace = new InteractiveWorkspace(host);
+            _workspace = new RoslynWorkspace(host);
+            _workspace.ApplyingTextChange += (d, s) => ApplyingTextChange?.Invoke(d, s);
+
             var documentTrackingService = _workspace.Services.GetService(DocumentTrackingServiceProxy.InterfaceType);
             RoslynInterfaceProxy.Initialize(documentTrackingService, new DocumentTrackingServiceProxy(), _workspace);
 
@@ -118,6 +129,9 @@ namespace RoslynPad.Roslyn
             _diagnosticsService = DiagnosticsService.Load(compositionHost);
             _diagnosticsService.DiagnosticsUpdated += (sender, args) => DiagnosticsUpdated?.Invoke(this, args);
 
+            _codeFixService = CodeFixService.Load(compositionHost);
+
+            // MEF v1
             var container = new CompositionContainer(new AggregateCatalog(
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
@@ -177,7 +191,21 @@ namespace RoslynPad.Roslyn
 
         #endregion
 
+        #region Code Fixes
+
+        public Task<IEnumerable<CodeFixCollection>> GetFixesAsync(TextSpan textSpan,
+            bool includeSuppressionFixes,
+            CancellationToken cancellationToken)
+        {
+            return _codeFixService.GetFixesAsync(GetCurrentDocument(), textSpan, includeSuppressionFixes,
+                cancellationToken);
+        }
+
+        #endregion
+
         #region Documents
+
+        public event Action<DocumentId, SourceText> ApplyingTextChange;
 
         public void SetDocument(SourceTextContainer textContainer)
         {

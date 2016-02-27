@@ -1,17 +1,18 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn
 {
-    public sealed class InteractiveWorkspace : Workspace
+    public sealed class RoslynWorkspace : Workspace
     {
         public DocumentId OpenDocumentId { get; private set; }
 
-        internal InteractiveWorkspace(HostServices host)
-            : base(host, WorkspaceKind.Interactive)
+        internal RoslynWorkspace(HostServices host)
+            : base(host, WorkspaceKind.Host)
         {
         }
 
@@ -42,6 +43,8 @@ namespace RoslynPad.Roslyn
             OnDocumentContextUpdated(documentId);
         }
 
+        public event Action<DocumentId, SourceText> ApplyingTextChange;
+
         protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
         {
             if (OpenDocumentId != document)
@@ -49,6 +52,8 @@ namespace RoslynPad.Roslyn
                 return;
             }
 
+            ApplyingTextChange?.Invoke(document, newText);
+            
             OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
         }
 

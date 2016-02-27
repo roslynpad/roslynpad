@@ -222,17 +222,27 @@
     <Compile Include="Editor\AvalonEditTextContainer.cs" />
     <Compile Include="Editor\CodeTextEditor.cs" />
     <Compile Include="Editor\CompletionResult.cs" />
+    <Compile Include="Editor\ContextActionsRenderer.cs" />
     <Compile Include="Editor\TextMarker.cs" />
     <Compile Include="Editor\TextMarkerService.cs" />
-    <Compile Include="Editor\EditorExtensions.cs" />
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />
-    <Compile Include="Editor\RoslynCodeEditorCompletionProvider.cs" />
-    <Compile Include="Editor\RoslynOverloadProvider.cs" />
     <Compile Include="Editor\TextMarkerToolTipProvider.cs" />
+    <Compile Include="Formatting\CodeActionsConverter.cs" />
+    <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
     <Compile Include="Formatting\SymbolDisplayPartExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="RoslynEditor\RoslynCodeEditorCompletionProvider.cs" />
+    <Compile Include="RoslynEditor\RoslynContextActionProvider.cs" />
+    <Compile Include="RoslynEditor\RoslynOverloadProvider.cs" />
     <Compile Include="Roslyn\AnalyzerAssemblyLoader.cs" />
+    <Compile Include="Roslyn\CodeActions\CodeActionExtensions.cs" />
+    <Compile Include="Roslyn\CodeFixes\CodeFix.cs" />
+    <Compile Include="Roslyn\CodeFixes\CodeFixCollection.cs" />
+    <Compile Include="Roslyn\CodeFixes\CodeFixService.cs" />
+    <Compile Include="Roslyn\CodeFixes\FirstDiagnosticResult.cs" />
+    <Compile Include="Roslyn\CodeFixes\FixAllCodeActionContext.cs" />
+    <Compile Include="Roslyn\CodeFixes\ICodeFixService.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticData.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticDataLocation.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticsService.cs" />
@@ -255,8 +265,8 @@
     <Compile Include="Roslyn\Completion\CompletionTriggerInfo.cs" />
     <Compile Include="Roslyn\Completion\CompletionTriggerReason.cs" />
     <Compile Include="Roslyn\Completion\Glyph.cs" />
-    <Compile Include="Roslyn\InteractiveManager.cs" />
-    <Compile Include="Roslyn\InteractiveWorkspace.cs" />
+    <Compile Include="Roslyn\RoslynHost.cs" />
+    <Compile Include="Roslyn\RoslynWorkspace.cs" />
     <Compile Include="Roslyn\SignatureHelp\ISignatureHelpProvider.cs" />
     <Compile Include="Roslyn\SignatureHelp\SignatureHelperProvider.cs" />
     <Compile Include="Roslyn\SignatureHelp\SignatureHelpItem.cs" />
@@ -266,6 +276,7 @@
     <Compile Include="Roslyn\SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="Roslyn\ValueSource.cs" />
     <Compile Include="Utilities\CompositionContainerExtensions.cs" />
+    <Compile Include="Utilities\DelegateCommand.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\TaskExtensions.cs" />
@@ -284,6 +295,10 @@
     <Page Include="Resources\Glyphs.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Icons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

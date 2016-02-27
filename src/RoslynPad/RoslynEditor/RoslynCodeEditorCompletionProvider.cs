@@ -2,19 +2,20 @@
 using System.Linq;
 using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.CodeCompletion;
+using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.RoslynEditor
 {
     internal sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
     {
-        private readonly InteractiveManager _interactiveManager;
+        private readonly RoslynHost _roslynHost;
 
-        public RoslynCodeEditorCompletionProvider(InteractiveManager interactiveManager)
+        public RoslynCodeEditorCompletionProvider(RoslynHost roslynHost)
         {
-            _interactiveManager = interactiveManager;
+            _roslynHost = roslynHost;
         }
 
         public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
@@ -25,10 +26,10 @@ namespace RoslynPad.Editor
 
             if (useSignatureHelp || triggerChar != null)
             {
-                var isSignatureHelp = useSignatureHelp || await _interactiveManager.IsSignatureHelpTriggerCharacter(position - 1).ConfigureAwait(false);
+                var isSignatureHelp = useSignatureHelp || await _roslynHost.IsSignatureHelpTriggerCharacter(position - 1).ConfigureAwait(false);
                 if (isSignatureHelp)
                 {
-                    var signatureHelp = await _interactiveManager.GetSignatureHelp(
+                    var signatureHelp = await _roslynHost.GetSignatureHelp(
                         new SignatureHelpTriggerInfo(
                             useSignatureHelp
                                 ? SignatureHelpTriggerReason.InvokeSignatureHelpCommand
@@ -41,13 +42,13 @@ namespace RoslynPad.Editor
                 }
                 else
                 {
-                    isCompletion = await _interactiveManager.IsCompletionTriggerCharacter(position - 1).ConfigureAwait(false);
+                    isCompletion = await _roslynHost.IsCompletionTriggerCharacter(position - 1).ConfigureAwait(false);
                 }
             }
 
             if (overloadProvider == null && isCompletion != false)
             {
-                var data = await _interactiveManager.GetCompletion(
+                var data = await _roslynHost.GetCompletion(
                     triggerChar != null
                         ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
                         : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo(),

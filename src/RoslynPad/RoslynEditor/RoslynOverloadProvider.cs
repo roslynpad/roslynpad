@@ -10,7 +10,7 @@ using RoslynPad.Annotations;
 using RoslynPad.Formatting;
 using RoslynPad.Roslyn.SignatureHelp;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.RoslynEditor
 {
     internal sealed class RoslynOverloadProvider : IOverloadProvider
     {
