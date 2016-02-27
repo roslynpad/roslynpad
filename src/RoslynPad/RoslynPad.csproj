@@ -222,12 +222,17 @@
     <Compile Include="Editor\AvalonEditTextContainer.cs" />
     <Compile Include="Editor\CodeTextEditor.cs" />
     <Compile Include="Editor\CompletionResult.cs" />
+    <Compile Include="Editor\ContextActionsBulbPopup.cs" />
     <Compile Include="Editor\ContextActionsRenderer.cs" />
+    <Compile Include="Editor\DocumentUtilities.cs" />
+    <Compile Include="Editor\ExtendedPopup.cs" />
+    <Compile Include="Editor\IContextActionProvider.cs" />
     <Compile Include="Editor\TextMarker.cs" />
     <Compile Include="Editor\TextMarkerService.cs" />
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />
     <Compile Include="Editor\TextMarkerToolTipProvider.cs" />
+    <Compile Include="Editor\TextViewExtensions.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
     <Compile Include="Formatting\SymbolDisplayPartExtensions.cs" />
