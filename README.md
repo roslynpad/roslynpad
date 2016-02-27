@@ -22,7 +22,7 @@ A simple C# editor based on Roslyn and AvalonEdit
 
 ![Code Fixes](docs/CodeFixes.png)
 
-## Nodes
+## Notes
 
 * Most of the Roslyn APIs required to make RoslynPad work are internal and may change with future releases
 * It's intended only for play and for learning how to use some Roslyn APIs
