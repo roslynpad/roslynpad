@@ -70,7 +70,7 @@ namespace RoslynPad
                 foreach (var prop in ThePropertyGrid.Properties.OfType<PropertyItem>())
                 {
                     var propertyType = prop.PropertyType;
-                    if (!propertyType.IsPrimitive && propertyType != typeof (string))
+                    if (!propertyType.IsPrimitive && propertyType != typeof(string))
                     {
                         prop.IsExpandable = true;
                     }
@@ -101,9 +101,12 @@ namespace RoslynPad
                     continue;
                 }
 
-                var marker = _textMarkerService.Create(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
-                marker.MarkerColor = GetDiagnosticsColor(diagnosticData);
-                marker.ToolTip = diagnosticData.Message;
+                var marker = _textMarkerService.TryCreate(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
+                if (marker != null)
+                {
+                    marker.MarkerColor = GetDiagnosticsColor(diagnosticData);
+                    marker.ToolTip = diagnosticData.Message;
+                }
             }
         }
 

@@ -76,21 +76,20 @@ namespace RoslynPad.Editor
 
         #region TextMarkerService
 
-        public TextMarker Create(int startOffset, int length)
+        public TextMarker TryCreate(int startOffset, int length)
         {
             if (_markers == null)
                 throw new InvalidOperationException("Cannot create a marker when not attached to a document");
 
             var textLength = _document.TextLength;
-            if (startOffset < 0 || startOffset > textLength)
-                throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
-            if (length < 0 || startOffset + length > textLength)
-                throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
+            if (startOffset < 0 || startOffset > textLength) return null;
+                //throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
+            if (length < 0 || startOffset + length > textLength) return null;
+                //throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
 
-            var m = new TextMarker(this, startOffset, length);
-            _markers.Add(m);
-            // no need to mark segment for redraw: the text marker is invisible until a property is set
-            return m;
+            var marker = new TextMarker(this, startOffset, length);
+            _markers.Add(marker);
+            return marker;
         }
 
         public IEnumerable<TextMarker> GetMarkersAtOffset(int offset)
