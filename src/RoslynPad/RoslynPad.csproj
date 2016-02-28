@@ -218,8 +218,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Editor\AvalonEditCompletionData.cs" />
-    <Compile Include="Editor\AvalonEditTextContainer.cs" />
     <Compile Include="Editor\CodeTextEditor.cs" />
     <Compile Include="Editor\CompletionResult.cs" />
     <Compile Include="Editor\ContextActionsBulbPopup.cs" />
@@ -237,7 +235,9 @@
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
     <Compile Include="Formatting\SymbolDisplayPartExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="RoslynEditor\AvalonEditTextContainer.cs" />
     <Compile Include="RoslynEditor\RoslynCodeEditorCompletionProvider.cs" />
+    <Compile Include="RoslynEditor\RoslynCompletionData.cs" />
     <Compile Include="RoslynEditor\RoslynContextActionProvider.cs" />
     <Compile Include="RoslynEditor\RoslynOverloadProvider.cs" />
     <Compile Include="Roslyn\AnalyzerAssemblyLoader.cs" />

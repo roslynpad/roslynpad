@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using System.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.RoslynEditor
 {
     internal sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {
@@ -25,7 +20,7 @@ namespace RoslynPad.Editor
         public AvalonEditTextContainer(TextEditor editor)
         {
             _editor = editor;
-            _currentText = new AvalonEditStringText(_editor.Text, null, container: this);
+            _currentText = SourceText.From(_editor.Text);
 
             _editor.Document.Changed += DocumentOnChanged;
         }
@@ -69,60 +64,6 @@ namespace RoslynPad.Editor
             {
                 _updatding = false;
                 _editor.Document.UndoStack.EndUndoGroup();
-            }
-        }
-    }
-
-    internal sealed class AvalonEditStringText : SourceText
-    {
-        private readonly string _source;
-
-        internal AvalonEditStringText(string source, Encoding encodingOpt, AvalonEditTextContainer container, ImmutableArray<byte> checksum = default(ImmutableArray<byte>), SourceHashAlgorithm checksumAlgorithm = SourceHashAlgorithm.Sha1)
-            : base(checksum, checksumAlgorithm, container)
-        {
-            Debug.Assert(source != null);
-
-            _source = source;
-            Encoding = encodingOpt;
-        }
-
-        public override Encoding Encoding { get; }
-
-        public string Source => _source;
-
-        public override int Length => _source.Length;
-
-        public override char this[int position] => _source[position];
-
-        public override string ToString(TextSpan span)
-        {
-            if (span.End > Source.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(span));
-            }
-
-            if (span.Start == 0 && span.Length == Length)
-            {
-                return Source;
-            }
-
-            return Source.Substring(span.Start, span.Length);
-        }
-
-        public override void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
-        {
-            Source.CopyTo(sourceIndex, destination, destinationIndex, count);
-        }
-
-        public override void Write(TextWriter textWriter, TextSpan span, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (span.Start == 0 && span.End == Length)
-            {
-                textWriter.Write(Source);
-            }
-            else
-            {
-                base.Write(textWriter, span, cancellationToken);
             }
         }
     }

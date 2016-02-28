@@ -53,7 +53,7 @@ namespace RoslynPad.RoslynEditor
                         ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
                         : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo(),
                     position).ConfigureAwait(false);
-                completionData = data?.Items.Select(item => new AvalonEditCompletionData(item)).ToArray<ICompletionDataEx>() 
+                completionData = data?.Items.Select(item => new RoslynCompletionData(item)).ToArray<ICompletionDataEx>() 
                     ?? (IList<ICompletionDataEx>) new List<ICompletionDataEx>();
             }
 

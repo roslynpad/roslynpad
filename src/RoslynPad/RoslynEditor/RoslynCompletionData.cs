@@ -3,17 +3,18 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
+using RoslynPad.Editor;
 using RoslynPad.Formatting;
 using RoslynPad.Roslyn.Completion;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.RoslynEditor
 {
-    internal sealed class AvalonEditCompletionData : ICompletionDataEx
+    internal sealed class RoslynCompletionData : ICompletionDataEx
     {
         private readonly CompletionItem _item;
         private object _description;
 
-        public AvalonEditCompletionData(CompletionItem item)
+        public RoslynCompletionData(CompletionItem item)
         {
             _item = item;
             Text = item.DisplayText;
