@@ -41,4 +41,21 @@
         </DrawingImage.Drawing>
     </DrawingImage>
     
+    <!-- Source: Visual Studio Image Library -->
+    <DrawingImage x:Key="Copy">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M5.0004,-0.000199999999999534L5.0004,4.0008 0.9994,4.0008 0.9994,15.9998 10.9994,15.9998 10.9994,12.0008 15.0004,12.0008 15.0004,-0.000199999999999534z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M9,6L3,6 3,14 9,14z M10,15L2,15 2,5 10,5z M11,11L11,10 13,10 13,2 7,2 7,4 6,4 6,1 14,1 14,11z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M7,2L7,4 11,4 11,10 13,10 13,2z M9,14L3,14 3,6 9,6z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

@@ -86,7 +86,7 @@ namespace RoslynPad
         {
             lock (_lock)
             {
-                _objects.Add(new ResultObject(o));
+                _objects.Add(ResultObject.Create(o));
             }
         }
 
@@ -154,7 +154,7 @@ namespace RoslynPad
                 {
                     foreach (var diagnostic in ex.Diagnostics)
                     {
-                        _objects.Add(new ResultObject(diagnostic));
+                        _objects.Add(ResultObject.Create(diagnostic));
                     }
                 }
             }

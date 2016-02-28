@@ -64,18 +64,35 @@
                           ResizeDirection="Columns"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch" />
-            
+
             <xctk:PropertyGrid Name="ThePropertyGrid"
                                Grid.Row="3"
-                               Grid.Column="2"/>
+                               Grid.Column="2" />
             <TreeView Name="Results"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                       Grid.Column="0"
                       Grid.Row="3">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded"
+                                Value="{Binding IsExpanded}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type runtime:ResultObject}"
                                               ItemsSource="{Binding Children}">
-                        <TextBlock Text="{Binding Header}" />
+                        <DockPanel>
+                            <Button Padding="0"
+                                    Margin="0 0 5 0"
+                                    VerticalAlignment="Top"
+                                    KeyboardNavigation.IsTabStop="False"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Command="{Binding CopyCommand}">
+                                <Image Source="{StaticResource Copy}" Height="12" />
+                            </Button>
+                            <TextBlock Text="{Binding Header}" />
+                        </DockPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>
