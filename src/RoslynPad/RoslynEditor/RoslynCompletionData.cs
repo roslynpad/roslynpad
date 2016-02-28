@@ -28,8 +28,8 @@ namespace RoslynPad.RoslynEditor
         public void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
         {
             var change = _item.Rules.GetTextChange(_item);
-            if (change == null) return;
-            textArea.Document.Replace(completionSegment, change.Value.NewText);
+            var text = change?.NewText ?? _item.DisplayText; // workaround for keywords
+            textArea.Document.Replace(completionSegment, text);
         }
 
         public ImageSource Image { get; }
