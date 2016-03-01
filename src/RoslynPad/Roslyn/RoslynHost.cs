@@ -135,7 +135,7 @@ namespace RoslynPad.Roslyn
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
             SolutionCrawlerRegistrationService.Register(_workspace);
-            
+
             // MEF v1
             var container = new CompositionContainer(new AggregateCatalog(
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
@@ -230,21 +230,17 @@ namespace RoslynPad.Roslyn
         }
 
         #endregion
-        
+
         #region Scripting
 
         public async Task<object> Execute()
         {
-            object result = null;
-            SourceText text;
-            if (CurrentDocument.TryGetText(out text))
-            {
-                result =  await CSharpScript.RunAsync(text.ToString(),
-                    ScriptOptions.Default
-                        .AddImports(_assemblyTypes.Select(x => x.Namespace))
-                        .AddReferences(_assemblyTypes.Select(x => x.Assembly))).ConfigureAwait(false);
-            }
-            return result;
+            var text = await CurrentDocument.GetTextAsync().ConfigureAwait(false);
+            var state = await CSharpScript.RunAsync(text.ToString(),
+                ScriptOptions.Default
+                    .AddImports(_assemblyTypes.Select(x => x.Namespace))
+                    .AddReferences(_assemblyTypes.Select(x => x.Assembly))).ConfigureAwait(false);
+            return state.ReturnValue;
         }
 
         #endregion
