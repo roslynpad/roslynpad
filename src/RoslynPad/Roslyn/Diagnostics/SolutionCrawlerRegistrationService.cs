@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {
-    public static class SolutionCrawlerRegistrationService
+    internal static class SolutionCrawlerRegistrationService
     {
         private static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService, Microsoft.CodeAnalysis.Features", throwOnError: true);
 

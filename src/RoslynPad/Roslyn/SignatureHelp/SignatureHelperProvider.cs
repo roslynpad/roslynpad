@@ -7,24 +7,16 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.SignatureHelp
 {
-    public sealed class SignatureHelperProvider : ISignatureHelpProvider
+    internal sealed class SignatureHelperProvider : ISignatureHelpProvider
     {
-        private static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.Editor.ISignatureHelpProvider, Microsoft.CodeAnalysis.EditorFeatures", throwOnError: true);
-
-        public static IReadOnlyList<ISignatureHelpProvider> LoadProviders(CompositionContainer container)
-        {
-            var signatureHelpProviders = container.GetExportedValues(InterfaceType)
-                .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x)).ToArray();
-            return Array.AsReadOnly(signatureHelpProviders);
-        }
-
+        internal static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.Editor.ISignatureHelpProvider, Microsoft.CodeAnalysis.EditorFeatures", throwOnError: true);
+        
         private readonly object _inner;
 
-        private SignatureHelperProvider(object inner)
+        internal SignatureHelperProvider(object inner)
         {
             _inner = inner;
         }

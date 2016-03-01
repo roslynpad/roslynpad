@@ -3,16 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using RoslynPad.Annotations;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
-    internal sealed class ResultObject : INotifyPropertyChanged
+    internal sealed class ResultObject : NotificationObject
     {
         private readonly object _o;
         private readonly PropertyDescriptor _property;
@@ -85,12 +83,7 @@ namespace RoslynPad.Runtime
         public bool IsExpanded
         {
             get { return _isExpanded; }
-            set
-            {
-                if (value == _isExpanded) return;
-                _isExpanded = value;
-                OnPropertyChanged();
-            }
+            set { SetProperty(ref _isExpanded, value); }
         }
 
         private void Initialize()
@@ -142,14 +135,6 @@ namespace RoslynPad.Runtime
             {
                 _children = properties;
             }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

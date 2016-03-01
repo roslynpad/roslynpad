@@ -52,7 +52,7 @@ namespace RoslynPad.Roslyn
                     {
                         isWorkspaceService
                             ? new CustomAttributeBuilder(typeof(ExportWorkspaceServiceAttribute).GetConstructors().First(),
-                                new object[] { interfaceType, ServiceLayer.Default} )
+                                new object[] { interfaceType, WorkspaceKind.Host} )
                             // ReSharper disable once AssignNullToNotNullAttribute
                             : new CustomAttributeBuilder(typeof(ExportAttribute).GetConstructor(new[] { typeof(Type) }),
                                 new object[] { interfaceType }),

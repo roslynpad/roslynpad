@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Composition.Hosting;
+using System.Composition;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -13,21 +13,17 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.CodeFixes
 {
-    public sealed class CodeFixService : ICodeFixService
+    [Export(typeof(ICodeFixService)), Shared]
+    internal sealed class CodeFixService : ICodeFixService
     {
         private static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.CodeFixes.ICodeFixService, Microsoft.CodeAnalysis.EditorFeatures", true);
 
-        public static ICodeFixService Load(CompositionHost host)
-        {
-            var service = host.GetExport(InterfaceType);
-            return new CodeFixService(service);
-        }
-
         private readonly object _inner;
 
-        private CodeFixService(object inner)
+        [ImportingConstructor]
+        public CodeFixService(CompositionContext compositionContext)
         {
-            _inner = inner;
+            _inner = compositionContext.GetExport(InterfaceType);
         }
 
         private static readonly Func<object, Document, TextSpan, bool, CancellationToken, Task<IEnumerable<object>>> _getFixesAsync =

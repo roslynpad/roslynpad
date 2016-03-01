@@ -26,14 +26,17 @@ namespace RoslynPad.RoslynEditor
 
             if (useSignatureHelp || triggerChar != null)
             {
-                var isSignatureHelp = useSignatureHelp || await _roslynHost.IsSignatureHelpTriggerCharacter(position - 1).ConfigureAwait(false);
+                var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
+                var isSignatureHelp = useSignatureHelp || signatureHelpProvider.IsTriggerCharacter(triggerChar.Value);
                 if (isSignatureHelp)
                 {
-                    var signatureHelp = await _roslynHost.GetSignatureHelp(
+                    var signatureHelp = await signatureHelpProvider.GetItemsAsync(
+                        _roslynHost.CurrentDocument,
+                        position,
                         new SignatureHelpTriggerInfo(
                             useSignatureHelp
                                 ? SignatureHelpTriggerReason.InvokeSignatureHelpCommand
-                                : SignatureHelpTriggerReason.TypeCharCommand, triggerChar), position)
+                                : SignatureHelpTriggerReason.TypeCharCommand, triggerChar))
                         .ConfigureAwait(false);
                     if (signatureHelp != null)
                     {
@@ -42,17 +45,19 @@ namespace RoslynPad.RoslynEditor
                 }
                 else
                 {
-                    isCompletion = await _roslynHost.IsCompletionTriggerCharacter(position - 1).ConfigureAwait(false);
+                    isCompletion = await CompletionService.IsCompletionTriggerCharacterAsync(_roslynHost.CurrentDocument, position - 1).ConfigureAwait(false);
                 }
             }
 
             if (overloadProvider == null && isCompletion != false)
             {
-                var data = await _roslynHost.GetCompletion(
+                var data = await CompletionService.GetCompletionListAsync(
+                    _roslynHost.CurrentDocument,
+                    position,
                     triggerChar != null
                         ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
-                        : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo(),
-                    position).ConfigureAwait(false);
+                        : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo()
+                    ).ConfigureAwait(false);
                 completionData = data?.Items.Select(item => new RoslynCompletionData(item)).ToArray<ICompletionDataEx>() 
                     ?? (IList<ICompletionDataEx>) new List<ICompletionDataEx>();
             }

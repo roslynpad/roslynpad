@@ -48,14 +48,18 @@ namespace RoslynPad.RoslynEditor
         public void UpdateText(SourceText newText)
         {
             _updatding = true;
-            _editor.Document.UndoStack.StartUndoGroup();
+            _editor.Document.BeginUpdate();
             try
             {
                 var changes = newText.GetTextChanges(_currentText);
 
+                var offset = 0;
+
                 foreach (var change in changes)
                 {
-                    _editor.Document.Replace(change.Span.Start, change.Span.Length, new StringTextSource(change.NewText));
+                    _editor.Document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
+
+                    offset += change.NewText.Length - change.Span.Length;
                 }
 
                 _currentText = newText;
@@ -63,7 +67,7 @@ namespace RoslynPad.RoslynEditor
             finally
             {
                 _updatding = false;
-                _editor.Document.UndoStack.EndUndoGroup();
+                _editor.Document.EndUpdate();
             }
         }
     }

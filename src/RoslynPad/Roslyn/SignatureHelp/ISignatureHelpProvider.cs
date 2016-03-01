@@ -10,6 +10,6 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         bool IsRetriggerCharacter(char ch);
 
-        Task<SignatureHelpItems> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo triggerInfo, CancellationToken cancellationToken);
+        Task<SignatureHelpItems> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo triggerInfo, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

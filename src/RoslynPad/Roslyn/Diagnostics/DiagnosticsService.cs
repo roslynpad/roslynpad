@@ -1,28 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Composition.Hosting;
+using System.Composition;
 using System.Reflection;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {
-    public sealed class DiagnosticsService : IDiagnosticService
+    [Export(typeof(IDiagnosticService)), Shared]
+    internal sealed class DiagnosticsService : IDiagnosticService
     {
         private static readonly Type InterfaceType = Type.GetType("Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService, Microsoft.CodeAnalysis.Features", throwOnError: true);
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly object _inner;
 
-        public static IDiagnosticService Load(CompositionHost host)
+        [ImportingConstructor]
+        public DiagnosticsService(CompositionContext compositionContext)
         {
-            var service = host.GetExport(InterfaceType);
-            return new DiagnosticsService(service);
-        }
-
-        private DiagnosticsService(object inner)
-        {
-            _inner = inner;
+            _inner = compositionContext.GetExport(InterfaceType);
             var eventInfo = InterfaceType.GetEvent(nameof(DiagnosticsUpdated));
             eventInfo.AddEventHandler(_inner,
                 Delegate.CreateDelegate(eventInfo.EventHandlerType, this,

@@ -9,7 +9,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -17,9 +16,10 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Roslyn.CodeFixes;
-using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.LanguageServices.ChangeSignature;
+using RoslynPad.Roslyn.LanguageServices.ExtractInterface;
+using RoslynPad.Roslyn.Navigation;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Runtime;
 using Expression = System.Linq.Expressions.Expression;
@@ -46,12 +46,9 @@ namespace RoslynPad.Roslyn
         private readonly CSharpParseOptions _parseOptions;
         private readonly CSharpCompilationOptions _compilationOptions;
         private readonly ImmutableArray<MetadataReference> _references;
-        private readonly IReadOnlyList<ISignatureHelpProvider> _signatureHelpProviders;
         private readonly Func<string, DocumentationProvider> _documentationProviderFactory;
         private readonly string _referenceAssembliesPath;
-        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly IDiagnosticService _diagnosticsService;
-        private readonly ICodeFixService _codeFixService;
+        private readonly CompositionHost _compositionContext;
 
         private DocumentId _currentDocumenId;
         private int _documentNumber;
@@ -78,9 +75,12 @@ namespace RoslynPad.Roslyn
         public RoslynHost()
         {
             var documentTrackingServiceType = DocumentTrackingServiceProxy.GeneratedType.Value;
-            // ReSharper disable once UnusedVariable
-            var workspaceDiagnosticAnalyzerProviderServiceType =
-                WorkspaceDiagnosticAnalyzerProviderServiceProxy.GeneratedType.Value;
+            // ReSharper disable UnusedVariable
+            var workspaceDiagnosticAnalyzerProviderServiceType = WorkspaceDiagnosticAnalyzerProviderServiceProxy.GeneratedType.Value;
+            var documentNavigationServiceType = DocumentNavigationServiceProxy.GeneratedType.Value;
+            var extractInterfaceOptionsServiceType = ExtractInterfaceOptionsServiceProxy.GeneratedType.Value;
+            var changeSignatureOptionsServiceType = ChangeSignatureOptionsServiceProxy.GeneratedType.Value;
+            // ReSharper restore UnusedVariable
 
             var assemblies = new[]
             {
@@ -88,6 +88,7 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp"),
                 Assembly.Load("Microsoft.CodeAnalysis.Features"),
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
+                typeof(RoslynHost).Assembly,
                 documentTrackingServiceType.Assembly,
             };
 
@@ -96,13 +97,13 @@ namespace RoslynPad.Roslyn
             var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
             var types = editorFeaturesAssembly.GetTypes().Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes");
 
-            var compositionHost = new ContainerConfiguration()
+            _compositionContext = new ContainerConfiguration()
                 .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
                 .WithParts(types)
                 .WithDefaultConventions(new AttributeFilterProvider())
                 .CreateContainer();
 
-            var host = MefHostServices.Create(compositionHost);
+            var host = MefHostServices.Create(_compositionContext);
 
             _workspace = new RoslynWorkspace(host);
             _workspace.ApplyingTextChange += (d, s) => ApplyingTextChange?.Invoke(d, s);
@@ -110,8 +111,17 @@ namespace RoslynPad.Roslyn
             var documentTrackingService = _workspace.Services.GetService(DocumentTrackingServiceProxy.InterfaceType);
             RoslynInterfaceProxy.Initialize(documentTrackingService, new DocumentTrackingServiceProxy(), _workspace);
 
-            var workspaceDiagnosticAnalyzerProviderService = compositionHost.GetExport(WorkspaceDiagnosticAnalyzerProviderServiceProxy.InterfaceType);
+            var workspaceDiagnosticAnalyzerProviderService = _compositionContext.GetExport(WorkspaceDiagnosticAnalyzerProviderServiceProxy.InterfaceType);
             RoslynInterfaceProxy.Initialize(workspaceDiagnosticAnalyzerProviderService, new WorkspaceDiagnosticAnalyzerProviderServiceProxy(), _workspace);
+
+            var documentNavigationService = _workspace.Services.GetService(DocumentNavigationServiceProxy.InterfaceType);
+            RoslynInterfaceProxy.Initialize(documentNavigationService, new DocumentNavigationServiceProxy(), _workspace);
+
+            var extractInterfaceOptionsService = _workspace.Services.GetService(ExtractInterfaceOptionsServiceProxy.InterfaceType);
+            RoslynInterfaceProxy.Initialize(extractInterfaceOptionsService, new ExtractInterfaceOptionsServiceProxy(), _workspace);
+
+            var changeSignatureOptionsService = _workspace.Services.GetService(ChangeSignatureOptionsServiceProxy.InterfaceType);
+            RoslynInterfaceProxy.Initialize(changeSignatureOptionsService, new ChangeSignatureOptionsServiceProxy(), _workspace);
 
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
@@ -125,19 +135,19 @@ namespace RoslynPad.Roslyn
                 usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
 
             SolutionCrawlerRegistrationService.Register(_workspace);
-
-            _diagnosticsService = DiagnosticsService.Load(compositionHost);
-            _diagnosticsService.DiagnosticsUpdated += (sender, args) => DiagnosticsUpdated?.Invoke(this, args);
-
-            _codeFixService = CodeFixService.Load(compositionHost);
-
+            
             // MEF v1
             var container = new CompositionContainer(new AggregateCatalog(
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
                 CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
 
-            _signatureHelpProviders = SignatureHelperProvider.LoadProviders(container);
+            ((AggregateSignatureHelpProvider)GetService<ISignatureHelpProvider>()).Initialize(container);
+        }
+
+        public TService GetService<TService>()
+        {
+            return _compositionContext.GetExport<TService>();
         }
 
         #endregion
@@ -185,25 +195,9 @@ namespace RoslynPad.Roslyn
 
         #endregion
 
-        #region Diagnostics
-
-        public event EventHandler<DiagnosticsUpdatedArgs> DiagnosticsUpdated;
-
-        #endregion
-
-        #region Code Fixes
-
-        public Task<IEnumerable<CodeFixCollection>> GetFixesAsync(TextSpan textSpan,
-            bool includeSuppressionFixes,
-            CancellationToken cancellationToken)
-        {
-            return _codeFixService.GetFixesAsync(GetCurrentDocument(), textSpan, includeSuppressionFixes,
-                cancellationToken);
-        }
-
-        #endregion
-
         #region Documents
+
+        public Document CurrentDocument => _workspace.CurrentSolution.GetDocument(_currentDocumenId);
 
         public event Action<DocumentId, SourceText> ApplyingTextChange;
 
@@ -236,67 +230,21 @@ namespace RoslynPad.Roslyn
         }
 
         #endregion
-
-        #region Completion
-
-        public async Task<CompletionList> GetCompletion(CompletionTriggerInfo trigger, int position)
-        {
-            var document = GetCurrentDocument();
-            var list = await CompletionService.GetCompletionListAsync(
-                document, position, trigger).ConfigureAwait(false);
-            return list;
-        }
-
-        private Document GetCurrentDocument()
-        {
-            return _workspace.CurrentSolution.GetDocument(_currentDocumenId);
-        }
-
-        public Task<bool> IsCompletionTriggerCharacter(int position)
-        {
-            return CompletionService.IsCompletionTriggerCharacterAsync(GetCurrentDocument(), position);
-        }
-
-        #endregion
-
-        #region Signature Help
-
-        public async Task<bool> IsSignatureHelpTriggerCharacter(int position)
-        {
-            var text = await GetCurrentDocument().GetTextAsync().ConfigureAwait(false);
-            var character = text.GetSubText(new TextSpan(position, 1))[0];
-            return _signatureHelpProviders.Any(p => p.IsTriggerCharacter(character));
-        }
-
-        public async Task<SignatureHelpItems> GetSignatureHelp(SignatureHelpTriggerInfo trigger, int position)
-        {
-            var document = GetCurrentDocument();
-            foreach (var provider in _signatureHelpProviders)
-            {
-                var items = await provider.GetItemsAsync(document, position, trigger, CancellationToken.None)
-                            .ConfigureAwait(false);
-                if (items != null)
-                {
-                    return items;
-                }
-            }
-            return null;
-        }
-
-        #endregion
-
+        
         #region Scripting
 
-        public async Task Execute()
+        public async Task<object> Execute()
         {
+            object result = null;
             SourceText text;
-            if (GetCurrentDocument().TryGetText(out text))
+            if (CurrentDocument.TryGetText(out text))
             {
-                await CSharpScript.RunAsync(text.ToString(),
+                result =  await CSharpScript.RunAsync(text.ToString(),
                     ScriptOptions.Default
                         .AddImports(_assemblyTypes.Select(x => x.Namespace))
                         .AddReferences(_assemblyTypes.Select(x => x.Assembly))).ConfigureAwait(false);
             }
+            return result;
         }
 
         #endregion

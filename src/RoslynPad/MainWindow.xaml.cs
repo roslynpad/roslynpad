@@ -4,14 +4,17 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Highlighting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
+using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Properties;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.Editor;
 using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
 using Xceed.Wpf.Toolkit.PropertyGrid;
@@ -50,7 +53,7 @@ namespace RoslynPad
             var syncContext = SynchronizationContext.Current;
 
             _roslynHost = new RoslynHost();
-            _roslynHost.DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
+            _roslynHost.GetService<IDiagnosticService>().DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
             _roslynHost.SetDocument(avalonEditTextContainer);
             _roslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
@@ -146,7 +149,11 @@ namespace RoslynPad
 
             try
             {
-                await _roslynHost.Execute().ConfigureAwait(true);
+                var result = await _roslynHost.Execute().ConfigureAwait(true);
+                if (result != null)
+                {
+                    AddResult(result);
+                }
             }
             catch (CompilationErrorException ex)
             {
@@ -161,6 +168,15 @@ namespace RoslynPad
             catch (Exception ex)
             {
                 AddResult(ex);
+            }
+        }
+
+        private void Editor_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                _roslynHost.GetService<IInlineRenameService>().StartInlineSession(
+                    _roslynHost.CurrentDocument, new TextSpan(Editor.CaretOffset, 1));
             }
         }
     }

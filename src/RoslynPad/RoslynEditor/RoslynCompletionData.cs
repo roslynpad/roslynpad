@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using RoslynPad.Editor;
 using RoslynPad.Formatting;
 using RoslynPad.Roslyn.Completion;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.RoslynEditor
 {
@@ -21,7 +21,7 @@ namespace RoslynPad.RoslynEditor
             Content = item.DisplayText;
             if (item.Glyph != null)
             {
-                Image = Application.Current.TryFindResource(item.Glyph.Value) as ImageSource;
+                Image = item.Glyph.Value.ToImageSource();
             }
         }
 

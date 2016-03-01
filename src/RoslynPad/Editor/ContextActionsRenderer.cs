@@ -153,8 +153,9 @@ namespace RoslynPad.Editor
                 _actions = await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
                 return true;
             }
-            catch (OperationCanceledException)
+            catch (Exception)
             {
+                // ignored
             }
             _cancellationTokenSource = null;
             return false;
@@ -171,9 +172,15 @@ namespace RoslynPad.Editor
             var allActions = new List<object>();
             foreach (var provider in _providers)
             {
-                var marker = _textMarkerService.GetMarkersAtOffset(_editor.TextArea.Caret.Offset).FirstOrDefault();
-                if (marker == null) continue;
-                var actions = await provider.GetActions(marker.StartOffset, marker.Length, cancellationToken).ConfigureAwait(true);
+                var offset = _editor.TextArea.Caret.Offset;
+                var length = 1;
+                var marker = _textMarkerService.GetMarkersAtOffset(offset).FirstOrDefault();
+                if (marker != null)
+                {
+                    offset = marker.StartOffset;
+                    length = marker.Length;
+                }
+                var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(true);
                 allActions.AddRange(actions);
             }
             return allActions;

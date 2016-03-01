@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.CodeActions;
 using RoslynPad.Roslyn.CodeFixes;
+using RoslynPad.Roslyn.CodeRefactorings;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.RoslynEditor
@@ -17,6 +19,9 @@ namespace RoslynPad.RoslynEditor
     {
         private readonly RoslynHost _roslynHost;
 
+        private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
+            ImmutableArray.Create("ExtractInterface");
+
         public RoslynContextActionProvider(RoslynHost roslynHost)
         {
             _roslynHost = roslynHost;
@@ -24,9 +29,17 @@ namespace RoslynPad.RoslynEditor
 
         public async Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken)
         {
-            var results = await _roslynHost.GetFixesAsync(new TextSpan(offset, length), false,
-                cancellationToken).ConfigureAwait(false);
-            return results.SelectMany(x => x.Fixes);
+            var textSpan = new TextSpan(offset, length);
+            var codeFixes = await _roslynHost.GetService<ICodeFixService>().GetFixesAsync(_roslynHost.CurrentDocument,
+                textSpan, false, cancellationToken).ConfigureAwait(false);
+
+            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(_roslynHost.CurrentDocument,
+                textSpan, cancellationToken).ConfigureAwait(false);
+
+            return ((IEnumerable<object>)codeFixes.SelectMany(x => x.Fixes))
+                .Concat(codeRefactorings
+                    .Where(x => ExcludedRefactoringProviders.All(p => !x.Provider.GetType().Name.Contains(p)))
+                    .SelectMany(x => x.Actions));
         }
         public ICommand GetActionCommand(object action)
         {

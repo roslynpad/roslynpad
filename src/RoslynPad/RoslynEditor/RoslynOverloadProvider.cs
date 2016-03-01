@@ -1,18 +1,16 @@
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Annotations;
 using RoslynPad.Formatting;
 using RoslynPad.Roslyn.SignatureHelp;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.RoslynEditor
 {
-    internal sealed class RoslynOverloadProvider : IOverloadProvider
+    internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProvider
     {
         private readonly SignatureHelpItems _signatureHelp;
         private readonly IList<SignatureHelpItem> _items;
@@ -29,18 +27,16 @@ namespace RoslynPad.RoslynEditor
             _items = signatureHelp.Items;
             CreateSignatureHelp();
         }
-   
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public int SelectedIndex
         {
             get { return _selectedIndex; }
             set
             {
-                if (value == _selectedIndex) return;
-                CreateSignatureHelp();
-                _selectedIndex = value;
-                OnPropertyChanged();
+                if (SetProperty(ref _selectedIndex, value))
+                {
+                    CreateSignatureHelp();
+                }
             }
         }
 
@@ -117,40 +113,19 @@ namespace RoslynPad.RoslynEditor
         public string CurrentIndexText
         {
             get { return _currentIndexText; }
-            private set
-            {
-                if (value == _currentIndexText) return;
-                _currentIndexText = value;
-                OnPropertyChanged();
-            }
+            private set { SetProperty(ref _currentIndexText, value); }
         }
 
         public object CurrentHeader
         {
             get { return _currentHeader; }
-            private set
-            {
-                if (Equals(value, _currentHeader)) return;
-                _currentHeader = value;
-                OnPropertyChanged();
-            }
+            private set { SetProperty(ref _currentHeader, value); }
         }
 
         public object CurrentContent
         {
             get { return _currentContent; }
-            private set
-            {
-                if (Equals(value, _currentContent)) return;
-                _currentContent = value;
-                OnPropertyChanged();
-            }
-        }
-
-        [NotifyPropertyChangedInvocator]
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            private set { SetProperty(ref _currentContent, value); }
         }
     }
 }

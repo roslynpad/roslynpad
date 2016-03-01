@@ -248,6 +248,9 @@
     <Compile Include="Roslyn\CodeFixes\FirstDiagnosticResult.cs" />
     <Compile Include="Roslyn\CodeFixes\FixAllCodeActionContext.cs" />
     <Compile Include="Roslyn\CodeFixes\ICodeFixService.cs" />
+    <Compile Include="Roslyn\CodeRefactorings\CodeRefactoring.cs" />
+    <Compile Include="Roslyn\CodeRefactorings\CodeRefactoringService.cs" />
+    <Compile Include="Roslyn\CodeRefactorings\ICodeRefactoringService.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticData.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticDataLocation.cs" />
     <Compile Include="Roslyn\Diagnostics\DiagnosticsService.cs" />
@@ -258,9 +261,32 @@
     <Compile Include="Roslyn\Diagnostics\SolutionCrawlerRegistrationService.cs" />
     <Compile Include="Roslyn\Diagnostics\UpdatedEventArgs.cs" />
     <Compile Include="Roslyn\Diagnostics\WorkspaceDiagnosticAnalyzerProviderServiceProxy.cs" />
+    <Compile Include="Roslyn\DocumentExtensions.cs" />
     <Compile Include="Roslyn\DocumentTrackingServiceProxy.cs" />
+    <Compile Include="Roslyn\Editor\IInlineRenameService.cs" />
+    <Compile Include="Roslyn\Editor\IInlineRenameSession.cs" />
+    <Compile Include="Roslyn\Editor\InlineRenameService.cs" />
+    <Compile Include="Roslyn\Editor\InlineRenameSession.cs" />
+    <Compile Include="Roslyn\Editor\InlineRenameSessionInfo.cs" />
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
+      <DependentUpon>ChangeSignatureDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\ChangeSignatureOptionsResult.cs" />
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\ChangeSignatureOptionsServiceProxy.cs" />
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\ParameterConfiguration.cs" />
+    <Compile Include="Roslyn\LanguageServices\ChangeSignature\SignatureChange.cs" />
+    <Compile Include="Roslyn\LanguageServices\ExtractInterface\ExtractInterfaceDialogViewModel.cs" />
+    <Compile Include="Roslyn\LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml.cs">
+      <DependentUpon>ExtractInterfaceDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Roslyn\LanguageServices\ExtractInterface\ExtractInterfaceOptionsServiceProxy.cs" />
     <Compile Include="Roslyn\HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="Roslyn\Navigation\DocumentNavigationServiceProxy.cs" />
+    <Compile Include="Roslyn\ISymbolExtensions.cs" />
     <Compile Include="Roslyn\RoslynInterfaceProxy.cs" />
+    <Compile Include="Roslyn\SignatureHelp\AggregateSignatureHelpProvider.cs" />
+    <Compile Include="Roslyn\SignatureHelp\SignatureHelpProviderExtensions.cs" />
     <Compile Include="Runtime\ResultObject.cs" />
     <Compile Include="Roslyn\Completion\CompletionService.cs" />
     <Compile Include="Roslyn\Completion\CompletionItem.cs" />
@@ -282,9 +308,13 @@
     <Compile Include="Roslyn\ValueSource.cs" />
     <Compile Include="Utilities\CompositionContainerExtensions.cs" />
     <Compile Include="Utilities\DelegateCommand.cs" />
+    <Compile Include="Utilities\GlyphExtensions.cs" />
+    <Compile Include="Utilities\NotificationObject.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
+    <Compile Include="Utilities\StringExtensions.cs" />
     <Compile Include="Utilities\TaskExtensions.cs" />
+    <Compile Include="Utilities\WindowExtensions.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -302,6 +332,14 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Icons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Roslyn\LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Roslyn\LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
