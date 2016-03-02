@@ -1,39 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2F7723C1-297B-416F-9A78-153156D319B9}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <ProjectGuid>{AC9F325F-A3FF-4561-941E-49CE4736CBD0}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RoslynPad</RootNamespace>
-    <AssemblyName>RoslynPad</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <RootNamespace>RoslynPad.Roslyn</RootNamespace>
+    <AssemblyName>RoslynETAHost</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WarningLevel>4</WarningLevel>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <TargetFrameworkProfile />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -43,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -52,38 +30,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Castle.Core, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Castle.DynamicProxy2, Version=2.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.DynamicProxy.2.2.0\lib\Castle.DynamicProxy2.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Castle.Services.Logging.log4netIntegration, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Services.Logging.log4netIntegration.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Castle.Services.Logging.NLogIntegration, Version=1.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.1.2.0\lib\Castle.Services.Logging.NLogIntegration.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ICSharpCode.AvalonEdit">
-      <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.1.2.10\lib\2.0\log4net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.3.0-beta1-20160301-05\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
@@ -148,10 +100,8 @@
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.3.0-beta1-20160301-05\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="NLog, Version=1.0.0.505, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.1.0.0.505\lib\NLog.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.AppContext.4.0.0\lib\net46\System.AppContext.dll</HintPath>
@@ -182,7 +132,7 @@
       <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.StackTrace, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.StackTrace.4.0.0\lib\net46\System.Diagnostics.StackTrace.dll</HintPath>
       <Private>True</Private>
@@ -199,127 +149,104 @@
       <HintPath>..\packages\System.Reflection.Metadata.1.2.0-rc3-23811\lib\dotnet5.2\System.Reflection.Metadata.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Core" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Xaml">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="Xceed.Wpf.AvalonDock, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Xceed.Wpf.DataGrid, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.DataGrid.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Xceed.Wpf.Toolkit, Version=2.6.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.2.6\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Compile Include="Formatting\CodeActionsConverter.cs" />
-    <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
+    <Compile Include="AnalyzerAssemblyLoader.cs" />
+    <Compile Include="CodeActions\CodeActionExtensions.cs" />
+    <Compile Include="CodeFixes\CodeFix.cs" />
+    <Compile Include="CodeFixes\CodeFixCollection.cs" />
+    <Compile Include="CodeFixes\CodeFixService.cs" />
+    <Compile Include="CodeFixes\FirstDiagnosticResult.cs" />
+    <Compile Include="CodeFixes\FixAllCodeActionContext.cs" />
+    <Compile Include="CodeFixes\ICodeFixService.cs" />
+    <Compile Include="CodeRefactorings\CodeRefactoring.cs" />
+    <Compile Include="CodeRefactorings\CodeRefactoringService.cs" />
+    <Compile Include="CodeRefactorings\ICodeRefactoringService.cs" />
+    <Compile Include="Completion\CompletionItem.cs" />
+    <Compile Include="Completion\CompletionItemRules.cs" />
+    <Compile Include="Completion\CompletionList.cs" />
+    <Compile Include="Completion\CompletionRules.cs" />
+    <Compile Include="Completion\CompletionService.cs" />
+    <Compile Include="Completion\CompletionTriggerInfo.cs" />
+    <Compile Include="Completion\CompletionTriggerReason.cs" />
+    <Compile Include="Completion\Glyph.cs" />
+    <Compile Include="Diagnostics\DiagnosticData.cs" />
+    <Compile Include="Diagnostics\DiagnosticDataLocation.cs" />
+    <Compile Include="Diagnostics\DiagnosticsService.cs" />
+    <Compile Include="Diagnostics\DiagnosticsUpdatedArgs.cs" />
+    <Compile Include="Diagnostics\DiagnosticsUpdatedKind.cs" />
+    <Compile Include="Diagnostics\IDiagnosticService.cs" />
+    <Compile Include="Diagnostics\UpdatedEventArgs.cs" />
+    <Compile Include="Diagnostics\WorkspaceDiagnosticAnalyzerProviderService.cs" />
+    <Compile Include="DocumentExtensions.cs" />
+    <Compile Include="DocumentTrackingService.cs" />
+    <Compile Include="Editor\IInlineRenameService.cs" />
+    <Compile Include="Editor\IInlineRenameSession.cs" />
+    <Compile Include="Editor\InlineRenameService.cs" />
+    <Compile Include="Editor\InlineRenameSession.cs" />
+    <Compile Include="Editor\InlineRenameSessionInfo.cs" />
+    <Compile Include="GlyphExtensions.cs" />
+    <Compile Include="HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="ISymbolExtensions.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
+      <DependentUpon>ChangeSignatureDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
+    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureOptionsService.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\ParameterConfiguration.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\SignatureChange.cs" />
+    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml.cs">
+      <DependentUpon>ExtractInterfaceDialog.xaml</DependentUpon>
     </Compile>
-    <Page Include="Resources\Glyphs.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Resources\Icons.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceDialogViewModel.cs" />
+    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceOptionsService.cs" />
+    <Compile Include="Navigation\DocumentNavigationService.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoslynHost.cs" />
+    <Compile Include="RoslynWorkspace.cs" />
+    <Compile Include="SignatureHelp\AggregateSignatureHelpProvider.cs" />
+    <Compile Include="SignatureHelp\ISignatureHelpProvider.cs" />
+    <Compile Include="SignatureHelp\SignatureHelperProvider.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpItem.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpItems.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpParameter.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpProviderExtensions.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpTriggerInfo.cs" />
+    <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
+    <Compile Include="SymbolDisplayPartExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
     <None Include="packages.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <AppDesigner Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\RoslynPad.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\CSharp-Mode.xml" />
+    <Page Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
       <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.RoslynEditor\RoslynPad.RoslynEditor.csproj">
-      <Project>{5fc3a02c-33b5-4e32-8512-7053474d9c57}</Project>
-      <Name>RoslynPad.RoslynEditor</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
-      <Project>{ac9f325f-a3ff-4561-941e-49ce4736cbd0}</Project>
-      <Name>RoslynPad.Roslyn</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

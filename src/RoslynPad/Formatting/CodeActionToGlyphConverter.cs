@@ -5,8 +5,8 @@ using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
 using Microsoft.CodeAnalysis.CodeActions;
+using RoslynPad.Roslyn.CodeActions;
 using RoslynPad.Roslyn.Completion;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Formatting
 {
@@ -19,7 +19,7 @@ namespace RoslynPad.Formatting
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var glyphNumber = ((CodeAction)value).GetPropertyValue<int?>("Glyph");
+            var glyphNumber = ((CodeAction)value).GetGlyph();
             if (glyphNumber == null) return null;
             return Application.Current.TryFindResource((Glyph)glyphNumber.Value) as ImageSource;
         }
