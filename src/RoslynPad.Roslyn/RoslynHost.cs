@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.Notification;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.SignatureHelp;
@@ -109,6 +110,9 @@ namespace RoslynPad.Roslyn
             _workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
                 .Register(_workspace);
 
+            _compositionContext.GetExport<ISemanticChangeNotificationService>().OpenedDocumentSemanticChanged += 
+                (sender, document) => OpenedDocumentSemanticChanged?.Invoke(this, document);
+
             // MEF v1
             var container = new CompositionContainer(new AggregateCatalog(
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
@@ -117,6 +121,8 @@ namespace RoslynPad.Roslyn
 
             ((AggregateSignatureHelpProvider)GetService<ISignatureHelpProvider>()).Initialize(container);
         }
+
+        public event EventHandler<Document> OpenedDocumentSemanticChanged;
 
         public TService GetService<TService>()
         {

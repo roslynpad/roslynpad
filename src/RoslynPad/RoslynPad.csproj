@@ -289,9 +289,6 @@
     <Resource Include="Resources\RoslynPad.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\CSharp-Mode.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
       <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>

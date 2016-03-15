@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -8,9 +6,6 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Xml;
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
@@ -61,6 +56,8 @@ namespace RoslynPad
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
             _roslynHost.SetDocument(avalonEditTextContainer);
             _roslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
+
+            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_roslynHost));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_roslynHost));
@@ -134,7 +131,7 @@ namespace RoslynPad
 
         private void ConfigureEditor()
         {
-            Editor.SyntaxHighlighting = GetSyntaxHighlighting();
+            //Editor.SyntaxHighlighting = GetSyntaxHighlighting();
             var lastSessionText = Settings.Default.LastSessionText;
             Editor.Text = string.IsNullOrEmpty(lastSessionText) ? DefaultSessionText : lastSessionText;
             Application.Current.Exit += (sender, args) =>
@@ -142,20 +139,6 @@ namespace RoslynPad
                 Settings.Default.LastSessionText = Editor.Text;
                 Settings.Default.Save();
             };
-        }
-
-        private static IHighlightingDefinition GetSyntaxHighlighting()
-        {
-            XshdSyntaxDefinition syntaxDefinition;
-            // ReSharper disable once PossibleNullReferenceException
-            using (var input = Application.GetResourceStream(new Uri("pack://application:,,,/RoslynPad;component/Resources/CSharp-Mode.xml")).Stream)
-            {
-                using (var xmlTextReader = new XmlTextReader(input))
-                {
-                    syntaxDefinition = HighlightingLoader.LoadXshd(xmlTextReader);
-                }
-            }
-            return HighlightingLoader.Load(syntaxDefinition, HighlightingManager.Instance);
         }
 
         private async void OnPlayCommand(object sender, RoutedEventArgs e)

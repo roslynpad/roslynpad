@@ -207,7 +207,8 @@ namespace RoslynPad.Editor
                     _insightWindow = new OverloadInsightWindow(TextArea)
                     {
                         Provider = results.OverloadProvider,
-                        Background = CompletionBackground
+                        Background = CompletionBackground,
+                        Style = TryFindResource(typeof(InsightWindow)) as Style
                     };
                     _insightWindow.Show();
                     _insightWindow.Closed += (o, args) => _insightWindow = null;

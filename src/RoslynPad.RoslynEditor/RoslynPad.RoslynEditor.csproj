@@ -111,6 +111,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AvalonEditTextContainer.cs" />
+    <Compile Include="ClassificationHighlightColors.cs" />
+    <Compile Include="RoslynHighlightingColorizer.cs" />
+    <Compile Include="RoslynSemanticHighlighter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynCodeEditorCompletionProvider.cs" />
     <Compile Include="RoslynCompletionData.cs" />
