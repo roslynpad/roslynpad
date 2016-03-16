@@ -18,14 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 
 namespace RoslynPad.RoslynEditor
@@ -37,7 +34,6 @@ namespace RoslynPad.RoslynEditor
         private readonly List<CachedLine> _cachedLines;
 
         private bool _inHighlightingGroup;
-        private int _lineNumber;
         private HighlightedLine _line;
 
         public RoslynSemanticHighlighter(IDocument document, RoslynHost roslynHost)
@@ -70,10 +66,7 @@ namespace RoslynPad.RoslynEditor
 
         IDocument IHighlighter.Document => _document;
 
-        IEnumerable<HighlightingColor> IHighlighter.GetColorStack(int lineNumber)
-        {
-            return null;
-        }
+        IEnumerable<HighlightingColor> IHighlighter.GetColorStack(int lineNumber) => null;
 
         void IHighlighter.UpdateHighlightingState(int lineNumber)
         {
@@ -81,24 +74,23 @@ namespace RoslynPad.RoslynEditor
 
         public HighlightedLine HighlightLine(int lineNumber)
         {
-            IDocumentLine documentLine = _document.GetLineByNumber(lineNumber);
-            ITextSourceVersion newVersion = _document.Version;
+            var documentLine = _document.GetLineByNumber(lineNumber);
+            var newVersion = _document.Version;
             CachedLine cachedLine = null;
             if (_cachedLines != null)
             {
-                for (int i = 0; i < _cachedLines.Count; i++)
+                for (var i = 0; i < _cachedLines.Count; i++)
                 {
-                    if (_cachedLines[i].DocumentLine == documentLine)
+                    var line = _cachedLines[i];
+                    if (line.DocumentLine != documentLine) continue;
+                    if (newVersion == null || !newVersion.BelongsToSameDocumentAs(line.OldVersion))
                     {
-                        if (newVersion == null || !newVersion.BelongsToSameDocumentAs(_cachedLines[i].OldVersion))
-                        {
-                            // cannot list changes from old to new: we can't update the cache, so we'll remove it
-                            _cachedLines.RemoveAt(i);
-                        }
-                        else {
-                            cachedLine = _cachedLines[i];
-                        }
-                        break;
+                        // cannot list changes from old to new: we can't update the cache, so we'll remove it
+                        _cachedLines.RemoveAt(i);
+                    }
+                    else
+                    {
+                        cachedLine = line;
                     }
                 }
 
@@ -109,14 +101,14 @@ namespace RoslynPad.RoslynEditor
                 }
             }
 
-            bool wasInHighlightingGroup = _inHighlightingGroup;
+            var wasInHighlightingGroup = _inHighlightingGroup;
             if (!_inHighlightingGroup)
             {
                 BeginHighlighting();
             }
             try
             {
-                return DoHighlightLine(lineNumber, documentLine).GetAwaiter().GetResult();
+                return DoHighlightLine(documentLine);
             }
             finally
             {
@@ -126,12 +118,20 @@ namespace RoslynPad.RoslynEditor
             }
         }
 
-        private async Task<HighlightedLine> DoHighlightLine(int lineNumber, IDocumentLine documentLine)
+        private HighlightedLine DoHighlightLine(IDocumentLine documentLine)
         {
             _line = new HighlightedLine(_document, documentLine);
 
-            var spans = await Classifier.GetClassifiedSpansAsync(_roslynHost.CurrentDocument, 
-                new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None).ConfigureAwait(true);
+            IEnumerable<ClassifiedSpan> spans;
+            try
+            {
+                spans = Classifier.GetClassifiedSpansAsync(_roslynHost.CurrentDocument,
+                    new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                return _line;
+            }
 
             foreach (var classifiedSpan in spans)
             {
@@ -149,48 +149,11 @@ namespace RoslynPad.RoslynEditor
                 });
             }
 
-            _lineNumber = lineNumber;
-
             if (_cachedLines != null && _document.Version != null)
             {
                 _cachedLines.Add(new CachedLine(_line, _document.Version));
             }
             return _line;
-        }
-
-        internal void Colorize(TextLocation start, TextLocation end, HighlightingColor color)
-        {
-            if (color == null)
-                return;
-            if (start.Line <= _lineNumber && end.Line >= _lineNumber)
-            {
-                int lineStartOffset = _line.DocumentLine.Offset;
-                int lineEndOffset = lineStartOffset + _line.DocumentLine.Length;
-                int startOffset = lineStartOffset + (start.Line == _lineNumber ? start.Column - 1 : 0);
-                int endOffset = lineStartOffset + (end.Line == _lineNumber ? end.Column - 1 : _line.DocumentLine.Length);
-                // For some parser errors, the mcs parser produces grossly wrong locations (e.g. miscounting the number of newlines),
-                // so we need to coerce the offsets to valid values within the line
-                startOffset = startOffset.CoerceValue(lineStartOffset, lineEndOffset);
-                endOffset = endOffset.CoerceValue(lineStartOffset, lineEndOffset);
-                if (_line.Sections.Count > 0)
-                {
-                    HighlightedSection prevSection = _line.Sections.Last();
-                    if (startOffset < prevSection.Offset + prevSection.Length)
-                    {
-                        // The mcs parser sometimes creates strange ASTs with duplicate nodes
-                        // when there are syntax errors (e.g. "int A() public static void Main() {}"),
-                        // so we'll silently ignore duplicate colorization.
-                        return;
-                        //throw new InvalidOperationException("Cannot create unordered highlighting section");
-                    }
-                }
-                _line.Sections.Add(new HighlightedSection
-                {
-                    Offset = startOffset,
-                    Length = endOffset - startOffset,
-                    Color = color
-                });
-            }
         }
 
         HighlightingColor IHighlighter.DefaultTextColor => ClassificationHighlightColors.DefaultColor;
@@ -206,13 +169,14 @@ namespace RoslynPad.RoslynEditor
         {
             _inHighlightingGroup = false;
             // TODO use this to remove cached lines which are no longer visible
-            //			var visibleDocumentLines = new HashSet<IDocumentLine>(syntaxHighlighter.GetVisibleDocumentLines());
-            //			cachedLines.RemoveAll(c => !visibleDocumentLines.Contains(c.DocumentLine));
+            // var visibleDocumentLines = new HashSet<IDocumentLine>(syntaxHighlighter.GetVisibleDocumentLines());
+            // cachedLines.RemoveAll(c => !visibleDocumentLines.Contains(c.DocumentLine));
         }
 
         public HighlightingColor GetNamedColor(string name) => null;
 
         #region Caching
+
         // If a line gets edited and we need to display it while no parse information is ready for the
         // changed file, the line would flicker (semantic highlightings disappear temporarily).
         // We avoid this issue by storing the semantic highlightings and updating them on document changes
@@ -242,7 +206,7 @@ namespace RoslynPad.RoslynEditor
                 IsValid = true;
             }
         }
-        
+
         #endregion
     }
 }

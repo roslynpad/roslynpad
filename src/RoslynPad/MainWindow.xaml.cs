@@ -8,12 +8,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Properties;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
-using RoslynPad.Roslyn.Editor;
 using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
 using Xceed.Wpf.Toolkit.PropertyGrid;
@@ -174,11 +172,11 @@ namespace RoslynPad
 
         private void Editor_OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
-            {
-                _roslynHost.GetService<IInlineRenameService>().StartInlineSession(
-                    _roslynHost.CurrentDocument, new TextSpan(Editor.CaretOffset, 1));
-            }
+            //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            //{
+            //    _roslynHost.GetService<IInlineRenameService>().StartInlineSession(
+            //        _roslynHost.CurrentDocument, new TextSpan(Editor.CaretOffset, 1));
+            //}
         }
     }
 }

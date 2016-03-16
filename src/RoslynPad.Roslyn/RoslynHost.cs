@@ -1,4 +1,6 @@
-﻿using System;
+﻿extern alias workspaces;
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition.Hosting;
@@ -9,15 +11,19 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Notification;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
+using Roslyn.Utilities;
+using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Runtime;
 
@@ -46,9 +52,12 @@ namespace RoslynPad.Roslyn
         private readonly DocumentationProviderServiceFactory.DocumentationProviderService _documentationProviderService;
         private readonly string _referenceAssembliesPath;
         private readonly CompositionHost _compositionContext;
+        private readonly Dictionary<string, DirectiveInfo> _referencesDirectives;
+        private readonly SemaphoreSlim _referenceDirectivesLock;
 
         private DocumentId _currentDocumenId;
         private int _documentNumber;
+        private CancellationTokenSource _referenceDirectivesCancellationTokenSource;
 
         public Workspace Workspace => _workspace;
 
@@ -56,21 +65,11 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
-        class AttributeFilterProvider : AttributedModelProvider
-        {
-            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
-            {
-                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
-            }
-
-            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
-            {
-                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
-            }
-        }
-
         public RoslynHost()
         {
+            _referencesDirectives = new Dictionary<string, DirectiveInfo>();
+            _referenceDirectivesLock = new SemaphoreSlim(1, 1);
+
             var assemblies = new[]
             {
                 Assembly.Load("Microsoft.CodeAnalysis"),
@@ -104,29 +103,157 @@ namespace RoslynPad.Roslyn
             _references = _assemblyTypes.Select(t =>
                 (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location,
                     documentation: GetDocumentationProvider(t.Assembly.Location))).ToImmutableArray();
+            var metadataReferenceResolver = CreateMetadataReferenceResolver();
             _compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
-                usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray());
+                usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray(),
+                metadataReferenceResolver: metadataReferenceResolver);
 
             _workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
                 .Register(_workspace);
 
-            _compositionContext.GetExport<ISemanticChangeNotificationService>().OpenedDocumentSemanticChanged += 
-                (sender, document) => OpenedDocumentSemanticChanged?.Invoke(this, document);
+            _compositionContext.GetExport<ISemanticChangeNotificationService>().OpenedDocumentSemanticChanged +=
+                OnOpenedDocumentSemanticChanged;
 
             // MEF v1
             var container = new CompositionContainer(new AggregateCatalog(
                 new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
-                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"))),
+                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures")),
+                new AssemblyCatalog(typeof(RoslynHost).Assembly)),
                 CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
 
             ((AggregateSignatureHelpProvider)GetService<ISignatureHelpProvider>()).Initialize(container);
+
+            CompletionService.Initialize(container);
         }
+
+        private class AttributeFilterProvider : AttributedModelProvider
+        {
+            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
+            {
+                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+            }
+
+            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
+            {
+                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+            }
+        }
+
+        private async void OnOpenedDocumentSemanticChanged(object sender, Document document)
+        {
+            OpenedDocumentSemanticChanged?.Invoke(this, document);
+
+            await ProcessReferenceDirectives(document).ConfigureAwait(false);
+        }
+
 
         public event EventHandler<Document> OpenedDocumentSemanticChanged;
 
         public TService GetService<TService>()
         {
             return _compositionContext.GetExport<TService>();
+        }
+
+        #endregion
+
+        #region Reference Resolution
+
+        private class DirectiveInfo
+        {
+            public MetadataReference MetadataReference { get; }
+
+            public bool IsActive { get; set; }
+
+            public DirectiveInfo(MetadataReference metadataReference)
+            {
+                MetadataReference = metadataReference;
+                IsActive = true;
+            }
+        }
+
+        private async Task ProcessReferenceDirectives(Document document)
+        {
+            CancellationToken cancellationToken;
+            lock (_referenceDirectivesLock)
+            {
+                _referenceDirectivesCancellationTokenSource?.Cancel();
+                _referenceDirectivesCancellationTokenSource = new CancellationTokenSource();
+                cancellationToken = _referenceDirectivesCancellationTokenSource.Token;
+            }
+
+            // ReSharper disable once MethodSupportsCancellation
+            using (await _referenceDirectivesLock.DisposableWaitAsync().ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var project = document.Project;
+                var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false))
+                        .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
+
+                foreach (var referenceDirective in _referencesDirectives)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
+                    {
+                        referenceDirective.Value.IsActive = false;
+                    }
+                }
+
+                foreach (var directive in directives)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    DirectiveInfo referenceDirective;
+                    if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
+                    {
+                        referenceDirective.IsActive = true;
+                    }
+                    else
+                    {
+                        _referencesDirectives.Add(directive, new DirectiveInfo(ResolveReference(directive)));
+                    }
+                }
+
+                var solution = project.Solution;
+                var references =
+                    _referencesDirectives.Where(x => x.Value.IsActive).Select(x => x.Value.MetadataReference).WhereNotNull();
+                var newSolution = solution.WithProjectMetadataReferences(project.Id, _references.Concat(references));
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                _workspace.SetCurrentSolution(newSolution);
+            }
+        }
+
+        private static MetadataReference ResolveReference(string name)
+        {
+            if (File.Exists(name))
+            {
+                return MetadataReference.CreateFromFile(name);
+            }
+            try
+            {
+                var assemblyName = GlobalAssemblyCache.Instance.ResolvePartialName(name);
+                if (assemblyName == null)
+                {
+                    return null;
+                }
+                var assembly = Assembly.Load(assemblyName.ToString());
+                return MetadataReference.CreateFromFile(assembly.Location);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private MetadataReferenceResolver CreateMetadataReferenceResolver()
+        {
+            return new WorkspaceMetadataFileReferenceResolver(
+                _workspace.Services.GetService<IMetadataService>(),
+                new workspaces::Microsoft.CodeAnalysis.RelativePathResolver(ImmutableArray<string>.Empty,
+                    AppDomain.CurrentDomain.BaseDirectory));
         }
 
         #endregion

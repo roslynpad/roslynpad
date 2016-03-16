@@ -95,6 +95,7 @@
     <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.3.0-beta1-20160301-05\lib\net45\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
       <Private>True</Private>
+      <Aliases>global,workspaces</Aliases>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.3.0-beta1-20160301-05\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
@@ -177,7 +178,11 @@
     <Compile Include="Completion\CompletionService.cs" />
     <Compile Include="Completion\CompletionTriggerInfo.cs" />
     <Compile Include="Completion\CompletionTriggerReason.cs" />
+    <Compile Include="Completion\DummyWaitIndicator.cs" />
     <Compile Include="Completion\Glyph.cs" />
+    <Compile Include="Completion\Providers\AbstractReferenceDirectiveCompletionProvider.cs" />
+    <Compile Include="Completion\Providers\GlobalAssemblyCacheCompletionHelper.cs" />
+    <Compile Include="Completion\Providers\ReferenceDirectiveCompletionProvider.cs" />
     <Compile Include="Diagnostics\DiagnosticData.cs" />
     <Compile Include="Diagnostics\DiagnosticDataLocation.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />
