@@ -1,6 +1,7 @@
 ﻿extern alias workspaces;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition.Hosting;
@@ -45,6 +46,7 @@ namespace RoslynPad.Roslyn
             typeof(ObjectExtensions)
         };
 
+        private readonly INuGetProvider _nuGetProvider;
         private readonly RoslynWorkspace _workspace;
         private readonly CSharpParseOptions _parseOptions;
         private readonly CSharpCompilationOptions _compilationOptions;
@@ -52,7 +54,7 @@ namespace RoslynPad.Roslyn
         private readonly DocumentationProviderServiceFactory.DocumentationProviderService _documentationProviderService;
         private readonly string _referenceAssembliesPath;
         private readonly CompositionHost _compositionContext;
-        private readonly Dictionary<string, DirectiveInfo> _referencesDirectives;
+        private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
         private readonly SemaphoreSlim _referenceDirectivesLock;
 
         private DocumentId _currentDocumenId;
@@ -65,9 +67,10 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
-        public RoslynHost()
+        public RoslynHost(INuGetProvider nuGetProvider = null)
         {
-            _referencesDirectives = new Dictionary<string, DirectiveInfo>();
+            _nuGetProvider = nuGetProvider;
+            _referencesDirectives = new ConcurrentDictionary<string, DirectiveInfo>();
             _referenceDirectivesLock = new SemaphoreSlim(1, 1);
 
             var assemblies = new[]
@@ -171,6 +174,19 @@ namespace RoslynPad.Roslyn
             }
         }
 
+        public IEnumerable<string> ReferenceDirectives
+            => _referencesDirectives.Where(x => x.Value.IsActive).Select(x => x.Key);
+
+        public bool HasReference(string text)
+        {
+            DirectiveInfo info;
+            if (_referencesDirectives.TryGetValue(text, out info))
+            {
+                return info.IsActive;
+            }
+            return _assemblyTypes.Any(x => x.Assembly.GetName().Name == text);
+        }
+
         private async Task ProcessReferenceDirectives(Document document)
         {
             CancellationToken cancellationToken;
@@ -211,7 +227,7 @@ namespace RoslynPad.Roslyn
                     }
                     else
                     {
-                        _referencesDirectives.Add(directive, new DirectiveInfo(ResolveReference(directive)));
+                        _referencesDirectives.TryAdd(directive, new DirectiveInfo(ResolveReference(directive)));
                     }
                 }
 
@@ -226,8 +242,9 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        private static MetadataReference ResolveReference(string name)
+        private MetadataReference ResolveReference(string name)
         {
+            name = _nuGetProvider.ResolveReference(name);
             if (File.Exists(name))
             {
                 return MetadataReference.CreateFromFile(name);
@@ -332,10 +349,54 @@ namespace RoslynPad.Roslyn
             var state = await CSharpScript.RunAsync(text.ToString(),
                 ScriptOptions.Default
                     .AddImports(_assemblyTypes.Select(x => x.Namespace))
-                    .AddReferences(_assemblyTypes.Select(x => x.Assembly))).ConfigureAwait(false);
+                    .AddReferences(_assemblyTypes.Select(x => x.Assembly))
+                    .WithMetadataResolver(new NuGetScriptMetadataResolver(_nuGetProvider))).ConfigureAwait(false);
             return state.ReturnValue;
         }
 
+        class NuGetScriptMetadataResolver : MetadataReferenceResolver
+        {
+            private readonly INuGetProvider _nuGetProvider;
+            private readonly ScriptMetadataResolver _inner;
+
+            public NuGetScriptMetadataResolver(INuGetProvider nuGetProvider)
+            {
+                _nuGetProvider = nuGetProvider;
+                _inner = ScriptMetadataResolver.Default;
+            }
+
+            public override bool Equals(object other)
+            {
+                return _inner.Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return _inner.GetHashCode();
+            }
+
+            public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
+            {
+                reference = _nuGetProvider.ResolveReference(reference);
+                return _inner.ResolveReference(reference, baseFilePath, properties);
+            }
+        }
+
         #endregion
+    }
+
+    internal static class NuGetProviderExtensions
+    {
+        public static string ResolveReference(this INuGetProvider nuGetProvider, string reference)
+        {
+            if (nuGetProvider?.PathVariableName != null &&
+                nuGetProvider.PathToRepository != null &&
+                reference.StartsWith(nuGetProvider.PathVariableName, StringComparison.OrdinalIgnoreCase))
+            {
+                reference = Path.Combine(nuGetProvider.PathToRepository,
+                    reference.Substring(nuGetProvider.PathVariableName.Length).TrimStart('/', '\\'));
+            }
+            return reference;
+        }
     }
 }

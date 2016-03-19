@@ -200,6 +200,7 @@
     <Compile Include="Editor\InlineRenameSessionInfo.cs" />
     <Compile Include="GlyphExtensions.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="INuGetProvider.cs" />
     <Compile Include="ISymbolExtensions.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
       <DependentUpon>ChangeSignatureDialog.xaml</DependentUpon>

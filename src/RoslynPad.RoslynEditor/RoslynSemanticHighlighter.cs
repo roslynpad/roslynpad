@@ -125,6 +125,7 @@ namespace RoslynPad.RoslynEditor
             IEnumerable<ClassifiedSpan> spans;
             try
             {
+                // TODO: check offset in Roslyn's doc
                 spans = Classifier.GetClassifiedSpansAsync(_roslynHost.CurrentDocument,
                     new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None).GetAwaiter().GetResult();
             }

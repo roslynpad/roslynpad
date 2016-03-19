@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
+using NuGet;
 using RoslynPad.Editor;
-using RoslynPad.Properties;
-using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
 using Xceed.Wpf.Toolkit.PropertyGrid;
+using Settings = RoslynPad.Properties.Settings;
 
 namespace RoslynPad
 {
@@ -25,13 +27,17 @@ namespace RoslynPad
         private readonly object _lock;
         private readonly ObservableCollection<ResultObject> _objects;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly RoslynHost _roslynHost;
         private readonly TextMarkerService _textMarkerService;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly ContextActionsRenderer _contextActionsRenderer;
+        private readonly MainViewModel _viewModel;
 
         public MainWindow()
         {
+            _viewModel = new MainViewModel();
+            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            DataContext = _viewModel;
+
             InitializeComponent();
 
             _textMarkerService = new TextMarkerService(Editor);
@@ -49,18 +55,30 @@ namespace RoslynPad
 
             var syncContext = SynchronizationContext.Current;
 
-            _roslynHost = new RoslynHost();
-            _roslynHost.GetService<IDiagnosticService>().DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
+            _viewModel.RoslynHost.GetService<IDiagnosticService>().DiagnosticsUpdated += (sender, args) => syncContext.Post(o => ProcessDiagnostics(args), null);
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
-            _roslynHost.SetDocument(avalonEditTextContainer);
-            _roslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
+            _viewModel.RoslynHost.SetDocument(avalonEditTextContainer);
+            _viewModel.RoslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
 
-            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_roslynHost));
+            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.RoslynHost));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
-            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_roslynHost));
+            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.RoslynHost));
 
-            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_roslynHost);
+            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.RoslynHost);
+        }
+
+        private void NuGetOnPackageInstalled(IPackage package, NuGetInstallResult installResult)
+        {
+            if (installResult.References.Count == 0) return;
+
+            var text = string.Join(Environment.NewLine,
+                installResult.References.Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
+                .Concat(installResult.FrameworkReferences)
+                .Where(r => !_viewModel.RoslynHost.HasReference(r))
+                .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
+
+            Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
         }
 
         private void OnDumped(object o, DumpTarget mode)
@@ -148,7 +166,7 @@ namespace RoslynPad
 
             try
             {
-                var result = await _roslynHost.Execute().ConfigureAwait(true);
+                var result = await _viewModel.RoslynHost.Execute().ConfigureAwait(true);
                 if (result != null)
                 {
                     AddResult(result);

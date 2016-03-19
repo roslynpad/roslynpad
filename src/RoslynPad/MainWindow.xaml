@@ -4,12 +4,18 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
         xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:roslynPad="clr-namespace:RoslynPad"
+        xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet"
+        mc:Ignorable="d"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         FontFamily="Consolas"
         Title="RoslynPad"
-        Height="350"
-        Width="525">
+        Height="600"
+        Width="800"
+        d:DataContext="{d:DesignInstance roslynPad:MainViewModel}">
     <FrameworkElement.CommandBindings>
         <CommandBinding Command="Play"
                         Executed="OnPlayCommand" />
@@ -42,6 +48,93 @@
             <ToolBar Grid.ColumnSpan="3">
                 <Button Content="Go"
                         Command="Play" />
+                <Separator />
+                <Label Content="NuGet" />
+                <Menu Background="Transparent"
+                      Name="RootMenu"
+                      IsEnabled="{Binding NuGet.IsEnabled}">
+                    <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
+                              ItemsSource="{Binding NuGet.Packages}"
+                              Header="{Binding NuGet}">
+                        <MenuItem.HeaderTemplate>
+                            <DataTemplate DataType="{x:Type roslynPad:NuGetViewModel}">
+                                <Grid>
+                                    <TextBlock Name="Text"
+                                               Text=""
+                                               FontFamily="Segoe UI Symbol" />
+                                    <Ellipse Name="Icon"
+                                             Margin="2"
+                                             Visibility="Hidden"
+                                             VerticalAlignment="Stretch"
+                                             HorizontalAlignment="Stretch"
+                                             Fill="Transparent"
+                                             Stroke="Gray"
+                                             StrokeThickness="2"
+                                             Stretch="Uniform">
+                                    </Ellipse>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsBusy}"
+                                                 Value="True">
+                                        <Setter TargetName="Text"
+                                                Property="Visibility"
+                                                Value="Hidden" />
+                                        <Setter TargetName="Icon"
+                                                Property="Visibility"
+                                                Value="Visible" />
+                                        <Setter TargetName="Icon"
+                                                Property="Stroke">
+                                            <Setter.Value>
+                                                <RadialGradientBrush GradientOrigin="0,0">
+                                                    <GradientStop Color="Teal"
+                                                                  Offset="1" />
+                                                    <GradientStop Color="Transparent" />
+                                                </RadialGradientBrush>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="animate">
+                                                <Storyboard>
+                                                    <PointAnimationUsingKeyFrames Storyboard.TargetName="Icon"
+                                                                                  Storyboard.TargetProperty="(Shape.Stroke).(RadialGradientBrush.GradientOrigin)"
+                                                                                  RepeatBehavior="Forever">
+                                                        <LinearPointKeyFrame Value="1,0" />
+                                                        <LinearPointKeyFrame Value="1,1" />
+                                                        <LinearPointKeyFrame Value="0,1" />
+                                                        <LinearPointKeyFrame Value="0,0" />
+                                                    </PointAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="animate" />
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </MenuItem.HeaderTemplate>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Command"
+                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
+                                <Setter Property="CommandParameter"
+                                        Value="{Binding}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="nuGet:IPackage">
+                                <TextBlock>
+                                    <Run Text="{Binding Id, Mode=OneTime}" />
+                                    <Run Text="{Binding Version, Mode=OneTime}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </MenuItem>
+                </Menu>
+                <TextBox Name="SearchTerm"
+                         IsEnabled="{Binding NuGet.IsEnabled}"
+                         Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
+                         Width="300" />
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"
@@ -90,7 +183,8 @@
                                     Background="Transparent"
                                     BorderBrush="Transparent"
                                     Command="{Binding CopyCommand}">
-                                <Image Source="{StaticResource Copy}" Height="12" />
+                                <Image Source="{StaticResource Copy}"
+                                       Height="12" />
                             </Button>
                             <TextBlock Text="{Binding Header}" />
                         </DockPanel>
