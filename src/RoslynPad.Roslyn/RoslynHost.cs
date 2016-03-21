@@ -30,12 +30,11 @@ using RoslynPad.Runtime;
 
 namespace RoslynPad.Roslyn
 {
-    internal sealed class RoslynHost
+    public sealed class RoslynHost
     {
         #region Fields
 
-        private static readonly Type[] _assemblyTypes =
-        {
+        private static readonly ImmutableArray<Type> _defaultReferenceAssemblyTypes = new[] {
             typeof(object),
             typeof(Task),
             typeof(List<>),
@@ -44,7 +43,13 @@ namespace RoslynPad.Roslyn
             typeof(Uri),
             typeof(Enumerable),
             typeof(ObjectExtensions)
-        };
+        }.ToImmutableArray();
+
+        private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =
+            _defaultReferenceAssemblyTypes.Select(x => x.Assembly).Distinct().Concat(new[]
+            {
+                Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
+            }).ToImmutableArray();
 
         private readonly INuGetProvider _nuGetProvider;
         private readonly RoslynWorkspace _workspace;
@@ -95,7 +100,7 @@ namespace RoslynPad.Roslyn
 
             var host = MefHostServices.Create(_compositionContext);
 
-            _workspace = new RoslynWorkspace(host);
+            _workspace = new RoslynWorkspace(host, this);
             _workspace.ApplyingTextChange += (d, s) => ApplyingTextChange?.Invoke(d, s);
 
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
@@ -103,12 +108,12 @@ namespace RoslynPad.Roslyn
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
-            _references = _assemblyTypes.Select(t =>
-                (MetadataReference)MetadataReference.CreateFromFile(t.Assembly.Location,
-                    documentation: GetDocumentationProvider(t.Assembly.Location))).ToImmutableArray();
+            _references = _defaultReferenceAssemblies.Select(t =>
+                (MetadataReference)MetadataReference.CreateFromFile(t.Location,
+                    documentation: GetDocumentationProvider(t.Location))).ToImmutableArray();
             var metadataReferenceResolver = CreateMetadataReferenceResolver();
             _compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
-                usings: _assemblyTypes.Select(x => x.Namespace).ToImmutableArray(),
+                usings: _defaultReferenceAssemblyTypes.Select(x => x.Namespace).ToImmutableArray(),
                 metadataReferenceResolver: metadataReferenceResolver);
 
             _workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
@@ -174,6 +179,11 @@ namespace RoslynPad.Roslyn
             }
         }
 
+        internal void AddMetadataReference(ProjectId projectId, AssemblyIdentity assemblyIdentity)
+        {
+            // TODO
+        }
+
         public IEnumerable<string> ReferenceDirectives
             => _referencesDirectives.Where(x => x.Value.IsActive).Select(x => x.Key);
 
@@ -184,7 +194,7 @@ namespace RoslynPad.Roslyn
             {
                 return info.IsActive;
             }
-            return _assemblyTypes.Any(x => x.Assembly.GetName().Name == text);
+            return _defaultReferenceAssemblies.Any(x => x.GetName().Name == text);
         }
 
         private async Task ProcessReferenceDirectives(Document document)
@@ -348,8 +358,8 @@ namespace RoslynPad.Roslyn
             var text = await CurrentDocument.GetTextAsync().ConfigureAwait(false);
             var state = await CSharpScript.RunAsync(text.ToString(),
                 ScriptOptions.Default
-                    .AddImports(_assemblyTypes.Select(x => x.Namespace))
-                    .AddReferences(_assemblyTypes.Select(x => x.Assembly))
+                    .AddImports(_defaultReferenceAssemblyTypes.Select(x => x.Namespace))
+                    .AddReferences(_defaultReferenceAssemblies)
                     .WithMetadataResolver(new NuGetScriptMetadataResolver(_nuGetProvider))).ConfigureAwait(false);
             return state.ReturnValue;
         }

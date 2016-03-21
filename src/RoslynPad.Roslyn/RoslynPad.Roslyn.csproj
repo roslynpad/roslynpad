@@ -228,6 +228,7 @@
     <Compile Include="SignatureHelp\SignatureHelpTriggerInfo.cs" />
     <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="SymbolDisplayPartExtensions.cs" />
+    <Compile Include="WorkspaceServices\AddMetadataReferenceCodeActionOperationFactoryWorkspaceService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

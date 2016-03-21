@@ -9,11 +9,13 @@ namespace RoslynPad.Roslyn
 {
     public sealed class RoslynWorkspace : Workspace
     {
+        public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
 
-        internal RoslynWorkspace(HostServices host)
+        internal RoslynWorkspace(HostServices host, RoslynHost roslynHost)
             : base(host, WorkspaceKind.Host)
         {
+            RoslynHost = roslynHost;
         }
 
         public new void SetCurrentSolution(Solution solution)
