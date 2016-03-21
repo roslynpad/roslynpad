@@ -50,6 +50,13 @@ namespace RoslynPad.Editor
                     Height = 16
                 }
             };
+            _mainItem.SubmenuOpened += (sender, args) =>
+            {
+                if (ReferenceEquals(args.OriginalSource, _mainItem))
+                {
+                    MenuOpened?.Invoke(this, EventArgs.Empty);
+                }
+            };
             var menu = new Menu
             {
                 Background = Brushes.Transparent,
@@ -59,6 +66,8 @@ namespace RoslynPad.Editor
             };
             Child = menu;
         }
+
+        public event EventHandler MenuOpened;
 
         private Style CreateItemContainerStyle()
         {

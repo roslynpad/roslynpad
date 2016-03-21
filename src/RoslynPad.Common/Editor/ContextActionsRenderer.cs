@@ -141,7 +141,15 @@ namespace RoslynPad.Editor
         {
             if (_popup == null)
             {
-                _popup = new ContextActionsBulbPopup(_editor.TextArea) {CommandProvider = GetActionCommand};
+                _popup = new ContextActionsBulbPopup(_editor.TextArea) { CommandProvider = GetActionCommand };
+                // TODO: workaround to refresh menu with latest document
+                _popup.MenuOpened += async (sender, args) =>
+                {
+                    if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
+                    {
+                        _popup.ItemsSource = _actions;
+                    }
+                };
             }
         }
 

@@ -30,10 +30,11 @@ namespace RoslynPad.RoslynEditor
         public async Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken)
         {
             var textSpan = new TextSpan(offset, length);
-            var codeFixes = await _roslynHost.GetService<ICodeFixService>().GetFixesAsync(_roslynHost.CurrentDocument,
+            var document = _roslynHost.CurrentDocument;
+            var codeFixes = await _roslynHost.GetService<ICodeFixService>().GetFixesAsync(document,
                 textSpan, false, cancellationToken).ConfigureAwait(false);
 
-            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(_roslynHost.CurrentDocument,
+            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(document,
                 textSpan, cancellationToken).ConfigureAwait(false);
 
             return ((IEnumerable<object>)codeFixes.SelectMany(x => x.Fixes))
@@ -41,6 +42,7 @@ namespace RoslynPad.RoslynEditor
                     .Where(x => ExcludedRefactoringProviders.All(p => !x.Provider.GetType().Name.Contains(p)))
                     .SelectMany(x => x.Actions));
         }
+
         public ICommand GetActionCommand(object action)
         {
             var codeAction = action as CodeAction;

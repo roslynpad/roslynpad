@@ -223,6 +223,7 @@ namespace RoslynPad.Editor
                 // Open code completion after the user has pressed dot:
                 _completionWindow = new CompletionWindow(TextArea)
                 {
+                    MinWidth = 200,
                     Background = CompletionBackground,
                     CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion
                 };
