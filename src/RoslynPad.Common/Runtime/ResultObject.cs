@@ -10,6 +10,8 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
+    using System.Reflection;
+
     public sealed class ResultObject : NotificationObject
     {
         private readonly object _o;
@@ -99,7 +101,18 @@ namespace RoslynPad.Runtime
 
             if (_property != null)
             {
-                var value = _property.GetValue(_o);
+                object value;
+                try
+                {
+                    value = _property.GetValue(_o);
+                }
+                catch (TargetInvocationException exception)
+                {
+                     _header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
+                    _children = new[] { new ResultObject(exception.InnerException) };
+                    return;
+                }
+
                 _header = _property.Name + " = " + value;
                 var propertyType = _property.PropertyType;
                 if (!propertyType.IsPrimitive &&
