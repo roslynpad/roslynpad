@@ -109,6 +109,7 @@ namespace RoslynPad.Runtime
                 catch (TargetInvocationException exception)
                 {
                      _header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
+                    _children = new[] { new ResultObject(exception.InnerException) };
                     return;
                 }
 
