@@ -1,196 +1,71 @@
 ﻿<Window x:Class="RoslynPad.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
-        xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:roslynPad="clr-namespace:RoslynPad"
-        xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet"
+        xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
-        FontFamily="Consolas"
         Title="RoslynPad"
         Height="600"
-        Width="800"
-        d:DataContext="{d:DesignInstance roslynPad:MainViewModel}">
-    <FrameworkElement.CommandBindings>
-        <CommandBinding Command="Play"
-                        Executed="OnPlayCommand" />
-    </FrameworkElement.CommandBindings>
-    <FrameworkElement.InputBindings>
-        <KeyBinding Key="F5"
-                    Command="Play" />
-    </FrameworkElement.InputBindings>
-    <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock DataContext="{Binding ElementName=Editor, Path=TextArea.Caret.Position}">
-                    Ln <Run Text="{Binding Line}" /> 
-                    Col <Run Text="{Binding Column}" />
-                </TextBlock>
-            </StatusBarItem>
-        </StatusBar>
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition />
-                <RowDefinition Height="5" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <ToolBar Grid.ColumnSpan="3">
-                <Button Content="Go"
-                        Command="Play" />
-                <Separator />
-                <Label Content="NuGet" />
-                <Menu Background="Transparent"
-                      Name="RootMenu"
-                      IsEnabled="{Binding NuGet.IsEnabled}">
-                    <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
-                              ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet}">
-                        <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type roslynPad:NuGetViewModel}">
-                                <Grid>
-                                    <TextBlock Name="Text"
-                                               Text=""
-                                               FontFamily="Segoe UI Symbol" />
-                                    <Ellipse Name="Icon"
-                                             Margin="2"
-                                             Visibility="Hidden"
-                                             VerticalAlignment="Stretch"
-                                             HorizontalAlignment="Stretch"
-                                             Fill="Transparent"
-                                             Stroke="Gray"
-                                             StrokeThickness="2"
-                                             Stretch="Uniform">
-                                    </Ellipse>
-                                </Grid>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding IsBusy}"
-                                                 Value="True">
-                                        <Setter TargetName="Text"
-                                                Property="Visibility"
-                                                Value="Hidden" />
-                                        <Setter TargetName="Icon"
-                                                Property="Visibility"
-                                                Value="Visible" />
-                                        <Setter TargetName="Icon"
-                                                Property="Stroke">
-                                            <Setter.Value>
-                                                <RadialGradientBrush GradientOrigin="0,0">
-                                                    <GradientStop Color="Teal"
-                                                                  Offset="1" />
-                                                    <GradientStop Color="Transparent" />
-                                                </RadialGradientBrush>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard Name="animate">
-                                                <Storyboard>
-                                                    <PointAnimationUsingKeyFrames Storyboard.TargetName="Icon"
-                                                                                  Storyboard.TargetProperty="(Shape.Stroke).(RadialGradientBrush.GradientOrigin)"
-                                                                                  RepeatBehavior="Forever">
-                                                        <LinearPointKeyFrame Value="1,0" />
-                                                        <LinearPointKeyFrame Value="1,1" />
-                                                        <LinearPointKeyFrame Value="0,1" />
-                                                        <LinearPointKeyFrame Value="0,0" />
-                                                    </PointAnimationUsingKeyFrames>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                        <DataTrigger.ExitActions>
-                                            <StopStoryboard BeginStoryboardName="animate" />
-                                        </DataTrigger.ExitActions>
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </MenuItem.HeaderTemplate>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="MenuItem">
-                                <Setter Property="Command"
-                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
-                                <Setter Property="CommandParameter"
-                                        Value="{Binding}" />
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="nuGet:IPackage">
-                                <TextBlock>
-                                    <Run Text="{Binding Id, Mode=OneTime}" />
-                                    <Run Text="{Binding Version, Mode=OneTime}" />
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </MenuItem>
-                </Menu>
-                <TextBox Name="SearchTerm"
-                         IsEnabled="{Binding NuGet.IsEnabled}"
-                         Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                         Width="300" />
-            </ToolBar>
-            <editor:CodeTextEditor x:Name="Editor"
-                                   x:FieldModifier="private"
-                                   Grid.Row="1"
-                                   Grid.Column="0"
-                                   KeyDown="Editor_OnKeyDown"
-                                   Grid.ColumnSpan="3" />
-            <GridSplitter Grid.Row="2"
-                          Grid.Column="0"
-                          Grid.ColumnSpan="3"
-                          Background="#ccc"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Rows"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch" />
-
-            <GridSplitter Grid.Row="3"
-                          Grid.Column="1"
-                          Background="#ccc"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Columns"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch" />
-
-            <xctk:PropertyGrid Name="ThePropertyGrid"
-                               Grid.Row="3"
-                               Grid.Column="2" />
-            <TreeView Name="Results"
-                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                      Grid.Column="0"
-                      Grid.Row="3">
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded"
-                                Value="{Binding IsExpanded}" />
-                    </Style>
-                </TreeView.ItemContainerStyle>
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate DataType="{x:Type runtime:ResultObject}"
-                                              ItemsSource="{Binding Children}">
-                        <DockPanel>
-                            <Button Padding="0"
-                                    Margin="0 0 5 0"
-                                    VerticalAlignment="Top"
-                                    KeyboardNavigation.IsTabStop="False"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding CopyCommand}">
-                                <Image Source="{StaticResource Copy}"
-                                       Height="12" />
-                            </Button>
-                            <TextBlock Text="{Binding Header}" />
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
-        </Grid>
-    </DockPanel>
+        Width="800">
+    <FrameworkElement.Resources>
+        <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
+                                  ItemsSource="{Binding Children}">
+            <DockPanel Margin="0 0 0 3">
+                <Image Name="Icon"
+                       Source="{StaticResource CsFile}"
+                       Height="12"
+                       Margin="0 0 3 0" />
+                <TextBlock Text="{Binding Name}" />
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
+                             Value="True">
+                    <Setter TargetName="Icon"
+                            Property="Source"
+                            Value="{StaticResource Folder}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+        
+        <DataTemplate DataType="{x:Type roslynPad:OpenDocumentViewModel}">
+            <roslynPad:DocumentView />
+        </DataTemplate>
+        
+        <Style x:Key="DocumentItemContainerStyle"
+               TargetType="TreeViewItem"
+               d:DataContext="{d:DesignInstance roslynPad:DocumentViewModel}">
+            <Setter Property="IsExpanded"
+                    Value="{Binding IsExpanded}" />
+            <EventSetter Event="MouseDoubleClick" Handler="OnDocumentClick" />
+            <EventSetter Event="KeyDown" Handler="OnDocumentKeyDown" />
+        </Style>
+    </FrameworkElement.Resources>
+    <dock:DockingManager DocumentsSource="{Binding OpenDocuments}">
+        <dock:DockingManager.DocumentHeaderTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding Content.Title}" />
+            </DataTemplate>
+        </dock:DockingManager.DocumentHeaderTemplate>
+        <dock:LayoutRoot>
+            <dock:LayoutPanel Orientation="Horizontal">
+                <dock:LayoutAnchorablePane DockWidth="200">
+                    <dock:LayoutAnchorable CanClose="False"
+                                           CanFloat="False"
+                                           CanAutoHide="True"
+                                           AutoHideWidth="200"
+                                           Title="Documents">
+                        <TreeView ItemsSource="{Binding Documents}"
+                                  ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                    </dock:LayoutAnchorable>
+                </dock:LayoutAnchorablePane>
+                <dock:LayoutDocumentPane />
+            </dock:LayoutPanel>
+        </dock:LayoutRoot>
+    </dock:DockingManager>
 </Window>
+

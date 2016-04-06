@@ -34,6 +34,10 @@
             <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
                 <TextBlock Text="{Binding Descriptor.Title}" />
             </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type ImageSource}">
+                <Image Source="{Binding}" />
+            </DataTemplate>
 
             <Style TargetType="cc:InsightWindow">
                 <Setter Property="Template">

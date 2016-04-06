@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -13,9 +14,20 @@ namespace RoslynPad
         {
             NuGet = new NuGetViewModel();
             RoslynHost = new RoslynHost(new NuGetProvider(NuGet.GlobalPackageFolder, NuGetPathVariableName));
+            Documents = DocumentViewModel.CreateRoot(this).Children;
+            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
         }
 
         public NuGetViewModel NuGet { get; }
+
+        public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
+
+        public ObservableCollection<DocumentViewModel> Documents { get; }
+
+        public void OpenDocument(DocumentViewModel document)
+        {
+            OpenDocuments.Add(new OpenDocumentViewModel(document));
+        }
 
         class NuGetProvider : INuGetProvider
         {

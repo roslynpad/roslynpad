@@ -22,17 +22,5 @@ namespace RoslynPad.Properties {
                 return defaultInstance;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastSessionText {
-            get {
-                return ((string)(this["LastSessionText"]));
-            }
-            set {
-                this["LastSessionText"] = value;
-            }
-        }
     }
 }
