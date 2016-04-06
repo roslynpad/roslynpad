@@ -79,8 +79,8 @@ namespace RoslynPad
             if (installResult.References.Count == 0) return;
 
             var text = string.Join(Environment.NewLine,
-                installResult.References.Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
-                .Concat(installResult.FrameworkReferences)
+                installResult.References.Distinct().Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
+                .Concat(installResult.FrameworkReferences.Distinct())
                 .Where(r => !_roslynHost.HasReference(_viewModel.DocumentId, r))
                 .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
 

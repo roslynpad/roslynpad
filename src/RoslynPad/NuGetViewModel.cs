@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
-using NuGet.CommandLine;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.PackageManagement;
@@ -24,6 +24,8 @@ using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
 using System.Reflection;
+using NuGet.Protocol.Core.v3;
+using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
 
 namespace RoslynPad
 {
@@ -523,13 +525,73 @@ namespace RoslynPad
                 return Enumerable.Empty<string>();
             }
 
-            public string ProjectName => null;
-            public string ProjectUniqueName => null;
-            public string ProjectFullPath => null;
+            public string ProjectName => "P";
+            public string ProjectUniqueName => "P";
+            public string ProjectFullPath => "P";
 
             public INuGetProjectContext NuGetProjectContext { get; }
 
             #endregion
+        }
+
+        private class CommandLineSourceRepositoryProvider : ISourceRepositoryProvider
+        {
+            private readonly List<Lazy<INuGetResourceProvider>> _resourceProviders;
+            private readonly List<SourceRepository> _repositories;
+
+            // There should only be one instance of the source repository for each package source.
+            private static readonly ConcurrentDictionary<PackageSource, SourceRepository> _cachedSources
+                = new ConcurrentDictionary<PackageSource, SourceRepository>();
+
+            public CommandLineSourceRepositoryProvider(IPackageSourceProvider packageSourceProvider)
+            {
+                PackageSourceProvider = packageSourceProvider;
+
+                _resourceProviders = new List<Lazy<INuGetResourceProvider>>();
+                _resourceProviders.AddRange(Repository.Provider.GetCoreV2());
+                _resourceProviders.AddRange(Repository.Provider.GetCoreV3());
+
+                // Create repositories
+                _repositories = PackageSourceProvider.LoadPackageSources()
+                    .Where(s => s.IsEnabled)
+                    .Select(CreateRepository)
+                    .ToList();
+            }
+
+            /// <summary>
+            /// Retrieve repositories that have been cached.
+            /// </summary>
+            public IEnumerable<SourceRepository> GetRepositories()
+            {
+                return _repositories;
+            }
+
+            /// <summary>
+            /// Create a repository and add it to the cache.
+            /// </summary>
+            public SourceRepository CreateRepository(PackageSource source)
+            {
+                return _cachedSources.GetOrAdd(source, new SourceRepository(source, _resourceProviders));
+            }
+
+            public IPackageSourceProvider PackageSourceProvider { get; }
+        }
+
+        private class CommandLineMachineWideSettings : IMachineWideSettings
+        {
+            private readonly Lazy<IEnumerable<Settings>> _settings;
+
+            public CommandLineMachineWideSettings()
+            {
+                var baseDirectory = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                        "nuget",
+                        "Config");
+                _settings = new Lazy<IEnumerable<Settings>>(
+                    () => NuGet.Configuration.Settings.LoadMachineWideSettings(baseDirectory));
+            }
+
+            public IEnumerable<Settings> Settings => _settings.Value;
         }
 
         #endregion
