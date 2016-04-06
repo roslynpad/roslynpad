@@ -6,13 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Reflection;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
-    using System.Reflection;
-
-    public sealed class ResultObject : NotificationObject
+    internal sealed class ResultObject : NotificationObject
     {
         private readonly object _o;
         private readonly PropertyDescriptor _property;
@@ -108,7 +107,7 @@ namespace RoslynPad.Runtime
                 }
                 catch (TargetInvocationException exception)
                 {
-                     _header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
+                    _header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
                     _children = new[] { new ResultObject(exception.InnerException) };
                     return;
                 }

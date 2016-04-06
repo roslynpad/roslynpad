@@ -40,6 +40,18 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+
+    <!-- Source: The Noun Project, icon by Robin Richards -->
+    <DrawingImage x:Key="Save">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="#00539C">
+                <GeometryDrawing.Geometry>
+                    <PathGeometry Figures="m 10.16 113 -0.6 0 -1.586667 0 -0.786666 0 C 6.16 113 5.333333 113.82667 5.333333 114.84 l 0 3.48 -2.666666 0 L 6 121.65333 9.333333 118.32 l -2.666666 0 0 -3.48 c 0 -0.28 0.24 -0.50667 0.506666 -0.50667 l 0.786667 0 1.586667 0 0.6 0 c 0.28 0 0.506666 0.24 0.506666 0.50667 l 0 8.30667 c 0 0.28 -0.24 0.50666 -0.506666 0.50666 l -8.306667 0 c -0.28 0 -0.506667 -0.24 -0.506667 -0.50666 l 0 -8.81334 -1.333333 0 0 8.82667 c 0 1.01333 0.826667 1.84 1.84 1.84 l 8.306667 0 C 11.173333 125 12 124.17333 12 123.16 l 0 -8.32 C 12 113.82667 11.173333 113 10.16 113 Z"
+                                  FillRule="NonZero" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingImage.Drawing>
+    </DrawingImage>
     
     <!-- Source: Visual Studio Image Library -->
     <DrawingImage x:Key="Copy">

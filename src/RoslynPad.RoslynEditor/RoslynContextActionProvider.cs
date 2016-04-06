@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
@@ -17,21 +18,25 @@ namespace RoslynPad.RoslynEditor
 {
     internal sealed class RoslynContextActionProvider : IContextActionProvider
     {
-        private readonly RoslynHost _roslynHost;
-
         private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
             ImmutableArray.Create("ExtractInterface");
 
-        public RoslynContextActionProvider(RoslynHost roslynHost)
+        private readonly DocumentId _documentId;
+        private readonly RoslynHost _roslynHost;
+        private readonly ICodeFixService _codeFixService;
+
+        public RoslynContextActionProvider(DocumentId documentId, RoslynHost roslynHost)
         {
+            _documentId = documentId;
             _roslynHost = roslynHost;
+            _codeFixService = _roslynHost.GetService<ICodeFixService>();
         }
 
         public async Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken)
         {
             var textSpan = new TextSpan(offset, length);
-            var document = _roslynHost.CurrentDocument;
-            var codeFixes = await _roslynHost.GetService<ICodeFixService>().GetFixesAsync(document,
+            var document = _roslynHost.GetDocument(_documentId);
+            var codeFixes = await _codeFixService.GetFixesAsync(document,
                 textSpan, false, cancellationToken).ConfigureAwait(false);
 
             var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(document,
@@ -60,7 +65,7 @@ namespace RoslynPad.RoslynEditor
             var operations = await codeAction.GetOperationsAsync(CancellationToken.None).ConfigureAwait(true);
             foreach (var operation in operations)
             {
-                operation.Apply(_roslynHost.Workspace, CancellationToken.None);
+                operation.Apply(_roslynHost.GetDocument(_documentId).Project.Solution.Workspace, CancellationToken.None);
             }
         }
     }

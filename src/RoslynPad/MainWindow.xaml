@@ -45,7 +45,9 @@
             <EventSetter Event="KeyDown" Handler="OnDocumentKeyDown" />
         </Style>
     </FrameworkElement.Resources>
-    <dock:DockingManager DocumentsSource="{Binding OpenDocuments}">
+    <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                         ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                         DocumentClosed="DockingManager_OnDocumentClosed">
         <dock:DockingManager.DocumentHeaderTemplate>
             <DataTemplate>
                 <TextBlock Text="{Binding Content.Title}" />

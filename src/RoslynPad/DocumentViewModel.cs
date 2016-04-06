@@ -25,6 +25,7 @@ namespace RoslynPad
         public string Path { get; }
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
+        public bool IsNew { get; set; }
 
         public static DocumentViewModel CreateRoot(MainViewModel mainViewModel)
         {
@@ -36,13 +37,23 @@ namespace RoslynPad
             return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
         }
 
-        private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder)
+        private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder, bool isNew = false)
         {
             MainViewModel = mainViewModel;
             Path = path;
             IsFolder = isFolder;
-            Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            IsNew = isNew;
+            if (!isNew)
+            {
+                Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            }
             OpenDocumentCommand  = new DelegateCommand((Action)Open);
+        }
+
+        public DocumentViewModel CreateNew()
+        {
+            if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
+            return new DocumentViewModel(MainViewModel, Path, isFolder: false, isNew: true);
         }
 
         private void Open()
@@ -59,7 +70,7 @@ namespace RoslynPad
             set { SetProperty(ref _isExpanded, value); }
         }
 
-        public string Name { get; }
+        public string Name { get; set; }
 
         public ObservableCollection<DocumentViewModel> Children
         {
@@ -77,9 +88,9 @@ namespace RoslynPad
             try
             {
                 return new ObservableCollection<DocumentViewModel>(
-                    Directory.EnumerateDirectories(Path).Select(x => new DocumentViewModel(MainViewModel, x, true))
+                    Directory.EnumerateDirectories(Path).Select(x => new DocumentViewModel(MainViewModel, x, isFolder: true)).OrderBy(x => x.Name)
                         .Concat(Directory.EnumerateFiles(Path, "*" + DefaultFileExtension)
-                            .Select(x => new DocumentViewModel(MainViewModel, x, false))));
+                            .Select(x => new DocumentViewModel(MainViewModel, x, isFolder: false)).OrderBy(x => x.Name)));
             }
             catch (Exception)
             {

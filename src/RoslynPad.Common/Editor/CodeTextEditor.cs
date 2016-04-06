@@ -10,6 +10,7 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Search;
 
 namespace RoslynPad.Editor
 {
@@ -29,6 +30,7 @@ namespace RoslynPad.Editor
             TextArea.TextEntered += OnTextEntered;
             ShowLineNumbers = true;
             ToolTipService.SetInitialShowDelay(this, 0);
+            SearchPanel.Install(this);
         }
 
         public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(

@@ -30,6 +30,7 @@ namespace RoslynPad
         private ContextActionsRenderer _contextActionsRenderer;
         private readonly SynchronizationContext _syncContext;
         private RoslynHost _roslynHost;
+        private OpenDocumentViewModel _viewModel;
 
         public DocumentView()
         {
@@ -51,23 +52,26 @@ namespace RoslynPad
             DataContextChanged += OnDataContextChanged;
         }
 
-        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
+        private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            var viewModel = (OpenDocumentViewModel)args.NewValue;
-            viewModel.MainViewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
-            _roslynHost = viewModel.MainViewModel.RoslynHost;
+            _viewModel = (OpenDocumentViewModel)args.NewValue;
+            _viewModel.MainViewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            _roslynHost = _viewModel.MainViewModel.RoslynHost;
 
-            _roslynHost.GetService<IDiagnosticService>().DiagnosticsUpdated += (s, a) => _syncContext.Post(o => ProcessDiagnostics(a), null);
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
-            _roslynHost.SetDocument(avalonEditTextContainer);
-            _roslynHost.ApplyingTextChange += (id, text) => avalonEditTextContainer.UpdateText(text);
 
-            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_roslynHost));
+            await _viewModel.Initialize(
+                avalonEditTextContainer,
+                a => _syncContext.Post(o => ProcessDiagnostics(a), null),
+                text => avalonEditTextContainer.UpdateText(text)
+                ).ConfigureAwait(true);
+
+            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
-            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_roslynHost));
+            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
-            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_roslynHost);
+            Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
         }
 
         private void NuGetOnPackageInstalled(IPackage package, NuGetInstallResult installResult)
@@ -77,7 +81,7 @@ namespace RoslynPad
             var text = string.Join(Environment.NewLine,
                 installResult.References.Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
                 .Concat(installResult.FrameworkReferences)
-                .Where(r => !_roslynHost.HasReference(r))
+                .Where(r => !_roslynHost.HasReference(_viewModel.DocumentId, r))
                 .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
 
             Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
@@ -161,7 +165,7 @@ namespace RoslynPad
 
             try
             {
-                var result = await _roslynHost.Execute().ConfigureAwait(true);
+                var result = await _roslynHost.Execute(_viewModel.DocumentId).ConfigureAwait(true);
                 if (result != null)
                 {
                     AddResult(result);

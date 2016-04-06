@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Input;
+using Xceed.Wpf.AvalonDock;
 
 namespace RoslynPad
 {
@@ -8,10 +9,12 @@ namespace RoslynPad
     /// </summary>
     public partial class MainWindow
     {
+        private readonly MainViewModel _viewModel;
+
         public MainWindow()
         {
-            var mainViewModel = new MainViewModel();
-            DataContext = mainViewModel;
+            _viewModel = new MainViewModel();
+            DataContext = _viewModel;
             InitializeComponent();
         }
 
@@ -35,6 +38,11 @@ namespace RoslynPad
         {
             var documentViewModel = (DocumentViewModel)((FrameworkElement)source).DataContext;
             documentViewModel.OpenDocumentCommand.Execute();
+        }
+
+        private void DockingManager_OnDocumentClosed(object sender, DocumentClosedEventArgs e)
+        {
+            _viewModel.CloseDocument((OpenDocumentViewModel) e.Document.Content);
         }
     }
 }

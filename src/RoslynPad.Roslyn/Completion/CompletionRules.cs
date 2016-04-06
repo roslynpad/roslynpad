@@ -3,9 +3,9 @@ namespace RoslynPad.Roslyn.Completion
     public class CompletionRules
     {
         // ReSharper disable once NotAccessedField.Local
-        private readonly object _inner;
+        private readonly Microsoft.CodeAnalysis.Completion.CompletionRules _inner;
 
-        internal CompletionRules(object inner)
+        internal CompletionRules(Microsoft.CodeAnalysis.Completion.CompletionRules inner)
         {
             _inner = inner;
         }

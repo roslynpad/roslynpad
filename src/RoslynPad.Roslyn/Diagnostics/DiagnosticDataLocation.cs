@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {

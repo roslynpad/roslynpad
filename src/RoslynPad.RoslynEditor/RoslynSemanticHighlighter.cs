@@ -21,26 +21,30 @@ using System.Collections.Generic;
 using System.Threading;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn;
+using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
 
 namespace RoslynPad.RoslynEditor
 {
     internal sealed class RoslynSemanticHighlighter : IHighlighter
     {
         private readonly IDocument _document;
+        private readonly DocumentId _documentId;
         private readonly RoslynHost _roslynHost;
         private readonly List<CachedLine> _cachedLines;
 
         private bool _inHighlightingGroup;
         private HighlightedLine _line;
 
-        public RoslynSemanticHighlighter(IDocument document, RoslynHost roslynHost)
+        public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, RoslynHost roslynHost)
         {
             if (document == null)
                 throw new ArgumentNullException(nameof(document));
             _document = document;
+            _documentId = documentId;
             _roslynHost = roslynHost;
 
             if (document is TextDocument)
@@ -126,7 +130,7 @@ namespace RoslynPad.RoslynEditor
             try
             {
                 // TODO: check offset in Roslyn's doc
-                spans = Classifier.GetClassifiedSpansAsync(_roslynHost.CurrentDocument,
+                spans = Classifier.GetClassifiedSpansAsync(_roslynHost.GetDocument(_documentId),
                     new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None).GetAwaiter().GetResult();
             }
             catch (OperationCanceledException)
