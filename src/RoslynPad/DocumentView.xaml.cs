@@ -3,10 +3,13 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
@@ -60,11 +63,16 @@ namespace RoslynPad
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
 
+            _viewModel.PromptForDocument = PromptForDocument;
+
             await _viewModel.Initialize(
                 avalonEditTextContainer,
                 a => _syncContext.Post(o => ProcessDiagnostics(a), null),
                 text => avalonEditTextContainer.UpdateText(text)
                 ).ConfigureAwait(true);
+
+            var documentText = await _viewModel.LoadText().ConfigureAwait(true);
+            Editor.AppendText(documentText);
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
@@ -72,6 +80,63 @@ namespace RoslynPad
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
+        }
+
+        private Task<string> PromptForDocument()
+        {
+            // TODO: encapsulate in a dialog service
+
+            var isValid = false;
+            var textBox = new TextBox { MaxLength = 200 };
+            textBox.Loaded += (sender, args) => textBox.Focus();
+            FilterInvalidCharacters(textBox);
+            textBox.KeyDown += (sender, args) =>
+            {
+                if (args.Key == Key.Enter)
+                {
+                    isValid = true;
+                    TaskDialog.CancelCommand.Execute(null, textBox);
+                }
+            };
+            var saveButton = new Button { Content = "Save", IsDefault = true };
+            var dialog = new TaskDialog
+            {
+                Background = Brushes.White,
+                Header = "Save Document",
+                Content = textBox,
+                Buttons =
+                {
+                    saveButton,
+                    new TaskDialogButtonData(TaskDialogButtons.Cancel)
+                },
+            };
+            dialog.ShowInline(this);
+            // ReSharper disable once PossibleUnintendedReferenceComparison
+            if ((isValid || dialog.Result.Button == saveButton) && !string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                return Task.FromResult(textBox.Text);
+            }
+            return Task.FromResult<string>(null);
+        }
+
+        private static void FilterInvalidCharacters(TextBox textBox)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            textBox.TextChanged += (sender, e) =>
+            {
+                foreach (var c in e.Changes)
+                {
+                    if (c.AddedLength == 0) continue;
+                    textBox.Select(c.Offset, c.AddedLength);
+                    var filteredText = invalidChars.Aggregate(textBox.SelectedText,
+                        (current, invalidChar) => current.Replace(invalidChar.ToString(), string.Empty));
+                    if (textBox.SelectedText != filteredText)
+                    {
+                        textBox.SelectedText = filteredText;
+                    }
+                    textBox.Select(c.Offset + c.AddedLength, 0);
+                }
+            };
         }
 
         private void NuGetOnPackageInstalled(IPackage package, NuGetInstallResult installResult)
@@ -194,6 +259,11 @@ namespace RoslynPad
             //    _roslynHost.GetService<IInlineRenameService>().StartInlineSession(
             //        _roslynHost.CurrentDocument, new TextSpan(Editor.CaretOffset, 1));
             //}
+        }
+
+        private void Editor_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Editor.Focus();
         }
     }
 }

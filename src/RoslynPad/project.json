@@ -13,13 +13,8 @@
     "Microsoft.CodeAnalysis.CSharp.Features": "1.2.0",
     "AvalonEdit": "5.0.2",
     "Extended.Wpf.Toolkit": "2.6.0",
-    "NuGet.Packaging": "3.3.0",
-    "NuGet.Packaging.Core": "3.3.0",
-    "NuGet.Frameworks": "3.3.0",
-    "NuGet.Client": "3.3.0",
-    "NuGet.RuntimeModel": "3.3.0",
-    "NuGet.Packaging.Core.Types": "3.3.0",
-    "NuGet.ProjectManagement": "3.3.0",
-    "Nuget.PackageManagement": "3.3.0"
+    "AvalonLibrary": "2.3.0",
+    "Nuget.PackageManagement": "3.3.0",
+    "Microsoft.ApplicationInsights.WindowsServer": "2.0.0" 
   }
 }

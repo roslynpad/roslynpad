@@ -5,13 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:roslynPad="clr-namespace:RoslynPad"
         xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
+        xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         Title="RoslynPad"
         Height="600"
-        Width="800">
+        Width="800"
+        Name="This">
+    <FrameworkElement.InputBindings>
+        <KeyBinding Gesture="Ctrl+N"
+                    Command="{Binding NewDocumentCommand}" />
+        <KeyBinding Gesture="Ctrl+W"
+                    Command="{Binding CloseCurrentDocumentCommand}" />
+    </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
         <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
                                   ItemsSource="{Binding Children}">
@@ -31,43 +39,83 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </HierarchicalDataTemplate>
-        
+
         <DataTemplate DataType="{x:Type roslynPad:OpenDocumentViewModel}">
             <roslynPad:DocumentView />
         </DataTemplate>
-        
+
         <Style x:Key="DocumentItemContainerStyle"
                TargetType="TreeViewItem"
                d:DataContext="{d:DesignInstance roslynPad:DocumentViewModel}">
             <Setter Property="IsExpanded"
                     Value="{Binding IsExpanded}" />
-            <EventSetter Event="MouseDoubleClick" Handler="OnDocumentClick" />
-            <EventSetter Event="KeyDown" Handler="OnDocumentKeyDown" />
+            <EventSetter Event="MouseDoubleClick"
+                         Handler="OnDocumentClick" />
+            <EventSetter Event="KeyDown"
+                         Handler="OnDocumentKeyDown" />
         </Style>
+        
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
-    <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
-                         ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
-                         DocumentClosed="DockingManager_OnDocumentClosed">
-        <dock:DockingManager.DocumentHeaderTemplate>
-            <DataTemplate>
-                <TextBlock Text="{Binding Content.Title}" />
-            </DataTemplate>
-        </dock:DockingManager.DocumentHeaderTemplate>
-        <dock:LayoutRoot>
-            <dock:LayoutPanel Orientation="Horizontal">
-                <dock:LayoutAnchorablePane DockWidth="200">
-                    <dock:LayoutAnchorable CanClose="False"
-                                           CanFloat="False"
-                                           CanAutoHide="True"
-                                           AutoHideWidth="200"
-                                           Title="Documents">
-                        <TreeView ItemsSource="{Binding Documents}"
-                                  ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
-                    </dock:LayoutAnchorable>
-                </dock:LayoutAnchorablePane>
-                <dock:LayoutDocumentPane />
-            </dock:LayoutPanel>
-        </dock:LayoutRoot>
-    </dock:DockingManager>
+    <av:InlineModalDecorator Target="{Binding ElementName=This}">
+        <DockPanel>
+            <Border Padding="3"
+                    Margin="1"
+                    Background="#eebbbb"
+                    DockPanel.Dock="Bottom"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <DockPanel LastChildFill="False">
+                    <CheckBox IsChecked="{Binding SendErrors}"
+                              ToolTip="Send errors to RoslynPad's author (just stack traces)"
+                              VerticalAlignment="Center"
+                              Background="Transparent"
+                              Content="Send errors"
+                              DockPanel.Dock="Right" />
+                    <Button Margin="3"
+                            Content="View details"
+                            DockPanel.Dock="Right"
+                            Background="Transparent"
+                            Click="ViewErrorDetails_OnClick" />
+                    <Button Background="Transparent"
+                            Content=""
+                            FontFamily="Segoe UI Symbol"
+                            Command="{Binding ClearErrorCommand}"
+                            Margin="3" />
+                    <TextBlock VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding LastError.Message}" />
+                </DockPanel>
+            </Border>
+            <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                                 ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                                 DocumentClosed="DockingManager_OnDocumentClosed">
+                <dock:DockingManager.DocumentHeaderTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Content.Title}" />
+                    </DataTemplate>
+                </dock:DockingManager.DocumentHeaderTemplate>
+                <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Content.Title}" />
+                    </DataTemplate>
+                </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                <dock:LayoutRoot>
+                    <dock:LayoutPanel Orientation="Horizontal">
+                        <dock:LayoutAnchorablePane DockWidth="200">
+                            <dock:LayoutAnchorable x:Name="DocumentsPane"
+                                                   CanClose="False"
+                                                   CanFloat="False"
+                                                   CanAutoHide="True"
+                                                   AutoHideWidth="200"
+                                                   Title="Documents">
+                                <TreeView ItemsSource="{Binding Documents}"
+                                          ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                            </dock:LayoutAnchorable>
+                        </dock:LayoutAnchorablePane>
+                        <dock:LayoutDocumentPane />
+                    </dock:LayoutPanel>
+                </dock:LayoutRoot>
+            </dock:DockingManager>
+        </DockPanel>
+    </av:InlineModalDecorator>
 </Window>
-

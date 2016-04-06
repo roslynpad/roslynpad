@@ -150,6 +150,7 @@ namespace RoslynPad.Editor
                         _popup.ItemsSource = _actions;
                     }
                 };
+                _popup.MenuClosed += (sender, args) => _editor.Dispatcher.InvokeAsync(() => _editor.Focus(), DispatcherPriority.ApplicationIdle);
             }
         }
 

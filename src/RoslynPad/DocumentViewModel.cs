@@ -25,7 +25,6 @@ namespace RoslynPad
         public string Path { get; }
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
-        public bool IsNew { get; set; }
 
         public static DocumentViewModel CreateRoot(MainViewModel mainViewModel)
         {
@@ -37,23 +36,29 @@ namespace RoslynPad
             return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
         }
 
-        private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder, bool isNew = false)
+        private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder)
         {
             MainViewModel = mainViewModel;
             Path = path;
             IsFolder = isFolder;
-            IsNew = isNew;
-            if (!isNew)
-            {
-                Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
-            }
-            OpenDocumentCommand  = new DelegateCommand((Action)Open);
+            Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            OpenDocumentCommand = new DelegateCommand((Action)Open);
         }
 
-        public DocumentViewModel CreateNew()
+        public DocumentViewModel CreateNew(string documentName)
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
-            return new DocumentViewModel(MainViewModel, Path, isFolder: false, isNew: true);
+
+            if (!documentName.EndsWith(DefaultFileExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                documentName += DefaultFileExtension;
+            }
+
+            var document = new DocumentViewModel(MainViewModel, System.IO.Path.Combine(Path, documentName), isFolder: false);
+
+            var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
+            Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
+            return document;
         }
 
         private void Open()

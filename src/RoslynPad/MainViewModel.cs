@@ -1,5 +1,10 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+using Microsoft.ApplicationInsights;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -7,8 +12,13 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private OpenDocumentViewModel _currentOpenDocument;
+        private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
+
+        private readonly Lazy<TelemetryClient> _client;
+        private readonly DocumentViewModel _documentRoot;
+        private Exception _lastError;
+        private OpenDocumentViewModel _currentOpenDocument;
 
         public RoslynHost RoslynHost { get; }
 
@@ -16,9 +26,19 @@ namespace RoslynPad
         {
             NuGet = new NuGetViewModel();
             RoslynHost = new RoslynHost(new NuGetProvider(NuGet.GlobalPackageFolder, NuGetPathVariableName));
-            Documents = DocumentViewModel.CreateRoot(this).Children;
+            _documentRoot = DocumentViewModel.CreateRoot(this);
+            Documents = _documentRoot.Children;
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
+            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
+            CloseCurrentDocumentCommand = new DelegateCommand((Action)CloseCurrentDocument);
+            ClearErrorCommand = new DelegateCommand(() => LastError = null);
             CreateNewDocument();
+
+            _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
+            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
+            Application.Current.Exit += (o, e) => OnExit();
+            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject);
+            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
         }
 
         public NuGetViewModel NuGet { get; }
@@ -33,6 +53,10 @@ namespace RoslynPad
 
         public ObservableCollection<DocumentViewModel> Documents { get; }
 
+        public DelegateCommand NewDocumentCommand { get; }
+
+        public DelegateCommand CloseCurrentDocumentCommand { get; }
+
         public void OpenDocument(DocumentViewModel document)
         {
             var openDocument = OpenDocuments.FirstOrDefault(x => x.Document == document);
@@ -46,7 +70,86 @@ namespace RoslynPad
 
         public void CreateNewDocument()
         {
-            OpenDocuments.Add(new OpenDocumentViewModel(this, null));
+            var openDocument = new OpenDocumentViewModel(this, null);
+            OpenDocuments.Add(openDocument);
+            CurrentOpenDocument = openDocument;
+        }
+
+        public void CloseDocument(OpenDocumentViewModel document)
+        {
+            // TODO: Save
+            RoslynHost.CloseDocument(document.DocumentId);
+            OpenDocuments.Remove(document);
+        }
+
+        private void CloseCurrentDocument()
+        {
+            if (CurrentOpenDocument != null)
+            {
+                CloseDocument(CurrentOpenDocument);
+            }
+        }
+
+        private void OnUnhandledException(Exception exception)
+        {
+            TrackException(exception, flushSync: true);
+        }
+
+        private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
+        {
+            TrackException(args.Exception);
+            LastError = args.Exception;
+            args.Handled = true;
+        }
+
+        private void OnExit()
+        {
+            if (_client.IsValueCreated)
+            {
+                _client.Value.Flush();
+            }
+        }
+
+        private void TrackException(Exception exception, bool flushSync = false)
+        {
+            // ReSharper disable once RedundantLogicalConditionalExpressionOperand
+            if (SendErrors && ApplicationInsightsInstrumentationKey != null)
+            {
+                _client.Value.TrackException(exception);
+                if (flushSync)
+                {
+                    _client.Value.Flush();
+                }
+                else
+                {
+                    Task.Run(() => _client.Value.Flush());
+                }
+            }
+        }
+
+        public Exception LastError
+        {
+            get { return _lastError; }
+            private set
+            {
+                SetProperty(ref _lastError, value);
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
+
+        public bool HasError => LastError != null;
+
+        public DelegateCommand ClearErrorCommand { get; }
+
+        public bool SendErrors
+        {
+            get { return Properties.Settings.Default.SendErrors; }
+            set
+            {
+                Properties.Settings.Default.SendErrors = value;
+                Properties.Settings.Default.Save();
+                OnPropertyChanged(nameof(SendErrors));
+            }
         }
 
         class NuGetProvider : INuGetProvider
@@ -61,11 +164,9 @@ namespace RoslynPad
             public string PathVariableName { get; }
         }
 
-        public void CloseDocument(OpenDocumentViewModel content)
+        public DocumentViewModel AddDocument(string documentName)
         {
-            // TODO: Save
-            // TODO: stop Roslyn services
-            OpenDocuments.Remove(content);
+            return _documentRoot.CreateNew(documentName);
         }
     }
 }

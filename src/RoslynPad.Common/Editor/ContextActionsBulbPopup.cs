@@ -57,6 +57,13 @@ namespace RoslynPad.Editor
                     MenuOpened?.Invoke(this, EventArgs.Empty);
                 }
             };
+            _mainItem.SubmenuClosed += (sender, args) =>
+            {
+                if (ReferenceEquals(args.OriginalSource, _mainItem))
+                {
+                    MenuClosed?.Invoke(this, EventArgs.Empty);
+                }
+            };
             var menu = new Menu
             {
                 Background = Brushes.Transparent,
@@ -68,6 +75,7 @@ namespace RoslynPad.Editor
         }
 
         public event EventHandler MenuOpened;
+        public event EventHandler MenuClosed;
 
         private Style CreateItemContainerStyle()
         {

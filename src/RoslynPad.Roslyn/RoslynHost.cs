@@ -223,6 +223,18 @@ namespace RoslynPad.Roslyn
 
         #region Documents
 
+        public void CloseDocument(DocumentId documentId)
+        {
+            RoslynWorkspace workspace;
+            if (_workspaces.TryGetValue(documentId, out workspace))
+            {
+                workspace.Dispose();
+                _workspaces.TryRemove(documentId, out workspace);
+            }
+            Action<DiagnosticsUpdatedArgs> notifier;
+            _diagnosticsUpdatedNotifiers.TryRemove(documentId, out notifier);
+        }
+
         public Document GetDocument(DocumentId documentId)
         {
             RoslynWorkspace workspace;

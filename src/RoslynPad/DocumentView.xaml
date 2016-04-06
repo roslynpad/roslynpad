@@ -148,6 +148,7 @@
                                    Grid.Row="1"
                                    Grid.Column="0"
                                    KeyDown="Editor_OnKeyDown"
+                                   Loaded="Editor_OnLoaded"
                                    Grid.ColumnSpan="3" />
             <GridSplitter Grid.Row="2"
                           Grid.Column="0"

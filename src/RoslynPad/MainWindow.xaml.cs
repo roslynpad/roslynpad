@@ -1,5 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Input;
+using Avalon.Windows.Controls;
 using Xceed.Wpf.AvalonDock;
 
 namespace RoslynPad
@@ -16,6 +18,14 @@ namespace RoslynPad
             _viewModel = new MainViewModel();
             DataContext = _viewModel;
             InitializeComponent();
+            DocumentsPane.ToggleAutoHide();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            Application.Current.Shutdown();
         }
 
         private void OnDocumentClick(object sender, MouseButtonEventArgs e)
@@ -43,6 +53,14 @@ namespace RoslynPad
         private void DockingManager_OnDocumentClosed(object sender, DocumentClosedEventArgs e)
         {
             _viewModel.CloseDocument((OpenDocumentViewModel) e.Document.Content);
+        }
+
+        private void ViewErrorDetails_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (!_viewModel.HasError) return;
+
+            TaskDialog.ShowInline(this, "Unhandled Exception", 
+                _viewModel.LastError.ToString(), string.Empty, TaskDialogButtons.Close);
         }
     }
 }

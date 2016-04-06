@@ -22,5 +22,17 @@ namespace RoslynPad.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SendErrors {
+            get {
+                return ((bool)(this["SendErrors"]));
+            }
+            set {
+                this["SendErrors"] = value;
+            }
+        }
     }
 }
