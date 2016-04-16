@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,14 +11,13 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Notification;
-using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Completion;
@@ -33,19 +33,23 @@ namespace RoslynPad.Roslyn
 
         private static readonly ImmutableArray<Type> _defaultReferenceAssemblyTypes = new[] {
             typeof(object),
+            typeof(Thread),
             typeof(Task),
             typeof(List<>),
             typeof(Regex),
             typeof(StringBuilder),
             typeof(Uri),
             typeof(Enumerable),
-            typeof(ObjectExtensions)
+            typeof(IEnumerable),
+            typeof(ObjectExtensions),
+            typeof(Path),
         }.ToImmutableArray();
 
         private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =
             _defaultReferenceAssemblyTypes.Select(x => x.Assembly).Distinct().Concat(new[]
             {
-                Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
+                Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"),
+                typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
             }).ToImmutableArray();
 
         private readonly INuGetProvider _nuGetProvider;
@@ -60,6 +64,8 @@ namespace RoslynPad.Roslyn
         private int _documentNumber;
 
         internal ImmutableArray<MetadataReference> DefaultReferences { get; }
+
+        internal ImmutableArray<string> DefaultImports { get; }
 
         #endregion
 
@@ -84,7 +90,8 @@ namespace RoslynPad.Roslyn
             // we can't import this entire assembly due to composition errors
             // and we don't need all the VS services
             var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
-            var types = editorFeaturesAssembly.GetTypes().Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes");
+            var types = editorFeaturesAssembly.GetTypes().Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes")
+                .Concat(new[] { typeof(DocumentationProviderServiceFactory) });
 
             _compositionContext = new ContainerConfiguration()
                 .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
@@ -102,6 +109,8 @@ namespace RoslynPad.Roslyn
             DefaultReferences = _defaultReferenceAssemblies.Select(t =>
                 (MetadataReference)MetadataReference.CreateFromFile(t.Location,
                     documentation: GetDocumentationProvider(t.Location))).ToImmutableArray();
+
+            DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
 
@@ -175,7 +184,7 @@ namespace RoslynPad.Roslyn
             return _defaultReferenceAssemblies.Any(x => x.GetName().Name == text);
         }
 
-        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace)
+        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace, string workingDirectory)
         {
             var resolver = Activator.CreateInstance(
                 // can't access this type due to a name collision with Scripting assembly
@@ -183,7 +192,7 @@ namespace RoslynPad.Roslyn
                 // ReSharper disable once AssignNullToNotNullAttribute
                 Type.GetType("Microsoft.CodeAnalysis.RelativePathResolver, Microsoft.CodeAnalysis.Workspaces"),
                 ImmutableArray<string>.Empty,
-                AppDomain.CurrentDomain.BaseDirectory);
+                workingDirectory);
             return (MetadataReferenceResolver)Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
                 workspace.Services.GetService<IMetadataService>(),
                 resolver);
@@ -241,7 +250,7 @@ namespace RoslynPad.Roslyn
             return _workspaces.TryGetValue(documentId, out workspace) ? workspace.CurrentSolution.GetDocument(documentId) : null;
         }
 
-        public DocumentId AddDocument([NotNull] SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public DocumentId AddDocument([NotNull] SourceTextContainer sourceTextContainer, [NotNull] string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
@@ -254,7 +263,7 @@ namespace RoslynPad.Roslyn
                 .Register(workspace);
 
             var currentSolution = workspace.CurrentSolution;
-            var project = CreateSubmissionProject(currentSolution, CreateCompilationOptions(workspace));
+            var project = CreateSubmissionProject(currentSolution, CreateCompilationOptions(workspace, workingDirectory));
             var currentDocument = SetSubmissionDocument(workspace, sourceTextContainer, project);
 
             _workspaces.TryAdd(currentDocument.Id, workspace);
@@ -267,11 +276,11 @@ namespace RoslynPad.Roslyn
             return currentDocument.Id;
         }
 
-        private static CSharpCompilationOptions CreateCompilationOptions(Workspace workspace)
+        private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory)
         {
-            var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace);
+            var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory);
             var compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
-                usings: _defaultReferenceAssemblyTypes.Select(x => x.Namespace).ToImmutableArray(),
+                usings: DefaultImports,
                 metadataReferenceResolver: metadataReferenceResolver);
             return compilationOptions;
         }
@@ -294,49 +303,6 @@ namespace RoslynPad.Roslyn
                 compilationOptions: compilationOptions.WithScriptClassName(name),
                 metadataReferences: DefaultReferences));
             return solution.GetProject(id);
-        }
-
-        #endregion
-
-        #region Scripting
-
-        public async Task<object> Execute(DocumentId documentId)
-        {
-            var text = await GetDocument(documentId).GetTextAsync().ConfigureAwait(false);
-            var state = await CSharpScript.RunAsync(text.ToString(),
-                ScriptOptions.Default
-                    .AddImports(_defaultReferenceAssemblyTypes.Select(x => x.Namespace))
-                    .AddReferences(_defaultReferenceAssemblies)
-                    .WithMetadataResolver(new NuGetScriptMetadataResolver(_nuGetProvider))).ConfigureAwait(false);
-            return state.ReturnValue;
-        }
-
-        class NuGetScriptMetadataResolver : MetadataReferenceResolver
-        {
-            private readonly INuGetProvider _nuGetProvider;
-            private readonly ScriptMetadataResolver _inner;
-
-            public NuGetScriptMetadataResolver(INuGetProvider nuGetProvider)
-            {
-                _nuGetProvider = nuGetProvider;
-                _inner = ScriptMetadataResolver.Default;
-            }
-
-            public override bool Equals(object other)
-            {
-                return _inner.Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                return _inner.GetHashCode();
-            }
-
-            public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
-            {
-                reference = _nuGetProvider.ResolveReference(reference);
-                return _inner.ResolveReference(reference, baseFilePath, properties);
-            }
         }
 
         #endregion

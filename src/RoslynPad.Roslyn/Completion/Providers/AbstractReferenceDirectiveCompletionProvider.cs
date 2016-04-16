@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Immutable;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -72,7 +72,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
             var fileSystemHelper = new FileSystemCompletionHelper(
                 this, textChangeSpan,
-                CurrentWorkingDirectoryDiscoveryService.Instance,
+                new CurrentWorkingDirectoryDiscoveryService(Directory.GetCurrentDirectory()),
                 Microsoft.CodeAnalysis.Glyph.OpenFolder,
                 Microsoft.CodeAnalysis.Glyph.Assembly, searchPaths, new[] { ".dll", ".exe" }, path => path.Contains(","), ItemRules.Instance);
 
@@ -91,9 +91,12 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         private class CurrentWorkingDirectoryDiscoveryService : ICurrentWorkingDirectoryDiscoveryService
         {
-            public static readonly CurrentWorkingDirectoryDiscoveryService Instance = new CurrentWorkingDirectoryDiscoveryService();
+            public CurrentWorkingDirectoryDiscoveryService(string workingDirectory)
+            {
+                WorkingDirectory = workingDirectory;
+            }
 
-            public string WorkingDirectory => AppDomain.CurrentDomain.BaseDirectory;
+            public string WorkingDirectory { get; }
         }
 
         private class ItemRules : Microsoft.CodeAnalysis.Completion.CompletionItemRules

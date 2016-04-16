@@ -169,7 +169,10 @@ namespace RoslynPad.Roslyn
 
         private MetadataReference ResolveReference(string name)
         {
-            name = _nuGetProvider.ResolveReference(name);
+            if (_nuGetProvider != null)
+            {
+                name = _nuGetProvider.ResolveReference(name);
+            }
             if (File.Exists(name))
             {
                 return MetadataReference.CreateFromFile(name);

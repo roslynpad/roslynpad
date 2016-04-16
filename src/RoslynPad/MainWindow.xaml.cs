@@ -26,6 +26,7 @@ namespace RoslynPad
             base.OnClosed(e);
 
             Application.Current.Shutdown();
+            Environment.Exit(0);
         }
 
         private void OnDocumentClick(object sender, MouseButtonEventArgs e)

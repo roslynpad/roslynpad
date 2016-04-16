@@ -10,6 +10,7 @@ namespace RoslynPad.Runtime
             return o;
         }
 
+        [Obsolete("Use Dump")]
         public static T DumpToPropertyGrid<T>(this T o)
         {
             Dumped?.Invoke(o, DumpTarget.PropertyGrid);

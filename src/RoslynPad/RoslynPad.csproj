@@ -85,6 +85,7 @@
     <Compile Include="OpenDocumentViewModel.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
+    <Compile Include="ResultObjectViewModel.cs" />
     <Page Include="DocumentView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -141,6 +142,10 @@
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
       <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host.csproj">
+      <Project>{ca953492-94c7-4f25-9cf2-eb70aa07a55f}</Project>
+      <Name>RoslynPad.Host</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.RoslynEditor\RoslynPad.RoslynEditor.csproj">
       <Project>{5fc3a02c-33b5-4e32-8512-7053474d9c57}</Project>

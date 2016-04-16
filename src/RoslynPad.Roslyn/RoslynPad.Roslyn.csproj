@@ -91,7 +91,6 @@
     <Compile Include="Editor\InlineRenameSessionInfo.cs" />
     <Compile Include="GlyphExtensions.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
-    <Compile Include="INuGetProvider.cs" />
     <Compile Include="ISymbolExtensions.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
       <DependentUpon>ChangeSignatureDialog.xaml</DependentUpon>
@@ -106,7 +105,6 @@
     <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceDialogViewModel.cs" />
     <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceOptionsService.cs" />
     <Compile Include="Navigation\DocumentNavigationService.cs" />
-    <Compile Include="NuGetProviderExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynHost.cs" />
     <Compile Include="RoslynWorkspace.cs" />

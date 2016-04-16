@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using Microsoft.CodeAnalysis;
@@ -35,9 +37,12 @@ namespace RoslynPad.RoslynEditor
         private readonly DocumentId _documentId;
         private readonly RoslynHost _roslynHost;
         private readonly List<CachedLine> _cachedLines;
+        private readonly SemaphoreSlim _semaphore;
+        private readonly ConcurrentQueue<HighlightedLine> _queue;
+        private readonly SynchronizationContext _syncContext;
+        private CancellationTokenSource _cts;
 
         private bool _inHighlightingGroup;
-        private HighlightedLine _line;
 
         public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, RoslynHost roslynHost)
         {
@@ -46,6 +51,8 @@ namespace RoslynPad.RoslynEditor
             _document = document;
             _documentId = documentId;
             _roslynHost = roslynHost;
+            _semaphore = new SemaphoreSlim(0);
+            _queue = new ConcurrentQueue<HighlightedLine>();
 
             if (document is TextDocument)
             {
@@ -54,18 +61,28 @@ namespace RoslynPad.RoslynEditor
                 // not need the cache as it does not need to highlight the same line multiple times
                 _cachedLines = new List<CachedLine>();
             }
+
+            _syncContext = SynchronizationContext.Current;
+            _cts = new CancellationTokenSource();
+            var cancellationToken = _cts.Token;
+            Task.Run(() => Worker(cancellationToken), cancellationToken);
         }
 
         public void Dispose()
         {
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _cts.Dispose();
+                _cts = null;
+            }
         }
 
         public event HighlightingStateChangedEventHandler HighlightingStateChanged;
 
-        // ReSharper disable once UnusedMember.Local
         private void OnHighlightingStateChanged(int fromLineNumber, int toLineNumber)
         {
-            HighlightingStateChanged?.Invoke(fromLineNumber, toLineNumber);
+            _syncContext.Post(o => HighlightingStateChanged?.Invoke(fromLineNumber, toLineNumber), null);
         }
 
         IDocument IHighlighter.Document => _document;
@@ -98,7 +115,8 @@ namespace RoslynPad.RoslynEditor
                     }
                 }
 
-                if (cachedLine != null && cachedLine.IsValid && newVersion.CompareAge(cachedLine.OldVersion) == 0)
+                if (cachedLine != null && cachedLine.IsValid && newVersion.CompareAge(cachedLine.OldVersion) == 0 &&
+                    cachedLine.DocumentLine.Length == documentLine.Length)
                 {
                     // the file hasn't changed since the cache was created, so just reuse the old highlighted line
                     return cachedLine.HighlightedLine;
@@ -116,7 +134,6 @@ namespace RoslynPad.RoslynEditor
             }
             finally
             {
-                _line = null;
                 if (!wasInHighlightingGroup)
                     EndHighlighting();
             }
@@ -124,41 +141,89 @@ namespace RoslynPad.RoslynEditor
 
         private HighlightedLine DoHighlightLine(IDocumentLine documentLine)
         {
-            _line = new HighlightedLine(_document, documentLine);
+            var line = new HighlightedLine(_document, documentLine);
 
-            IEnumerable<ClassifiedSpan> spans;
-            try
-            {
-                // TODO: check offset in Roslyn's doc
-                spans = Classifier.GetClassifiedSpansAsync(_roslynHost.GetDocument(_documentId),
-                    new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (OperationCanceledException)
-            {
-                return _line;
-            }
+            // since we don't want to block the UI thread
+            // we'll enqueue the request and process it asynchornously
+            EnqueueLine(line);
 
-            foreach (var classifiedSpan in spans)
+            CacheLine(line);
+            return line;
+        }
+
+        private void EnqueueLine(HighlightedLine line)
+        {
+            _queue.Enqueue(line);
+            _semaphore.Release();
+        }
+
+        private async Task Worker(CancellationToken cancellationToken)
+        {
+            while (true)
             {
-                if (classifiedSpan.TextSpan.Start > documentLine.EndOffset ||
-                    classifiedSpan.TextSpan.End > documentLine.EndOffset)
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                HighlightedLine line;
+                if (!_queue.TryDequeue(out line)) continue;
+
+                var documentLine = line.DocumentLine;
+                IEnumerable<ClassifiedSpan> spans;
+                try
                 {
-                    // TODO: this shouldn't happen, but the Roslyn document and AvalonEdit's somehow get out of sync
+                    spans = await GetClassifiedSpansAsync(documentLine).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
                     continue;
                 }
-                _line.Sections.Add(new HighlightedSection
-                {
-                    Color = ClassificationHighlightColors.GetColor(classifiedSpan.ClassificationType),
-                    Offset = classifiedSpan.TextSpan.Start,
-                    Length = classifiedSpan.TextSpan.Length
-                });
-            }
 
+                foreach (var classifiedSpan in spans)
+                {
+                    if (IsOutsideLine(classifiedSpan, documentLine))
+                    {
+                        continue;
+                    }
+                    line.Sections.Add(new HighlightedSection
+                    {
+                        Color = ClassificationHighlightColors.GetColor(classifiedSpan.ClassificationType),
+                        Offset = classifiedSpan.TextSpan.Start,
+                        Length = classifiedSpan.TextSpan.Length
+                    });
+                }
+
+                OnHighlightingStateChanged(documentLine.LineNumber, documentLine.LineNumber);
+            }
+            // ReSharper disable once FunctionNeverReturns
+        }
+
+        private static bool IsOutsideLine(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
+        {
+            return classifiedSpan.TextSpan.Start < documentLine.Offset ||
+                   classifiedSpan.TextSpan.Start > documentLine.EndOffset ||
+                   classifiedSpan.TextSpan.End > documentLine.EndOffset;
+        }
+
+        private void CacheLine(HighlightedLine line)
+        {
             if (_cachedLines != null && _document.Version != null)
             {
-                _cachedLines.Add(new CachedLine(_line, _document.Version));
+                _cachedLines.Add(new CachedLine(line, _document.Version));
             }
-            return _line;
+        }
+
+        private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(IDocumentLine documentLine)
+        {
+            var document = _roslynHost.GetDocument(_documentId);
+            var text = await document.GetTextAsync().ConfigureAwait(false);
+            if (text.Length >= documentLine.Offset + documentLine.TotalLength)
+            {
+                return await Classifier.GetClassifiedSpansAsync(document,
+                    new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            return Array.Empty<ClassifiedSpan>();
         }
 
         HighlightingColor IHighlighter.DefaultTextColor => ClassificationHighlightColors.DefaultColor;

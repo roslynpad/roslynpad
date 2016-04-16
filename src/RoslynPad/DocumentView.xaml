@@ -1,22 +1,17 @@
 ﻿<UserControl x:Class="RoslynPad.DocumentView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
-        xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:roslynPad="clr-namespace:RoslynPad"
-        xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet"
-        mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
-    <FrameworkElement.CommandBindings>
-        <CommandBinding Command="Play"
-                        Executed="OnPlayCommand" />
-    </FrameworkElement.CommandBindings>
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
+             xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:roslynPad="clr-namespace:RoslynPad"
+             xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet.Core"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
         <KeyBinding Key="F5"
-                    Command="Play" />
+                    Command="{Binding RunCommand}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand}" />
     </FrameworkElement.InputBindings>
@@ -36,19 +31,16 @@
                 <RowDefinition Height="5" />
                 <RowDefinition />
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="0"
-                                  x:Name="PropertyGridColumn" />
-            </Grid.ColumnDefinitions>
             <ToolBar Grid.ColumnSpan="3"
                      Background="Transparent"
                      BorderBrush="DarkGray"
                      BorderThickness="0 0 0 1">
-                <Button Command="Play"
+                <Button Command="{Binding RunCommand}"
                         ToolTip="Run"
                         Content="{StaticResource Run}" />
+                <Button Command="{Binding RestartHostCommand}"
+                        ToolTip="Restart host process"
+                        Content="{StaticResource Restart}" />
                 <Separator />
                 <Button Command="{Binding SaveCommand}"
                         ToolTip="Save"
@@ -148,29 +140,16 @@
                                    Grid.Row="1"
                                    Grid.Column="0"
                                    KeyDown="Editor_OnKeyDown"
-                                   Loaded="Editor_OnLoaded"
-                                   Grid.ColumnSpan="3" />
+                                   Loaded="Editor_OnLoaded" />
             <GridSplitter Grid.Row="2"
                           Grid.Column="0"
-                          Grid.ColumnSpan="3"
                           Background="#ccc"
                           ResizeBehavior="PreviousAndNext"
                           ResizeDirection="Rows"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch" />
 
-            <GridSplitter Grid.Row="3"
-                          Grid.Column="1"
-                          Background="#ccc"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Columns"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch" />
-
-            <xctk:PropertyGrid Name="ThePropertyGrid"
-                               Grid.Row="3"
-                               Grid.Column="2" />
-            <TreeView Name="Results"
+            <TreeView ItemsSource="{Binding Results}"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                       Grid.Column="0"
                       Grid.Row="3">

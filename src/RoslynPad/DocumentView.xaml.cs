@@ -1,32 +1,25 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Scripting;
 using NuGet;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.RoslynEditor;
-using RoslynPad.Runtime;
-using Xceed.Wpf.Toolkit.PropertyGrid;
 
 namespace RoslynPad
 {
     public partial class DocumentView
     {
-        private readonly object _lock;
-        private readonly ObservableCollection<ResultObject> _objects;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly TextMarkerService _textMarkerService;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -42,14 +35,7 @@ namespace RoslynPad
             _textMarkerService = new TextMarkerService(Editor);
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
-
-            _lock = new object();
-            _objects = new ObservableCollection<ResultObject>();
-            BindingOperations.EnableCollectionSynchronization(_objects, _lock);
-            Results.ItemsSource = _objects;
-
-            ObjectExtensions.Dumped += OnDumped;
-
+            
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
@@ -73,6 +59,7 @@ namespace RoslynPad
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             Editor.AppendText(documentText);
+            Editor.Document.UndoStack.ClearAll();
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
@@ -152,40 +139,6 @@ namespace RoslynPad
             Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
         }
 
-        private void OnDumped(object o, DumpTarget mode)
-        {
-            if (mode == DumpTarget.PropertyGrid)
-            {
-                if (PropertyGridColumn.Width == new GridLength(0))
-                {
-                    PropertyGridColumn.Width = new GridLength(200);
-                }
-
-                ThePropertyGrid.SelectedObject = o;
-
-                foreach (var prop in ThePropertyGrid.Properties.OfType<PropertyItem>())
-                {
-                    var propertyType = prop.PropertyType;
-                    if (!propertyType.IsPrimitive && propertyType != typeof(string))
-                    {
-                        prop.IsExpandable = true;
-                    }
-                }
-            }
-            else
-            {
-                AddResult(o);
-            }
-        }
-
-        private void AddResult(object o)
-        {
-            lock (_lock)
-            {
-                _objects.Add(ResultObject.Create(o));
-            }
-        }
-
         private void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
         {
             _textMarkerService.RemoveAll(x => true);
@@ -220,38 +173,7 @@ namespace RoslynPad
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        private async void OnPlayCommand(object sender, RoutedEventArgs e)
-        {
-            lock (_lock)
-            {
-                _objects.Clear();
-            }
-
-            try
-            {
-                var result = await _roslynHost.Execute(_viewModel.DocumentId).ConfigureAwait(true);
-                if (result != null)
-                {
-                    AddResult(result);
-                }
-            }
-            catch (CompilationErrorException ex)
-            {
-                lock (_lock)
-                {
-                    foreach (var diagnostic in ex.Diagnostics)
-                    {
-                        _objects.Add(ResultObject.Create(diagnostic));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                AddResult(ex);
-            }
-        }
-
+        
         private void Editor_OnKeyDown(object sender, KeyEventArgs e)
         {
             //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))

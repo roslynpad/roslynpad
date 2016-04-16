@@ -101,7 +101,17 @@ namespace RoslynPad.Editor
 
         private void OnMouseHover(object sender, MouseEventArgs e)
         {
-            var position = TextArea.TextView.GetPositionFloor(e.GetPosition(TextArea.TextView) + TextArea.TextView.ScrollOffset);
+            TextViewPosition? position;
+            try
+            {
+                position = TextArea.TextView.GetPositionFloor(e.GetPosition(TextArea.TextView) + TextArea.TextView.ScrollOffset);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // TODO: check why this happens
+                e.Handled = true;
+                return;
+            }
             var args = new ToolTipRequestEventArgs { InDocument = position.HasValue };
             if (!position.HasValue || position.Value.Location.IsEmpty)
             {

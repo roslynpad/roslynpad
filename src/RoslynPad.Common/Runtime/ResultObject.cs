@@ -4,14 +4,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using System.Windows;
-using System.Windows.Input;
 using System.Reflection;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
-    internal sealed class ResultObject : NotificationObject
+    internal sealed class ResultObject : MarshalByRefObject
     {
         private readonly object _o;
         private readonly PropertyDescriptor _property;
@@ -19,7 +16,6 @@ namespace RoslynPad.Runtime
         private bool _initialized;
         private string _header;
         private IEnumerable<ResultObject> _children;
-        private bool _isExpanded;
 
         public static ResultObject Create(object o)
         {
@@ -31,20 +27,31 @@ namespace RoslynPad.Runtime
             _o = o;
             _property = property;
             IsRoot = isRoot;
-            CopyCommand = new DelegateCommand((Action)Copy);
         }
 
-        private void Copy()
+        private ResultObject(string header, IEnumerable<ResultObject> children)
+        {
+            _header = header;
+            _children = children;
+            _initialized = true;
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
+        }
+        
+        public override string ToString()
         {
             var builder = new StringBuilder();
             BuildStringRecursive(builder, 0);
-            Clipboard.SetText(builder.ToString());
+            return builder.ToString();
         }
 
         private void BuildStringRecursive(StringBuilder builder, int level)
         {
             if (!_initialized) return;
-            for (int i = 0; i < level; i++)
+            for (var i = 0; i < level; i++)
             {
                 builder.Append("  ");
             }
@@ -58,8 +65,6 @@ namespace RoslynPad.Runtime
                 }
             }
         }
-
-        public ICommand CopyCommand { get; }
 
         public bool IsRoot { get; }
 
@@ -79,12 +84,6 @@ namespace RoslynPad.Runtime
                 Initialize();
                 return _children;
             }
-        }
-
-        public bool IsExpanded
-        {
-            get { return _isExpanded; }
-            set { SetProperty(ref _isExpanded, value); }
         }
 
         private void Initialize()
@@ -130,23 +129,27 @@ namespace RoslynPad.Runtime
                 return;
             }
 
+            var propertyDescriptors = TypeDescriptor.GetProperties(_o);
+            var children = propertyDescriptors.Cast<PropertyDescriptor>()
+                .Select(p => new ResultObject(_o, p));
+
             var e = _o as IEnumerable;
             if (e != null)
             {
                 var enumerableChildren = e.Cast<object>().Select(x => new ResultObject(x)).ToArray();
-                _children = enumerableChildren;
-                _header = $"<enumerable count={enumerableChildren.Length}>";
-                return;
+                var header = $"<enumerable count={enumerableChildren.Length}>";
+                if (propertyDescriptors.Count == 0)
+                {
+                    _children = enumerableChildren;
+                    _header = header;
+                    return;
+                }
+                children = children.Concat(new[] { new ResultObject(header, enumerableChildren) });
             }
 
-            var properties = TypeDescriptor.GetProperties(_o).Cast<PropertyDescriptor>()
-                .Select(p => new ResultObject(_o, p)).ToArray();
             var ex = _o as Exception;
-            _header = ex != null ? (ex.GetType().FullName + ": " + ex.Message) : _o.ToString();
-            if (properties.Length > 0)
-            {
-                _children = properties;
-            }
+            _header = ex != null ? ex.GetType().FullName + ": " + ex.Message : _o.ToString();
+            _children = children.ToArray();
         }
     }
 }

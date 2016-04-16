@@ -16,18 +16,21 @@ namespace RoslynPad
         public const string NuGetPathVariableName = "$NuGet";
 
         private readonly Lazy<TelemetryClient> _client;
-        private readonly DocumentViewModel _documentRoot;
+        public DocumentViewModel DocumentRoot { get; }
         private Exception _lastError;
         private OpenDocumentViewModel _currentOpenDocument;
+        public INuGetProvider NuGetProvider { get; }
 
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
         {
             NuGet = new NuGetViewModel();
-            RoslynHost = new RoslynHost(new NuGetProvider(NuGet.GlobalPackageFolder, NuGetPathVariableName));
-            _documentRoot = DocumentViewModel.CreateRoot(this);
-            Documents = _documentRoot.Children;
+            NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
+            RoslynHost = new RoslynHost(NuGetProvider);
+
+            DocumentRoot = DocumentViewModel.CreateRoot(this);
+            Documents = DocumentRoot.Children;
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand((Action)CloseCurrentDocument);
@@ -37,7 +40,7 @@ namespace RoslynPad
             _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
             Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
             Application.Current.Exit += (o, e) => OnExit();
-            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject);
+            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
         }
 
@@ -80,6 +83,7 @@ namespace RoslynPad
             // TODO: Save
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
+            document.Close();
         }
 
         private void CloseCurrentDocument()
@@ -90,9 +94,9 @@ namespace RoslynPad
             }
         }
 
-        private void OnUnhandledException(Exception exception)
+        private void OnUnhandledException(Exception exception, bool flushSync = false)
         {
-            TrackException(exception, flushSync: true);
+            TrackException(exception, flushSync);
         }
 
         private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
@@ -120,10 +124,11 @@ namespace RoslynPad
                 {
                     _client.Value.Flush();
                 }
-                else
-                {
-                    Task.Run(() => _client.Value.Flush());
-                }
+                // TODO: check why this freezes the UI
+                //else
+                //{
+                //    Task.Run(() => _client.Value.Flush());
+                //}
             }
         }
 
@@ -152,9 +157,10 @@ namespace RoslynPad
             }
         }
 
-        class NuGetProvider : INuGetProvider
+        [Serializable]
+        class NuGetProviderImpl : INuGetProvider
         {
-            public NuGetProvider(string pathToRepository, string pathVariableName)
+            public NuGetProviderImpl(string pathToRepository, string pathVariableName)
             {
                 PathToRepository = pathToRepository;
                 PathVariableName = pathVariableName;
@@ -166,7 +172,7 @@ namespace RoslynPad
 
         public DocumentViewModel AddDocument(string documentName)
         {
-            return _documentRoot.CreateNew(documentName);
+            return DocumentRoot.CreateNew(documentName);
         }
     }
 }

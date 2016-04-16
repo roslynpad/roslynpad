@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using RoslynPad.Utilities;
 
 namespace RoslynPad
@@ -93,14 +94,22 @@ namespace RoslynPad
             try
             {
                 return new ObservableCollection<DocumentViewModel>(
-                    Directory.EnumerateDirectories(Path).Select(x => new DocumentViewModel(MainViewModel, x, isFolder: true)).OrderBy(x => x.Name)
+                    Directory.EnumerateDirectories(Path)
+                    .Select(x => new DocumentViewModel(MainViewModel, x, isFolder: true))
+                    .OrderBy(OrderByName)
                         .Concat(Directory.EnumerateFiles(Path, "*" + DefaultFileExtension)
-                            .Select(x => new DocumentViewModel(MainViewModel, x, isFolder: false)).OrderBy(x => x.Name)));
+                            .Select(x => new DocumentViewModel(MainViewModel, x, isFolder: false))
+                            .OrderBy(OrderByName)));
             }
             catch (Exception)
             {
                 return new ObservableCollection<DocumentViewModel>();
             }
+        }
+
+        private static string OrderByName(DocumentViewModel x)
+        {
+            return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
         }
     }
 }
