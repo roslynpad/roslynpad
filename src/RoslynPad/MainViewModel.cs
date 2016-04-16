@@ -1,5 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -29,7 +31,7 @@ namespace RoslynPad
             NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetProvider);
 
-            DocumentRoot = DocumentViewModel.CreateRoot(this);
+            DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
@@ -42,6 +44,21 @@ namespace RoslynPad
             Application.Current.Exit += (o, e) => OnExit();
             AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
+        }
+
+        private DocumentViewModel CreateDocumentRoot()
+        {
+            var root = DocumentViewModel.CreateRoot(this);
+            if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                using (var stream = Application.GetResourceStream(new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
+                using (var archive = new ZipArchive(stream))
+                {
+                    archive.ExtractToDirectory(root.Path);
+                }
+            }
+            return root;
         }
 
         public NuGetViewModel NuGet { get; }

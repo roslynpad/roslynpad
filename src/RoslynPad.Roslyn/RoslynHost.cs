@@ -43,6 +43,7 @@ namespace RoslynPad.Roslyn
             typeof(IEnumerable),
             typeof(ObjectExtensions),
             typeof(Path),
+            typeof(Assembly),
         }.ToImmutableArray();
 
         private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =

@@ -10,6 +10,7 @@ try
 	$files =
 	@(
 		"RoslynPad.exe",
+		"RoslynPad.Host.exe",
 		"AvalonLibrary.dll",
 		"ICSharpCode.AvalonEdit.dll",
 		"Microsoft.AI.Agent.Intercept.dll",
