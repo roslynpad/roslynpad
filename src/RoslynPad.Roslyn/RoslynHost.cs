@@ -102,7 +102,7 @@ namespace RoslynPad.Roslyn
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: new [] { "__DEMO__", "__DEMO_EXPERIMENTAL__" });
 
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -15,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using RoslynPad.Roslyn;
@@ -331,6 +333,12 @@ namespace RoslynPad.Host
 
             public void Initialize(IList<string> references, IList<string> imports, INuGetProvider nuGetProvider, string workingDirectory, Action<ResultObject> dumped)
             {
+                // TODO: remove this once C# 7 is finalized
+                var scriptCompilerType = Type.GetType("Microsoft.CodeAnalysis.CSharp.Scripting.CSharpScriptCompiler, Microsoft.CodeAnalysis.CSharp.Scripting", throwOnError: true);
+                var optionsField = scriptCompilerType.GetField("s_defaultOptions", BindingFlags.Static | BindingFlags.NonPublic);
+                var options = ((CSharpParseOptions)optionsField.GetValue(null)).WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
+                optionsField.SetValue(null, options);
+
                 var scriptOptions = _scriptOptions
                     .WithReferences(references)
                     .WithImports(imports);
