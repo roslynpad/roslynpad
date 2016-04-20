@@ -54,7 +54,7 @@
             <EventSetter Event="KeyDown"
                          Handler="OnDocumentKeyDown" />
         </Style>
-        
+
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This}">
@@ -86,36 +86,45 @@
                                Text="{Binding LastError.Message}" />
                 </DockPanel>
             </Border>
-            <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
-                                 ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
-                                 DocumentClosed="DockingManager_OnDocumentClosed">
-                <dock:DockingManager.DocumentHeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Content.Title}" />
-                    </DataTemplate>
-                </dock:DockingManager.DocumentHeaderTemplate>
-                <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Content.Title}" />
-                    </DataTemplate>
-                </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
-                <dock:LayoutRoot>
-                    <dock:LayoutPanel Orientation="Horizontal">
-                        <dock:LayoutAnchorablePane DockWidth="200">
-                            <dock:LayoutAnchorable x:Name="DocumentsPane"
-                                                   CanClose="False"
-                                                   CanFloat="False"
-                                                   CanAutoHide="True"
-                                                   AutoHideWidth="200"
-                                                   Title="Documents">
-                                <TreeView ItemsSource="{Binding Documents}"
-                                          ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
-                            </dock:LayoutAnchorable>
-                        </dock:LayoutAnchorablePane>
-                        <dock:LayoutDocumentPane />
-                    </dock:LayoutPanel>
-                </dock:LayoutRoot>
-            </dock:DockingManager>
+            <Grid>
+                <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                                     ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                                     DocumentClosed="DockingManager_OnDocumentClosed">
+                    <dock:DockingManager.DocumentHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Content.Title}" />
+                        </DataTemplate>
+                    </dock:DockingManager.DocumentHeaderTemplate>
+                    <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Content.Title}" />
+                        </DataTemplate>
+                    </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                    <dock:LayoutRoot>
+                        <dock:LayoutPanel Orientation="Horizontal">
+                            <dock:LayoutAnchorablePane DockWidth="200">
+                                <dock:LayoutAnchorable x:Name="DocumentsPane"
+                                                       CanClose="False"
+                                                       CanFloat="False"
+                                                       CanAutoHide="True"
+                                                       AutoHideWidth="200"
+                                                       Title="Documents">
+                                    <TreeView ItemsSource="{Binding Documents}"
+                                              ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                </dock:LayoutAnchorable>
+                            </dock:LayoutAnchorablePane>
+                            <dock:LayoutDocumentPane />
+                        </dock:LayoutPanel>
+                    </dock:LayoutRoot>
+                </dock:DockingManager>
+                <Button HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="5"
+                        Style="{StaticResource LinkButton}"
+                        Content="Update available"
+                        Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Click="ViewUpdateClick" />
+            </Grid>
         </DockPanel>
     </av:InlineModalDecorator>
 </Window>

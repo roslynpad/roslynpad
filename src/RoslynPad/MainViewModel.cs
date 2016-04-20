@@ -3,10 +3,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.ApplicationInsights;
+using RoslynPad.Host;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -14,15 +16,19 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
+        private static readonly Version _currentVersion = new Version(0, 6);
+
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
 
         private readonly Lazy<TelemetryClient> _client;
-        public DocumentViewModel DocumentRoot { get; }
-        private Exception _lastError;
-        private OpenDocumentViewModel _currentOpenDocument;
-        public INuGetProvider NuGetProvider { get; }
 
+        private OpenDocumentViewModel _currentOpenDocument;
+        private Exception _lastError;
+        private bool _hasUpdate;
+
+        public DocumentViewModel DocumentRoot { get; }
+        public INuGetProvider NuGetProvider { get; }
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
@@ -30,6 +36,7 @@ namespace RoslynPad
             NuGet = new NuGetViewModel();
             NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetProvider);
+            ChildProcessManager = new ChildProcessManager();
 
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
@@ -44,8 +51,56 @@ namespace RoslynPad
             Application.Current.Exit += (o, e) => OnExit();
             AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
+
+            if (HasCachedUpdate())
+            {
+                HasUpdate = true;
+            }
+            else
+            {
+                Task.Run(CheckForUpdates);
+            }
         }
 
+        public bool HasUpdate
+        {
+            get { return _hasUpdate; }
+            private set { SetProperty(ref _hasUpdate, value); }
+        }
+
+        private static bool HasCachedUpdate()
+        {
+            Version latestVersion;
+            return Version.TryParse(Properties.Settings.Default.LatestVersion, out latestVersion) &&
+                   latestVersion > _currentVersion;
+        }
+
+        private async Task CheckForUpdates()
+        {
+            string latestVersionString;
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    latestVersionString = await client.GetStringAsync("https://roslynpad.net/latest").ConfigureAwait(false);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+            Version latestVersion;
+            if (Version.TryParse(latestVersionString, out latestVersion))
+            {
+                if (latestVersion > _currentVersion)
+                {
+                    HasUpdate = true;
+                }
+                Properties.Settings.Default.LatestVersion = latestVersionString;
+                Properties.Settings.Default.Save();
+            }
+        }
+        
         private DocumentViewModel CreateDocumentRoot()
         {
             var root = DocumentViewModel.CreateRoot(this);
@@ -174,8 +229,15 @@ namespace RoslynPad
             }
         }
 
+        public ChildProcessManager ChildProcessManager { get; }
+
+        public DocumentViewModel AddDocument(string documentName)
+        {
+            return DocumentRoot.CreateNew(documentName);
+        }
+
         [Serializable]
-        class NuGetProviderImpl : INuGetProvider
+        private class NuGetProviderImpl : INuGetProvider
         {
             public NuGetProviderImpl(string pathToRepository, string pathVariableName)
             {
@@ -185,11 +247,6 @@ namespace RoslynPad
 
             public string PathToRepository { get; }
             public string PathVariableName { get; }
-        }
-
-        public DocumentViewModel AddDocument(string documentName)
-        {
-            return DocumentRoot.CreateNew(documentName);
         }
     }
 }

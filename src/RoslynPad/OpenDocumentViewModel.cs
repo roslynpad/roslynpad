@@ -37,8 +37,7 @@ namespace RoslynPad
 
             _executionHost = new ExecutionHost("RoslynPad.Host.exe", _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports,
-                mainViewModel.NuGetProvider);
+                roslynHost.DefaultImports, mainViewModel.NuGetProvider, mainViewModel.ChildProcessManager);
             _executionHost.Dumped += AddResult;
 
             _resultsLock = new object();

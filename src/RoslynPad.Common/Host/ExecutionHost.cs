@@ -115,14 +115,14 @@ namespace RoslynPad.Host
 
         public ExecutionHost(string hostPath, string initialWorkingDirectory,
             IEnumerable<string> references, IEnumerable<string> imports,
-            INuGetProvider nuGetProvider)
+            INuGetProvider nuGetProvider, ChildProcessManager childProcessManager)
         {
             _hostPath = hostPath;
             _initialWorkingDirectory = initialWorkingDirectory;
             _references = references;
             _imports = imports;
             _nuGetProvider = nuGetProvider;
-            _childProcessManager = new ChildProcessManager();
+            _childProcessManager = childProcessManager;
             var serverProvider = new BinaryServerFormatterSinkProvider { TypeFilterLevel = TypeFilterLevel.Full };
             _serverChannel = new IpcServerChannel(GenerateUniqueChannelLocalName(), "Channel-" + Guid.NewGuid(), serverProvider);
             ChannelServices.RegisterChannel(_serverChannel, ensureSecurity: false);

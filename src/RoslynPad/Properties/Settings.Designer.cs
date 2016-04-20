@@ -34,5 +34,17 @@ namespace RoslynPad.Properties {
                 this["SendErrors"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LatestVersion {
+            get {
+                return ((string)(this["LatestVersion"]));
+            }
+            set {
+                this["LatestVersion"] = value;
+            }
+        }
     }
 }

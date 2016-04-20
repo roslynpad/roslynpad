@@ -20,9 +20,7 @@ namespace RoslynPad.Roslyn
     {
         private readonly INuGetProvider _nuGetProvider;
         private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
-        private readonly SemaphoreSlim _referenceDirectivesLock;
-
-        private CancellationTokenSource _referenceDirectivesCancellationTokenSource;
+        private int _referenceDirectivesLock;
 
         public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
@@ -32,7 +30,6 @@ namespace RoslynPad.Roslyn
         {
             _nuGetProvider = nuGetProvider;
             _referencesDirectives = new ConcurrentDictionary<string, DirectiveInfo>();
-            _referenceDirectivesLock = new SemaphoreSlim(1, 1);
 
             RoslynHost = roslynHost;
         }
@@ -74,7 +71,7 @@ namespace RoslynPad.Roslyn
             }
 
             ApplyingTextChange?.Invoke(document, newText);
-            
+
             OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
         }
 
@@ -114,27 +111,18 @@ namespace RoslynPad.Roslyn
 
         internal async Task ProcessReferenceDirectives(Document document)
         {
-            CancellationToken cancellationToken;
-            lock (_referenceDirectivesLock)
+            if (Interlocked.CompareExchange(ref _referenceDirectivesLock, 1, 0) != 0)
             {
-                _referenceDirectivesCancellationTokenSource?.Cancel();
-                _referenceDirectivesCancellationTokenSource = new CancellationTokenSource();
-                cancellationToken = _referenceDirectivesCancellationTokenSource.Token;
+                return;
             }
-
-            // ReSharper disable once MethodSupportsCancellation
-            using (await _referenceDirectivesLock.DisposableWaitAsync().ConfigureAwait(false))
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
                 var project = document.Project;
-                var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false))
-                        .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
+                var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false))
+                    .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
 
                 foreach (var referenceDirective in _referencesDirectives)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
                     if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
                     {
                         referenceDirective.Value.IsActive = false;
@@ -143,8 +131,6 @@ namespace RoslynPad.Roslyn
 
                 foreach (var directive in directives)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
                     DirectiveInfo referenceDirective;
                     if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
                     {
@@ -158,12 +144,17 @@ namespace RoslynPad.Roslyn
 
                 var solution = project.Solution;
                 var references =
-                    _referencesDirectives.Where(x => x.Value.IsActive).Select(x => x.Value.MetadataReference).WhereNotNull();
-                var newSolution = solution.WithProjectMetadataReferences(project.Id, RoslynHost.DefaultReferences.Concat(references));
-
-                cancellationToken.ThrowIfCancellationRequested();
+                    _referencesDirectives.Where(x => x.Value.IsActive)
+                        .Select(x => x.Value.MetadataReference)
+                        .WhereNotNull();
+                var newSolution = solution.WithProjectMetadataReferences(project.Id,
+                    RoslynHost.DefaultReferences.Concat(references));
 
                 SetCurrentSolution(newSolution);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _referenceDirectivesLock, 0);
             }
         }
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Avalon.Windows.Controls;
@@ -62,6 +64,11 @@ namespace RoslynPad
 
             TaskDialog.ShowInline(this, "Unhandled Exception", 
                 _viewModel.LastError.ToString(), string.Empty, TaskDialogButtons.Close);
+        }
+
+        private void ViewUpdateClick(object sender, RoutedEventArgs e)
+        {
+            Task.Run(() => Process.Start("https://roslynpad.net/"));
         }
     }
 }

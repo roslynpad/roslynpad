@@ -34,7 +34,7 @@
             <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
                 <TextBlock Text="{Binding Descriptor.Title}" />
             </DataTemplate>
-            
+
             <DataTemplate DataType="{x:Type ImageSource}">
                 <Image Source="{Binding}" />
             </DataTemplate>
@@ -51,6 +51,38 @@
                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                   SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                             </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="LinkButton"
+                   TargetType="Button">
+                <Setter Property="Background"
+                        Value="Transparent" />
+                <Setter Property="BorderThickness"
+                        Value="0" />
+                <Setter Property="Padding"
+                        Value="0" />
+                <Setter Property="Foreground"
+                        Value="DodgerBlue" />
+                <Setter Property="Cursor"
+                        Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <TextBlock Name="Text"
+                                       Text="{TemplateBinding Content}"
+                                       Background="{TemplateBinding Background}"
+                                       Foreground="{TemplateBinding Foreground}" />
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter TargetName="Text"
+                                            Property="TextBlock.TextDecorations"
+                                            Value="Underline" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
