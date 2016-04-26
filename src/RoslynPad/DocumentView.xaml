@@ -2,7 +2,6 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
-             xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:roslynPad="clr-namespace:RoslynPad"
@@ -15,6 +14,9 @@
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand}" />
     </FrameworkElement.InputBindings>
+    <FrameworkElement.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </FrameworkElement.Resources>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
@@ -36,8 +38,15 @@
                      BorderBrush="DarkGray"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand}"
-                        ToolTip="Run"
-                        Content="{StaticResource Run}" />
+                        ToolTip="Run">
+                    <Grid>
+                        <Image Source="{StaticResource Run}" />
+                        <ProgressBar VerticalAlignment="Bottom"
+                                     Height="4"
+                                     IsIndeterminate="{Binding IsRunning}"
+                                     Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
+                </Button>
                 <Button Command="{Binding RestartHostCommand}"
                         ToolTip="Restart host process"
                         Content="{StaticResource Restart}" />
@@ -151,15 +160,10 @@
 
             <TreeView ItemsSource="{Binding Results}"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
                       Grid.Column="0"
                       Grid.Row="3">
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem"
-                           d:DataContext="{d:DesignInstance runtime:ResultObject}">
-                        <Setter Property="IsExpanded"
-                                Value="{Binding IsExpanded}" />
-                    </Style>
-                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <DockPanel>

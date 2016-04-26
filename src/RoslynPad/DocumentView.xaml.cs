@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Avalon.Windows.Controls;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using NuGet;
@@ -35,6 +36,12 @@ namespace RoslynPad
             _textMarkerService = new TextMarkerService(Editor);
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
+            Editor.Options = new TextEditorOptions
+            {
+                ConvertTabsToSpaces = true,
+                AllowScrollBelowDocument = true,
+                IndentationSize = 4
+            };
             
             _syncContext = SynchronizationContext.Current;
 

@@ -43,7 +43,7 @@ namespace RoslynPad.RoslynEditor
         private void CreateSignatureHelp()
         {
             _item = _items[_selectedIndex];
-            var headerPanel = new StackPanel
+            var headerPanel = new WrapPanel
             {
                 Orientation = Orientation.Horizontal,
                 Children =
@@ -83,12 +83,12 @@ namespace RoslynPad.RoslynEditor
                 var textBlock = param.DocumentationFactory(CancellationToken.None).ToTextBlock();
                 if (textBlock != null && textBlock.Inlines.Count > 0)
                 {
-                    contentPanel.Children.Add(new StackPanel
+                    contentPanel.Children.Add(new WrapPanel
                     {
                         Orientation = Orientation.Horizontal,
                         Children =
                         {
-                            new TextBlock {Text = param.Name + ": ", FontWeight = FontWeights.Bold},
+                            new TextBlock { Text = param.Name + ": ", FontWeight = FontWeights.Bold },
                             textBlock
                         }
                     });

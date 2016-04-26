@@ -20,7 +20,21 @@ namespace RoslynPad
 
         public ICommand CopyCommand { get; }
 
-        public string Header => _resultObject.Header;
+        private bool _headerCached;
+        private string _header;
+
+        public string Header
+        {
+            get
+            {
+                if (!_headerCached)
+                {
+                    _header = _resultObject.Header;
+                    _headerCached = true;
+                }
+                return _header;
+            }
+        }
 
         public IEnumerable<ResultObjectViewModel> Children
             => _resultObject.Children?.Select(x => new ResultObjectViewModel(x));

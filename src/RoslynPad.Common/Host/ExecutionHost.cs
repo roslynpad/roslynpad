@@ -137,6 +137,13 @@ namespace RoslynPad.Host
             Dumped?.Invoke(o);
         }
 
+        public event Action<int> ExecutionCompleted;
+
+        public void OnExecutionCompleted(int token)
+        {
+            ExecutionCompleted?.Invoke(token);
+        }
+
         private RemoteService TryStartProcess(CancellationToken cancellationToken)
         {
             Process newProcess = null;
@@ -160,7 +167,7 @@ namespace RoslynPad.Host
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                var remoteServerPort = "InteractiveHostChannel-" + Guid.NewGuid();
+                var remoteServerPort = "HostChannel-" + Guid.NewGuid();
 
                 var processInfo = new ProcessStartInfo(_hostPath)
                 {
@@ -205,7 +212,7 @@ namespace RoslynPad.Host
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetProvider, _initialWorkingDirectory, OnDumped);
+                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetProvider, _initialWorkingDirectory, OnDumped, OnExecutionCompleted);
                 }
                 catch (RemotingException) when (!newProcess.IsAlive())
                 {
@@ -289,14 +296,14 @@ namespace RoslynPad.Host
             return null;
         }
 
-        public async Task ExecuteAsync(string code)
+        public async Task ExecuteAsync(string code, int token)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            service.ExecuteAsync(code);
+            service.ExecuteAsync(code, token);
         }
 
         public async Task ResetAsync()
@@ -317,6 +324,7 @@ namespace RoslynPad.Host
 
             private Task _lastTask;
             private Action<ResultObject> _dumped;
+            private Action<int> _completed;
 
             public Service()
             {
@@ -329,7 +337,7 @@ namespace RoslynPad.Host
 
             public override object InitializeLifetimeService() => null;
 
-            public void Initialize(IList<string> references, IList<string> imports, INuGetProvider nuGetProvider, string workingDirectory, Action<ResultObject> dumped)
+            public void Initialize(IList<string> references, IList<string> imports, INuGetProvider nuGetProvider, string workingDirectory, Action<ResultObject> dumped, Action<int> completed)
             {
                 var scriptOptions = _scriptOptions
                     .WithReferences(references)
@@ -341,6 +349,7 @@ namespace RoslynPad.Host
                 }
                 _scriptOptions = scriptOptions;
                 _dumped = dumped;
+                _completed = completed;
             }
 
             private void OnDumped(object o, DumpTarget mode)
@@ -354,17 +363,17 @@ namespace RoslynPad.Host
             }
 
             [OneWay]
-            public void ExecuteAsync(string code)
+            public void ExecuteAsync(string code, int token)
             {
                 Debug.Assert(code != null);
 
                 lock (_lastTaskGuard)
                 {
-                    _lastTask = ExecuteAsync(_lastTask, code);
+                    _lastTask = ExecuteAsync(_lastTask, code, token);
                 }
             }
 
-            private async Task ExecuteAsync(Task lastTask, string code)
+            private async Task ExecuteAsync(Task lastTask, string code, int token)
             {
                 await ReportUnhandledExceptionIfAny(lastTask).ConfigureAwait(false);
 
@@ -384,6 +393,8 @@ namespace RoslynPad.Host
                 {
                     ReportUnhandledException(e);
                 }
+
+                _completed?.Invoke(token);
             }
 
             private static Script<object> TryCompile(string code, ScriptOptions options)
@@ -393,14 +404,14 @@ namespace RoslynPad.Host
                 var diagnostics = script.Compile();
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
                 {
-                    DisplayInteractiveErrors(diagnostics);
+                    DisplayErrors(diagnostics);
                     return null;
                 }
 
                 return script;
             }
 
-            private static void DisplayInteractiveErrors(ImmutableArray<Diagnostic> diagnostics)
+            private static void DisplayErrors(ImmutableArray<Diagnostic> diagnostics)
             {
                 foreach (var diagnostic in diagnostics)
                 {
@@ -493,7 +504,7 @@ namespace RoslynPad.Host
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine("InteractiveHostProcess: can't terminate process {0}: {1}", processId, e.Message);
+                    Debug.WriteLine("HostProcess: can't terminate process {0}: {1}", processId, e.Message);
                 }
             }
         }
