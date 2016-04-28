@@ -51,6 +51,10 @@ namespace RoslynPad
             {
                 CreateNewDocument();
             }
+            else
+            {
+                CurrentOpenDocument = OpenDocuments[0];
+            }
 
             _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
 

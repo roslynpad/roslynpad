@@ -250,7 +250,6 @@ namespace RoslynPad.Host
             }
 
             _lazyRemoteService?.Dispose();
-            _lazyRemoteService = null;
         }
 
         private async Task<Service> TryGetOrCreateRemoteServiceAsync()
@@ -531,7 +530,7 @@ namespace RoslynPad.Host
                 // If the value has been calculated already, dispose the service.
                 if (InitializedService.IsValueCreated && InitializedService.Value.Status == TaskStatus.RanToCompletion)
                 {
-                    InitializedService.Value.Result.Dispose();
+                    InitializedService.Value.Result?.Dispose();
                 }
             }
 

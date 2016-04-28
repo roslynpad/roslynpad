@@ -32,6 +32,7 @@ namespace RoslynPad
     internal sealed class NuGetViewModel : NotificationObject
     {
         private const string TargetFrameworkName = "net46";
+        private const string TargetFrameworkFullName = ".NET Framework, Version=4.6";
 
         private readonly ISettings _settings;
         private readonly PackageSourceProvider _sourceProvider;
@@ -117,6 +118,8 @@ namespace RoslynPad
             get { return _hasPackages; }
             set { SetProperty(ref _hasPackages, value); }
         }
+
+        public bool ExactMatch { get; set; }
 
         private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
         {
@@ -290,9 +293,21 @@ namespace RoslynPad
 
         private IEnumerable<IPackage> GetPackages(string searchTerm, bool includePrerelease, bool allVersions)
         {
+            if (ExactMatch)
+            {
+                var exactResult = _repository.FindPackagesById(searchTerm);
+                if (!allVersions)
+                {
+                    exactResult = includePrerelease
+                        ? exactResult.Where(x => x.IsAbsoluteLatestVersion)
+                        : exactResult.Where(p => p.IsLatestVersion);
+                }
+                return exactResult;
+            }
+
             IQueryable<IPackage> packages = _repository.Search(
                 searchTerm,
-                targetFrameworks: Enumerable.Empty<string>(),
+                targetFrameworks: new[] { TargetFrameworkFullName },
                 allowPrereleaseVersions: includePrerelease);
 
             if (allVersions)
@@ -301,11 +316,11 @@ namespace RoslynPad
             }
             packages = includePrerelease ? packages.Where(p => p.IsAbsoluteLatestVersion) : packages.Where(p => p.IsLatestVersion);
 
-            var result = packages.OrderBy(p => p.Id)
-                .AsEnumerable();
+            var result = packages.AsEnumerable();
             result = result.Where(PackageExtensions.IsListed);
             return result.Where(p => includePrerelease || p.IsReleaseVersion())
-                .AsCollapsed();
+                .AsCollapsed()
+                .OrderBy(x => x.Id);
         }
 
         private IEnumerable<PackageSource> GetPackageSources()

@@ -138,7 +138,7 @@
                         <Image Source="{StaticResource CsFile}"
                                Width="64"
                                Height="64" />
-                        <TextBlock Text="New"
+                        <TextBlock Text="New (Ctrl-N)"
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>

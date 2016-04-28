@@ -38,7 +38,7 @@
                      BorderBrush="DarkGray"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand}"
-                        ToolTip="Run">
+                        ToolTip="Run (F5)">
                     <Grid>
                         <Image Source="{StaticResource Run}" />
                         <ProgressBar VerticalAlignment="Bottom"
@@ -52,7 +52,7 @@
                         Content="{StaticResource Restart}" />
                 <Separator />
                 <Button Command="{Binding SaveCommand}"
-                        ToolTip="Save"
+                        ToolTip="Save (Ctrl-S)"
                         Content="{StaticResource Save}" />
                 <Separator />
                 <Label Content="NuGet" />
@@ -141,7 +141,11 @@
                          IsEnabled="{Binding NuGet.IsEnabled}"
                          BorderBrush="#eee"
                          Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                         Width="300" />
+                         Width="200" />
+                <Decorator VerticalAlignment="Center">
+                    <CheckBox IsChecked="{Binding NuGet.ExactMatch}"
+                              Content="Exact" />
+                </Decorator>
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"
