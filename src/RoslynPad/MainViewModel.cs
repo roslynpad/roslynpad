@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
@@ -38,17 +39,22 @@ namespace RoslynPad
             RoslynHost = new RoslynHost(NuGetProvider);
             ChildProcessManager = new ChildProcessManager();
 
+            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
+            CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
+            ClearErrorCommand = new DelegateCommand(() => LastError = null);
+
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
-            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
-            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
-            CloseCurrentDocumentCommand = new DelegateCommand((Action)CloseCurrentDocument);
-            ClearErrorCommand = new DelegateCommand(() => LastError = null);
-            CreateNewDocument();
+            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>(LoadAutoSaves(DocumentRoot.Path));
+            OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
+            if (HasNoOpenDocuments)
+            {
+                CreateNewDocument();
+            }
 
             _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
+
             Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
-            Application.Current.Exit += (o, e) => OnExit();
             AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
 
@@ -60,6 +66,12 @@ namespace RoslynPad
             {
                 Task.Run(CheckForUpdates);
             }
+        }
+
+        public IEnumerable<OpenDocumentViewModel> LoadAutoSaves(string root)
+        {
+            return Directory.EnumerateFiles(root, DocumentViewModel.GetAutoSaveName("*"), SearchOption.AllDirectories)
+                .Select(x => new OpenDocumentViewModel(this, DocumentViewModel.CreateAutoSave(this, x)));
         }
 
         public bool HasUpdate
@@ -100,7 +112,7 @@ namespace RoslynPad
                 Properties.Settings.Default.Save();
             }
         }
-        
+
         private DocumentViewModel CreateDocumentRoot()
         {
             var root = DocumentViewModel.CreateRoot(this);
@@ -150,19 +162,39 @@ namespace RoslynPad
             CurrentOpenDocument = openDocument;
         }
 
-        public void CloseDocument(OpenDocumentViewModel document)
+        public async Task<bool> CloseDocument(OpenDocumentViewModel document)
         {
-            // TODO: Save
+            try
+            {
+                await document.Save(showDontSave: true, promptSave: true).ConfigureAwait(true);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            if (document.Document?.IsAutoSave == true)
+            {
+                File.Delete(document.Document.Path);
+            }
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
             document.Close();
+            return true;
         }
 
-        private void CloseCurrentDocument()
+        public async Task AutoSaveOpenDocuments()
+        {
+            foreach (var document in OpenDocuments)
+            {
+                await document.AutoSave().ConfigureAwait(false);
+            }
+        }
+
+        private async Task CloseCurrentDocument()
         {
             if (CurrentOpenDocument != null)
             {
-                CloseDocument(CurrentOpenDocument);
+                await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
             }
         }
 
@@ -178,8 +210,10 @@ namespace RoslynPad
             args.Handled = true;
         }
 
-        private void OnExit()
+        public async Task OnExit()
         {
+            await AutoSaveOpenDocuments().ConfigureAwait(false);
+
             if (_client.IsValueCreated)
             {
                 _client.Value.Flush();
@@ -230,6 +264,8 @@ namespace RoslynPad
         }
 
         public ChildProcessManager ChildProcessManager { get; }
+
+        public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 
         public DocumentViewModel AddDocument(string documentName)
         {

@@ -42,7 +42,7 @@ namespace RoslynPad
                 AllowScrollBelowDocument = true,
                 IndentationSize = 4
             };
-            
+
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
@@ -67,6 +67,7 @@ namespace RoslynPad
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             Editor.AppendText(documentText);
             Editor.Document.UndoStack.ClearAll();
+            Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty(Editor.Document.TextLength);
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
@@ -76,13 +77,16 @@ namespace RoslynPad
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
         }
 
-        private Task<string> PromptForDocument()
+        private Task<string> PromptForDocument(PromptForDocumentFlags flags, string currentName)
         {
             // TODO: encapsulate in a dialog service
 
             var isValid = false;
-            var textBox = new TextBox { MaxLength = 200 };
-            textBox.Loaded += (sender, args) => textBox.Focus();
+            var textBox = new TextBox
+            {
+                MaxLength = 200,
+                Text = currentName
+            };
             FilterInvalidCharacters(textBox);
             textBox.KeyDown += (sender, args) =>
             {
@@ -92,7 +96,18 @@ namespace RoslynPad
                     TaskDialog.CancelCommand.Execute(null, textBox);
                 }
             };
-            var saveButton = new Button { Content = "Save", IsDefault = true };
+            if (flags.HasFlag(PromptForDocumentFlags.AllowNameEdit))
+            {
+                textBox.Loaded += (sender, args) => textBox.Focus();
+            }
+            else
+            {
+                textBox.IsEnabled = false;
+            }
+
+            const int saveValue = 10;
+            const int dontSaveValue = 20;
+
             var dialog = new TaskDialog
             {
                 Background = Brushes.White,
@@ -100,15 +115,23 @@ namespace RoslynPad
                 Content = textBox,
                 Buttons =
                 {
-                    saveButton,
-                    new TaskDialogButtonData(TaskDialogButtons.Cancel)
+                    new TaskDialogButtonData(saveValue, "_Save", null, isDefault: true)
                 },
             };
+            if (flags.HasFlag(PromptForDocumentFlags.ShowDontSave))
+            {
+                dialog.Buttons.Add(new TaskDialogButtonData(dontSaveValue, "_Don't Save", null));
+            }
+            dialog.Buttons.Add(new TaskDialogButtonData(TaskDialogButtons.Cancel));
             dialog.ShowInline(this);
             // ReSharper disable once PossibleUnintendedReferenceComparison
-            if ((isValid || dialog.Result.Button == saveButton) && !string.IsNullOrWhiteSpace(textBox.Text))
+            if ((isValid || dialog.Result.ButtonData?.Value == saveValue) && !string.IsNullOrWhiteSpace(textBox.Text))
             {
                 return Task.FromResult(textBox.Text);
+            }
+            if (dialog.Result.ButtonData?.Value != dontSaveValue)
+            {
+                throw new OperationCanceledException();
             }
             return Task.FromResult<string>(null);
         }
@@ -180,7 +203,7 @@ namespace RoslynPad
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
+
         private void Editor_OnKeyDown(object sender, KeyEventArgs e)
         {
             //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))

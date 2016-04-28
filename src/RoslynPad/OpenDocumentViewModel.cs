@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace RoslynPad
         private int _runToken;
         private Action<object> _executionHostOnDumped;
         private readonly object _resultsLock;
+        private bool _isDirty;
 
         public ObservableCollection<ResultObjectViewModel> Results
         {
@@ -45,6 +47,8 @@ namespace RoslynPad
 
             var roslynHost = mainViewModel.RoslynHost;
 
+            IsDirty = document?.IsAutoSave == true;
+
             _workingDirectory = Document != null
                 ? Path.GetDirectoryName(Document.Path)
                 : MainViewModel.DocumentRoot.Path;
@@ -58,7 +62,7 @@ namespace RoslynPad
             Results = new ObservableCollection<ResultObjectViewModel>();
             BindingOperations.EnableCollectionSynchronization(Results, _resultsLock);
 
-            SaveCommand = new DelegateCommand(Save);
+            SaveCommand = new DelegateCommand(() => Save(showDontSave: false, promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);
             RestartHostCommand = new DelegateCommand(RestartHost);
         }
@@ -83,29 +87,71 @@ namespace RoslynPad
             _dispatcher.InvokeAsync(() => IsRunning = value);
         }
 
-        private async Task Save()
+        public async Task AutoSave()
         {
-            if (Document == null && PromptForDocument != null)
+            if (!IsDirty) return;
+            if (Document == null)
             {
-                var documentName = await PromptForDocument().ConfigureAwait(true);
+                var index = 1;
+                string path;
+                do
+                {
+                    path = Path.Combine(_workingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
+                } while (File.Exists(path));
+                Document = DocumentViewModel.CreateAutoSave(MainViewModel, path);
+            }
+
+            await SaveDocument(Document.IsAutoSave
+                ? Document.Path
+                // ReSharper disable once AssignNullToNotNullAttribute
+                : Path.Combine(Path.GetDirectoryName(Document.Path), DocumentViewModel.GetAutoSaveName(Document.Name)))
+                .ConfigureAwait(false);
+        }
+
+        public async Task Save(bool showDontSave, bool promptSave)
+        {
+            if (!IsDirty) return;
+
+            var flags = PromptForDocumentFlags.None;
+            if (showDontSave)
+            {
+                flags |= PromptForDocumentFlags.ShowDontSave;
+            }
+
+            var shouldSave = false;
+            if (Document == null || Document.IsAutoSaveOnly)
+            {
+                Debug.Assert(PromptForDocument != null, "PromptForDocument != null");
+                var documentName = await PromptForDocument(flags | PromptForDocumentFlags.AllowNameEdit, null).ConfigureAwait(true);
                 if (documentName != null)
                 {
+                    if (Document?.IsAutoSave == true)
+                    {
+                        File.Delete(Document.Path);
+                    }
                     Document = MainViewModel.AddDocument(documentName);
+                    shouldSave = true;
                     OnPropertyChanged(nameof(Title));
                 }
             }
-            if (Document != null)
+            else
             {
-                await SaveDocument().ConfigureAwait(true);
+                var documentName = await PromptForDocument(flags, Document.Name).ConfigureAwait(false);
+                shouldSave = documentName != null;
+            }
+            if (shouldSave)
+            {
+                await SaveDocument(Document.Path).ConfigureAwait(true);
+                IsDirty = false;
             }
         }
 
-        public Func<Task<string>> PromptForDocument { get; set; }
+        public Func<PromptForDocumentFlags, string, Task<string>> PromptForDocument { get; set; }
 
-        private async Task SaveDocument()
+        private async Task SaveDocument(string path)
         {
             var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
-            using (var writer = new StreamWriter(Document.Path, append: false))
+            using (var writer = new StreamWriter(path, append: false))
             {
                 foreach (var line in text.Lines)
                 {
@@ -128,7 +174,7 @@ namespace RoslynPad
 
         public NuGetViewModel NuGet => MainViewModel.NuGet;
 
-        public string Title => Document?.Name ?? "New";
+        public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : "New";
 
         public DelegateCommand SaveCommand { get; }
 
@@ -151,6 +197,8 @@ namespace RoslynPad
         private async Task Run()
         {
             Reset();
+
+            await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(false);
 
             SetIsRunning(true);
 
@@ -225,5 +273,24 @@ namespace RoslynPad
             _executionHost?.Dispose();
             _executionHost = null;
         }
+
+        public bool IsDirty
+        {
+            get { return _isDirty; }
+            private set { SetProperty(ref _isDirty, value); }
+        }
+
+        public void SetDirty(int textLength)
+        {
+            IsDirty = textLength > 0;
+        }
+    }
+
+    [Flags]
+    internal enum PromptForDocumentFlags
+    {
+        None = 0,
+        ShowDontSave = 1,
+        AllowNameEdit = 2
     }
 }

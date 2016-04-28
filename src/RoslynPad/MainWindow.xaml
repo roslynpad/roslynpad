@@ -89,10 +89,22 @@
             <Grid>
                 <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
-                                     DocumentClosed="DockingManager_OnDocumentClosed">
+                                     DocumentClosing="DockingManager_OnDocumentClosing">
                     <dock:DockingManager.DocumentHeaderTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Content.Title}" />
+                            <TextBlock>
+                                <Run Text="{Binding Content.Title, Mode=OneWay}" />
+                                <Run Name="DirtyIndicator"
+                                     Text="" />
+                            </TextBlock>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Content.IsDirty}"
+                                             Value="True">
+                                    <Setter TargetName="DirtyIndicator"
+                                            Property="Text"
+                                            Value="*" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </dock:DockingManager.DocumentHeaderTemplate>
                     <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
@@ -117,6 +129,19 @@
                         </dock:LayoutPanel>
                     </dock:LayoutRoot>
                 </dock:DockingManager>
+                <Button HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand}"
+                        Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <Image Source="{StaticResource CsFile}"
+                               Width="64"
+                               Height="64" />
+                        <TextBlock Text="New"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
                 <Button HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
                         Margin="5"
