@@ -11,7 +11,6 @@ using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
-using NuGet;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
@@ -156,7 +155,7 @@ namespace RoslynPad
             };
         }
 
-        private void NuGetOnPackageInstalled(IPackage package, NuGetInstallResult installResult)
+        private void NuGetOnPackageInstalled(NuGetInstallResult installResult)
         {
             if (installResult.References.Count == 0) return;
 

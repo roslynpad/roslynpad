@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
@@ -14,6 +16,7 @@ using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
 using NuGet.Protocol.Core.Types;
 using NuGet.Protocol.Core.v2;
+using NuGet.Protocol.Core.v3;
 using NuGet.Resolver;
 using NuGet.Versioning;
 using RoslynPad.Utilities;
@@ -23,9 +26,8 @@ using PackageReference = NuGet.Packaging.PackageReference;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
-using System.Reflection;
-using NuGet.Protocol.Core.v3;
 using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
+using NullLogger = NuGet.Logging.NullLogger;
 
 namespace RoslynPad
 {
@@ -33,6 +35,7 @@ namespace RoslynPad
     {
         private const string TargetFrameworkName = "net46";
         private const string TargetFrameworkFullName = ".NET Framework, Version=4.6";
+        private const int MaxSearchResults = 50;
 
         private readonly ISettings _settings;
         private readonly PackageSourceProvider _sourceProvider;
@@ -41,7 +44,7 @@ namespace RoslynPad
         private readonly Lazy<Task> _initializationTask;
 
         private string _searchTerm;
-        private IReadOnlyList<IPackage> _packages;
+        private IReadOnlyList<PackageData> _packages;
         private CancellationTokenSource _cts;
         private bool _hasPackages;
         private AggregateRepository _repository;
@@ -67,7 +70,7 @@ namespace RoslynPad
 
             _initializationTask = new Lazy<Task>(Initialize);
 
-            InstallPackageCommand = new DelegateCommand<IPackage>(InstallPackage);
+            InstallPackageCommand = new DelegateCommand<PackageData>(InstallPackage);
 
             IsEnabled = true;
         }
@@ -84,13 +87,13 @@ namespace RoslynPad
             private set { SetProperty(ref _isEnabled, value); }
         }
 
-        public DelegateCommand<IPackage> InstallPackageCommand { get; }
+        public DelegateCommand<PackageData> InstallPackageCommand { get; }
 
-        public event Action<IPackage, NuGetInstallResult> PackageInstalled;
+        public event Action<NuGetInstallResult> PackageInstalled;
 
-        private void OnPackageInstalled(IPackage package, NuGetInstallResult result)
+        private void OnPackageInstalled(NuGetInstallResult result)
         {
-            PackageInstalled?.Invoke(package, result);
+            PackageInstalled?.Invoke(result);
         }
 
         public string SearchTerm
@@ -107,7 +110,7 @@ namespace RoslynPad
             }
         }
 
-        public IReadOnlyList<IPackage> Packages
+        public IReadOnlyList<PackageData> Packages
         {
             get { return _packages; }
             private set { SetProperty(ref _packages, value); }
@@ -134,15 +137,12 @@ namespace RoslynPad
                 }
                 try
                 {
-                    var packages = await Task.Run(() => GetPackagesAsync(searchTerm, true, false), cancellationToken).ConfigureAwait(false);
-                    var list = new List<IPackage>();
-                    foreach (var package in packages)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        list.Add(package);
-                    }
-                    HasPackages = list.Count > 0;
-                    Packages = list.AsReadOnly();
+                    var packages = await Task.Run(() =>
+                        GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true, cancellationToken: cancellationToken),
+                        cancellationToken).ConfigureAwait(false);
+
+                    Packages = packages;
+                    HasPackages = Packages.Count > 0;
                 }
                 catch (OperationCanceledException)
                 {
@@ -154,21 +154,26 @@ namespace RoslynPad
             }
         }
 
-        private async Task<IEnumerable<IPackage>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions)
+        private async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, CancellationToken cancellationToken)
         {
             await _initializationTask.Value.ConfigureAwait(false);
-            return GetPackages(searchTerm, includePrerelease, allVersions);
+            return await GetPackages(searchTerm, includePrerelease, allVersions, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task InstallPackage(IPackage package)
+        private Task InstallPackage(PackageData package)
+        {
+            return InstallPackage(package.Id, package.Version);
+        }
+
+        public async Task InstallPackage(string id, NuGetVersion version)
         {
             IsBusy = true;
             IsEnabled = false;
             try
             {
-                var result = await InstallPackage(package.Id, new NuGetVersion(package.Version.ToNormalizedString()), prerelease: true).ConfigureAwait(false);
+                var result = await InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
 
-                OnPackageInstalled(package, result);
+                OnPackageInstalled(result);
             }
             finally
             {
@@ -218,6 +223,7 @@ namespace RoslynPad
                     project,
                     resolutionContext,
                     primaryRepositories,
+                    NullLogger.Instance,
                     CancellationToken.None).ConfigureAwait(false);
 
                 if (version == null)
@@ -291,7 +297,7 @@ namespace RoslynPad
             return listEndpoints;
         }
 
-        private IEnumerable<IPackage> GetPackages(string searchTerm, bool includePrerelease, bool allVersions)
+        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool allVersions, CancellationToken cancellationToken)
         {
             if (ExactMatch)
             {
@@ -302,32 +308,38 @@ namespace RoslynPad
                         ? exactResult.Where(x => x.IsAbsoluteLatestVersion)
                         : exactResult.Where(p => p.IsLatestVersion);
                 }
-                return exactResult;
+                return new[] { new PackageData(exactResult) };
             }
 
-            IQueryable<IPackage> packages = _repository.Search(
-                searchTerm,
-                targetFrameworks: new[] { TargetFrameworkFullName },
-                allowPrereleaseVersions: includePrerelease);
+            var filter = new SearchFilter(new[] { TargetFrameworkFullName }, includePrerelease, includeDelisted: false);
 
-            if (allVersions)
+            foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
             {
-                return packages.OrderBy(p => p.Id);
+                IPackageSearchMetadata[] result;
+                try
+                {
+                    result = await sourceRepository.SearchAsync(searchTerm, filter, MaxSearchResults, cancellationToken).ConfigureAwait(false);
+                }
+                catch (FatalProtocolException)
+                {
+                    continue;
+                }
+                if (result.Length > 0)
+                {
+                    var packages = result.Select(x => new PackageData(x)).ToArray();
+                    await Task.WhenAll(packages.Select(x => x.Initialize())).ConfigureAwait(false);
+                    return packages;
+                }
             }
-            packages = includePrerelease ? packages.Where(p => p.IsAbsoluteLatestVersion) : packages.Where(p => p.IsLatestVersion);
 
-            var result = packages.AsEnumerable();
-            result = result.Where(PackageExtensions.IsListed);
-            return result.Where(p => includePrerelease || p.IsReleaseVersion())
-                .AsCollapsed()
-                .OrderBy(x => x.Id);
+            return Array.Empty<PackageData>();
         }
 
         private IEnumerable<PackageSource> GetPackageSources()
         {
             var availableSources = _sourceProvider.LoadPackageSources().Where(source => source.IsEnabled);
             var packageSources = new List<PackageSource>();
-            
+
             if (!string.IsNullOrEmpty(GlobalPackageFolder) && Directory.Exists(GlobalPackageFolder))
             {
                 packageSources.Add(new V2PackageSource(GlobalPackageFolder,
@@ -573,17 +585,11 @@ namespace RoslynPad
                     .ToList();
             }
 
-            /// <summary>
-            /// Retrieve repositories that have been cached.
-            /// </summary>
             public IEnumerable<SourceRepository> GetRepositories()
             {
                 return _repositories;
             }
 
-            /// <summary>
-            /// Create a repository and add it to the cache.
-            /// </summary>
             public SourceRepository CreateRepository(PackageSource source)
             {
                 return _cachedSources.GetOrAdd(source, new SourceRepository(source, _resourceProviders));
@@ -612,6 +618,44 @@ namespace RoslynPad
         #endregion
     }
 
+    internal sealed class PackageData
+    {
+        private readonly IPackageSearchMetadata _package;
+
+        private PackageData(string id, NuGetVersion version)
+        {
+            Id = id;
+            Version = version;
+        }
+
+        public string Id { get; }
+        public NuGetVersion Version { get; }
+        public ImmutableArray<PackageData> OtherVersions { get; private set; }
+
+        public PackageData(IEnumerable<IPackage> packages)
+        {
+            var packagesArray = packages as IPackage[] ?? packages.ToArray();
+            var package = packagesArray.First();
+            Id = package.Id;
+            Version = NuGetVersion.Parse(package.Version.ToString());
+            OtherVersions = packagesArray.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
+        }
+
+        public PackageData(IPackageSearchMetadata package)
+        {
+            _package = package;
+            Id = package.Identity.Id;
+            Version = package.Identity.Version;
+        }
+
+        public async Task Initialize()
+        {
+            if (_package == null) return;
+            var versions = await _package.GetVersionsAsync().ConfigureAwait(false);
+            OtherVersions = versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version).ToImmutableArray();
+        }
+    }
+
     internal sealed class NuGetInstallResult
     {
         public NuGetInstallResult(IReadOnlyList<string> references, IReadOnlyList<string> frameworkReferences)
@@ -622,5 +666,25 @@ namespace RoslynPad
 
         public IReadOnlyList<string> References { get; }
         public IReadOnlyList<string> FrameworkReferences { get; }
+    }
+
+    internal static class SourceRepositoryExtensions
+    {
+        public static async Task<IPackageSearchMetadata[]> SearchAsync(this SourceRepository sourceRepository, string searchText, SearchFilter searchFilter, int pageSize, CancellationToken cancellationToken)
+        {
+            var searchResource = await sourceRepository.GetResourceAsync<PackageSearchResource>(cancellationToken).ConfigureAwait(false);
+
+            var searchResults = await searchResource.SearchAsync(
+                searchText,
+                searchFilter,
+                0,
+                pageSize,
+                NullLogger.Instance,
+                cancellationToken).ConfigureAwait(false);
+
+            var items = searchResults?.ToArray() ?? Array.Empty<IPackageSearchMetadata>();
+
+            return items;
+        }
     }
 }

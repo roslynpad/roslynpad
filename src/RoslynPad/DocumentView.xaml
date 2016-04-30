@@ -5,7 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:roslynPad="clr-namespace:RoslynPad"
-             xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
@@ -61,62 +60,19 @@
                       IsEnabled="{Binding NuGet.IsEnabled}">
                     <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
                               ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet}">
+                              Header="{Binding NuGet}"
+                              IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
                             <DataTemplate DataType="{x:Type roslynPad:NuGetViewModel}">
                                 <Grid>
                                     <TextBlock Name="Text"
                                                Text=""
                                                FontFamily="Segoe UI Symbol" />
-                                    <Ellipse Name="Icon"
-                                             Margin="2"
-                                             Visibility="Hidden"
-                                             VerticalAlignment="Stretch"
-                                             HorizontalAlignment="Stretch"
-                                             Fill="Transparent"
-                                             Stroke="Gray"
-                                             StrokeThickness="2"
-                                             Stretch="Uniform">
-                                    </Ellipse>
+                                    <ProgressBar VerticalAlignment="Bottom"
+                                                 Height="4"
+                                                 IsIndeterminate="{Binding IsBusy}"
+                                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding IsBusy}"
-                                                 Value="True">
-                                        <Setter TargetName="Text"
-                                                Property="Visibility"
-                                                Value="Hidden" />
-                                        <Setter TargetName="Icon"
-                                                Property="Visibility"
-                                                Value="Visible" />
-                                        <Setter TargetName="Icon"
-                                                Property="Stroke">
-                                            <Setter.Value>
-                                                <RadialGradientBrush GradientOrigin="0,0">
-                                                    <GradientStop Color="Teal"
-                                                                  Offset="1" />
-                                                    <GradientStop Color="Transparent" />
-                                                </RadialGradientBrush>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard Name="animate">
-                                                <Storyboard>
-                                                    <PointAnimationUsingKeyFrames Storyboard.TargetName="Icon"
-                                                                                  Storyboard.TargetProperty="(Shape.Stroke).(RadialGradientBrush.GradientOrigin)"
-                                                                                  RepeatBehavior="Forever">
-                                                        <LinearPointKeyFrame Value="1,0" />
-                                                        <LinearPointKeyFrame Value="1,1" />
-                                                        <LinearPointKeyFrame Value="0,1" />
-                                                        <LinearPointKeyFrame Value="0,0" />
-                                                    </PointAnimationUsingKeyFrames>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                        <DataTrigger.ExitActions>
-                                            <StopStoryboard BeginStoryboardName="animate" />
-                                        </DataTrigger.ExitActions>
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </MenuItem.HeaderTemplate>
                         <ItemsControl.ItemContainerStyle>
@@ -125,16 +81,43 @@
                                         Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
                                 <Setter Property="CommandParameter"
                                         Value="{Binding}" />
+                                <Setter Property="Icon"
+                                        Value="{Binding}" />
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="nuGet:IPackage">
+                            <DataTemplate DataType="{x:Type roslynPad:PackageData}">
                                 <TextBlock>
                                     <Run Text="{Binding Id, Mode=OneTime}" />
                                     <Run Text="{Binding Version, Mode=OneTime}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
+                        <ItemsControl.Resources>
+                            <DataTemplate DataType="{x:Type roslynPad:PackageData}">
+                                <Menu Background="Transparent"
+                                      ToolTip="Other versions">
+                                    <MenuItem ItemsSource="{Binding OtherVersions}"
+                                              DisplayMemberPath="Version"
+                                              Padding="2">
+                                        <MenuItem.Header>
+                                            <TextBlock FontWeight="Bold"
+                                                       FontFamily="Segoe UI Symbol"
+                                                       Text=""
+                                                       FontSize="8" />
+                                        </MenuItem.Header>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="MenuItem">
+                                                <Setter Property="Command"
+                                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
+                                                <Setter Property="CommandParameter"
+                                                        Value="{Binding}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                    </MenuItem>
+                                </Menu>
+                            </DataTemplate>
+                        </ItemsControl.Resources>
                     </MenuItem>
                 </Menu>
                 <TextBox Name="SearchTerm"
