@@ -45,8 +45,7 @@
         </DataTemplate>
 
         <Style x:Key="DocumentItemContainerStyle"
-               TargetType="TreeViewItem"
-               d:DataContext="{d:DesignInstance roslynPad:DocumentViewModel}">
+               TargetType="TreeViewItem">
             <Setter Property="IsExpanded"
                     Value="{Binding IsExpanded}" />
             <EventSetter Event="MouseDoubleClick"
@@ -65,12 +64,6 @@
                     DockPanel.Dock="Bottom"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel LastChildFill="False">
-                    <CheckBox IsChecked="{Binding SendTelemetry}"
-                              ToolTip="Send errors to RoslynPad's author (just stack traces)"
-                              VerticalAlignment="Center"
-                              Background="Transparent"
-                              Content="Send errors"
-                              DockPanel.Dock="Right" />
                     <Button Margin="3"
                             Content="View details"
                             DockPanel.Dock="Right"
@@ -143,13 +136,38 @@
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Margin="5"
-                        Style="{StaticResource LinkButton}"
-                        Content="Update available"
-                        Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        Click="ViewUpdateClick" />
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="5">
+                    <Button Width="16"
+                            Height="16"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Cursor="Hand"
+                            Content="{StaticResource Update}"
+                            ToolTip="Update Available"
+                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Click="ViewUpdateClick" />
+                    <Menu Background="Transparent"
+                          Margin="10,0,0,0">
+                        <MenuItem Padding="0"
+                                  BorderThickness="0"
+                                  ToolTip="Send Feedback">
+                            <MenuItem.Header>
+                                <Image Source="{StaticResource Feedback}"
+                                       Width="16"
+                                       Height="16" />
+                            </MenuItem.Header>
+                            <MenuItem IsCheckable="True"
+                                      IsChecked="{Binding SendTelemetry}"
+                                      Header="Send Telemetry"
+                                      ToolTip="Send errors to the author (stack traces of internal RoslynPad errors - not your code)" />
+                            <MenuItem Header="Report a problem..."
+                                      Command="{Binding ReportProblemCommand}" />
+                        </MenuItem>
+                    </Menu>
+                </StackPanel>
             </Grid>
         </DockPanel>
     </av:InlineModalDecorator>

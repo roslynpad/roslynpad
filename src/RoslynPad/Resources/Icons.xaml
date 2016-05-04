@@ -136,4 +136,34 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+
+    <DrawingImage x:Key="Feedback">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M0,16L0,9 2.053,9C1.403,8.364 1,7.479 1,6.5 1,4.74 2.306,3.279 4,3.036L4,1.586 5.584,0 14.414,0 16,1.586 16,7.414 14.414,9 11.535,9 9,12.803 9,16z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M14,1L5.999,1 5,2 5,3.051 5,3.051C5.162,3.074 5.318,3.11 5.472,3.154 5.505,3.164 5.537,3.174 5.569,3.185 5.717,3.233 5.861,3.285 6,3.351L6,3.351 6,2 14,2 14,7 10,7 9,9 9,11 11,8 14,8 15,7 15,2z M9,9L8,9 8,7 9,7z M8,10L8,15 1,15 1,10 3,10 4.5,12 6,10z M2,6.5C2,5.12 3.119,4 4.5,4 5.879,4 7,5.12 7,6.5 7,7.881 5.879,9 4.5,9 3.119,9 2,7.881 2,6.5" />
+                    <GeometryDrawing Brush="#FFEFEFF0"
+                                     Geometry="F1M14,2L14,7 10,7 9,9 9,7 7.949,7C7.973,6.835 8,6.671 8,6.5 8,5.109 7.178,3.915 6,3.351L6,3 6,2z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Update">
+        <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="WhiteSmoke"
+                                         Geometry="F1M16,8C16,12.418 12.418,16 8,16 3.582,16 0,12.418 0,8 0,3.582 3.582,0 8,0 12.418,0 16,3.582 16,8z" />
+                        <GeometryDrawing Brush="#FF1AA0E1"
+                                         Geometry="F1M4,7L8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10 4,7z M8,15C11.865,15 15,11.866 15,8 15,4.135 11.865,1 8,1 4.135,1 1,4.135 1,8 1,11.866 4.135,15 8,15z" />
+                        <GeometryDrawing Brush="White"
+                                         Geometry="F1M4,10L4,7 8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10z" />
+                    </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

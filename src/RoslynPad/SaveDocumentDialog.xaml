@@ -12,7 +12,7 @@
              Background="White">
     <StackPanel Margin="10">
         <TextBlock Text="Save Document"
-                   FontSize="16" />
+                   Style="{StaticResource Title}" />
         <TextBox Name="DocumentTextBox"
                  KeyDown="DocumentText_KeyDown"
                  Text="{Binding DocumentName, UpdateSourceTrigger=PropertyChanged}"
@@ -22,28 +22,24 @@
         <StackPanel HorizontalAlignment="Right"
                     Orientation="Horizontal"
                     Margin="50,30,0,0">
-            <FrameworkElement.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="Padding"
-                            Value="10,2,10,2" />
-                    <Setter Property="Margin"
-                            Value="10,0,0,0" />
-                </Style>
-            </FrameworkElement.Resources>
             <Button Name="OverwriteButton"
+                    Style="{StaticResource DialogButton}"
                     BorderBrush="Red"
                     Visibility="Collapsed"
                     Content="_Overwrite"
                     Click="Overwrite_Click"/>
             <Button IsDefault="True"
+                    Style="{StaticResource DialogButton}"
                     Name="SaveButton"
                     Content="_Save"
                     Click="Save_Click" />
             <Button Content="_Dont Save"
+                    Style="{StaticResource DialogButton}"
                     Visibility="{Binding ShowDontSave, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Name="DontSaveButton"
                     Click="DontSave_Click" />
             <Button Content="_Cancel"
+                    Style="{StaticResource DialogButton}"
                     IsCancel="True"
                     Click="Cancel_Click" />
         </StackPanel>

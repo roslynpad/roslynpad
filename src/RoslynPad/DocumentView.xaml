@@ -46,6 +46,7 @@
                         <ProgressBar VerticalAlignment="Bottom"
                                      Height="4"
                                      IsIndeterminate="{Binding IsRunning}"
+                                     BorderThickness="0"
                                      Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </Grid>
                 </Button>
@@ -77,6 +78,7 @@
                                                FontFamily="Segoe UI Symbol" />
                                     <ProgressBar VerticalAlignment="Bottom"
                                                  Height="4"
+                                                 BorderThickness="0"
                                                  IsIndeterminate="{Binding IsBusy}"
                                                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>

@@ -86,6 +86,9 @@
     <Compile Include="OpenDocumentViewModel.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
+    <Compile Include="ReportProblemDialog.xaml.cs">
+      <DependentUpon>ReportProblemDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ResultObjectViewModel.cs" />
     <Compile Include="SaveDocumentDialog.xaml.cs">
       <DependentUpon>SaveDocumentDialog.xaml</DependentUpon>
@@ -104,6 +107,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MainWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ReportProblemDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

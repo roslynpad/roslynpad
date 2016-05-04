@@ -22,7 +22,7 @@ namespace RoslynPad
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
 
-        private readonly TelemetryClient _client;
+        private readonly TelemetryClient _telemetryClient;
 
         private OpenDocumentViewModel _currentOpenDocument;
         private Exception _lastError;
@@ -42,6 +42,7 @@ namespace RoslynPad
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
+            ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
 
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
@@ -56,13 +57,13 @@ namespace RoslynPad
                 CurrentOpenDocument = OpenDocuments[0];
             }
 
-            _client = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
+            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
 #if DEBUG
-            _client.Context.Properties["DEBUG"] = "1";
+            _telemetryClient.Context.Properties["DEBUG"] = "1";
 #endif
             if (SendTelemetry)
             {
-                _client.TrackEvent(TelemetryEventNames.Start);
+                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
             }
 
             Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
@@ -77,6 +78,12 @@ namespace RoslynPad
             {
                 Task.Run(CheckForUpdates);
             }
+        }
+
+        private void ReportProblem()
+        {
+            var dialog = new ReportProblemDialog(this);
+            dialog.Show();
         }
 
         public IEnumerable<OpenDocumentViewModel> LoadAutoSaves(string root)
@@ -227,7 +234,7 @@ namespace RoslynPad
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
-            _client.Flush();
+            _telemetryClient.Flush();
         }
 
         private void TrackException(Exception exception, bool flushSync = false)
@@ -235,15 +242,15 @@ namespace RoslynPad
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
             if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
             {
-                _client.TrackException(exception);
+                _telemetryClient.TrackException(exception);
                 if (flushSync)
                 {
-                    _client.Flush();
+                    _telemetryClient.Flush();
                 }
                 // TODO: check why this freezes the UI
                 //else
                 //{
-                //    Task.Run(() => _client.Value.Flush());
+                //    Task.Run(() => _telemetryClient.Value.Flush());
                 //}
             }
         }
@@ -277,9 +284,24 @@ namespace RoslynPad
 
         public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 
+        public DelegateCommand ReportProblemCommand { get; private set; }
+
         public DocumentViewModel AddDocument(string documentName)
         {
             return DocumentRoot.CreateNew(documentName);
+        }
+
+        public Task SubmitFeedback(string feedbackText, string email)
+        {
+            return Task.Run(() =>
+            {
+                _telemetryClient.TrackEvent(TelemetryEventNames.Feedback, new Dictionary<string, string>
+                {
+                    ["Content"] = feedbackText,
+                    ["Email"] = email
+                });
+                _telemetryClient.Flush();
+            });
         }
 
         [Serializable]
@@ -299,5 +321,6 @@ namespace RoslynPad
     internal static class TelemetryEventNames
     {
         public const string Start = "Start";
+        public const string Feedback = "Feedback";
     }
 }
