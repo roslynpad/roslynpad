@@ -2,12 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
@@ -50,12 +47,10 @@ namespace RoslynPad
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
-            _viewModel.MainViewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
             _roslynHost = _viewModel.MainViewModel.RoslynHost;
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
-
-            _viewModel.PromptForDocument = PromptForDocument;
 
             await _viewModel.Initialize(
                 avalonEditTextContainer,
@@ -74,85 +69,6 @@ namespace RoslynPad
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
-        }
-
-        private Task<string> PromptForDocument(PromptForDocumentFlags flags, string currentName)
-        {
-            // TODO: encapsulate in a dialog service
-
-            var isValid = false;
-            var textBox = new TextBox
-            {
-                MaxLength = 200,
-                Text = currentName
-            };
-            FilterInvalidCharacters(textBox);
-            textBox.KeyDown += (sender, args) =>
-            {
-                if (args.Key == Key.Enter)
-                {
-                    isValid = true;
-                    TaskDialog.CancelCommand.Execute(null, textBox);
-                }
-            };
-            if (flags.HasFlag(PromptForDocumentFlags.AllowNameEdit))
-            {
-                textBox.Loaded += (sender, args) => textBox.Focus();
-            }
-            else
-            {
-                textBox.IsEnabled = false;
-            }
-
-            const int saveValue = 10;
-            const int dontSaveValue = 20;
-
-            var dialog = new TaskDialog
-            {
-                Background = Brushes.White,
-                Header = "Save Document",
-                Content = textBox,
-                Buttons =
-                {
-                    new TaskDialogButtonData(saveValue, "_Save", null, isDefault: true)
-                },
-            };
-            if (flags.HasFlag(PromptForDocumentFlags.ShowDontSave))
-            {
-                dialog.Buttons.Add(new TaskDialogButtonData(dontSaveValue, "_Don't Save", null));
-            }
-            dialog.Buttons.Add(new TaskDialogButtonData(TaskDialogButtons.Cancel));
-            dialog.ShowInline(this);
-            // ReSharper disable once PossibleUnintendedReferenceComparison
-            if ((isValid || dialog.Result.ButtonData?.Value == saveValue) && !string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                return Task.FromResult(textBox.Text);
-            }
-            if (dialog.Result.ButtonData?.Value != dontSaveValue)
-            {
-                throw new OperationCanceledException();
-            }
-            return Task.FromResult<string>(null);
-        }
-
-        private static void FilterInvalidCharacters(TextBox textBox)
-        {
-            var invalidChars = Path.GetInvalidFileNameChars();
-            textBox.TextChanged += (sender, e) =>
-            {
-                foreach (var c in e.Changes)
-                {
-                    if (c.AddedLength == 0) continue;
-                    textBox.Select(c.Offset, c.AddedLength);
-                    var filteredText = invalidChars.Aggregate(textBox.SelectedText,
-                        (current, invalidChar) => current.Replace(invalidChar.ToString(), string.Empty));
-                    if (textBox.SelectedText != filteredText)
-                    {
-                        textBox.SelectedText = filteredText;
-                    }
-                    textBox.Select(c.Offset + c.AddedLength, 0);
-                }
-            };
         }
 
         private void NuGetOnPackageInstalled(NuGetInstallResult installResult)

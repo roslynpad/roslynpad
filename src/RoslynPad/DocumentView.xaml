@@ -5,11 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:roslynPad="clr-namespace:RoslynPad"
+             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
         <KeyBinding Key="F5"
                     Command="{Binding RunCommand}" />
+        <KeyBinding Gesture="Shift+F5"
+                    Command="{Binding RestartHostCommand}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand}" />
     </FrameworkElement.InputBindings>
@@ -47,8 +50,12 @@
                     </Grid>
                 </Button>
                 <Button Command="{Binding RestartHostCommand}"
-                        ToolTip="Restart host process"
+                        ToolTip="Restart host process (Shift-F5)"
                         Content="{StaticResource Restart}" />
+                <ComboBox SelectedItem="{Binding Platform}">
+                    <codeAnalysis:Platform>X86</codeAnalysis:Platform>
+                    <codeAnalysis:Platform>X64</codeAnalysis:Platform>
+                </ComboBox>
                 <Separator />
                 <Button Command="{Binding SaveCommand}"
                         ToolTip="Save (Ctrl-S)"
@@ -63,7 +70,7 @@
                               Header="{Binding NuGet}"
                               IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type roslynPad:NuGetViewModel}">
+                            <DataTemplate DataType="{x:Type roslynPad:NuGetDocumentViewModel}">
                                 <Grid>
                                     <TextBlock Name="Text"
                                                Text=""

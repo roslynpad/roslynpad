@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
-using ICSharpCode.AvalonEdit.CodeCompletion;
 
 namespace RoslynPad.Editor
 {
     public sealed class CompletionResult
     {
-        public CompletionResult(IList<ICompletionDataEx> completionData, IOverloadProvider overloadProvider)
+        public CompletionResult(IList<ICompletionDataEx> completionData, IOverloadProviderEx overloadProvider)
         {
             CompletionData = completionData;
             OverloadProvider = overloadProvider;
@@ -13,6 +12,6 @@ namespace RoslynPad.Editor
 
         public IList<ICompletionDataEx> CompletionData { get; private set; }
 
-        public IOverloadProvider OverloadProvider { get; private set; }
+        public IOverloadProviderEx OverloadProvider { get; private set; }
     }
 }

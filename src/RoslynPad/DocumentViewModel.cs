@@ -64,16 +64,23 @@ namespace RoslynPad
             OpenDocumentCommand = new DelegateCommand((Action)Open);
         }
 
+        public static string GetDocumentPathFromName(string path, string name)
+        {
+            if (!name.EndsWith(DefaultFileExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                name += DefaultFileExtension;
+            }
+
+            return System.IO.Path.Combine(path, name);
+        }
+
         public DocumentViewModel CreateNew(string documentName)
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
-            if (!documentName.EndsWith(DefaultFileExtension, StringComparison.OrdinalIgnoreCase))
-            {
-                documentName += DefaultFileExtension;
-            }
+     
 
-            var document = new DocumentViewModel(MainViewModel, System.IO.Path.Combine(Path, documentName), isFolder: false);
+            var document = new DocumentViewModel(MainViewModel, GetDocumentPathFromName(Path, documentName), isFolder: false);
 
             var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
             Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);

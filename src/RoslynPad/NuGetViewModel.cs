@@ -43,13 +43,7 @@ namespace RoslynPad
         private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
         private readonly Lazy<Task> _initializationTask;
 
-        private string _searchTerm;
-        private IReadOnlyList<PackageData> _packages;
-        private CancellationTokenSource _cts;
-        private bool _hasPackages;
         private AggregateRepository _repository;
-        private bool _isBusy;
-        private bool _isEnabled;
 
         public string GlobalPackageFolder { get; }
 
@@ -70,119 +64,15 @@ namespace RoslynPad
 
             _initializationTask = new Lazy<Task>(Initialize);
 
-            InstallPackageCommand = new DelegateCommand<PackageData>(InstallPackage);
-
-            IsEnabled = true;
         }
-
-        public bool IsBusy
-        {
-            get { return _isBusy; }
-            private set { SetProperty(ref _isBusy, value); }
-        }
-
-        public bool IsEnabled
-        {
-            get { return _isEnabled; }
-            private set { SetProperty(ref _isEnabled, value); }
-        }
-
-        public DelegateCommand<PackageData> InstallPackageCommand { get; }
-
-        public event Action<NuGetInstallResult> PackageInstalled;
-
-        private void OnPackageInstalled(NuGetInstallResult result)
-        {
-            PackageInstalled?.Invoke(result);
-        }
-
-        public string SearchTerm
-        {
-            get { return _searchTerm; }
-            set
-            {
-                if (SetProperty(ref _searchTerm, value))
-                {
-                    _cts?.Cancel();
-                    _cts = new CancellationTokenSource();
-                    PerformSearch(value, _cts.Token);
-                }
-            }
-        }
-
-        public IReadOnlyList<PackageData> Packages
-        {
-            get { return _packages; }
-            private set { SetProperty(ref _packages, value); }
-        }
-
-        public bool HasPackages
-        {
-            get { return _hasPackages; }
-            set { SetProperty(ref _hasPackages, value); }
-        }
-
-        public bool ExactMatch { get; set; }
-
-        private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
-        {
-            IsBusy = true;
-            try
-            {
-                if (string.IsNullOrWhiteSpace(searchTerm))
-                {
-                    HasPackages = false;
-                    Packages = null;
-                    return;
-                }
-                try
-                {
-                    var packages = await Task.Run(() =>
-                        GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true, cancellationToken: cancellationToken),
-                        cancellationToken).ConfigureAwait(false);
-
-                    Packages = packages;
-                    HasPackages = Packages.Count > 0;
-                }
-                catch (OperationCanceledException)
-                {
-                }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, CancellationToken cancellationToken)
+      
+        public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
         {
             await _initializationTask.Value.ConfigureAwait(false);
-            return await GetPackages(searchTerm, includePrerelease, allVersions, cancellationToken).ConfigureAwait(false);
+            return await GetPackages(searchTerm, includePrerelease, allVersions, exactMatch, cancellationToken).ConfigureAwait(false);
         }
-
-        private Task InstallPackage(PackageData package)
-        {
-            return InstallPackage(package.Id, package.Version);
-        }
-
-        public async Task InstallPackage(string id, NuGetVersion version)
-        {
-            IsBusy = true;
-            IsEnabled = false;
-            try
-            {
-                var result = await InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
-
-                OnPackageInstalled(result);
-            }
-            finally
-            {
-                IsBusy = false;
-                IsEnabled = true;
-            }
-        }
-
-        private async Task<NuGetInstallResult> InstallPackage(
+        
+        public async Task<NuGetInstallResult> InstallPackage(
             string packageId,
             NuGetVersion version,
             bool prerelease)
@@ -297,9 +187,9 @@ namespace RoslynPad
             return listEndpoints;
         }
 
-        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool allVersions, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
         {
-            if (ExactMatch)
+            if (exactMatch)
             {
                 var exactResult = _repository.FindPackagesById(searchTerm);
                 if (!allVersions)
@@ -308,7 +198,12 @@ namespace RoslynPad
                         ? exactResult.Where(x => x.IsAbsoluteLatestVersion)
                         : exactResult.Where(p => p.IsLatestVersion);
                 }
-                return new[] { new PackageData(exactResult) };
+                var packages = exactResult.ToArray();
+                if (packages.Any())
+                {
+                    return new[] { new PackageData(packages) };
+                }
+                return Array.Empty<PackageData>();
             }
 
             var filter = new SearchFilter(new[] { TargetFrameworkFullName }, includePrerelease, includeDelisted: false);
@@ -618,6 +513,129 @@ namespace RoslynPad
         #endregion
     }
 
+    internal sealed class NuGetDocumentViewModel : NotificationObject
+    {
+        private readonly NuGetViewModel _nuGetViewModel;
+
+        private bool _isBusy;
+        private bool _isEnabled;
+        private string _searchTerm;
+        private CancellationTokenSource _cts;
+        private IReadOnlyList<PackageData> _packages;
+        private bool _hasPackages;
+
+        public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel)
+        {
+            _nuGetViewModel = nuGetViewModel;
+
+            InstallPackageCommand = new DelegateCommand<PackageData>(InstallPackage);
+
+            IsEnabled = true;
+        }
+
+        private Task InstallPackage(PackageData package)
+        {
+            return InstallPackage(package.Id, package.Version);
+        }
+
+        public async Task InstallPackage(string id, NuGetVersion version)
+        {
+            IsBusy = true;
+            IsEnabled = false;
+            try
+            {
+                var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
+
+                OnPackageInstalled(result);
+            }
+            finally
+            {
+                IsBusy = false;
+                IsEnabled = true;
+            }
+        }
+
+        public DelegateCommand<PackageData> InstallPackageCommand { get; }
+
+        private void OnPackageInstalled(NuGetInstallResult result)
+        {
+            PackageInstalled?.Invoke(result);
+        }
+
+        public event Action<NuGetInstallResult> PackageInstalled;
+
+        public bool IsBusy
+        {
+            get { return _isBusy; }
+            private set { SetProperty(ref _isBusy, value); }
+        }
+
+        public bool IsEnabled
+        {
+            get { return _isEnabled; }
+            private set { SetProperty(ref _isEnabled, value); }
+        }
+
+
+        public string SearchTerm
+        {
+            get { return _searchTerm; }
+            set
+            {
+                if (SetProperty(ref _searchTerm, value))
+                {
+                    _cts?.Cancel();
+                    _cts = new CancellationTokenSource();
+                    PerformSearch(value, _cts.Token);
+                }
+            }
+        }
+
+        public IReadOnlyList<PackageData> Packages
+        {
+            get { return _packages; }
+            private set { SetProperty(ref _packages, value); }
+        }
+
+        public bool HasPackages
+        {
+            get { return _hasPackages; }
+            set { SetProperty(ref _hasPackages, value); }
+        }
+
+        public bool ExactMatch { get; set; }
+
+        private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
+        {
+            IsBusy = true;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    HasPackages = false;
+                    Packages = null;
+                    return;
+                }
+                try
+                {
+                    var packages = await Task.Run(() =>
+                        _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true, exactMatch: ExactMatch, cancellationToken: cancellationToken),
+                        cancellationToken).ConfigureAwait(false);
+
+                    Packages = packages;
+                    HasPackages = Packages.Count > 0;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+    }
+
     internal sealed class PackageData
     {
         private readonly IPackageSearchMetadata _package;
@@ -632,13 +650,12 @@ namespace RoslynPad
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
 
-        public PackageData(IEnumerable<IPackage> packages)
+        public PackageData(IList<IPackage> packages)
         {
-            var packagesArray = packages as IPackage[] ?? packages.ToArray();
-            var package = packagesArray.First();
+            var package = packages[0];
             Id = package.Id;
             Version = NuGetVersion.Parse(package.Version.ToString());
-            OtherVersions = packagesArray.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
+            OtherVersions = packages.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
         }
 
         public PackageData(IPackageSearchMetadata package)

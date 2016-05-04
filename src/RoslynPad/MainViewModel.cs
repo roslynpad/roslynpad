@@ -22,7 +22,7 @@ namespace RoslynPad
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
 
-        private readonly Lazy<TelemetryClient> _client;
+        private readonly TelemetryClient _client;
 
         private OpenDocumentViewModel _currentOpenDocument;
         private Exception _lastError;
@@ -56,7 +56,14 @@ namespace RoslynPad
                 CurrentOpenDocument = OpenDocuments[0];
             }
 
-            _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
+            _client = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
+#if DEBUG
+            _client.Context.Properties["DEBUG"] = "1";
+#endif
+            if (SendTelemetry)
+            {
+                _client.TrackEvent(TelemetryEventNames.Start);
+            }
 
             Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
             AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
@@ -166,15 +173,12 @@ namespace RoslynPad
             CurrentOpenDocument = openDocument;
         }
 
-        public async Task<bool> CloseDocument(OpenDocumentViewModel document)
+        public async Task CloseDocument(OpenDocumentViewModel document)
         {
-            try
+            var result = await document.Save(promptSave: true).ConfigureAwait(true);
+            if (result == SaveResult.Cancel)
             {
-                await document.Save(showDontSave: true, promptSave: true).ConfigureAwait(true);
-            }
-            catch (OperationCanceledException)
-            {
-                return false;
+                return;
             }
             if (document.Document?.IsAutoSave == true)
             {
@@ -183,7 +187,6 @@ namespace RoslynPad
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
             document.Close();
-            return true;
         }
 
         public async Task AutoSaveOpenDocuments()
@@ -204,35 +207,38 @@ namespace RoslynPad
 
         private void OnUnhandledException(Exception exception, bool flushSync = false)
         {
+            if (exception is OperationCanceledException) return;
             TrackException(exception, flushSync);
         }
 
         private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
         {
-            TrackException(args.Exception);
-            LastError = args.Exception;
+            var exception = args.Exception;
+            if (exception is OperationCanceledException)
+            {
+                args.Handled = true;
+                return;
+            }
+            TrackException(exception);
+            LastError = exception;
             args.Handled = true;
         }
 
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
-
-            if (_client.IsValueCreated)
-            {
-                _client.Value.Flush();
-            }
+            _client.Flush();
         }
 
         private void TrackException(Exception exception, bool flushSync = false)
         {
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
-            if (SendErrors && ApplicationInsightsInstrumentationKey != null)
+            if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
             {
-                _client.Value.TrackException(exception);
+                _client.TrackException(exception);
                 if (flushSync)
                 {
-                    _client.Value.Flush();
+                    _client.Flush();
                 }
                 // TODO: check why this freezes the UI
                 //else
@@ -256,14 +262,14 @@ namespace RoslynPad
 
         public DelegateCommand ClearErrorCommand { get; }
 
-        public bool SendErrors
+        public bool SendTelemetry
         {
             get { return Properties.Settings.Default.SendErrors; }
             set
             {
                 Properties.Settings.Default.SendErrors = value;
                 Properties.Settings.Default.Save();
-                OnPropertyChanged(nameof(SendErrors));
+                OnPropertyChanged(nameof(SendTelemetry));
             }
         }
 
@@ -288,5 +294,10 @@ namespace RoslynPad
             public string PathToRepository { get; }
             public string PathVariableName { get; }
         }
+    }
+
+    internal static class TelemetryEventNames
+    {
+        public const string Start = "Start";
     }
 }

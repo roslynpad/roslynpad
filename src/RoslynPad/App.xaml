@@ -13,6 +13,8 @@
                 <ResourceDictionary Source="Resources/Glyphs.xaml" />
                 <ResourceDictionary Source="Resources/Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
                                       ItemsSource="{Binding Fixes}">

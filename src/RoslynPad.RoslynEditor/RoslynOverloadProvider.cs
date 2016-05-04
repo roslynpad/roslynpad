@@ -2,15 +2,15 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using ICSharpCode.AvalonEdit.CodeCompletion;
 using Microsoft.CodeAnalysis;
+using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.RoslynEditor
 {
-    internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProvider
+    internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProviderEx
     {
         private readonly SignatureHelpItems _signatureHelp;
         private readonly IList<SignatureHelpItem> _items;
@@ -25,7 +25,6 @@ namespace RoslynPad.RoslynEditor
         {
             _signatureHelp = signatureHelp;
             _items = signatureHelp.Items;
-            CreateSignatureHelp();
         }
 
         public int SelectedIndex
@@ -35,12 +34,12 @@ namespace RoslynPad.RoslynEditor
             {
                 if (SetProperty(ref _selectedIndex, value))
                 {
-                    CreateSignatureHelp();
+                    Refresh();
                 }
             }
         }
 
-        private void CreateSignatureHelp()
+        public void Refresh()
         {
             _item = _items[_selectedIndex];
             var headerPanel = new WrapPanel

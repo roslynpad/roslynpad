@@ -24,7 +24,7 @@ namespace RoslynPad.RoslynEditor
         public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
         {
             IList<ICompletionDataEx> completionData = null;
-            IOverloadProvider overloadProvider = null;
+            IOverloadProviderEx overloadProvider = null;
             bool? isCompletion = null;
 
             var document = _roslynHost.GetDocument(_documentId);

@@ -34,7 +34,6 @@ namespace RoslynPad.Host
         private readonly IEnumerable<string> _references;
         private readonly IEnumerable<string> _imports;
         private readonly INuGetProvider _nuGetProvider;
-        private readonly string _hostPath;
         private readonly ChildProcessManager _childProcessManager;
 
         private IpcServerChannel _serverChannel;
@@ -117,7 +116,7 @@ namespace RoslynPad.Host
             IEnumerable<string> references, IEnumerable<string> imports,
             INuGetProvider nuGetProvider, ChildProcessManager childProcessManager)
         {
-            _hostPath = hostPath;
+            HostPath = hostPath;
             _initialWorkingDirectory = initialWorkingDirectory;
             _references = references;
             _imports = imports;
@@ -127,6 +126,8 @@ namespace RoslynPad.Host
             _serverChannel = new IpcServerChannel(GenerateUniqueChannelLocalName(), "Channel-" + Guid.NewGuid(), serverProvider);
             ChannelServices.RegisterChannel(_serverChannel, ensureSecurity: false);
         }
+
+        public string HostPath { get; set; }
 
         public override object InitializeLifetimeService() => null;
 
@@ -169,7 +170,7 @@ namespace RoslynPad.Host
 
                 var remoteServerPort = "HostChannel-" + Guid.NewGuid();
 
-                var processInfo = new ProcessStartInfo(_hostPath)
+                var processInfo = new ProcessStartInfo(HostPath)
                 {
                     Arguments = remoteServerPort + " " + semaphoreName,
                     WorkingDirectory = _initialWorkingDirectory,

@@ -65,7 +65,7 @@
                     DockPanel.Dock="Bottom"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel LastChildFill="False">
-                    <CheckBox IsChecked="{Binding SendErrors}"
+                    <CheckBox IsChecked="{Binding SendTelemetry}"
                               ToolTip="Send errors to RoslynPad's author (just stack traces)"
                               VerticalAlignment="Center"
                               Background="Transparent"
@@ -131,6 +131,7 @@
                 </dock:DockingManager>
                 <Button HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        Padding="5"
                         Background="Transparent"
                         Command="{Binding NewDocumentCommand}"
                         Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">

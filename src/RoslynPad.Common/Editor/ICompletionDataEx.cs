@@ -8,4 +8,9 @@ namespace RoslynPad.Editor
 
         string SortText { get; }
     }
+
+    public interface IOverloadProviderEx : IOverloadProvider
+    {
+        void Refresh();
+    }
 }
