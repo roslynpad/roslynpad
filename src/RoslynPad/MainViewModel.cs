@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.ApplicationInsights;
+using RoslynPad.Host;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -14,15 +17,19 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
+        private static readonly Version _currentVersion = new Version(0, 7);
+
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
 
-        private readonly Lazy<TelemetryClient> _client;
-        public DocumentViewModel DocumentRoot { get; }
-        private Exception _lastError;
-        private OpenDocumentViewModel _currentOpenDocument;
-        public INuGetProvider NuGetProvider { get; }
+        private readonly TelemetryClient _telemetryClient;
 
+        private OpenDocumentViewModel _currentOpenDocument;
+        private Exception _lastError;
+        private bool _hasUpdate;
+
+        public DocumentViewModel DocumentRoot { get; }
+        public INuGetProvider NuGetProvider { get; }
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
@@ -30,20 +37,98 @@ namespace RoslynPad
             NuGet = new NuGetViewModel();
             NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetProvider);
+            ChildProcessManager = new ChildProcessManager();
+
+            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
+            CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
+            ClearErrorCommand = new DelegateCommand(() => LastError = null);
+            ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
 
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
-            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
-            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
-            CloseCurrentDocumentCommand = new DelegateCommand((Action)CloseCurrentDocument);
-            ClearErrorCommand = new DelegateCommand(() => LastError = null);
-            CreateNewDocument();
+            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>(LoadAutoSaves(DocumentRoot.Path));
+            OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
+            if (HasNoOpenDocuments)
+            {
+                CreateNewDocument();
+            }
+            else
+            {
+                CurrentOpenDocument = OpenDocuments[0];
+            }
 
-            _client = new Lazy<TelemetryClient>(() => new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey });
+            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
+#if DEBUG
+            _telemetryClient.Context.Properties["DEBUG"] = "1";
+#endif
+            if (SendTelemetry)
+            {
+                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
+            }
+
             Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
-            Application.Current.Exit += (o, e) => OnExit();
             AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
+
+            if (HasCachedUpdate())
+            {
+                HasUpdate = true;
+            }
+            else
+            {
+                Task.Run(CheckForUpdates);
+            }
+        }
+
+        private void ReportProblem()
+        {
+            var dialog = new ReportProblemDialog(this);
+            dialog.Show();
+        }
+
+        public IEnumerable<OpenDocumentViewModel> LoadAutoSaves(string root)
+        {
+            return Directory.EnumerateFiles(root, DocumentViewModel.GetAutoSaveName("*"), SearchOption.AllDirectories)
+                .Select(x => new OpenDocumentViewModel(this, DocumentViewModel.CreateAutoSave(this, x)));
+        }
+
+        public bool HasUpdate
+        {
+            get { return _hasUpdate; }
+            private set { SetProperty(ref _hasUpdate, value); }
+        }
+
+        private static bool HasCachedUpdate()
+        {
+            Version latestVersion;
+            return Version.TryParse(Properties.Settings.Default.LatestVersion, out latestVersion) &&
+                   latestVersion > _currentVersion;
+        }
+
+        private async Task CheckForUpdates()
+        {
+            string latestVersionString;
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    latestVersionString = await client.GetStringAsync("https://roslynpad.net/latest").ConfigureAwait(false);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+            Version latestVersion;
+            if (Version.TryParse(latestVersionString, out latestVersion))
+            {
+                if (latestVersion > _currentVersion)
+                {
+                    HasUpdate = true;
+                }
+                Properties.Settings.Default.LatestVersion = latestVersionString;
+                Properties.Settings.Default.Save();
+            }
         }
 
         private DocumentViewModel CreateDocumentRoot()
@@ -95,56 +180,77 @@ namespace RoslynPad
             CurrentOpenDocument = openDocument;
         }
 
-        public void CloseDocument(OpenDocumentViewModel document)
+        public async Task CloseDocument(OpenDocumentViewModel document)
         {
-            // TODO: Save
+            var result = await document.Save(promptSave: true).ConfigureAwait(true);
+            if (result == SaveResult.Cancel)
+            {
+                return;
+            }
+            if (document.Document?.IsAutoSave == true)
+            {
+                File.Delete(document.Document.Path);
+            }
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
             document.Close();
         }
 
-        private void CloseCurrentDocument()
+        public async Task AutoSaveOpenDocuments()
+        {
+            foreach (var document in OpenDocuments)
+            {
+                await document.AutoSave().ConfigureAwait(false);
+            }
+        }
+
+        private async Task CloseCurrentDocument()
         {
             if (CurrentOpenDocument != null)
             {
-                CloseDocument(CurrentOpenDocument);
+                await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
             }
         }
 
         private void OnUnhandledException(Exception exception, bool flushSync = false)
         {
+            if (exception is OperationCanceledException) return;
             TrackException(exception, flushSync);
         }
 
         private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
         {
-            TrackException(args.Exception);
-            LastError = args.Exception;
+            var exception = args.Exception;
+            if (exception is OperationCanceledException)
+            {
+                args.Handled = true;
+                return;
+            }
+            TrackException(exception);
+            LastError = exception;
             args.Handled = true;
         }
 
-        private void OnExit()
+        public async Task OnExit()
         {
-            if (_client.IsValueCreated)
-            {
-                _client.Value.Flush();
-            }
+            await AutoSaveOpenDocuments().ConfigureAwait(false);
+            _telemetryClient.Flush();
         }
 
         private void TrackException(Exception exception, bool flushSync = false)
         {
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
-            if (SendErrors && ApplicationInsightsInstrumentationKey != null)
+            if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
             {
-                _client.Value.TrackException(exception);
+                _telemetryClient.TrackException(exception);
                 if (flushSync)
                 {
-                    _client.Value.Flush();
+                    _telemetryClient.Flush();
                 }
                 // TODO: check why this freezes the UI
                 //else
                 //{
-                //    Task.Run(() => _client.Value.Flush());
+                //    Task.Run(() => _telemetryClient.Value.Flush());
                 //}
             }
         }
@@ -163,19 +269,43 @@ namespace RoslynPad
 
         public DelegateCommand ClearErrorCommand { get; }
 
-        public bool SendErrors
+        public bool SendTelemetry
         {
             get { return Properties.Settings.Default.SendErrors; }
             set
             {
                 Properties.Settings.Default.SendErrors = value;
                 Properties.Settings.Default.Save();
-                OnPropertyChanged(nameof(SendErrors));
+                OnPropertyChanged(nameof(SendTelemetry));
             }
         }
 
+        public ChildProcessManager ChildProcessManager { get; }
+
+        public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
+
+        public DelegateCommand ReportProblemCommand { get; private set; }
+
+        public DocumentViewModel AddDocument(string documentName)
+        {
+            return DocumentRoot.CreateNew(documentName);
+        }
+
+        public Task SubmitFeedback(string feedbackText, string email)
+        {
+            return Task.Run(() =>
+            {
+                _telemetryClient.TrackEvent(TelemetryEventNames.Feedback, new Dictionary<string, string>
+                {
+                    ["Content"] = feedbackText,
+                    ["Email"] = email
+                });
+                _telemetryClient.Flush();
+            });
+        }
+
         [Serializable]
-        class NuGetProviderImpl : INuGetProvider
+        private class NuGetProviderImpl : INuGetProvider
         {
             public NuGetProviderImpl(string pathToRepository, string pathVariableName)
             {
@@ -186,10 +316,11 @@ namespace RoslynPad
             public string PathToRepository { get; }
             public string PathVariableName { get; }
         }
+    }
 
-        public DocumentViewModel AddDocument(string documentName)
-        {
-            return DocumentRoot.CreateNew(documentName);
-        }
+    internal static class TelemetryEventNames
+    {
+        public const string Start = "Start";
+        public const string Feedback = "Feedback";
     }
 }

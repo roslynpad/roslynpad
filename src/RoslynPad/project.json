@@ -14,7 +14,7 @@
     "AvalonEdit": "5.0.2",
     "Extended.Wpf.Toolkit": "2.6.0",
     "AvalonLibrary": "2.3.0",
-    "Nuget.PackageManagement": "3.3.0",
-    "Microsoft.ApplicationInsights.WindowsServer": "2.0.0" 
+    "Nuget.PackageManagement": "3.4.0",
+    "Microsoft.ApplicationInsights.WindowsServer": "2.0.0"
   }
 }

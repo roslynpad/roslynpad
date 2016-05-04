@@ -9,10 +9,12 @@ namespace RoslynPad
 {
     internal class DocumentViewModel : NotificationObject
     {
-        private const string DefaultFileExtension = ".csx";
+        internal const string DefaultFileExtension = ".csx";
+        internal const string AutoSaveSuffix = ".autosave";
 
         private ObservableCollection<DocumentViewModel> _children;
         private bool _isExpanded;
+        private bool? _isAutoSaveOnly;
 
         private DocumentViewModel(MainViewModel mainViewModel)
         {
@@ -27,9 +29,19 @@ namespace RoslynPad
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
 
+        public static string GetAutoSaveName(string name)
+        {
+            return name + AutoSaveSuffix + DefaultFileExtension;
+        }
+
         public static DocumentViewModel CreateRoot(MainViewModel mainViewModel)
         {
             return new DocumentViewModel(mainViewModel);
+        }
+
+        public static DocumentViewModel CreateAutoSave(MainViewModel mainViewModel, string path)
+        {
+            return new DocumentViewModel(mainViewModel, path, isFolder: false);
         }
 
         private static string GetDefaultPath()
@@ -43,19 +55,32 @@ namespace RoslynPad
             Path = path;
             IsFolder = isFolder;
             Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            // ReSharper disable once PossibleNullReferenceException
+            IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
+            if (IsAutoSave)
+            {
+                Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
+            }
             OpenDocumentCommand = new DelegateCommand((Action)Open);
+        }
+
+        public static string GetDocumentPathFromName(string path, string name)
+        {
+            if (!name.EndsWith(DefaultFileExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                name += DefaultFileExtension;
+            }
+
+            return System.IO.Path.Combine(path, name);
         }
 
         public DocumentViewModel CreateNew(string documentName)
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
-            if (!documentName.EndsWith(DefaultFileExtension, StringComparison.OrdinalIgnoreCase))
-            {
-                documentName += DefaultFileExtension;
-            }
+     
 
-            var document = new DocumentViewModel(MainViewModel, System.IO.Path.Combine(Path, documentName), isFolder: false);
+            var document = new DocumentViewModel(MainViewModel, GetDocumentPathFromName(Path, documentName), isFolder: false);
 
             var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
             Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
@@ -78,6 +103,22 @@ namespace RoslynPad
 
         public string Name { get; set; }
 
+        public bool IsAutoSave { get; }
+
+        public bool IsAutoSaveOnly
+        {
+            get
+            {
+                if (_isAutoSaveOnly == null)
+                {
+                    _isAutoSaveOnly = IsAutoSave &&
+                                      // ReSharper disable once AssignNullToNotNullAttribute
+                                      !File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), Name + DefaultFileExtension));
+                }
+                return _isAutoSaveOnly.Value;
+            }
+        }
+
         public ObservableCollection<DocumentViewModel> Children
         {
             get
@@ -99,6 +140,7 @@ namespace RoslynPad
                     .OrderBy(OrderByName)
                         .Concat(Directory.EnumerateFiles(Path, "*" + DefaultFileExtension)
                             .Select(x => new DocumentViewModel(MainViewModel, x, isFolder: false))
+                            .Where(x => !x.IsAutoSave)
                             .OrderBy(OrderByName)));
             }
             catch (Exception)

@@ -2,15 +2,12 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Avalon.Windows.Controls;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
-using NuGet;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
@@ -35,7 +32,13 @@ namespace RoslynPad
             _textMarkerService = new TextMarkerService(Editor);
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
-            
+            Editor.Options = new TextEditorOptions
+            {
+                ConvertTabsToSpaces = true,
+                AllowScrollBelowDocument = true,
+                IndentationSize = 4
+            };
+
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
@@ -44,12 +47,10 @@ namespace RoslynPad
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
-            _viewModel.MainViewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
             _roslynHost = _viewModel.MainViewModel.RoslynHost;
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
-
-            _viewModel.PromptForDocument = PromptForDocument;
 
             await _viewModel.Initialize(
                 avalonEditTextContainer,
@@ -60,6 +61,7 @@ namespace RoslynPad
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             Editor.AppendText(documentText);
             Editor.Document.UndoStack.ClearAll();
+            Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty(Editor.Document.TextLength);
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
@@ -69,64 +71,7 @@ namespace RoslynPad
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
         }
 
-        private Task<string> PromptForDocument()
-        {
-            // TODO: encapsulate in a dialog service
-
-            var isValid = false;
-            var textBox = new TextBox { MaxLength = 200 };
-            textBox.Loaded += (sender, args) => textBox.Focus();
-            FilterInvalidCharacters(textBox);
-            textBox.KeyDown += (sender, args) =>
-            {
-                if (args.Key == Key.Enter)
-                {
-                    isValid = true;
-                    TaskDialog.CancelCommand.Execute(null, textBox);
-                }
-            };
-            var saveButton = new Button { Content = "Save", IsDefault = true };
-            var dialog = new TaskDialog
-            {
-                Background = Brushes.White,
-                Header = "Save Document",
-                Content = textBox,
-                Buttons =
-                {
-                    saveButton,
-                    new TaskDialogButtonData(TaskDialogButtons.Cancel)
-                },
-            };
-            dialog.ShowInline(this);
-            // ReSharper disable once PossibleUnintendedReferenceComparison
-            if ((isValid || dialog.Result.Button == saveButton) && !string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                return Task.FromResult(textBox.Text);
-            }
-            return Task.FromResult<string>(null);
-        }
-
-        private static void FilterInvalidCharacters(TextBox textBox)
-        {
-            var invalidChars = Path.GetInvalidFileNameChars();
-            textBox.TextChanged += (sender, e) =>
-            {
-                foreach (var c in e.Changes)
-                {
-                    if (c.AddedLength == 0) continue;
-                    textBox.Select(c.Offset, c.AddedLength);
-                    var filteredText = invalidChars.Aggregate(textBox.SelectedText,
-                        (current, invalidChar) => current.Replace(invalidChar.ToString(), string.Empty));
-                    if (textBox.SelectedText != filteredText)
-                    {
-                        textBox.SelectedText = filteredText;
-                    }
-                    textBox.Select(c.Offset + c.AddedLength, 0);
-                }
-            };
-        }
-
-        private void NuGetOnPackageInstalled(IPackage package, NuGetInstallResult installResult)
+        private void NuGetOnPackageInstalled(NuGetInstallResult installResult)
         {
             if (installResult.References.Count == 0) return;
 
@@ -173,7 +118,7 @@ namespace RoslynPad
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
+
         private void Editor_OnKeyDown(object sender, KeyEventArgs e)
         {
             //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))

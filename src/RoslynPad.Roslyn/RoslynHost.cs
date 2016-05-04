@@ -132,6 +132,8 @@ namespace RoslynPad.Roslyn
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
+            if (diagnosticsUpdatedArgs?.DocumentId == null) return;
+
             Action<DiagnosticsUpdatedArgs> notifier;
             if (_diagnosticsUpdatedNotifiers.TryGetValue(diagnosticsUpdatedArgs.DocumentId, out notifier))
             {

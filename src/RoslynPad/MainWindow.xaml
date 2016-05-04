@@ -45,8 +45,7 @@
         </DataTemplate>
 
         <Style x:Key="DocumentItemContainerStyle"
-               TargetType="TreeViewItem"
-               d:DataContext="{d:DesignInstance roslynPad:DocumentViewModel}">
+               TargetType="TreeViewItem">
             <Setter Property="IsExpanded"
                     Value="{Binding IsExpanded}" />
             <EventSetter Event="MouseDoubleClick"
@@ -54,7 +53,7 @@
             <EventSetter Event="KeyDown"
                          Handler="OnDocumentKeyDown" />
         </Style>
-        
+
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This}">
@@ -65,12 +64,6 @@
                     DockPanel.Dock="Bottom"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel LastChildFill="False">
-                    <CheckBox IsChecked="{Binding SendErrors}"
-                              ToolTip="Send errors to RoslynPad's author (just stack traces)"
-                              VerticalAlignment="Center"
-                              Background="Transparent"
-                              Content="Send errors"
-                              DockPanel.Dock="Right" />
                     <Button Margin="3"
                             Content="View details"
                             DockPanel.Dock="Right"
@@ -86,36 +79,96 @@
                                Text="{Binding LastError.Message}" />
                 </DockPanel>
             </Border>
-            <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
-                                 ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
-                                 DocumentClosed="DockingManager_OnDocumentClosed">
-                <dock:DockingManager.DocumentHeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Content.Title}" />
-                    </DataTemplate>
-                </dock:DockingManager.DocumentHeaderTemplate>
-                <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Content.Title}" />
-                    </DataTemplate>
-                </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
-                <dock:LayoutRoot>
-                    <dock:LayoutPanel Orientation="Horizontal">
-                        <dock:LayoutAnchorablePane DockWidth="200">
-                            <dock:LayoutAnchorable x:Name="DocumentsPane"
-                                                   CanClose="False"
-                                                   CanFloat="False"
-                                                   CanAutoHide="True"
-                                                   AutoHideWidth="200"
-                                                   Title="Documents">
-                                <TreeView ItemsSource="{Binding Documents}"
-                                          ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
-                            </dock:LayoutAnchorable>
-                        </dock:LayoutAnchorablePane>
-                        <dock:LayoutDocumentPane />
-                    </dock:LayoutPanel>
-                </dock:LayoutRoot>
-            </dock:DockingManager>
+            <Grid>
+                <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                                     ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                                     DocumentClosing="DockingManager_OnDocumentClosing">
+                    <dock:DockingManager.DocumentHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <Run Text="{Binding Content.Title, Mode=OneWay}" />
+                                <Run Name="DirtyIndicator"
+                                     Text="" />
+                            </TextBlock>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Content.IsDirty}"
+                                             Value="True">
+                                    <Setter TargetName="DirtyIndicator"
+                                            Property="Text"
+                                            Value="*" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </dock:DockingManager.DocumentHeaderTemplate>
+                    <dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Content.Title}" />
+                        </DataTemplate>
+                    </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                    <dock:LayoutRoot>
+                        <dock:LayoutPanel Orientation="Horizontal">
+                            <dock:LayoutAnchorablePane DockWidth="200">
+                                <dock:LayoutAnchorable x:Name="DocumentsPane"
+                                                       CanClose="False"
+                                                       CanFloat="False"
+                                                       CanAutoHide="True"
+                                                       AutoHideWidth="200"
+                                                       Title="Documents">
+                                    <TreeView ItemsSource="{Binding Documents}"
+                                              ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                </dock:LayoutAnchorable>
+                            </dock:LayoutAnchorablePane>
+                            <dock:LayoutDocumentPane />
+                        </dock:LayoutPanel>
+                    </dock:LayoutRoot>
+                </dock:DockingManager>
+                <Button HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="5"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand}"
+                        Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <Image Source="{StaticResource CsFile}"
+                               Width="64"
+                               Height="64" />
+                        <TextBlock Text="New (Ctrl-N)"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="5">
+                    <Button Width="16"
+                            Height="16"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Cursor="Hand"
+                            Content="{StaticResource Update}"
+                            ToolTip="Update Available"
+                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Click="ViewUpdateClick" />
+                    <Menu Background="Transparent"
+                          Margin="10,0,0,0">
+                        <MenuItem Padding="0"
+                                  BorderThickness="0"
+                                  ToolTip="Send Feedback">
+                            <MenuItem.Header>
+                                <Image Source="{StaticResource Feedback}"
+                                       Width="16"
+                                       Height="16" />
+                            </MenuItem.Header>
+                            <MenuItem IsCheckable="True"
+                                      IsChecked="{Binding SendTelemetry}"
+                                      Header="Send Telemetry"
+                                      ToolTip="Send errors to the author (stack traces of internal RoslynPad errors - not your code)" />
+                            <MenuItem Header="Report a problem..."
+                                      Command="{Binding ReportProblemCommand}" />
+                        </MenuItem>
+                    </Menu>
+                </StackPanel>
+            </Grid>
         </DockPanel>
     </av:InlineModalDecorator>
 </Window>

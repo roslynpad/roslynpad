@@ -2,19 +2,23 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Common"
-             xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:roslynPad="clr-namespace:RoslynPad"
-             xmlns:nuGet="clr-namespace:NuGet;assembly=NuGet.Core"
+             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
         <KeyBinding Key="F5"
                     Command="{Binding RunCommand}" />
+        <KeyBinding Gesture="Shift+F5"
+                    Command="{Binding RestartHostCommand}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand}" />
     </FrameworkElement.InputBindings>
+    <FrameworkElement.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </FrameworkElement.Resources>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
@@ -36,14 +40,26 @@
                      BorderBrush="DarkGray"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand}"
-                        ToolTip="Run"
-                        Content="{StaticResource Run}" />
+                        ToolTip="Run (F5)">
+                    <Grid>
+                        <Image Source="{StaticResource Run}" />
+                        <ProgressBar VerticalAlignment="Bottom"
+                                     Height="4"
+                                     IsIndeterminate="{Binding IsRunning}"
+                                     BorderThickness="0"
+                                     Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
+                </Button>
                 <Button Command="{Binding RestartHostCommand}"
-                        ToolTip="Restart host process"
+                        ToolTip="Restart host process (Shift-F5)"
                         Content="{StaticResource Restart}" />
+                <ComboBox SelectedItem="{Binding Platform}">
+                    <codeAnalysis:Platform>X86</codeAnalysis:Platform>
+                    <codeAnalysis:Platform>X64</codeAnalysis:Platform>
+                </ComboBox>
                 <Separator />
                 <Button Command="{Binding SaveCommand}"
-                        ToolTip="Save"
+                        ToolTip="Save (Ctrl-S)"
                         Content="{StaticResource Save}" />
                 <Separator />
                 <Label Content="NuGet" />
@@ -52,62 +68,20 @@
                       IsEnabled="{Binding NuGet.IsEnabled}">
                     <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
                               ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet}">
+                              Header="{Binding NuGet}"
+                              IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type roslynPad:NuGetViewModel}">
+                            <DataTemplate DataType="{x:Type roslynPad:NuGetDocumentViewModel}">
                                 <Grid>
                                     <TextBlock Name="Text"
                                                Text=""
                                                FontFamily="Segoe UI Symbol" />
-                                    <Ellipse Name="Icon"
-                                             Margin="2"
-                                             Visibility="Hidden"
-                                             VerticalAlignment="Stretch"
-                                             HorizontalAlignment="Stretch"
-                                             Fill="Transparent"
-                                             Stroke="Gray"
-                                             StrokeThickness="2"
-                                             Stretch="Uniform">
-                                    </Ellipse>
+                                    <ProgressBar VerticalAlignment="Bottom"
+                                                 Height="4"
+                                                 BorderThickness="0"
+                                                 IsIndeterminate="{Binding IsBusy}"
+                                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding IsBusy}"
-                                                 Value="True">
-                                        <Setter TargetName="Text"
-                                                Property="Visibility"
-                                                Value="Hidden" />
-                                        <Setter TargetName="Icon"
-                                                Property="Visibility"
-                                                Value="Visible" />
-                                        <Setter TargetName="Icon"
-                                                Property="Stroke">
-                                            <Setter.Value>
-                                                <RadialGradientBrush GradientOrigin="0,0">
-                                                    <GradientStop Color="Teal"
-                                                                  Offset="1" />
-                                                    <GradientStop Color="Transparent" />
-                                                </RadialGradientBrush>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard Name="animate">
-                                                <Storyboard>
-                                                    <PointAnimationUsingKeyFrames Storyboard.TargetName="Icon"
-                                                                                  Storyboard.TargetProperty="(Shape.Stroke).(RadialGradientBrush.GradientOrigin)"
-                                                                                  RepeatBehavior="Forever">
-                                                        <LinearPointKeyFrame Value="1,0" />
-                                                        <LinearPointKeyFrame Value="1,1" />
-                                                        <LinearPointKeyFrame Value="0,1" />
-                                                        <LinearPointKeyFrame Value="0,0" />
-                                                    </PointAnimationUsingKeyFrames>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                        <DataTrigger.ExitActions>
-                                            <StopStoryboard BeginStoryboardName="animate" />
-                                        </DataTrigger.ExitActions>
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </MenuItem.HeaderTemplate>
                         <ItemsControl.ItemContainerStyle>
@@ -116,23 +90,54 @@
                                         Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
                                 <Setter Property="CommandParameter"
                                         Value="{Binding}" />
+                                <Setter Property="Icon"
+                                        Value="{Binding}" />
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="nuGet:IPackage">
+                            <DataTemplate DataType="{x:Type roslynPad:PackageData}">
                                 <TextBlock>
                                     <Run Text="{Binding Id, Mode=OneTime}" />
                                     <Run Text="{Binding Version, Mode=OneTime}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
+                        <ItemsControl.Resources>
+                            <DataTemplate DataType="{x:Type roslynPad:PackageData}">
+                                <Menu Background="Transparent"
+                                      ToolTip="Other versions">
+                                    <MenuItem ItemsSource="{Binding OtherVersions}"
+                                              DisplayMemberPath="Version"
+                                              Padding="2">
+                                        <MenuItem.Header>
+                                            <TextBlock FontWeight="Bold"
+                                                       FontFamily="Segoe UI Symbol"
+                                                       Text=""
+                                                       FontSize="8" />
+                                        </MenuItem.Header>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="MenuItem">
+                                                <Setter Property="Command"
+                                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
+                                                <Setter Property="CommandParameter"
+                                                        Value="{Binding}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                    </MenuItem>
+                                </Menu>
+                            </DataTemplate>
+                        </ItemsControl.Resources>
                     </MenuItem>
                 </Menu>
                 <TextBox Name="SearchTerm"
                          IsEnabled="{Binding NuGet.IsEnabled}"
                          BorderBrush="#eee"
                          Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                         Width="300" />
+                         Width="200" />
+                <Decorator VerticalAlignment="Center">
+                    <CheckBox IsChecked="{Binding NuGet.ExactMatch}"
+                              Content="Exact" />
+                </Decorator>
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"
@@ -151,15 +156,10 @@
 
             <TreeView ItemsSource="{Binding Results}"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
                       Grid.Column="0"
                       Grid.Row="3">
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem"
-                           d:DataContext="{d:DesignInstance runtime:ResultObject}">
-                        <Setter Property="IsExpanded"
-                                Value="{Binding IsExpanded}" />
-                    </Style>
-                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <DockPanel>

@@ -86,7 +86,13 @@
     <Compile Include="OpenDocumentViewModel.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
+    <Compile Include="ReportProblemDialog.xaml.cs">
+      <DependentUpon>ReportProblemDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ResultObjectViewModel.cs" />
+    <Compile Include="SaveDocumentDialog.xaml.cs">
+      <DependentUpon>SaveDocumentDialog.xaml</DependentUpon>
+    </Compile>
     <Page Include="DocumentView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -104,11 +110,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="ReportProblemDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Resources\Glyphs.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Icons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SaveDocumentDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -145,9 +159,13 @@
       <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host.csproj">
+    <ProjectReference Include="..\RoslynPad.Host64\RoslynPad.Host64.csproj">
+      <Project>{4dab681a-d6ce-4b39-8ed1-6218bb6679fd}</Project>
+      <Name>RoslynPad.Host64</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj">
       <Project>{ca953492-94c7-4f25-9cf2-eb70aa07a55f}</Project>
-      <Name>RoslynPad.Host</Name>
+      <Name>RoslynPad.Host32</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.RoslynEditor\RoslynPad.RoslynEditor.csproj">
       <Project>{5fc3a02c-33b5-4e32-8512-7053474d9c57}</Project>

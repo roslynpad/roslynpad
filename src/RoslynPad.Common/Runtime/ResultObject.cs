@@ -10,37 +10,37 @@ namespace RoslynPad.Runtime
 {
     internal sealed class ResultObject : MarshalByRefObject
     {
-        private readonly object _o;
-        private readonly PropertyDescriptor _property;
+        private const int MaxDepth = 5;
+        private const int MaxStringLength = 10000;
+        private const int MaxEnumerableLength = 10000;
 
-        private bool _initialized;
-        private string _header;
-        private IEnumerable<ResultObject> _children;
+        private readonly int _depth;
+        private readonly PropertyDescriptor _property;
 
         public static ResultObject Create(object o)
         {
-            return new ResultObject(o, isRoot: true);
+            return new ResultObject(o, 0);
         }
 
-        private ResultObject(object o, PropertyDescriptor property = null, bool isRoot = false)
+        private ResultObject(object o, int depth, PropertyDescriptor property = null)
         {
-            _o = o;
+            _depth = depth;
             _property = property;
-            IsRoot = isRoot;
+            Initialize(o);
         }
 
-        private ResultObject(string header, IEnumerable<ResultObject> children)
+        private ResultObject(string header, IEnumerable<ResultObject> children, int depth)
         {
-            _header = header;
-            _children = children;
-            _initialized = true;
+            _depth = depth;
+            Header = header;
+            Children = children;
         }
 
         public override object InitializeLifetimeService()
         {
             return null;
         }
-        
+
         public override string ToString()
         {
             var builder = new StringBuilder();
@@ -50,106 +50,114 @@ namespace RoslynPad.Runtime
 
         private void BuildStringRecursive(StringBuilder builder, int level)
         {
-            if (!_initialized) return;
             for (var i = 0; i < level; i++)
             {
                 builder.Append("  ");
             }
-            builder.Append(_header);
+            builder.Append(Header);
             builder.AppendLine();
-            if (_children != null)
+            if (Children != null)
             {
-                foreach (var child in _children)
+                foreach (var child in Children)
                 {
                     child.BuildStringRecursive(builder, level + 1);
                 }
             }
         }
 
-        public bool IsRoot { get; }
+        public string Header { get; private set; }
 
-        public string Header
+        public IEnumerable<ResultObject> Children { get; private set; }
+
+        private void Initialize(object o)
         {
-            get
+            if (o == null)
             {
-                Initialize();
-                return _header;
-            }
-        }
-
-        public IEnumerable<ResultObject> Children
-        {
-            get
-            {
-                Initialize();
-                return _children;
-            }
-        }
-
-        private void Initialize()
-        {
-            if (_initialized) return;
-            _initialized = true;
-
-            if (_o == null)
-            {
-                _header = "<null>";
+                Header = "<null>";
                 return;
             }
+
+            var targetDepth = _depth + 1;
+            var isMaxDepth = targetDepth >= MaxDepth;
 
             if (_property != null)
             {
                 object value;
                 try
                 {
-                    value = _property.GetValue(_o);
+                    value = _property.GetValue(o);
                 }
                 catch (TargetInvocationException exception)
                 {
-                    _header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
-                    _children = new[] { new ResultObject(exception.InnerException) };
+                    Header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
+                    Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
                     return;
                 }
 
-                _header = _property.Name + " = " + value;
+                Header = _property.Name + " = " + GetString(value);
                 var propertyType = _property.PropertyType;
-                if (!propertyType.IsPrimitive &&
-                    propertyType != typeof(string) &&
-                    !propertyType.IsEnum)
+                if (!isMaxDepth && !IsSimpleType(propertyType))
                 {
-                    _children = new[] { new ResultObject(value) };
+                    Children = new[] { new ResultObject(value, targetDepth) };
                 }
                 return;
             }
 
-            var s = _o as string;
+            var s = o as string;
             if (s != null)
             {
-                _header = s;
+                Header = s;
                 return;
             }
 
-            var propertyDescriptors = TypeDescriptor.GetProperties(_o);
-            var children = propertyDescriptors.Cast<PropertyDescriptor>()
-                .Select(p => new ResultObject(_o, p));
+            if (isMaxDepth)
+            {
+                Header = GetHeaderValue(o);
+                return;
+            }
 
-            var e = _o as IEnumerable;
+            var propertyDescriptors = TypeDescriptor.GetProperties(o);
+            var children = propertyDescriptors.Cast<PropertyDescriptor>()
+                .Select(p => new ResultObject(o, targetDepth, p));
+
+            var e = o as IEnumerable;
             if (e != null)
             {
-                var enumerableChildren = e.Cast<object>().Select(x => new ResultObject(x)).ToArray();
+                var enumerableChildren = e.Cast<object>().Take(MaxEnumerableLength).Select(x => new ResultObject(x, targetDepth)).ToArray();
                 var header = $"<enumerable count={enumerableChildren.Length}>";
                 if (propertyDescriptors.Count == 0)
                 {
-                    _children = enumerableChildren;
-                    _header = header;
+                    Children = enumerableChildren;
+                    Header = header;
                     return;
                 }
-                children = children.Concat(new[] { new ResultObject(header, enumerableChildren) });
+                children = children.Concat(new[] { new ResultObject(header, enumerableChildren, targetDepth) });
             }
 
-            var ex = _o as Exception;
-            _header = ex != null ? ex.GetType().FullName + ": " + ex.Message : _o.ToString();
-            _children = children.ToArray();
+            Header = GetHeaderValue(o);
+            Children = children.ToArray();
+        }
+
+        private static string GetHeaderValue(object o)
+        {
+            var ex = o as Exception;
+            return ex != null ? ex.GetType().FullName + ": " + ex.Message : GetString(o);
+        }
+
+        private static string GetString(object o)
+        {
+            var s = o + string.Empty;
+            return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
+        }
+
+        private static bool IsSimpleType(Type propertyType)
+        {
+            return propertyType != null &&
+                (propertyType.IsPrimitive ||
+                propertyType.IsEnum ||
+                propertyType == typeof(string) ||
+                propertyType == typeof(Guid) ||
+                IsSimpleType(Nullable.GetUnderlyingType(propertyType)));
         }
     }
 }

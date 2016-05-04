@@ -210,6 +210,8 @@ namespace RoslynPad.Editor
                         triggerMode == TriggerMode.SignatureHelp).ConfigureAwait(true);
             if (results.OverloadProvider != null)
             {
+                results.OverloadProvider.Refresh();
+
                 if (_insightWindow != null && _insightWindow.IsVisible)
                 {
                     _insightWindow.Provider = results.OverloadProvider;

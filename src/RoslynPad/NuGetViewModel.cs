@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
@@ -14,6 +16,7 @@ using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
 using NuGet.Protocol.Core.Types;
 using NuGet.Protocol.Core.v2;
+using NuGet.Protocol.Core.v3;
 using NuGet.Resolver;
 using NuGet.Versioning;
 using RoslynPad.Utilities;
@@ -23,15 +26,16 @@ using PackageReference = NuGet.Packaging.PackageReference;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
-using System.Reflection;
-using NuGet.Protocol.Core.v3;
 using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
+using NullLogger = NuGet.Logging.NullLogger;
 
 namespace RoslynPad
 {
     internal sealed class NuGetViewModel : NotificationObject
     {
         private const string TargetFrameworkName = "net46";
+        private const string TargetFrameworkFullName = ".NET Framework, Version=4.6";
+        private const int MaxSearchResults = 50;
 
         private readonly ISettings _settings;
         private readonly PackageSourceProvider _sourceProvider;
@@ -39,13 +43,7 @@ namespace RoslynPad
         private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
         private readonly Lazy<Task> _initializationTask;
 
-        private string _searchTerm;
-        private IReadOnlyList<IPackage> _packages;
-        private CancellationTokenSource _cts;
-        private bool _hasPackages;
         private AggregateRepository _repository;
-        private bool _isBusy;
-        private bool _isEnabled;
 
         public string GlobalPackageFolder { get; }
 
@@ -66,115 +64,15 @@ namespace RoslynPad
 
             _initializationTask = new Lazy<Task>(Initialize);
 
-            InstallPackageCommand = new DelegateCommand<IPackage>(InstallPackage);
-
-            IsEnabled = true;
         }
-
-        public bool IsBusy
-        {
-            get { return _isBusy; }
-            private set { SetProperty(ref _isBusy, value); }
-        }
-
-        public bool IsEnabled
-        {
-            get { return _isEnabled; }
-            private set { SetProperty(ref _isEnabled, value); }
-        }
-
-        public DelegateCommand<IPackage> InstallPackageCommand { get; }
-
-        public event Action<IPackage, NuGetInstallResult> PackageInstalled;
-
-        private void OnPackageInstalled(IPackage package, NuGetInstallResult result)
-        {
-            PackageInstalled?.Invoke(package, result);
-        }
-
-        public string SearchTerm
-        {
-            get { return _searchTerm; }
-            set
-            {
-                if (SetProperty(ref _searchTerm, value))
-                {
-                    _cts?.Cancel();
-                    _cts = new CancellationTokenSource();
-                    PerformSearch(value, _cts.Token);
-                }
-            }
-        }
-
-        public IReadOnlyList<IPackage> Packages
-        {
-            get { return _packages; }
-            private set { SetProperty(ref _packages, value); }
-        }
-
-        public bool HasPackages
-        {
-            get { return _hasPackages; }
-            set { SetProperty(ref _hasPackages, value); }
-        }
-
-        private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
-        {
-            IsBusy = true;
-            try
-            {
-                if (string.IsNullOrWhiteSpace(searchTerm))
-                {
-                    HasPackages = false;
-                    Packages = null;
-                    return;
-                }
-                try
-                {
-                    var packages = await Task.Run(() => GetPackagesAsync(searchTerm, true, false), cancellationToken).ConfigureAwait(false);
-                    var list = new List<IPackage>();
-                    foreach (var package in packages)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        list.Add(package);
-                    }
-                    HasPackages = list.Count > 0;
-                    Packages = list.AsReadOnly();
-                }
-                catch (OperationCanceledException)
-                {
-                }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private async Task<IEnumerable<IPackage>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions)
+      
+        public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
         {
             await _initializationTask.Value.ConfigureAwait(false);
-            return GetPackages(searchTerm, includePrerelease, allVersions);
+            return await GetPackages(searchTerm, includePrerelease, allVersions, exactMatch, cancellationToken).ConfigureAwait(false);
         }
-
-        public async Task InstallPackage(IPackage package)
-        {
-            IsBusy = true;
-            IsEnabled = false;
-            try
-            {
-                var result = await InstallPackage(package.Id, new NuGetVersion(package.Version.ToNormalizedString()), prerelease: true).ConfigureAwait(false);
-
-                OnPackageInstalled(package, result);
-            }
-            finally
-            {
-                IsBusy = false;
-                IsEnabled = true;
-            }
-        }
-
-        private async Task<NuGetInstallResult> InstallPackage(
+        
+        public async Task<NuGetInstallResult> InstallPackage(
             string packageId,
             NuGetVersion version,
             bool prerelease)
@@ -215,6 +113,7 @@ namespace RoslynPad
                     project,
                     resolutionContext,
                     primaryRepositories,
+                    NullLogger.Instance,
                     CancellationToken.None).ConfigureAwait(false);
 
                 if (version == null)
@@ -288,31 +187,54 @@ namespace RoslynPad
             return listEndpoints;
         }
 
-        private IEnumerable<IPackage> GetPackages(string searchTerm, bool includePrerelease, bool allVersions)
+        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
         {
-            IQueryable<IPackage> packages = _repository.Search(
-                searchTerm,
-                targetFrameworks: Enumerable.Empty<string>(),
-                allowPrereleaseVersions: includePrerelease);
-
-            if (allVersions)
+            if (exactMatch)
             {
-                return packages.OrderBy(p => p.Id);
+                var exactResult = _repository.FindPackagesById(searchTerm);
+                if (!allVersions)
+                {
+                    exactResult = includePrerelease
+                        ? exactResult.Where(x => x.IsAbsoluteLatestVersion)
+                        : exactResult.Where(p => p.IsLatestVersion);
+                }
+                var packages = exactResult.ToArray();
+                if (packages.Any())
+                {
+                    return new[] { new PackageData(packages) };
+                }
+                return Array.Empty<PackageData>();
             }
-            packages = includePrerelease ? packages.Where(p => p.IsAbsoluteLatestVersion) : packages.Where(p => p.IsLatestVersion);
 
-            var result = packages.OrderBy(p => p.Id)
-                .AsEnumerable();
-            result = result.Where(PackageExtensions.IsListed);
-            return result.Where(p => includePrerelease || p.IsReleaseVersion())
-                .AsCollapsed();
+            var filter = new SearchFilter(new[] { TargetFrameworkFullName }, includePrerelease, includeDelisted: false);
+
+            foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
+            {
+                IPackageSearchMetadata[] result;
+                try
+                {
+                    result = await sourceRepository.SearchAsync(searchTerm, filter, MaxSearchResults, cancellationToken).ConfigureAwait(false);
+                }
+                catch (FatalProtocolException)
+                {
+                    continue;
+                }
+                if (result.Length > 0)
+                {
+                    var packages = result.Select(x => new PackageData(x)).ToArray();
+                    await Task.WhenAll(packages.Select(x => x.Initialize())).ConfigureAwait(false);
+                    return packages;
+                }
+            }
+
+            return Array.Empty<PackageData>();
         }
 
         private IEnumerable<PackageSource> GetPackageSources()
         {
             var availableSources = _sourceProvider.LoadPackageSources().Where(source => source.IsEnabled);
             var packageSources = new List<PackageSource>();
-            
+
             if (!string.IsNullOrEmpty(GlobalPackageFolder) && Directory.Exists(GlobalPackageFolder))
             {
                 packageSources.Add(new V2PackageSource(GlobalPackageFolder,
@@ -558,17 +480,11 @@ namespace RoslynPad
                     .ToList();
             }
 
-            /// <summary>
-            /// Retrieve repositories that have been cached.
-            /// </summary>
             public IEnumerable<SourceRepository> GetRepositories()
             {
                 return _repositories;
             }
 
-            /// <summary>
-            /// Create a repository and add it to the cache.
-            /// </summary>
             public SourceRepository CreateRepository(PackageSource source)
             {
                 return _cachedSources.GetOrAdd(source, new SourceRepository(source, _resourceProviders));
@@ -597,6 +513,166 @@ namespace RoslynPad
         #endregion
     }
 
+    internal sealed class NuGetDocumentViewModel : NotificationObject
+    {
+        private readonly NuGetViewModel _nuGetViewModel;
+
+        private bool _isBusy;
+        private bool _isEnabled;
+        private string _searchTerm;
+        private CancellationTokenSource _cts;
+        private IReadOnlyList<PackageData> _packages;
+        private bool _hasPackages;
+
+        public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel)
+        {
+            _nuGetViewModel = nuGetViewModel;
+
+            InstallPackageCommand = new DelegateCommand<PackageData>(InstallPackage);
+
+            IsEnabled = true;
+        }
+
+        private Task InstallPackage(PackageData package)
+        {
+            return InstallPackage(package.Id, package.Version);
+        }
+
+        public async Task InstallPackage(string id, NuGetVersion version)
+        {
+            IsBusy = true;
+            IsEnabled = false;
+            try
+            {
+                var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
+
+                OnPackageInstalled(result);
+            }
+            finally
+            {
+                IsBusy = false;
+                IsEnabled = true;
+            }
+        }
+
+        public DelegateCommand<PackageData> InstallPackageCommand { get; }
+
+        private void OnPackageInstalled(NuGetInstallResult result)
+        {
+            PackageInstalled?.Invoke(result);
+        }
+
+        public event Action<NuGetInstallResult> PackageInstalled;
+
+        public bool IsBusy
+        {
+            get { return _isBusy; }
+            private set { SetProperty(ref _isBusy, value); }
+        }
+
+        public bool IsEnabled
+        {
+            get { return _isEnabled; }
+            private set { SetProperty(ref _isEnabled, value); }
+        }
+
+
+        public string SearchTerm
+        {
+            get { return _searchTerm; }
+            set
+            {
+                if (SetProperty(ref _searchTerm, value))
+                {
+                    _cts?.Cancel();
+                    _cts = new CancellationTokenSource();
+                    PerformSearch(value, _cts.Token);
+                }
+            }
+        }
+
+        public IReadOnlyList<PackageData> Packages
+        {
+            get { return _packages; }
+            private set { SetProperty(ref _packages, value); }
+        }
+
+        public bool HasPackages
+        {
+            get { return _hasPackages; }
+            set { SetProperty(ref _hasPackages, value); }
+        }
+
+        public bool ExactMatch { get; set; }
+
+        private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
+        {
+            IsBusy = true;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    HasPackages = false;
+                    Packages = null;
+                    return;
+                }
+                try
+                {
+                    var packages = await Task.Run(() =>
+                        _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true, exactMatch: ExactMatch, cancellationToken: cancellationToken),
+                        cancellationToken).ConfigureAwait(false);
+
+                    Packages = packages;
+                    HasPackages = Packages.Count > 0;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+    }
+
+    internal sealed class PackageData
+    {
+        private readonly IPackageSearchMetadata _package;
+
+        private PackageData(string id, NuGetVersion version)
+        {
+            Id = id;
+            Version = version;
+        }
+
+        public string Id { get; }
+        public NuGetVersion Version { get; }
+        public ImmutableArray<PackageData> OtherVersions { get; private set; }
+
+        public PackageData(IList<IPackage> packages)
+        {
+            var package = packages[0];
+            Id = package.Id;
+            Version = NuGetVersion.Parse(package.Version.ToString());
+            OtherVersions = packages.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
+        }
+
+        public PackageData(IPackageSearchMetadata package)
+        {
+            _package = package;
+            Id = package.Identity.Id;
+            Version = package.Identity.Version;
+        }
+
+        public async Task Initialize()
+        {
+            if (_package == null) return;
+            var versions = await _package.GetVersionsAsync().ConfigureAwait(false);
+            OtherVersions = versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version).ToImmutableArray();
+        }
+    }
+
     internal sealed class NuGetInstallResult
     {
         public NuGetInstallResult(IReadOnlyList<string> references, IReadOnlyList<string> frameworkReferences)
@@ -607,5 +683,25 @@ namespace RoslynPad
 
         public IReadOnlyList<string> References { get; }
         public IReadOnlyList<string> FrameworkReferences { get; }
+    }
+
+    internal static class SourceRepositoryExtensions
+    {
+        public static async Task<IPackageSearchMetadata[]> SearchAsync(this SourceRepository sourceRepository, string searchText, SearchFilter searchFilter, int pageSize, CancellationToken cancellationToken)
+        {
+            var searchResource = await sourceRepository.GetResourceAsync<PackageSearchResource>(cancellationToken).ConfigureAwait(false);
+
+            var searchResults = await searchResource.SearchAsync(
+                searchText,
+                searchFilter,
+                0,
+                pageSize,
+                NullLogger.Instance,
+                cancellationToken).ConfigureAwait(false);
+
+            var items = searchResults?.ToArray() ?? Array.Empty<IPackageSearchMetadata>();
+
+            return items;
+        }
     }
 }

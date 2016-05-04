@@ -2,15 +2,15 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using ICSharpCode.AvalonEdit.CodeCompletion;
 using Microsoft.CodeAnalysis;
+using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.RoslynEditor
 {
-    internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProvider
+    internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProviderEx
     {
         private readonly SignatureHelpItems _signatureHelp;
         private readonly IList<SignatureHelpItem> _items;
@@ -25,7 +25,6 @@ namespace RoslynPad.RoslynEditor
         {
             _signatureHelp = signatureHelp;
             _items = signatureHelp.Items;
-            CreateSignatureHelp();
         }
 
         public int SelectedIndex
@@ -35,15 +34,15 @@ namespace RoslynPad.RoslynEditor
             {
                 if (SetProperty(ref _selectedIndex, value))
                 {
-                    CreateSignatureHelp();
+                    Refresh();
                 }
             }
         }
 
-        private void CreateSignatureHelp()
+        public void Refresh()
         {
             _item = _items[_selectedIndex];
-            var headerPanel = new StackPanel
+            var headerPanel = new WrapPanel
             {
                 Orientation = Orientation.Horizontal,
                 Children =
@@ -83,12 +82,12 @@ namespace RoslynPad.RoslynEditor
                 var textBlock = param.DocumentationFactory(CancellationToken.None).ToTextBlock();
                 if (textBlock != null && textBlock.Inlines.Count > 0)
                 {
-                    contentPanel.Children.Add(new StackPanel
+                    contentPanel.Children.Add(new WrapPanel
                     {
                         Orientation = Orientation.Horizontal,
                         Children =
                         {
-                            new TextBlock {Text = param.Name + ": ", FontWeight = FontWeights.Bold},
+                            new TextBlock { Text = param.Name + ": ", FontWeight = FontWeights.Bold },
                             textBlock
                         }
                     });
