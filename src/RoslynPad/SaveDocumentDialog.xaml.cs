@@ -195,7 +195,7 @@ namespace RoslynPad
 
         private void DocumentText_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key == Key.Enter && SaveButton.IsEnabled)
             {
                 PerformSave();
             }
