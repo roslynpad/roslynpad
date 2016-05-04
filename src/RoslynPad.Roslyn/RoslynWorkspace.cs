@@ -121,11 +121,16 @@ namespace RoslynPad.Roslyn
                 var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false))
                     .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
 
+                var changed = false;
                 foreach (var referenceDirective in _referencesDirectives)
                 {
                     if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
                     {
-                        referenceDirective.Value.IsActive = false;
+                        if (!referenceDirective.Value.IsActive)
+                        {
+                            referenceDirective.Value.IsActive = false;
+                            changed = true;
+                        }
                     }
                 }
 
@@ -134,13 +139,22 @@ namespace RoslynPad.Roslyn
                     DirectiveInfo referenceDirective;
                     if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
                     {
-                        referenceDirective.IsActive = true;
+                        if (!referenceDirective.IsActive)
+                        {
+                            referenceDirective.IsActive = true;
+                            changed = true;
+                        }
                     }
                     else
                     {
-                        _referencesDirectives.TryAdd(directive, new DirectiveInfo(ResolveReference(directive)));
+                        if (_referencesDirectives.TryAdd(directive, new DirectiveInfo(ResolveReference(directive))))
+                        {
+                            changed = true;
+                        }
                     }
                 }
+
+                if (!changed) return;
 
                 var solution = project.Solution;
                 var references =
