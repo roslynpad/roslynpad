@@ -126,11 +126,8 @@ namespace RoslynPad.Roslyn
                 {
                     if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
                     {
-                        if (!referenceDirective.Value.IsActive)
-                        {
-                            referenceDirective.Value.IsActive = false;
-                            changed = true;
-                        }
+                        referenceDirective.Value.IsActive = false;
+                        changed = true;
                     }
                 }
 
