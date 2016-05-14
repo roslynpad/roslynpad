@@ -65,13 +65,13 @@ namespace RoslynPad
             _initializationTask = new Lazy<Task>(Initialize);
 
         }
-      
+
         public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
         {
             await _initializationTask.Value.ConfigureAwait(false);
             return await GetPackages(searchTerm, includePrerelease, allVersions, exactMatch, cancellationToken).ConfigureAwait(false);
         }
-        
+
         public async Task<NuGetInstallResult> InstallPackage(
             string packageId,
             NuGetVersion version,
@@ -691,17 +691,23 @@ namespace RoslynPad
         {
             var searchResource = await sourceRepository.GetResourceAsync<PackageSearchResource>(cancellationToken).ConfigureAwait(false);
 
-            var searchResults = await searchResource.SearchAsync(
-                searchText,
-                searchFilter,
-                0,
-                pageSize,
-                NullLogger.Instance,
-                cancellationToken).ConfigureAwait(false);
+            if (searchResource != null)
+            {
+                var searchResults = await searchResource.SearchAsync(
+                    searchText,
+                    searchFilter,
+                    0,
+                    pageSize,
+                    NullLogger.Instance,
+                    cancellationToken).ConfigureAwait(false);
 
-            var items = searchResults?.ToArray() ?? Array.Empty<IPackageSearchMetadata>();
+                if (searchResults != null)
+                {
+                    return searchResults.ToArray();
+                }
+            }
 
-            return items;
+            return Array.Empty<IPackageSearchMetadata>();
         }
     }
 }

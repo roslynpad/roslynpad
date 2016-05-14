@@ -172,6 +172,7 @@ namespace RoslynPad
                     var dialog = new SaveDocumentDialog
                     {
                         ShowDontSave = true,
+                        DocumentName = Document.Name
                     };
                     dialog.Show();
                     result = dialog.Result;
