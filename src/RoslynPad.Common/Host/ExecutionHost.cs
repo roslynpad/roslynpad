@@ -352,9 +352,9 @@ namespace RoslynPad.Host
                 _completed = completed;
             }
 
-            private void OnDumped(object o, DumpTarget mode)
+            private void OnDumped(object o, string header)
             {
-                _dumped?.Invoke(ResultObject.Create(o));
+                _dumped?.Invoke(ResultObject.Create(o, header));
             }
 
             public void Dispose()

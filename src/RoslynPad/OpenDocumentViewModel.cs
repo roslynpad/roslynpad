@@ -196,10 +196,12 @@ namespace RoslynPad
             var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
             using (var writer = new StreamWriter(path, append: false))
             {
-                foreach (var line in text.Lines)
+                for (int lineIndex = 0; lineIndex < text.Lines.Count - 1; ++lineIndex)
                 {
-                    await writer.WriteLineAsync(line.ToString()).ConfigureAwait(false);
+                    var lineText = text.Lines[lineIndex].ToString();
+                    await writer.WriteLineAsync(lineText).ConfigureAwait(false);
                 }
+                await writer.WriteAsync(text.Lines[text.Lines.Count - 1].ToString()).ConfigureAwait(false);
             }
         }
 

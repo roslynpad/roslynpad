@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -17,7 +18,7 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private static readonly Version _currentVersion = new Version(0, 7);
+        private static readonly Version _currentVersion = new Version(0, 8);
 
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
@@ -34,6 +35,20 @@ namespace RoslynPad
 
         public MainViewModel()
         {
+            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
+            _telemetryClient.Context.Component.Version = _currentVersion.ToString();
+#if DEBUG
+            _telemetryClient.Context.Properties["DEBUG"] = "1";
+#endif
+            if (SendTelemetry)
+            {
+                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
+            }
+
+            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
+            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
+            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
+
             NuGet = new NuGetViewModel();
             NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetProvider);
@@ -56,19 +71,6 @@ namespace RoslynPad
             {
                 CurrentOpenDocument = OpenDocuments[0];
             }
-
-            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
-#if DEBUG
-            _telemetryClient.Context.Properties["DEBUG"] = "1";
-#endif
-            if (SendTelemetry)
-            {
-                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
-            }
-
-            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
-            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
-            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
 
             if (HasCachedUpdate())
             {
@@ -242,6 +244,11 @@ namespace RoslynPad
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
             if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
             {
+                var typeLoadException = exception as ReflectionTypeLoadException;
+                if (typeLoadException != null)
+                {
+                    exception = new AggregateException(exception.Message, typeLoadException.LoaderExceptions);
+                }
                 _telemetryClient.TrackException(exception);
                 if (flushSync)
                 {

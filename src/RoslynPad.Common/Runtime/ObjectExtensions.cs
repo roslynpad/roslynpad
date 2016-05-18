@@ -4,17 +4,12 @@ namespace RoslynPad.Runtime
 {
     public static class ObjectExtensions
     {
-        public static T Dump<T>(this T o)
+        public static T Dump<T>(this T o, string header = null)
         {
-            Dumped?.Invoke(o, DumpTarget.Text);
+            Dumped?.Invoke(o, header);
             return o;
         }
         
-        internal static event Action<object, DumpTarget> Dumped;
-    }
-
-    internal enum DumpTarget
-    {
-        Text
+        internal static event Action<object, string> Dumped;
     }
 }

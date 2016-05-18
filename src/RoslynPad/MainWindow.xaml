@@ -46,8 +46,6 @@
 
         <Style x:Key="DocumentItemContainerStyle"
                TargetType="TreeViewItem">
-            <Setter Property="IsExpanded"
-                    Value="{Binding IsExpanded}" />
             <EventSetter Event="MouseDoubleClick"
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"
@@ -80,7 +78,8 @@
                 </DockPanel>
             </Border>
             <Grid>
-                <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                <dock:DockingManager Name="DockingManager"
+                                     DocumentsSource="{Binding OpenDocuments}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
                                      DocumentClosing="DockingManager_OnDocumentClosing">
                     <dock:DockingManager.DocumentHeaderTemplate>
@@ -107,14 +106,17 @@
                     </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
                     <dock:LayoutRoot>
                         <dock:LayoutPanel Orientation="Horizontal">
-                            <dock:LayoutAnchorablePane DockWidth="200">
+                            <dock:LayoutAnchorablePane Name="Documents"
+                                                       DockWidth="200">
                                 <dock:LayoutAnchorable x:Name="DocumentsPane"
+                                                       CanHide="False"
                                                        CanClose="False"
                                                        CanFloat="False"
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                    <TreeView ItemsSource="{Binding Documents}"
+                                    <TreeView Name="DocumentTree"
+                                              ItemsSource="{Binding Documents}"
                                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>

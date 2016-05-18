@@ -6,6 +6,7 @@
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynETAHost"
              xmlns:cc="clr-namespace:ICSharpCode.AvalonEdit.CodeCompletion;assembly=ICSharpCode.AvalonEdit"
+             xmlns:controls="clr-namespace:RoslynPad.Controls"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -13,8 +14,10 @@
                 <ResourceDictionary Source="Resources/Glyphs.xaml" />
                 <ResourceDictionary Source="Resources/Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <formatting:BooleanToVisibilityConverter x:Key="BooleanToVisibilityHiddenConverter"
+                                                     FalseValue="Hidden" />
 
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
                                       ItemsSource="{Binding Fixes}">
@@ -57,8 +60,9 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            
-            <Style x:Key="Title" TargetType="TextBlock">
+
+            <Style x:Key="Title"
+                   TargetType="TextBlock">
                 <Setter Property="FontSize"
                         Value="16" />
             </Style>
@@ -70,7 +74,7 @@
                 <Setter Property="Margin"
                         Value="10,0,0,0" />
             </Style>
-            
+
             <Style x:Key="LinkButton"
                    TargetType="Button">
                 <Setter Property="Background"
@@ -97,6 +101,191 @@
                                             Property="TextBlock.TextDecorations"
                                             Value="Underline" />
                                 </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="{x:Type controls:TreeListViewItem}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type controls:TreeListViewItem}">
+                            <Border Name="OuterBd"
+                                    BorderBrush="#eeeeee">
+                                <DockPanel>
+                                    <Border Name="Bd"
+                                            DockPanel.Dock="Top"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter x:Name="PART_Header"
+                                                          ContentSource="Header" />
+                                    </Border>
+                                    <ItemsPresenter x:Name="ItemsHost" />
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Level"
+                                         Value="0">
+                                    <Setter TargetName="OuterBd"
+                                            Property="Margin"
+                                            Value="0,2,0,2" />
+                                    <Setter TargetName="OuterBd"
+                                            Property="BorderThickness"
+                                            Value="0,0,0,1" />
+                                </Trigger>
+                                <Trigger Property="IsExpanded"
+                                         Value="false">
+                                    <Setter TargetName="ItemsHost"
+                                            Property="Visibility"
+                                            Value="Collapsed" />
+                                </Trigger>
+                                <Trigger Property="IsSelected"
+                                         Value="true">
+                                    <Setter TargetName="Bd"
+                                            Property="Background"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected"
+                                                   Value="true" />
+                                        <Condition Property="IsSelectionActive"
+                                                   Value="false" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bd"
+                                            Property="Background"
+                                            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+                                </MultiTrigger>
+                                <Trigger Property="IsEnabled"
+                                         Value="false">
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <controls:LevelToIndentConverter x:Key="LevelToIndentConverter" />
+
+            <PathGeometry x:Key="TreeArrow">
+                <PathGeometry.Figures>
+                    <PathFigureCollection>
+                        <PathFigure IsFilled="True"
+                                    StartPoint="0 0"
+                                    IsClosed="True">
+                            <PathFigure.Segments>
+                                <PathSegmentCollection>
+                                    <LineSegment Point="0 6" />
+                                    <LineSegment Point="6 0" />
+                                </PathSegmentCollection>
+                            </PathFigure.Segments>
+                        </PathFigure>
+                    </PathFigureCollection>
+                </PathGeometry.Figures>
+            </PathGeometry>
+
+
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke"
+                             Color="#FF818181" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Fill"
+                             Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Stroke"
+                             Color="#FF27C7F7" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Fill"
+                             Color="#FFCCEEFB" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Stroke"
+                             Color="#FF262626" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Fill"
+                             Color="#FF595959" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Stroke"
+                             Color="#FF1CC4F7" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Fill"
+                             Color="#FF82DFFB" />
+
+            <Style x:Key="TreeListViewToggleStyle"
+                   TargetType="{x:Type ToggleButton}">
+                <Setter Property="Margin"
+                        Value="{Binding Path=Level, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                <Setter Property="IsChecked"
+                        Value="{Binding Path=IsExpanded, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                <Setter Property="Visibility"
+                        Value="{Binding Path=HasItems, Converter={StaticResource BooleanToVisibilityHiddenConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                <Setter Property="ClickMode"
+                        Value="Press" />
+                <Setter Property="Focusable"
+                        Value="False" />
+                <Setter Property="Width"
+                        Value="16" />
+                <Setter Property="Height"
+                        Value="16" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <Border Width="16"
+                                    Height="16"
+                                    Background="Transparent"
+                                    Padding="5,5,5,5">
+                                <Path x:Name="ExpandPath"
+                                      Fill="{StaticResource TreeViewItem.TreeArrow.Static.Fill}"
+                                      Stroke="{StaticResource TreeViewItem.TreeArrow.Static.Stroke}"
+                                      Data="{StaticResource TreeArrow}">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="135"
+                                                         CenterX="3"
+                                                         CenterY="3" />
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked"
+                                         Value="True">
+                                    <Setter TargetName="ExpandPath"
+                                            Property="RenderTransform">
+                                        <Setter.Value>
+                                            <RotateTransform Angle="180"
+                                                             CenterX="3"
+                                                             CenterY="3" />
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Fill"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.Static.Checked.Fill}" />
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Stroke"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.Static.Checked.Stroke}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Stroke"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.MouseOver.Stroke}" />
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Fill"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.MouseOver.Fill}" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver"
+                                                   Value="True" />
+                                        <Condition Property="IsChecked"
+                                                   Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Stroke"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.MouseOver.Checked.Stroke}" />
+                                    <Setter TargetName="ExpandPath"
+                                            Property="Fill"
+                                            Value="{StaticResource TreeViewItem.TreeArrow.MouseOver.Checked.Fill}" />
+                                </MultiTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
