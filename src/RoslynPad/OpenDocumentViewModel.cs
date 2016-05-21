@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -20,14 +21,13 @@ namespace RoslynPad
     {
         private readonly string _workingDirectory;
         private readonly Dispatcher _dispatcher;
+        private readonly object _resultsLock;
 
         private ExecutionHost _executionHost;
         private ObservableCollection<ResultObjectViewModel> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
-        private int _runToken;
         private Action<object> _executionHostOnDumped;
-        private readonly object _resultsLock;
         private bool _isDirty;
         private Platform _platform;
         private bool _isSaving;
@@ -58,8 +58,7 @@ namespace RoslynPad
             Platform = Platform.X86;
             _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetProvider, mainViewModel.ChildProcessManager);
-            _executionHost.ExecutionCompleted += OnExecutionCompleted;
+                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, mainViewModel.ChildProcessManager);
 
             _resultsLock = new object();
             Results = new ObservableCollection<ResultObjectViewModel>();
@@ -96,14 +95,6 @@ namespace RoslynPad
                         RestartHostCommand.Execute();
                     }
                 }
-            }
-        }
-
-        private void OnExecutionCompleted(int token)
-        {
-            if (token == _runToken)
-            {
-                SetIsRunning(false);
             }
         }
 
@@ -193,6 +184,8 @@ namespace RoslynPad
 
         private async Task SaveDocument(string path)
         {
+            if (DocumentId == null) return;
+
             var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
             using (var writer = new StreamWriter(path, append: false))
             {
@@ -241,13 +234,13 @@ namespace RoslynPad
 
         private async Task Run()
         {
+            if (IsRunning) return;
+
             Reset();
 
             await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(false);
 
             SetIsRunning(true);
-
-            var token = Interlocked.Increment(ref _runToken);
 
             var results = new ObservableCollection<ResultObjectViewModel>();
             Results = results;
@@ -261,8 +254,12 @@ namespace RoslynPad
             _executionHost.Dumped += _executionHostOnDumped;
             try
             {
-                var code = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken).ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code.ToString(), token).ConfigureAwait(true);
+                var code =
+                    await
+                        MainViewModel.RoslynHost.GetDocument(DocumentId)
+                            .GetTextAsync(cancellationToken)
+                            .ConfigureAwait(true);
+                await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -277,6 +274,10 @@ namespace RoslynPad
             catch (Exception ex)
             {
                 AddResult(ex, results, cancellationToken);
+            }
+            finally
+            {
+                SetIsRunning(false);
             }
         }
 
@@ -296,7 +297,18 @@ namespace RoslynPad
             {
                 lock (_resultsLock)
                 {
-                    results.Add(new ResultObjectViewModel(o as ResultObject ?? ResultObject.Create(o)));
+                    var list = o as IList<ResultObject>;
+                    if (list != null)
+                    {
+                        foreach (var resultObject in list)
+                        {
+                            results.Add(new ResultObjectViewModel(resultObject));
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new ResultObjectViewModel(ResultObject.Create(o)));
+                    }
                 }
             }, DispatcherPriority.SystemIdle, cancellationToken);
         }

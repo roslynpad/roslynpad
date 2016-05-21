@@ -7,12 +7,12 @@ namespace RoslynPad.Host
 {
     internal sealed class NuGetScriptMetadataResolver : MetadataReferenceResolver
     {
-        private readonly INuGetProvider _nuGetProvider;
+        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ScriptMetadataResolver _inner;
 
-        public NuGetScriptMetadataResolver(INuGetProvider nuGetProvider, string workingDirectory)
+        public NuGetScriptMetadataResolver(NuGetConfiguration nuGetConfiguration, string workingDirectory)
         {
-            _nuGetProvider = nuGetProvider;
+            _nuGetConfiguration = nuGetConfiguration;
             _inner = ScriptMetadataResolver.Default.WithBaseDirectory(workingDirectory);
         }
 
@@ -28,7 +28,7 @@ namespace RoslynPad.Host
 
         public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
         {
-            reference = _nuGetProvider.ResolveReference(reference);
+            reference = _nuGetConfiguration.ResolveReference(reference);
             return _inner.ResolveReference(reference, baseFilePath, properties);
         }
     }

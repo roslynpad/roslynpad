@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace RoslynPad.Runtime
 {
-    internal sealed class ResultObject : MarshalByRefObject
+    [DataContract(IsReference = true)]
+    internal sealed class ResultObject
     {
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
@@ -27,11 +29,6 @@ namespace RoslynPad.Runtime
             _depth = depth;
             _property = property;
             Initialize(o, header);
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            return null;
         }
 
         public override string ToString()
@@ -63,11 +60,14 @@ namespace RoslynPad.Runtime
             }
         }
 
+        [DataMember]
         public string Header { get; private set; }
 
+        [DataMember]
         public string Value { get; private set; }
 
-        public IReadOnlyList<ResultObject> Children { get; private set; }
+        [DataMember]
+        public IList<ResultObject> Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 

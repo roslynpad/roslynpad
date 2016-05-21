@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -6,14 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Ipc;
-using System.Runtime.Remoting.Messaging;
-using System.Runtime.Serialization.Formatters;
+using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using System.Xml;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -23,20 +21,19 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Host
 {
-    internal class ExecutionHost : MarshalByRefObject, IDisposable
+    internal class ExecutionHost : IDisposable
     {
         private const int MillisecondsTimeout = 5000;
         private const int MaxAttemptsToCreateProcess = 2;
 
-        private static Dispatcher _dispatcher;
+        private static Dispatcher _serverDispatcher;
 
         private readonly string _initialWorkingDirectory;
         private readonly IEnumerable<string> _references;
         private readonly IEnumerable<string> _imports;
-        private readonly INuGetProvider _nuGetProvider;
+        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ChildProcessManager _childProcessManager;
 
-        private IpcServerChannel _serverChannel;
         private LazyRemoteService _lazyRemoteService;
 
         public static void RunServer(string serverPort, string semaphoreName)
@@ -47,34 +44,25 @@ namespace RoslynPad.Host
                 SetErrorMode(GetErrorMode() | ErrorMode.SEM_FAILCRITICALERRORS | ErrorMode.SEM_NOOPENFILEERRORBOX | ErrorMode.SEM_NOGPFAULTERRORBOX);
             }
 
-            IpcServerChannel serverChannel = null;
-            IpcClientChannel clientChannel = null;
+            ServiceHost serviceHost = null;
             try
             {
                 using (var semaphore = Semaphore.OpenExisting(semaphoreName))
                 {
-                    var serverProvider = new BinaryServerFormatterSinkProvider { TypeFilterLevel = TypeFilterLevel.Full };
-                    var clientProvider = new BinaryClientFormatterSinkProvider();
-
-                    clientChannel = new IpcClientChannel(GenerateUniqueChannelLocalName(), clientProvider);
-                    ChannelServices.RegisterChannel(clientChannel, ensureSecurity: false);
-
-                    serverChannel = new IpcServerChannel(GenerateUniqueChannelLocalName(), serverPort, serverProvider);
-                    ChannelServices.RegisterChannel(serverChannel, ensureSecurity: false);
-
-                    RemotingConfiguration.RegisterWellKnownServiceType(
-                        typeof(Service),
-                        typeof(Service).Name,
-                        WellKnownObjectMode.Singleton);
+                    serviceHost = new ServiceHost(typeof(Service));
+                    serviceHost.AddServiceEndpoint(typeof(IService), CreateBinding(), GetAddress(serverPort));
+                    serviceHost.Open();
 
                     Console.SetOut(CreateConsoleWriter());
                     Console.SetError(CreateConsoleWriter());
+                    Debug.Listeners.Add(new ConsoleTraceListener());
+                    Debug.AutoFlush = true;
 
                     using (var resetEvent = new ManualResetEventSlim(false))
                     {
                         var uiThread = new Thread(() =>
                         {
-                            _dispatcher = Dispatcher.CurrentDispatcher;
+                            _serverDispatcher = Dispatcher.CurrentDispatcher;
                             // ReSharper disable once AccessToDisposedClosure
                             resetEvent.Set();
                             Dispatcher.Run();
@@ -92,19 +80,34 @@ namespace RoslynPad.Host
             }
             finally
             {
-                if (serverChannel != null)
+                if (serviceHost?.State == CommunicationState.Opened)
                 {
-                    ChannelServices.UnregisterChannel(serverChannel);
-                }
-
-                if (clientChannel != null)
-                {
-                    ChannelServices.UnregisterChannel(clientChannel);
+                    serviceHost.Close();
                 }
             }
 
             // force exit even if there are foreground threads running:
             Environment.Exit(0);
+        }
+
+        private static Uri GetAddress(string serverPort)
+        {
+            return new UriBuilder
+            {
+                Scheme = Uri.UriSchemeNetPipe,
+                Path = serverPort
+            }.Uri;
+        }
+
+        private static NetNamedPipeBinding CreateBinding()
+        {
+            return new NetNamedPipeBinding(NetNamedPipeSecurityMode.None)
+            {
+                ReceiveTimeout = TimeSpan.MaxValue,
+                SendTimeout = TimeSpan.MaxValue,
+                ReaderQuotas = XmlDictionaryReaderQuotas.Max,
+                MaxReceivedMessageSize = int.MaxValue
+            };
         }
 
         private static TextWriter CreateConsoleWriter()
@@ -114,35 +117,23 @@ namespace RoslynPad.Host
 
         public ExecutionHost(string hostPath, string initialWorkingDirectory,
             IEnumerable<string> references, IEnumerable<string> imports,
-            INuGetProvider nuGetProvider, ChildProcessManager childProcessManager)
+            NuGetConfiguration nuGetConfiguration, ChildProcessManager childProcessManager)
         {
             HostPath = hostPath;
             _initialWorkingDirectory = initialWorkingDirectory;
             _references = references;
             _imports = imports;
-            _nuGetProvider = nuGetProvider;
+            _nuGetConfiguration = nuGetConfiguration;
             _childProcessManager = childProcessManager;
-            var serverProvider = new BinaryServerFormatterSinkProvider { TypeFilterLevel = TypeFilterLevel.Full };
-            _serverChannel = new IpcServerChannel(GenerateUniqueChannelLocalName(), "Channel-" + Guid.NewGuid(), serverProvider);
-            ChannelServices.RegisterChannel(_serverChannel, ensureSecurity: false);
         }
 
         public string HostPath { get; set; }
 
-        public override object InitializeLifetimeService() => null;
+        public event Action<IList<ResultObject>> Dumped;
 
-        public event Action<ResultObject> Dumped;
-
-        public void OnDumped(ResultObject o)
+        private void OnDumped(IList<ResultObject> results)
         {
-            Dumped?.Invoke(o);
-        }
-
-        public event Action<int> ExecutionCompleted;
-
-        public void OnExecutionCompleted(int token)
-        {
-            ExecutionCompleted?.Invoke(token);
+            Dumped?.Invoke(results);
         }
 
         private RemoteService TryStartProcess(CancellationToken cancellationToken)
@@ -203,19 +194,23 @@ namespace RoslynPad.Host
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                // instantiate remote service:
-                Service newService;
+                // instantiate remote service
+                IService newService;
                 try
                 {
-                    newService = (Service)Activator.GetObject(
-                        typeof(Service),
-                        "ipc://" + remoteServerPort + "/" + nameof(Service));
+                    newService = DuplexChannelFactory<IService>.CreateChannel(
+                        new InstanceContext(new ServiceCallback(OnDumped)),
+                        CreateBinding(),
+                        new EndpointAddress(GetAddress(remoteServerPort)));
+
+                    // ReSharper disable once SuspiciousTypeConversion.Global
+                    ((ICommunicationObject)newService).Open();
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetProvider, _initialWorkingDirectory, OnDumped, OnExecutionCompleted);
+                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetConfiguration, _initialWorkingDirectory);
                 }
-                catch (RemotingException) when (!newProcess.IsAlive())
+                catch (CommunicationException) when (!newProcess.IsAlive())
                 {
                     return null;
                 }
@@ -237,23 +232,12 @@ namespace RoslynPad.Host
             }
         }
 
-        private static string GenerateUniqueChannelLocalName()
-        {
-            return typeof(Service).FullName + Guid.NewGuid();
-        }
-
         public void Dispose()
         {
-            if (_serverChannel != null)
-            {
-                ChannelServices.UnregisterChannel(_serverChannel);
-                _serverChannel = null;
-            }
-
             _lazyRemoteService?.Dispose();
         }
 
-        private async Task<Service> TryGetOrCreateRemoteServiceAsync()
+        private async Task<IService> TryGetOrCreateRemoteServiceAsync()
         {
             try
             {
@@ -296,14 +280,14 @@ namespace RoslynPad.Host
             return null;
         }
 
-        public async Task ExecuteAsync(string code, int token)
+        public async Task ExecuteAsync(string code)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            service.ExecuteAsync(code, token);
+            await service.ExecuteAsync(code).ConfigureAwait(false);
         }
 
         public async Task ResetAsync()
@@ -317,44 +301,128 @@ namespace RoslynPad.Host
             await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
         }
 
-        internal class Service : MarshalByRefObject, IDisposable
+        [ServiceContract]
+        internal interface IServiceCallback
         {
-            private readonly object _lastTaskGuard;
-            private ScriptOptions _scriptOptions;
+            [OperationContract]
+            Task Dump(IList<ResultObject> result);
+        }
 
-            private Task _lastTask;
-            private Action<ResultObject> _dumped;
-            private Action<int> _completed;
+        [ServiceContract(CallbackContract = typeof(IServiceCallback))]
+        internal interface IService
+        {
+            [OperationContract]
+            Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory);
+
+            [OperationContract]
+            Task ExecuteAsync(string code);
+        }
+
+        [CallbackBehavior(UseSynchronizationContext = false)]
+        internal class ServiceCallback : IServiceCallback
+        {
+            private readonly Action<IList<ResultObject>> _dumped;
+
+            public ServiceCallback(Action<IList<ResultObject>> dumped)
+            {
+                _dumped = dumped;
+            }
+
+            public Task Dump(IList<ResultObject> result)
+            {
+                _dumped?.Invoke(result);
+                return Task.CompletedTask;
+            }
+        }
+
+        [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant, UseSynchronizationContext = false)]
+        internal class Service : IService, IDisposable
+        {
+            private const int WindowMillisecondsTimeout = 500;
+            private const int WindowMaxCount = 10000;
+
+            private readonly ConcurrentQueue<ResultObject> _dumpQueue;
+            private readonly SemaphoreSlim _dumpLock;
+
+            private ScriptOptions _scriptOptions;
+            private IServiceCallback _callbackChannel;
 
             public Service()
             {
-                _lastTaskGuard = new object();
-                _lastTask = Task.CompletedTask;
+                _dumpQueue = new ConcurrentQueue<ResultObject>();
+                _dumpLock = new SemaphoreSlim(0);
                 _scriptOptions = ScriptOptions.Default;
 
                 ObjectExtensions.Dumped += OnDumped;
             }
 
-            public override object InitializeLifetimeService() => null;
-
-            public void Initialize(IList<string> references, IList<string> imports, INuGetProvider nuGetProvider, string workingDirectory, Action<ResultObject> dumped, Action<int> completed)
+            public Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory)
             {
                 var scriptOptions = _scriptOptions
                     .WithReferences(references)
                     .WithImports(imports);
-                if (nuGetProvider != null)
+                if (nuGetConfiguration != null)
                 {
-                    var resolver = new NuGetScriptMetadataResolver(nuGetProvider, workingDirectory);
+                    var resolver = new NuGetScriptMetadataResolver(nuGetConfiguration, workingDirectory);
                     scriptOptions = scriptOptions.WithMetadataResolver(resolver);
                 }
                 _scriptOptions = scriptOptions;
-                _dumped = dumped;
-                _completed = completed;
+
+                _callbackChannel = OperationContext.Current.GetCallbackChannel<IServiceCallback>();
+
+                return Task.CompletedTask;
             }
 
             private void OnDumped(object o, string header)
             {
-                _dumped?.Invoke(ResultObject.Create(o, header));
+                _dumpQueue.Enqueue(ResultObject.Create(o, header));
+                _dumpLock.Release();
+            }
+
+            private async Task ProcessDumpQueue(CancellationToken cancellationToken)
+            {
+                while (true)
+                {
+                    // ReSharper disable once MethodSupportsCancellation
+                    var hasItem = await _dumpLock.WaitAsync(WindowMillisecondsTimeout).ConfigureAwait(false);
+                    if (!hasItem)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                        continue;
+                    }
+
+                    var list = new List<ResultObject>();
+                    var timestamp = Environment.TickCount;
+                    ResultObject item;
+                    while (Environment.TickCount - timestamp < WindowMillisecondsTimeout &&
+                           list.Count < WindowMaxCount &&
+                           _dumpQueue.TryDequeue(out item))
+                    {
+                        if (list.Count > 0)
+                        {
+                            // ReSharper disable once MethodSupportsCancellation
+                            await _dumpLock.WaitAsync().ConfigureAwait(false);
+                        }
+                        list.Add(item);
+                    }
+
+                    try
+                    {
+                        var task = _callbackChannel?.Dump(list);
+                        if (task != null)
+                        {
+                            await task.ConfigureAwait(false);
+                        }
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+                // ReSharper disable once FunctionNeverReturns
             }
 
             public void Dispose()
@@ -362,20 +430,14 @@ namespace RoslynPad.Host
                 ObjectExtensions.Dumped -= OnDumped;
             }
 
-            [OneWay]
-            public void ExecuteAsync(string code, int token)
+            public async Task ExecuteAsync(string code)
             {
                 Debug.Assert(code != null);
 
-                lock (_lastTaskGuard)
-                {
-                    _lastTask = ExecuteAsync(_lastTask, code, token);
-                }
-            }
-
-            private async Task ExecuteAsync(Task lastTask, string code, int token)
-            {
-                await ReportUnhandledExceptionIfAny(lastTask).ConfigureAwait(false);
+                var processCancelSource = new CancellationTokenSource();
+                var processCancelToken = processCancelSource.Token;
+                // ReSharper disable once MethodSupportsCancellation
+                var processTask = Task.Run(() => ProcessDumpQueue(processCancelToken));
 
                 try
                 {
@@ -393,8 +455,11 @@ namespace RoslynPad.Host
                 {
                     ReportUnhandledException(e);
                 }
-
-                _completed?.Invoke(token);
+                finally
+                {
+                    processCancelSource.Cancel();
+                    await processTask.ConfigureAwait(false);
+                }
             }
 
             private static Script<object> TryCompile(string code, ScriptOptions options)
@@ -431,7 +496,7 @@ namespace RoslynPad.Host
 
             private static async Task<ScriptState<object>> ExecuteOnUIThread(Script<object> script)
             {
-                return await (await _dispatcher.InvokeAsync(
+                return await (await _serverDispatcher.InvokeAsync(
                     async () =>
                     {
                         try
@@ -452,18 +517,6 @@ namespace RoslynPad.Host
                     })).ConfigureAwait(false);
             }
 
-            private static async Task ReportUnhandledExceptionIfAny(Task lastTask)
-            {
-                try
-                {
-                    await lastTask.ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    ReportUnhandledException(e);
-                }
-            }
-
             private static void ReportUnhandledException(Exception e)
             {
                 Console.Error.WriteLine("Unexpected error:");
@@ -475,10 +528,11 @@ namespace RoslynPad.Host
         internal sealed class RemoteService : IDisposable
         {
             public readonly Process Process;
-            public readonly Service Service;
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            public readonly IService Service;
             private readonly int _processId;
 
-            internal RemoteService(Process process, int processId, Service service)
+            internal RemoteService(Process process, int processId, IService service)
             {
                 Debug.Assert(process != null);
                 Debug.Assert(service != null);
@@ -504,7 +558,7 @@ namespace RoslynPad.Host
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine("HostProcess: can't terminate process {0}: {1}", processId, e.Message);
+                    Debug.WriteLine($"HostProcess: can't terminate process {processId}: {e.Message}");
                 }
             }
         }

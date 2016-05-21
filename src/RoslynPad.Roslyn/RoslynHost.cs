@@ -53,7 +53,7 @@ namespace RoslynPad.Roslyn
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
             }).ToImmutableArray();
 
-        private readonly INuGetProvider _nuGetProvider;
+        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly CSharpParseOptions _parseOptions;
@@ -72,9 +72,9 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
-        public RoslynHost(INuGetProvider nuGetProvider = null)
+        public RoslynHost(NuGetConfiguration nuGetConfiguration = null)
         {
-            _nuGetProvider = nuGetProvider;
+            _nuGetConfiguration = nuGetConfiguration;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
@@ -257,7 +257,7 @@ namespace RoslynPad.Roslyn
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
-            var workspace = new RoslynWorkspace(_host, _nuGetProvider, this);
+            var workspace = new RoslynWorkspace(_host, _nuGetConfiguration, this);
             if (onTextUpdated != null)
             {
                 workspace.ApplyingTextChange += (d, s) => onTextUpdated(s);

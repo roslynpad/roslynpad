@@ -132,5 +132,12 @@ namespace RoslynPad
         {
             Editor.Focus();
         }
+
+        private void OnTreeViewItemLoaded(object sender, RoutedEventArgs e)
+        {
+            var element = (FrameworkElement)sender;
+            element.InputBindings.Clear();
+            element.InputBindings.Add(new KeyBinding(((ResultObjectViewModel)element.DataContext).CopyCommand, Key.C, ModifierKeys.Control));
+        }
     }
 }

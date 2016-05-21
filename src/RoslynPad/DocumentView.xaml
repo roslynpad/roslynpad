@@ -218,6 +218,12 @@
                             </Grid>
                         </HierarchicalDataTemplate>
                     </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="controls:TreeListViewItem"
+                               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+                            <EventSetter Event="Loaded" Handler="OnTreeViewItemLoaded" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
                 </controls:TreeListView>
             </DockPanel>
         </Grid>

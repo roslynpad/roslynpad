@@ -78,8 +78,6 @@ namespace RoslynPad
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
-     
-
             var document = new DocumentViewModel(MainViewModel, GetDocumentPathFromName(Path, documentName), isFolder: false);
 
             var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);

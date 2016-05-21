@@ -30,7 +30,7 @@ namespace RoslynPad
         private bool _hasUpdate;
 
         public DocumentViewModel DocumentRoot { get; }
-        public INuGetProvider NuGetProvider { get; }
+        public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
@@ -50,8 +50,8 @@ namespace RoslynPad
             TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
 
             NuGet = new NuGetViewModel();
-            NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetProvider);
+            NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
+            RoslynHost = new RoslynHost(NuGetConfiguration);
             ChildProcessManager = new ChildProcessManager();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
@@ -254,11 +254,6 @@ namespace RoslynPad
                 {
                     _telemetryClient.Flush();
                 }
-                // TODO: check why this freezes the UI
-                //else
-                //{
-                //    Task.Run(() => _telemetryClient.Value.Flush());
-                //}
             }
         }
 
@@ -309,19 +304,6 @@ namespace RoslynPad
                 });
                 _telemetryClient.Flush();
             });
-        }
-
-        [Serializable]
-        private class NuGetProviderImpl : INuGetProvider
-        {
-            public NuGetProviderImpl(string pathToRepository, string pathVariableName)
-            {
-                PathToRepository = pathToRepository;
-                PathVariableName = pathVariableName;
-            }
-
-            public string PathToRepository { get; }
-            public string PathVariableName { get; }
         }
     }
 
