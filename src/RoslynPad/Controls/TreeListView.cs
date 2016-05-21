@@ -8,6 +8,15 @@ namespace RoslynPad.Controls
 {
     internal class TreeListView : TreeView
     {
+        public static readonly DependencyProperty ShowSeparatorProperty = DependencyProperty.Register(
+            "ShowSeparator", typeof(bool), typeof(TreeListView), new FrameworkPropertyMetadata(true));
+
+        public bool ShowSeparator
+        {
+            get { return (bool) GetValue(ShowSeparatorProperty); }
+            set { SetValue(ShowSeparatorProperty, value); }
+        }
+
         protected override DependencyObject GetContainerForItemOverride()
         {
             return new TreeListViewItem();
@@ -16,6 +25,12 @@ namespace RoslynPad.Controls
         protected override bool IsItemItsOwnContainerOverride(object item)
         {
             return item is TreeListViewItem;
+        }
+
+        protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
+        {
+            base.PrepareContainerForItemOverride(element, item);
+            element.SetValue(TreeListViewItem.ShowSeparatorPropertyKey, ShowSeparator);
         }
 
         public GridViewColumnCollection Columns
@@ -42,6 +57,16 @@ namespace RoslynPad.Controls
         public static readonly DependencyProperty LevelProperty = LevelPropertyKey.DependencyProperty;
 
         public int Level => (int)GetValue(LevelProperty);
+
+        internal static readonly DependencyPropertyKey ShowSeparatorPropertyKey = DependencyProperty.RegisterReadOnly(
+            "ShowSeparator", typeof(bool), typeof(TreeListViewItem), new FrameworkPropertyMetadata());
+
+        public static readonly DependencyProperty ShowSeparatorProperty = ShowSeparatorPropertyKey.DependencyProperty;
+
+        public bool ShowSeparator
+        {
+            get { return (bool) GetValue(ShowSeparatorProperty); }
+        }
 
         protected override DependencyObject GetContainerForItemOverride()
         {

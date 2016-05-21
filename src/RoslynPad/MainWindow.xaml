@@ -6,6 +6,7 @@
         xmlns:roslynPad="clr-namespace:RoslynPad"
         xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
+        xmlns:controls="clr-namespace:RoslynPad.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
@@ -24,6 +25,8 @@
         <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
                                   ItemsSource="{Binding Children}">
             <DockPanel Margin="0 0 0 3">
+                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+
                 <Image Name="Icon"
                        Source="{StaticResource CsFile}"
                        Height="12"
@@ -45,7 +48,8 @@
         </DataTemplate>
 
         <Style x:Key="DocumentItemContainerStyle"
-               TargetType="TreeViewItem">
+               TargetType="controls:TreeListViewItem"
+               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
             <EventSetter Event="MouseDoubleClick"
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"
@@ -115,9 +119,10 @@
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                    <TreeView Name="DocumentTree"
-                                              ItemsSource="{Binding Documents}"
-                                              ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                    <controls:TreeListView x:Name="DocumentTree"
+                                                           ShowSeparator="False"
+                                                           ItemsSource="{Binding Documents}"
+                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -142,15 +147,33 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="5">
+                    <Image Source="{StaticResource FontSize}"
+                           Height="16"
+                           Width="16" />
+                    <Slider Width="100"
+                            ToolTip="Font Size"
+                            Margin="5 0 0 0"
+                            Minimum="{Binding MinimumEditorFontSize, Mode=OneTime}"
+                            Maximum="{Binding MaximumEditorFontSize, Mode=OneTime}"
+                            SmallChange="1"
+                            LargeChange="10"
+                            IsSnapToTickEnabled="True"
+                            TickFrequency="1"
+                            Value="{Binding EditorFontSize}" />
+                    <TextBlock Text="{Binding EditorFontSize}"
+                               Margin="5 0 0 0" />
+                    
                     <Button Width="16"
                             Height="16"
+                            Margin="10 0 0 0"
                             BorderThickness="0"
                             Background="Transparent"
                             Cursor="Hand"
                             Content="{StaticResource Update}"
                             ToolTip="Update Available"
-                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityHiddenConverter}}"
                             Click="ViewUpdateClick" />
+                    
                     <Menu Background="Transparent"
                           Margin="10,0,0,0">
                         <MenuItem Padding="0"

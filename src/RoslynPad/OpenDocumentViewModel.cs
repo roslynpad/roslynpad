@@ -31,6 +31,7 @@ namespace RoslynPad
         private bool _isDirty;
         private Platform _platform;
         private bool _isSaving;
+        private IDisposable _viewDisposable;
 
         public ObservableCollection<ResultObjectViewModel> Results
         {
@@ -198,8 +199,9 @@ namespace RoslynPad
             }
         }
 
-        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, IDisposable viewDisposable)
         {
+            _viewDisposable = viewDisposable;
             var roslynHost = MainViewModel.RoslynHost;
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated, onTextUpdated);
@@ -327,6 +329,7 @@ namespace RoslynPad
 
         public void Close()
         {
+            _viewDisposable?.Dispose();
             _executionHost?.Dispose();
             _executionHost = null;
         }

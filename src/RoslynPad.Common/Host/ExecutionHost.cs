@@ -55,6 +55,7 @@ namespace RoslynPad.Host
 
                     Console.SetOut(CreateConsoleWriter());
                     Console.SetError(CreateConsoleWriter());
+                    Debug.Listeners.Clear();
                     Debug.Listeners.Add(new ConsoleTraceListener());
                     Debug.AutoFlush = true;
 

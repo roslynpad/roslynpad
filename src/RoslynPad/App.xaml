@@ -107,6 +107,23 @@
                 </Setter>
             </Style>
 
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke"
+                             Color="#FF818181" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Fill"
+                             Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Stroke"
+                             Color="#FF27C7F7" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Fill"
+                             Color="#FFCCEEFB" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Stroke"
+                             Color="#FF262626" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Fill"
+                             Color="#FF595959" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Stroke"
+                             Color="#FF1CC4F7" />
+            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Fill"
+                             Color="#FF82DFFB" />
+
             <Style TargetType="{x:Type controls:TreeListViewItem}">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -127,8 +144,8 @@
                                 </DockPanel>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <Trigger Property="Level"
-                                         Value="0">
+                                <Trigger Property="ShowSeparator"
+                                         Value="True">
                                     <Setter TargetName="OuterBd"
                                             Property="Margin"
                                             Value="0,2,0,2" />
@@ -146,9 +163,7 @@
                                          Value="true">
                                     <Setter TargetName="Bd"
                                             Property="Background"
-                                            Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-                                    <Setter Property="Foreground"
-                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                                            Value="{StaticResource TreeViewItem.TreeArrow.MouseOver.Fill}" />
                                 </Trigger>
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
@@ -160,8 +175,6 @@
                                     <Setter TargetName="Bd"
                                             Property="Background"
                                             Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
-                                    <Setter Property="Foreground"
-                                            Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
                                 </MultiTrigger>
                                 <Trigger Property="IsEnabled"
                                          Value="false">
@@ -192,24 +205,6 @@
                     </PathFigureCollection>
                 </PathGeometry.Figures>
             </PathGeometry>
-
-
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke"
-                             Color="#FF818181" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Fill"
-                             Color="#FFFFFFFF" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Stroke"
-                             Color="#FF27C7F7" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Fill"
-                             Color="#FFCCEEFB" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Stroke"
-                             Color="#FF262626" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Checked.Fill"
-                             Color="#FF595959" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Stroke"
-                             Color="#FF1CC4F7" />
-            <SolidColorBrush x:Key="TreeViewItem.TreeArrow.MouseOver.Checked.Fill"
-                             Color="#FF82DFFB" />
 
             <Style x:Key="TreeListViewToggleStyle"
                    TargetType="{x:Type ToggleButton}">

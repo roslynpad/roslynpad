@@ -166,4 +166,29 @@
                     </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+    
+    <DrawingImage x:Key="FontSize">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M8.667,9L10,5 11.333,9z M11,2L9,2 5,14 7,14 8,11 12,11 13,14 15,14z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M3.5,2L5,4 2,4z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M5,5L2,5 3.5,7z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M6,3.6665L3.5,0.333499999999999 1,3.6665 1,5.3335 3.5,8.6665 6,5.3335z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M16,13.8369L11.721,0.9999 8.279,0.9999 3.613,14.9999 7.721,14.9999 8.721,11.9999 11.279,11.9999 12.279,14.9999 16,14.9999z" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M8.667,9L10,5 11.333,9z M11,2L9,2 5,14 7,14 8,11 12,11 13,14 15,14z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M5,5L2,5 3.5,7z M3.5,2L5,4 2,4z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

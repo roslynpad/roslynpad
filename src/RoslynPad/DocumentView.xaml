@@ -19,6 +19,11 @@
     </FrameworkElement.InputBindings>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel LastChildFill="False" />
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
             <StatusBarItem>
                 <TextBlock DataContext="{Binding ElementName=Editor, Path=TextArea.Caret.Position}">
                     Ln <Run Text="{Binding Line}" /> 
@@ -221,7 +226,8 @@
                     <ItemsControl.ItemContainerStyle>
                         <Style TargetType="controls:TreeListViewItem"
                                BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-                            <EventSetter Event="Loaded" Handler="OnTreeViewItemLoaded" />
+                            <EventSetter Event="Loaded"
+                                         Handler="OnTreeViewItemLoaded" />
                         </Style>
                     </ItemsControl.ItemContainerStyle>
                 </controls:TreeListView>

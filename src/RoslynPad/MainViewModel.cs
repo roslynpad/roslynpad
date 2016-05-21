@@ -28,6 +28,7 @@ namespace RoslynPad
         private OpenDocumentViewModel _currentOpenDocument;
         private Exception _lastError;
         private bool _hasUpdate;
+        private double _editorFontSize;
 
         public DocumentViewModel DocumentRoot { get; }
         public NuGetConfiguration NuGetConfiguration { get; }
@@ -58,6 +59,8 @@ namespace RoslynPad
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
             ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
+
+            _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
@@ -287,6 +290,27 @@ namespace RoslynPad
         public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 
         public DelegateCommand ReportProblemCommand { get; private set; }
+
+        public double MinimumEditorFontSize => 8;
+        public double MaximumEditorFontSize => 72;
+
+        public double EditorFontSize
+        {
+            get { return _editorFontSize; }
+            set
+            {
+                if (value < MinimumEditorFontSize || value > MaximumEditorFontSize) return;
+
+                if (SetProperty(ref _editorFontSize, value))
+                {
+                    Properties.Settings.Default.EditorFontSize = value;
+                    Properties.Settings.Default.Save();
+                    EditorFontSizeChanged?.Invoke(value);
+                }
+            }
+        }
+
+        public event Action<double> EditorFontSizeChanged;
 
         public DocumentViewModel AddDocument(string documentName)
         {
