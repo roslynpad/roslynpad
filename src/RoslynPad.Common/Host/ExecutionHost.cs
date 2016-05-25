@@ -27,6 +27,8 @@ namespace RoslynPad.Host
         private const int MaxAttemptsToCreateProcess = 2;
 
         private static Dispatcher _serverDispatcher;
+        private static DelegatingTextWriter _outWriter;
+        private static DelegatingTextWriter _errorWriter;
 
         private readonly string _initialWorkingDirectory;
         private readonly IEnumerable<string> _references;
@@ -53,8 +55,10 @@ namespace RoslynPad.Host
                     serviceHost.AddServiceEndpoint(typeof(IService), CreateBinding(), GetAddress(serverPort));
                     serviceHost.Open();
 
-                    Console.SetOut(CreateConsoleWriter());
-                    Console.SetError(CreateConsoleWriter());
+                    _outWriter = CreateConsoleWriter();
+                    Console.SetOut(_outWriter);
+                    _errorWriter = CreateConsoleWriter();
+                    Console.SetError(_errorWriter);
                     Debug.Listeners.Clear();
                     Debug.Listeners.Add(new ConsoleTraceListener());
                     Debug.AutoFlush = true;
@@ -111,7 +115,7 @@ namespace RoslynPad.Host
             };
         }
 
-        private static TextWriter CreateConsoleWriter()
+        private static DelegatingTextWriter CreateConsoleWriter()
         {
             return new DelegatingTextWriter(line => line.Dump());
         }
@@ -458,6 +462,9 @@ namespace RoslynPad.Host
                 }
                 finally
                 {
+                    _outWriter.Flush();
+                    _errorWriter.Flush();
+
                     processCancelSource.Cancel();
                     await processTask.ConfigureAwait(false);
                 }

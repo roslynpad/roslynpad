@@ -113,7 +113,6 @@ namespace RoslynPad
         {
             base.OnClosed(e);
 
-            Application.Current.Shutdown();
             Environment.Exit(0);
         }
 

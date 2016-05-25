@@ -19,17 +19,30 @@ namespace RoslynPad.Utilities
             CoreNewLine = new[] { '\n' };
         }
 
+        public override void Flush()
+        {
+            if (_builder.Length > 0)
+            {
+                FlushInternal();
+            }
+        }
+
         public override void Write(char value)
         {
             if (value == '\n')
             {
-                _onLineWritten(_builder.ToString());
-                _builder.Clear();
+                FlushInternal();
             }
             else
             {
                 _builder.Append(value);
             }
+        }
+
+        private void FlushInternal()
+        {
+            _onLineWritten(_builder.ToString());
+            _builder.Clear();
         }
     }
 }

@@ -239,7 +239,7 @@ namespace RoslynPad
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
-            //_telemetryClient.Flush();
+            _telemetryClient.Flush();
         }
 
         private void TrackException(Exception exception, bool flushSync = false)
