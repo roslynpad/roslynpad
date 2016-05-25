@@ -72,6 +72,7 @@
                     <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
                               ItemsSource="{Binding NuGet.Packages}"
                               Header="{Binding NuGet, Mode=OneTime}"
+                              ToolTip="Packages"
                               IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
                             <DataTemplate DataType="{x:Type roslynPad:NuGetDocumentViewModel}">
@@ -132,13 +133,36 @@
                         </ItemsControl.Resources>
                     </MenuItem>
                 </Menu>
-                <TextBox Name="SearchTerm"
-                         IsEnabled="{Binding NuGet.IsEnabled}"
-                         BorderBrush="#eee"
-                         Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                         Width="200" />
+                <Grid>
+                    <TextBox Name="SearchTerm"
+                             IsEnabled="{Binding NuGet.IsEnabled}"
+                             BorderBrush="#eee"
+                             Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource {x:Static ToolBar.TextBoxStyleKey}}"
+                             Width="200" />
+                    <TextBlock IsHitTestVisible="False"
+                               Text="Search NuGet"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"
+                               Foreground="DarkGray">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SearchTerm}"
+                                                 Value="">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
                 <Decorator VerticalAlignment="Center">
                     <CheckBox IsChecked="{Binding NuGet.ExactMatch}"
+                              ToolTip="Match exact package name"
                               Content="Exact" />
                 </Decorator>
             </ToolBar>
