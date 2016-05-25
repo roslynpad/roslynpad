@@ -83,16 +83,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="DocumentViewModel.cs" />
+    <Compile Include="Formatting\BooleanToVisibilityConverter.cs" />
     <Compile Include="OpenDocumentViewModel.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
     <Compile Include="ReportProblemDialog.xaml.cs">
       <DependentUpon>ReportProblemDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ResultObjectViewModel.cs" />
     <Compile Include="SaveDocumentDialog.xaml.cs">
       <DependentUpon>SaveDocumentDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\TreeListView.cs" />
     <Page Include="DocumentView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -149,7 +150,9 @@
     <Resource Include="Resources\Samples.zip" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\RoslynPad.ico" />

@@ -68,7 +68,7 @@ namespace RoslynPad
             set
             {
                 SetProperty(ref _documentName, value);
-                SaveButton.IsEnabled = !string.IsNullOrWhiteSpace(DocumentName);
+                SaveButton.IsEnabled = !AllowNameEdit || !string.IsNullOrWhiteSpace(DocumentName);
             }
         }
 

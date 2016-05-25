@@ -12,10 +12,11 @@ using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.RoslynEditor;
+using RoslynPad.Runtime;
 
 namespace RoslynPad
 {
-    public partial class DocumentView
+    public partial class DocumentView : IDisposable
     {
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly TextMarkerService _textMarkerService;
@@ -38,10 +39,31 @@ namespace RoslynPad
                 AllowScrollBelowDocument = true,
                 IndentationSize = 4
             };
+            Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
+            Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
 
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
+        }
+
+        private void CaretOnPositionChanged(object sender, EventArgs eventArgs)
+        {
+            Ln.Text = Editor.TextArea.Caret.Line.ToString();
+            Col.Text = Editor.TextArea.Caret.Column.ToString();
+        }
+
+        private void EditorOnPreviewMouseWheel(object sender, MouseWheelEventArgs args)
+        {
+            if (_viewModel == null)
+            {
+                return;
+            }
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                _viewModel.MainViewModel.EditorFontSize += args.Delta > 0 ? 1 : -1;
+                args.Handled = true;
+            }
         }
 
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
@@ -50,13 +72,16 @@ namespace RoslynPad
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
             _roslynHost = _viewModel.MainViewModel.RoslynHost;
 
+            _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
+            Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
+
             var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
 
             await _viewModel.Initialize(
                 avalonEditTextContainer,
                 a => _syncContext.Post(o => ProcessDiagnostics(a), null),
-                text => avalonEditTextContainer.UpdateText(text)
-                ).ConfigureAwait(true);
+                text => avalonEditTextContainer.UpdateText(text),
+                this).ConfigureAwait(true);
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             Editor.AppendText(documentText);
@@ -69,6 +94,11 @@ namespace RoslynPad
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
+        }
+
+        private void OnEditorFontSizeChanged(double fontSize)
+        {
+            Editor.FontSize = fontSize;
         }
 
         private void NuGetOnPackageInstalled(NuGetInstallResult installResult)
@@ -131,6 +161,34 @@ namespace RoslynPad
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
             Editor.Focus();
+        }
+        
+        public void Dispose()
+        {
+            if (_viewModel?.MainViewModel != null)
+            {
+                _viewModel.MainViewModel.EditorFontSizeChanged -= OnEditorFontSizeChanged;
+            }
+        }
+
+        private void OnTreeViewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                CopyToClipboard(sender);
+            }
+        }
+
+        private void CopyClick(object sender, RoutedEventArgs e)
+        {
+            CopyToClipboard(sender);
+        }
+
+        private static void CopyToClipboard(object sender)
+        {
+            var element = (FrameworkElement) sender;
+            var result = (ResultObject) element.DataContext;
+            Clipboard.SetText(result.ToString());
         }
     }
 }

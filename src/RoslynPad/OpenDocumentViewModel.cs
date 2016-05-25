@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
@@ -22,17 +22,16 @@ namespace RoslynPad
         private readonly Dispatcher _dispatcher;
 
         private ExecutionHost _executionHost;
-        private ObservableCollection<ResultObjectViewModel> _results;
+        private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
-        private int _runToken;
         private Action<object> _executionHostOnDumped;
-        private readonly object _resultsLock;
         private bool _isDirty;
         private Platform _platform;
         private bool _isSaving;
+        private IDisposable _viewDisposable;
 
-        public ObservableCollection<ResultObjectViewModel> Results
+        public ObservableCollection<ResultObject> Results
         {
             get { return _results; }
             private set { SetProperty(ref _results, value); }
@@ -58,12 +57,7 @@ namespace RoslynPad
             Platform = Platform.X86;
             _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetProvider, mainViewModel.ChildProcessManager);
-            _executionHost.ExecutionCompleted += OnExecutionCompleted;
-
-            _resultsLock = new object();
-            Results = new ObservableCollection<ResultObjectViewModel>();
-            BindingOperations.EnableCollectionSynchronization(Results, _resultsLock);
+                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, mainViewModel.ChildProcessManager);
 
             SaveCommand = new DelegateCommand(() => Save(promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);
@@ -96,14 +90,6 @@ namespace RoslynPad
                         RestartHostCommand.Execute();
                     }
                 }
-            }
-        }
-
-        private void OnExecutionCompleted(int token)
-        {
-            if (token == _runToken)
-            {
-                SetIsRunning(false);
             }
         }
 
@@ -172,6 +158,7 @@ namespace RoslynPad
                     var dialog = new SaveDocumentDialog
                     {
                         ShowDontSave = true,
+                        DocumentName = Document.Name
                     };
                     dialog.Show();
                     result = dialog.Result;
@@ -192,18 +179,23 @@ namespace RoslynPad
 
         private async Task SaveDocument(string path)
         {
+            if (DocumentId == null) return;
+
             var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
             using (var writer = new StreamWriter(path, append: false))
             {
-                foreach (var line in text.Lines)
+                for (int lineIndex = 0; lineIndex < text.Lines.Count - 1; ++lineIndex)
                 {
-                    await writer.WriteLineAsync(line.ToString()).ConfigureAwait(false);
+                    var lineText = text.Lines[lineIndex].ToString();
+                    await writer.WriteLineAsync(lineText).ConfigureAwait(false);
                 }
+                await writer.WriteAsync(text.Lines[text.Lines.Count - 1].ToString()).ConfigureAwait(false);
             }
         }
 
-        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, IDisposable viewDisposable)
         {
+            _viewDisposable = viewDisposable;
             var roslynHost = MainViewModel.RoslynHost;
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated, onTextUpdated);
@@ -238,15 +230,15 @@ namespace RoslynPad
 
         private async Task Run()
         {
+            if (IsRunning) return;
+
             Reset();
 
             await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(false);
 
             SetIsRunning(true);
 
-            var token = Interlocked.Increment(ref _runToken);
-
-            var results = new ObservableCollection<ResultObjectViewModel>();
+            var results = new ObservableCollection<ResultObject>();
             Results = results;
 
             var cancellationToken = _cts.Token;
@@ -258,22 +250,27 @@ namespace RoslynPad
             _executionHost.Dumped += _executionHostOnDumped;
             try
             {
-                var code = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken).ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code.ToString(), token).ConfigureAwait(true);
+                var code =
+                    await
+                        MainViewModel.RoslynHost.GetDocument(DocumentId)
+                            .GetTextAsync(cancellationToken)
+                            .ConfigureAwait(true);
+                await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
-                lock (_resultsLock)
+                foreach (var diagnostic in ex.Diagnostics)
                 {
-                    foreach (var diagnostic in ex.Diagnostics)
-                    {
-                        results.Add(new ResultObjectViewModel(ResultObject.Create(diagnostic)));
-                    }
+                    results.Add(ResultObject.Create(diagnostic));
                 }
             }
             catch (Exception ex)
             {
                 AddResult(ex, results, cancellationToken);
+            }
+            finally
+            {
+                SetIsRunning(false);
             }
         }
 
@@ -287,13 +284,21 @@ namespace RoslynPad
             _cts = new CancellationTokenSource();
         }
 
-        private void AddResult(object o, ObservableCollection<ResultObjectViewModel> results, CancellationToken cancellationToken)
+        private void AddResult(object o, ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
         {
             _dispatcher.InvokeAsync(() =>
             {
-                lock (_resultsLock)
+                var list = o as IList<ResultObject>;
+                if (list != null)
                 {
-                    results.Add(new ResultObjectViewModel(o as ResultObject ?? ResultObject.Create(o)));
+                    foreach (var resultObject in list)
+                    {
+                        results.Add(resultObject);
+                    }
+                }
+                else
+                {
+                    results.Add(ResultObject.Create(o));
                 }
             }, DispatcherPriority.SystemIdle, cancellationToken);
         }
@@ -312,6 +317,7 @@ namespace RoslynPad
 
         public void Close()
         {
+            _viewDisposable?.Dispose();
             _executionHost?.Dispose();
             _executionHost = null;
         }

@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ICSharpCode.AvalonEdit.CodeCompletion;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
+using RoslynPad.Roslyn.Snippets;
 
 namespace RoslynPad.RoslynEditor
 {
@@ -14,11 +15,13 @@ namespace RoslynPad.RoslynEditor
     {
         private readonly DocumentId _documentId;
         private readonly RoslynHost _roslynHost;
+        private readonly SnippetInfoService _snippetService;
 
         public RoslynCodeEditorCompletionProvider(DocumentId documentId, RoslynHost roslynHost)
         {
             _documentId = documentId;
             _roslynHost = roslynHost;
+            _snippetService = (SnippetInfoService)_roslynHost.GetService<ISnippetInfoService>();
         }
 
         public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
@@ -63,8 +66,8 @@ namespace RoslynPad.RoslynEditor
                         ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
                         : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo()
                     ).ConfigureAwait(false);
-                completionData = data?.Items.Select(item => new RoslynCompletionData(item)).ToArray<ICompletionDataEx>()
-                    ?? (IList<ICompletionDataEx>)new List<ICompletionDataEx>();
+                completionData = data?.Items.Select(item => new RoslynCompletionData(item, _snippetService.SnippetManager)).ToArray<ICompletionDataEx>()
+                    ?? Array.Empty<ICompletionDataEx>();
             }
 
             return new CompletionResult(completionData, overloadProvider);

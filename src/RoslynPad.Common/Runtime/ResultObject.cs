@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace RoslynPad.Runtime
 {
-    internal sealed class ResultObject : MarshalByRefObject
+    [DataContract(IsReference = true)]
+    internal sealed class ResultObject : INotifyPropertyChanged
     {
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
@@ -17,28 +19,16 @@ namespace RoslynPad.Runtime
         private readonly int _depth;
         private readonly PropertyDescriptor _property;
 
-        public static ResultObject Create(object o)
+        public static ResultObject Create(object o, string header = null)
         {
-            return new ResultObject(o, 0);
+            return new ResultObject(o, 0, header);
         }
 
-        private ResultObject(object o, int depth, PropertyDescriptor property = null)
+        private ResultObject(object o, int depth, string header = null, PropertyDescriptor property = null)
         {
             _depth = depth;
             _property = property;
-            Initialize(o);
-        }
-
-        private ResultObject(string header, IEnumerable<ResultObject> children, int depth)
-        {
-            _depth = depth;
-            Header = header;
-            Children = children;
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            return null;
+            Initialize(o, header);
         }
 
         public override string ToString()
@@ -55,6 +45,11 @@ namespace RoslynPad.Runtime
                 builder.Append("  ");
             }
             builder.Append(Header);
+            if (Header != null && Value != null)
+            {
+                builder.Append(" = ");
+            }
+            builder.Append(Value);
             builder.AppendLine();
             if (Children != null)
             {
@@ -65,15 +60,23 @@ namespace RoslynPad.Runtime
             }
         }
 
+        [DataMember]
         public string Header { get; private set; }
 
-        public IEnumerable<ResultObject> Children { get; private set; }
+        [DataMember]
+        public string Value { get; private set; }
 
-        private void Initialize(object o)
+        [DataMember]
+        public IList<ResultObject> Children { get; private set; }
+
+        public bool HasChildren => Children?.Count > 0;
+
+        private void Initialize(object o, string headerPrefix)
         {
             if (o == null)
             {
-                Header = "<null>";
+                Header = headerPrefix;
+                Value = "<null>";
                 return;
             }
 
@@ -89,14 +92,26 @@ namespace RoslynPad.Runtime
                 }
                 catch (TargetInvocationException exception)
                 {
-                    Header = $"{_property.Name} = Threw {exception.InnerException.GetType().Name}";
+                    Header = _property.Name;
+                    Value = $"Threw {exception.InnerException.GetType().Name}";
                     Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
                     return;
                 }
 
-                Header = _property.Name + " = " + GetString(value);
                 var propertyType = _property.PropertyType;
-                if (!isMaxDepth && !IsSimpleType(propertyType))
+                var isSimpleType = IsSimpleType(propertyType);
+                if (!isSimpleType)
+                {
+                    var enumerable = value as IEnumerable;
+                    if (enumerable != null)
+                    {
+                        InitializeEnumerable(_property.Name, enumerable, targetDepth);
+                        return;
+                    }
+                }
+                Header = _property.Name;
+                Value = GetString(value);
+                if (!isMaxDepth && !isSimpleType)
                 {
                     Children = new[] { new ResultObject(value, targetDepth) };
                 }
@@ -106,42 +121,71 @@ namespace RoslynPad.Runtime
             var s = o as string;
             if (s != null)
             {
-                Header = s;
+                Header = headerPrefix;
+                Value = s;
                 return;
             }
+
+            string header;
+            string valueString;
 
             if (isMaxDepth)
             {
-                Header = GetHeaderValue(o);
+                GetHeaderValue(o, out header, out valueString);
+                Header = header ?? headerPrefix;
+                Value = valueString;
                 return;
             }
-
-            var propertyDescriptors = TypeDescriptor.GetProperties(o);
-            var children = propertyDescriptors.Cast<PropertyDescriptor>()
-                .Select(p => new ResultObject(o, targetDepth, p));
 
             var e = o as IEnumerable;
             if (e != null)
             {
-                var enumerableChildren = e.Cast<object>().Take(MaxEnumerableLength).Select(x => new ResultObject(x, targetDepth)).ToArray();
-                var header = $"<enumerable count={enumerableChildren.Length}>";
-                if (propertyDescriptors.Count == 0)
-                {
-                    Children = enumerableChildren;
-                    Header = header;
-                    return;
-                }
-                children = children.Concat(new[] { new ResultObject(header, enumerableChildren, targetDepth) });
+                InitializeEnumerable(headerPrefix, e, targetDepth);
+                return;
             }
 
-            Header = GetHeaderValue(o);
+            GetHeaderValue(o, out header, out valueString);
+            Header = header ?? headerPrefix;
+            Value = valueString;
+
+            var propertyDescriptors = TypeDescriptor.GetProperties(o);
+            var children = propertyDescriptors.Cast<PropertyDescriptor>()
+                .Select(p => new ResultObject(o, targetDepth, property: p));
             Children = children.ToArray();
         }
 
-        private static string GetHeaderValue(object o)
+        private void InitializeEnumerable(string headerPrefix, IEnumerable e, int targetDepth)
+        {
+            Header = headerPrefix;
+            var items = new List<ResultObject>();
+            var enumerator = e.GetEnumerator();
+            var index = 0;
+            while (index++ < MaxEnumerableLength && enumerator.MoveNext())
+            {
+                items.Add(new ResultObject(enumerator.Current, targetDepth));
+            }
+            var hasMore = enumerator.MoveNext() ? "+" : "";
+            var groupingInterface = e.GetType().GetInterfaces()
+                    .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
+            Value = groupingInterface != null
+                ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetProperty("Key").GetValue(e)}>"
+                : $"<enumerable Count: {items.Count}{hasMore}>";
+            Children = items;
+        }
+
+        private static void GetHeaderValue(object o, out string header, out string value)
         {
             var ex = o as Exception;
-            return ex != null ? ex.GetType().FullName + ": " + ex.Message : GetString(o);
+            if (ex != null)
+            {
+                header = ex.GetType().FullName;
+                value = ex.Message;
+            }
+            else
+            {
+                header = null;
+                value = GetString(o);
+            }
         }
 
         private static string GetString(object o)
@@ -158,6 +202,13 @@ namespace RoslynPad.Runtime
                 propertyType == typeof(string) ||
                 propertyType == typeof(Guid) ||
                 IsSimpleType(Nullable.GetUnderlyingType(propertyType)));
+        }
+
+        // avoids WPF PropertyDescriptor binding leaks
+        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+        {
+            add { }
+            remove { }
         }
     }
 }

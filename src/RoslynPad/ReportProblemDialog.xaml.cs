@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using Avalon.Windows.Controls;
 
@@ -58,6 +60,11 @@ namespace RoslynPad
         private void FeedbackText_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             Submit.IsEnabled = !string.IsNullOrWhiteSpace(((TextBox)sender).Text);
+        }
+
+        private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
+        {
+            Task.Run(() => Process.Start("https://github.com/aelij/RoslynPad/issues"));
         }
     }
 }

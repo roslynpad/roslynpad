@@ -53,7 +53,7 @@ namespace RoslynPad.Roslyn
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
             }).ToImmutableArray();
 
-        private readonly INuGetProvider _nuGetProvider;
+        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly CSharpParseOptions _parseOptions;
@@ -72,9 +72,9 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
-        public RoslynHost(INuGetProvider nuGetProvider = null)
+        public RoslynHost(NuGetConfiguration nuGetConfiguration = null, IEnumerable<Assembly> additionalAssemblies = null)
         {
-            _nuGetProvider = nuGetProvider;
+            _nuGetConfiguration = nuGetConfiguration;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
@@ -87,16 +87,23 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
                 typeof(RoslynHost).Assembly,
             };
+            if (additionalAssemblies != null)
+            {
+                assemblies = assemblies.Concat(additionalAssemblies).ToArray();
+            }
+
+            var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
+            var editorFeaturesTypes = SafeGetAssemblyTypes(editorFeaturesAssembly);
 
             // we can't import this entire assembly due to composition errors
             // and we don't need all the VS services
-            var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
-            var types = editorFeaturesAssembly.GetTypes().Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes")
-                .Concat(new[] { typeof(DocumentationProviderServiceFactory) });
+            var editorFeaturesParts = editorFeaturesTypes
+                .Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes")
+                .Concat(new[] {typeof(DocumentationProviderServiceFactory)});
 
             _compositionContext = new ContainerConfiguration()
                 .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
-                .WithParts(types)
+                .WithParts(editorFeaturesParts)
                 .WithDefaultConventions(new AttributeFilterProvider())
                 .CreateContainer();
 
@@ -119,15 +126,32 @@ namespace RoslynPad.Roslyn
                 OnOpenedDocumentSemanticChanged;
 
             // MEF v1
+            var csharpEditorFeatures = Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures");
+
             var container = new CompositionContainer(new AggregateCatalog(
-                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures")),
-                new AssemblyCatalog(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures")),
+                new TypeCatalog(editorFeaturesTypes),
+                new TypeCatalog(SafeGetAssemblyTypes(csharpEditorFeatures)),
                 new AssemblyCatalog(typeof(RoslynHost).Assembly)),
                 CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
 
             ((AggregateSignatureHelpProvider)GetService<ISignatureHelpProvider>()).Initialize(container);
 
             CompletionService.Initialize(container);
+        }
+
+        private static IReadOnlyList<Type> SafeGetAssemblyTypes(Assembly assembly)
+        {
+            IReadOnlyList<Type> types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                // this can happen if VS is not installed
+                types = ex.Types;
+            }
+            return types;
         }
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
@@ -171,7 +195,7 @@ namespace RoslynPad.Roslyn
         #endregion
 
         #region Reference Resolution
-        
+
         internal void AddMetadataReference(ProjectId projectId, AssemblyIdentity assemblyIdentity)
         {
             // TODO
@@ -240,6 +264,8 @@ namespace RoslynPad.Roslyn
             RoslynWorkspace workspace;
             if (_workspaces.TryGetValue(documentId, out workspace))
             {
+                workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
+                    .Unregister(workspace);
                 workspace.Dispose();
                 _workspaces.TryRemove(documentId, out workspace);
             }
@@ -257,7 +283,7 @@ namespace RoslynPad.Roslyn
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
-            var workspace = new RoslynWorkspace(_host, _nuGetProvider, this);
+            var workspace = new RoslynWorkspace(_host, _nuGetConfiguration, this);
             if (onTextUpdated != null)
             {
                 workspace.ApplyingTextChange += (d, s) => onTextUpdated(s);

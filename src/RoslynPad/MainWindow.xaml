@@ -6,6 +6,7 @@
         xmlns:roslynPad="clr-namespace:RoslynPad"
         xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
+        xmlns:controls="clr-namespace:RoslynPad.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
@@ -16,19 +17,21 @@
         Name="This">
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
-                    Command="{Binding NewDocumentCommand}" />
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+W"
-                    Command="{Binding CloseCurrentDocumentCommand}" />
+                    Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
         <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
-                                  ItemsSource="{Binding Children}">
+                                  ItemsSource="{Binding Children, Mode=OneTime}">
             <DockPanel Margin="0 0 0 3">
+                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+
                 <Image Name="Icon"
                        Source="{StaticResource CsFile}"
                        Height="12"
                        Margin="0 0 3 0" />
-                <TextBlock Text="{Binding Name}" />
+                <TextBlock Text="{Binding Name, Mode=OneTime}" />
             </DockPanel>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
@@ -45,9 +48,8 @@
         </DataTemplate>
 
         <Style x:Key="DocumentItemContainerStyle"
-               TargetType="TreeViewItem">
-            <Setter Property="IsExpanded"
-                    Value="{Binding IsExpanded}" />
+               TargetType="controls:TreeListViewItem"
+               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
             <EventSetter Event="MouseDoubleClick"
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"
@@ -56,7 +58,7 @@
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
-    <av:InlineModalDecorator Target="{Binding ElementName=This}">
+    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
@@ -72,7 +74,7 @@
                     <Button Background="Transparent"
                             Content=""
                             FontFamily="Segoe UI Symbol"
-                            Command="{Binding ClearErrorCommand}"
+                            Command="{Binding ClearErrorCommand, Mode=OneTime}"
                             Margin="3" />
                     <TextBlock VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"
@@ -80,7 +82,8 @@
                 </DockPanel>
             </Border>
             <Grid>
-                <dock:DockingManager DocumentsSource="{Binding OpenDocuments}"
+                <dock:DockingManager Name="DockingManager"
+                                     DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
                                      DocumentClosing="DockingManager_OnDocumentClosing">
                     <dock:DockingManager.DocumentHeaderTemplate>
@@ -107,15 +110,19 @@
                     </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
                     <dock:LayoutRoot>
                         <dock:LayoutPanel Orientation="Horizontal">
-                            <dock:LayoutAnchorablePane DockWidth="200">
+                            <dock:LayoutAnchorablePane Name="Documents"
+                                                       DockWidth="200">
                                 <dock:LayoutAnchorable x:Name="DocumentsPane"
+                                                       CanHide="False"
                                                        CanClose="False"
                                                        CanFloat="False"
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                    <TreeView ItemsSource="{Binding Documents}"
-                                              ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                    <controls:TreeListView x:Name="DocumentTree"
+                                                           ShowSeparator="False"
+                                                           ItemsSource="{Binding Documents, Mode=OneTime}"
+                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -140,15 +147,33 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="5">
+                    <Image Source="{StaticResource FontSize}"
+                           Height="16"
+                           Width="16" />
+                    <Slider Width="100"
+                            ToolTip="Font Size"
+                            Margin="5 0 0 0"
+                            Minimum="{Binding MinimumEditorFontSize, Mode=OneTime}"
+                            Maximum="{Binding MaximumEditorFontSize, Mode=OneTime}"
+                            SmallChange="1"
+                            LargeChange="10"
+                            IsSnapToTickEnabled="True"
+                            TickFrequency="1"
+                            Value="{Binding EditorFontSize}" />
+                    <TextBlock Text="{Binding EditorFontSize}"
+                               Margin="5 0 0 0" />
+                    
                     <Button Width="16"
                             Height="16"
+                            Margin="10 0 0 0"
                             BorderThickness="0"
                             Background="Transparent"
                             Cursor="Hand"
                             Content="{StaticResource Update}"
                             ToolTip="Update Available"
-                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityHiddenConverter}}"
                             Click="ViewUpdateClick" />
+                    
                     <Menu Background="Transparent"
                           Margin="10,0,0,0">
                         <MenuItem Padding="0"

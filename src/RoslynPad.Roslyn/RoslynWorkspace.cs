@@ -18,17 +18,17 @@ namespace RoslynPad.Roslyn
 {
     public sealed class RoslynWorkspace : Workspace
     {
-        private readonly INuGetProvider _nuGetProvider;
+        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
         private int _referenceDirectivesLock;
 
         public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
 
-        internal RoslynWorkspace(HostServices host, INuGetProvider nuGetProvider, RoslynHost roslynHost)
+        internal RoslynWorkspace(HostServices host, NuGetConfiguration nuGetConfiguration, RoslynHost roslynHost)
             : base(host, WorkspaceKind.Host)
         {
-            _nuGetProvider = nuGetProvider;
+            _nuGetConfiguration = nuGetConfiguration;
             _referencesDirectives = new ConcurrentDictionary<string, DirectiveInfo>();
 
             RoslynHost = roslynHost;
@@ -62,6 +62,13 @@ namespace RoslynPad.Roslyn
         }
 
         public event Action<DocumentId, SourceText> ApplyingTextChange;
+
+        protected override void Dispose(bool finalize)
+        {
+            base.Dispose(finalize);
+
+            ApplyingTextChange = null;
+        }
 
         protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
         {
@@ -126,11 +133,8 @@ namespace RoslynPad.Roslyn
                 {
                     if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
                     {
-                        if (!referenceDirective.Value.IsActive)
-                        {
-                            referenceDirective.Value.IsActive = false;
-                            changed = true;
-                        }
+                        referenceDirective.Value.IsActive = false;
+                        changed = true;
                     }
                 }
 
@@ -174,9 +178,9 @@ namespace RoslynPad.Roslyn
 
         private MetadataReference ResolveReference(string name)
         {
-            if (_nuGetProvider != null)
+            if (_nuGetConfiguration != null)
             {
-                name = _nuGetProvider.ResolveReference(name);
+                name = _nuGetConfiguration.ResolveReference(name);
             }
             if (File.Exists(name))
             {

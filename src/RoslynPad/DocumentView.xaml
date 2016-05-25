@@ -6,25 +6,28 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:roslynPad="clr-namespace:RoslynPad"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             xmlns:controls="clr-namespace:RoslynPad.Controls"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance roslynPad:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
         <KeyBinding Key="F5"
-                    Command="{Binding RunCommand}" />
+                    Command="{Binding RunCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Shift+F5"
-                    Command="{Binding RestartHostCommand}" />
+                    Command="{Binding RestartHostCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+S"
-                    Command="{Binding SaveCommand}" />
+                    Command="{Binding SaveCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
-    <FrameworkElement.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </FrameworkElement.Resources>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel LastChildFill="False" />
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
             <StatusBarItem>
-                <TextBlock DataContext="{Binding ElementName=Editor, Path=TextArea.Caret.Position}">
-                    Ln <Run Text="{Binding Line}" /> 
-                    Col <Run Text="{Binding Column}" />
+                <TextBlock>
+                    Ln <Run Name="Ln" /> 
+                    Col <Run Name="Col" />
                 </TextBlock>
             </StatusBarItem>
         </StatusBar>
@@ -39,7 +42,7 @@
                      Background="Transparent"
                      BorderBrush="DarkGray"
                      BorderThickness="0 0 0 1">
-                <Button Command="{Binding RunCommand}"
+                <Button Command="{Binding RunCommand, Mode=OneTime}"
                         ToolTip="Run (F5)">
                     <Grid>
                         <Image Source="{StaticResource Run}" />
@@ -50,7 +53,7 @@
                                      Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </Grid>
                 </Button>
-                <Button Command="{Binding RestartHostCommand}"
+                <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
                         ToolTip="Restart host process (Shift-F5)"
                         Content="{StaticResource Restart}" />
                 <ComboBox SelectedItem="{Binding Platform}">
@@ -58,7 +61,7 @@
                     <codeAnalysis:Platform>X64</codeAnalysis:Platform>
                 </ComboBox>
                 <Separator />
-                <Button Command="{Binding SaveCommand}"
+                <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl-S)"
                         Content="{StaticResource Save}" />
                 <Separator />
@@ -68,7 +71,8 @@
                       IsEnabled="{Binding NuGet.IsEnabled}">
                     <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
                               ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet}"
+                              Header="{Binding NuGet, Mode=OneTime}"
+                              ToolTip="Packages"
                               IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
                             <DataTemplate DataType="{x:Type roslynPad:NuGetDocumentViewModel}">
@@ -87,11 +91,11 @@
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Command"
-                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
+                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
                                 <Setter Property="CommandParameter"
-                                        Value="{Binding}" />
+                                        Value="{Binding Mode=OneTime}" />
                                 <Setter Property="Icon"
-                                        Value="{Binding}" />
+                                        Value="{Binding Mode=OneTime}" />
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
@@ -106,7 +110,7 @@
                             <DataTemplate DataType="{x:Type roslynPad:PackageData}">
                                 <Menu Background="Transparent"
                                       ToolTip="Other versions">
-                                    <MenuItem ItemsSource="{Binding OtherVersions}"
+                                    <MenuItem ItemsSource="{Binding OtherVersions, Mode=OneTime}"
                                               DisplayMemberPath="Version"
                                               Padding="2">
                                         <MenuItem.Header>
@@ -118,9 +122,9 @@
                                         <ItemsControl.ItemContainerStyle>
                                             <Style TargetType="MenuItem">
                                                 <Setter Property="Command"
-                                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand}" />
+                                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
                                                 <Setter Property="CommandParameter"
-                                                        Value="{Binding}" />
+                                                        Value="{Binding Mode=OneTime}" />
                                             </Style>
                                         </ItemsControl.ItemContainerStyle>
                                     </MenuItem>
@@ -129,13 +133,36 @@
                         </ItemsControl.Resources>
                     </MenuItem>
                 </Menu>
-                <TextBox Name="SearchTerm"
-                         IsEnabled="{Binding NuGet.IsEnabled}"
-                         BorderBrush="#eee"
-                         Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                         Width="200" />
+                <Grid>
+                    <TextBox Name="SearchTerm"
+                             IsEnabled="{Binding NuGet.IsEnabled}"
+                             BorderBrush="#eee"
+                             Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource {x:Static ToolBar.TextBoxStyleKey}}"
+                             Width="200" />
+                    <TextBlock IsHitTestVisible="False"
+                               Text="Search NuGet"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"
+                               Foreground="DarkGray">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SearchTerm}"
+                                                 Value="">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
                 <Decorator VerticalAlignment="Center">
                     <CheckBox IsChecked="{Binding NuGet.ExactMatch}"
+                              ToolTip="Match exact package name"
                               Content="Exact" />
                 </Decorator>
             </ToolBar>
@@ -154,30 +181,81 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch" />
 
-            <TreeView ItemsSource="{Binding Results}"
-                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      Grid.Column="0"
-                      Grid.Row="3">
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <DockPanel>
-                            <Button Padding="0"
-                                    Margin="0 0 5 0"
-                                    VerticalAlignment="Top"
-                                    KeyboardNavigation.IsTabStop="False"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    Command="{Binding CopyCommand}">
-                                <Image Source="{StaticResource Copy}"
-                                       Height="12" />
-                            </Button>
-                            <TextBlock Text="{Binding Header}" />
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
+            <DockPanel Grid.Column="0"
+                       Grid.Row="3"
+                       Grid.IsSharedSizeScope="True">
+                <Grid DockPanel.Dock="Top">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"
+                                          SharedSizeGroup="ResultNameGroup" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="300"
+                                          SharedSizeGroup="ResultValueGroup" />
+                        <ColumnDefinition Width="1" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Name"
+                               HorizontalAlignment="Center"
+                               Grid.Column="0" />
+                    <GridSplitter Grid.Column="1"
+                                  ResizeBehavior="PreviousAndNext"
+                                  ResizeDirection="Columns"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  Background="DarkGray" />
+                    <TextBlock Text="Value"
+                               HorizontalAlignment="Center"
+                               Grid.Column="2" />
+                    <GridSplitter Grid.Column="3"
+                                  ResizeBehavior="PreviousAndCurrent"
+                                  ResizeDirection="Columns"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  Background="DarkGray" />
+                </Grid>
+                <controls:TreeListView ItemsSource="{Binding Results}"
+                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                       VirtualizingPanel.IsVirtualizing="True"
+                                       VirtualizingPanel.VirtualizationMode="Recycling"
+                                       BorderBrush="#cccccc">
+                    <ItemsControl.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"
+                                                      SharedSizeGroup="ResultNameGroup" />
+                                    <ColumnDefinition Width="2" />
+                                    <ColumnDefinition Width="*"
+                                                      SharedSizeGroup="ResultValueGroup" />
+                                </Grid.ColumnDefinitions>
+                                <DockPanel Grid.Column="0">
+                                    <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+                                    <Button Padding="0"
+                                            Margin="2 0 5 0"
+                                            VerticalAlignment="Top"
+                                            KeyboardNavigation.IsTabStop="False"
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            Click="CopyClick">
+                                        <Image Source="{StaticResource Copy}"
+                                               Height="12" />
+                                    </Button>
+                                    <TextBlock Text="{Binding Header, Mode=OneTime}" />
+                                </DockPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding Value, Mode=OneTime}"
+                                           Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                            </Grid>
+                        </HierarchicalDataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="controls:TreeListViewItem"
+                               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+                            <EventSetter Event="KeyDown"
+                                         Handler="OnTreeViewKeyDown" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </controls:TreeListView>
+            </DockPanel>
         </Grid>
     </DockPanel>
 </UserControl>

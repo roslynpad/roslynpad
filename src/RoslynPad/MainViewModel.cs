@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -17,7 +18,7 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private static readonly Version _currentVersion = new Version(0, 7);
+        private static readonly Version _currentVersion = new Version(0, 8);
 
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
@@ -27,22 +28,39 @@ namespace RoslynPad
         private OpenDocumentViewModel _currentOpenDocument;
         private Exception _lastError;
         private bool _hasUpdate;
+        private double _editorFontSize;
 
         public DocumentViewModel DocumentRoot { get; }
-        public INuGetProvider NuGetProvider { get; }
+        public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
         {
+            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
+            _telemetryClient.Context.Component.Version = _currentVersion.ToString();
+#if DEBUG
+            _telemetryClient.Context.Properties["DEBUG"] = "1";
+#endif
+            if (SendTelemetry)
+            {
+                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
+            }
+
+            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
+            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
+            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
+
             NuGet = new NuGetViewModel();
-            NuGetProvider = new NuGetProviderImpl(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetProvider);
+            NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
+            RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
             ChildProcessManager = new ChildProcessManager();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
             ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
+
+            _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
             Documents = DocumentRoot.Children;
@@ -56,19 +74,6 @@ namespace RoslynPad
             {
                 CurrentOpenDocument = OpenDocuments[0];
             }
-
-            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
-#if DEBUG
-            _telemetryClient.Context.Properties["DEBUG"] = "1";
-#endif
-            if (SendTelemetry)
-            {
-                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
-            }
-
-            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
-            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
-            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
 
             if (HasCachedUpdate())
             {
@@ -242,16 +247,16 @@ namespace RoslynPad
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
             if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
             {
+                var typeLoadException = exception as ReflectionTypeLoadException;
+                if (typeLoadException != null)
+                {
+                    exception = new AggregateException(exception.Message, typeLoadException.LoaderExceptions);
+                }
                 _telemetryClient.TrackException(exception);
                 if (flushSync)
                 {
                     _telemetryClient.Flush();
                 }
-                // TODO: check why this freezes the UI
-                //else
-                //{
-                //    Task.Run(() => _telemetryClient.Value.Flush());
-                //}
             }
         }
 
@@ -286,6 +291,27 @@ namespace RoslynPad
 
         public DelegateCommand ReportProblemCommand { get; private set; }
 
+        public double MinimumEditorFontSize => 8;
+        public double MaximumEditorFontSize => 72;
+
+        public double EditorFontSize
+        {
+            get { return _editorFontSize; }
+            set
+            {
+                if (value < MinimumEditorFontSize || value > MaximumEditorFontSize) return;
+
+                if (SetProperty(ref _editorFontSize, value))
+                {
+                    Properties.Settings.Default.EditorFontSize = value;
+                    Properties.Settings.Default.Save();
+                    EditorFontSizeChanged?.Invoke(value);
+                }
+            }
+        }
+
+        public event Action<double> EditorFontSizeChanged;
+
         public DocumentViewModel AddDocument(string documentName)
         {
             return DocumentRoot.CreateNew(documentName);
@@ -302,19 +328,6 @@ namespace RoslynPad
                 });
                 _telemetryClient.Flush();
             });
-        }
-
-        [Serializable]
-        private class NuGetProviderImpl : INuGetProvider
-        {
-            public NuGetProviderImpl(string pathToRepository, string pathVariableName)
-            {
-                PathToRepository = pathToRepository;
-                PathVariableName = pathVariableName;
-            }
-
-            public string PathToRepository { get; }
-            public string PathVariableName { get; }
         }
     }
 
