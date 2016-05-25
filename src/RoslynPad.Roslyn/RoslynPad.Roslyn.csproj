@@ -117,6 +117,8 @@
     <Compile Include="SignatureHelp\SignatureHelpProviderExtensions.cs" />
     <Compile Include="SignatureHelp\SignatureHelpTriggerInfo.cs" />
     <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
+    <Compile Include="Snippets\SnippetInfo.cs" />
+    <Compile Include="Snippets\SnippetInfoService.cs" />
     <Compile Include="SymbolDisplayPartExtensions.cs" />
     <Compile Include="WorkspaceServices\AddMetadataReferenceCodeActionOperationFactoryWorkspaceService.cs" />
   </ItemGroup>

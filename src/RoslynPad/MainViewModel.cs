@@ -52,7 +52,7 @@ namespace RoslynPad
 
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetConfiguration);
+            RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
             ChildProcessManager = new ChildProcessManager();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
@@ -239,7 +239,7 @@ namespace RoslynPad
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
-            _telemetryClient.Flush();
+            //_telemetryClient.Flush();
         }
 
         private void TrackException(Exception exception, bool flushSync = false)

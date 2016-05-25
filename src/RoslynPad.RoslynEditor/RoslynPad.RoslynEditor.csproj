@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AvalonEditTextContainer.cs" />
     <Compile Include="ClassificationHighlightColors.cs" />
+    <Compile Include="CodeSnippet.cs" />
     <Compile Include="RoslynHighlightingColorizer.cs" />
     <Compile Include="RoslynSemanticHighlighter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -59,6 +60,8 @@
     <Compile Include="RoslynCompletionData.cs" />
     <Compile Include="RoslynContextActionProvider.cs" />
     <Compile Include="RoslynOverloadProvider.cs" />
+    <Compile Include="SnippetInfoService.cs" />
+    <Compile Include="SnippetManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
