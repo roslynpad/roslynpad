@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -8,7 +9,7 @@ using RoslynPad.Roslyn.Completion;
 
 namespace RoslynPad.RoslynEditor
 {
-    internal sealed class RoslynCompletionData : ICompletionDataEx
+    internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyChanged
     {
         private readonly CompletionItem _item;
         private object _description;
@@ -55,5 +56,12 @@ namespace RoslynPad.RoslynEditor
         public bool IsSelected => _item.Preselect;
 
         public string SortText => _item.SortText;
+
+        // avoids WPF PropertyDescriptor binding leaks
+        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+        {
+            add { }
+            remove { }
+        }
     }
 }

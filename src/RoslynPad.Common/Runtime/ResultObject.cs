@@ -10,7 +10,7 @@ using System.Runtime.Serialization;
 namespace RoslynPad.Runtime
 {
     [DataContract(IsReference = true)]
-    internal sealed class ResultObject
+    internal sealed class ResultObject : INotifyPropertyChanged
     {
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
@@ -202,6 +202,13 @@ namespace RoslynPad.Runtime
                 propertyType == typeof(string) ||
                 propertyType == typeof(Guid) ||
                 IsSimpleType(Nullable.GetUnderlyingType(propertyType)));
+        }
+
+        // avoids WPF PropertyDescriptor binding leaks
+        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+        {
+            add { }
+            remove { }
         }
     }
 }

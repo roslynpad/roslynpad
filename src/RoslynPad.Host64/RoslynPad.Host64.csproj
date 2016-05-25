@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad.Host</RootNamespace>
     <AssemblyName>RoslynPad.Host64</AssemblyName>
@@ -42,6 +42,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>..\RoslynPad\Resources\RoslynPad.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

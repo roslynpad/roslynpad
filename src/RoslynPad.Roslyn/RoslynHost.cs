@@ -240,6 +240,8 @@ namespace RoslynPad.Roslyn
             RoslynWorkspace workspace;
             if (_workspaces.TryGetValue(documentId, out workspace))
             {
+                workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
+                    .Unregister(workspace);
                 workspace.Dispose();
                 _workspaces.TryRemove(documentId, out workspace);
             }

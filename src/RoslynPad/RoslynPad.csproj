@@ -90,7 +90,6 @@
     <Compile Include="ReportProblemDialog.xaml.cs">
       <DependentUpon>ReportProblemDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ResultObjectViewModel.cs" />
     <Compile Include="SaveDocumentDialog.xaml.cs">
       <DependentUpon>SaveDocumentDialog.xaml</DependentUpon>
     </Compile>

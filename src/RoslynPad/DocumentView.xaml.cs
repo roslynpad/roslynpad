@@ -12,6 +12,7 @@ using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.RoslynEditor;
+using RoslynPad.Runtime;
 
 namespace RoslynPad
 {
@@ -39,10 +40,17 @@ namespace RoslynPad
                 IndentationSize = 4
             };
             Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
+            Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
 
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
+        }
+
+        private void CaretOnPositionChanged(object sender, EventArgs eventArgs)
+        {
+            Ln.Text = Editor.TextArea.Caret.Line.ToString();
+            Col.Text = Editor.TextArea.Caret.Column.ToString();
         }
 
         private void EditorOnPreviewMouseWheel(object sender, MouseWheelEventArgs args)
@@ -154,20 +162,33 @@ namespace RoslynPad
         {
             Editor.Focus();
         }
-
-        private void OnTreeViewItemLoaded(object sender, RoutedEventArgs e)
-        {
-            var element = (FrameworkElement)sender;
-            element.InputBindings.Clear();
-            element.InputBindings.Add(new KeyBinding(((ResultObjectViewModel)element.DataContext).CopyCommand, Key.C, ModifierKeys.Control));
-        }
-
+        
         public void Dispose()
         {
             if (_viewModel?.MainViewModel != null)
             {
                 _viewModel.MainViewModel.EditorFontSizeChanged -= OnEditorFontSizeChanged;
             }
+        }
+
+        private void OnTreeViewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                CopyToClipboard(sender);
+            }
+        }
+
+        private void CopyClick(object sender, RoutedEventArgs e)
+        {
+            CopyToClipboard(sender);
+        }
+
+        private static void CopyToClipboard(object sender)
+        {
+            var element = (FrameworkElement) sender;
+            var result = (ResultObject) element.DataContext;
+            Clipboard.SetText(result.ToString());
         }
     }
 }

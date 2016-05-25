@@ -99,7 +99,7 @@ namespace RoslynPad
             set { SetProperty(ref _isExpanded, value); }
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
         public bool IsAutoSave { get; }
 

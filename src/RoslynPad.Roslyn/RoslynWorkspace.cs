@@ -63,6 +63,13 @@ namespace RoslynPad.Roslyn
 
         public event Action<DocumentId, SourceText> ApplyingTextChange;
 
+        protected override void Dispose(bool finalize)
+        {
+            base.Dispose(finalize);
+
+            ApplyingTextChange = null;
+        }
+
         protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
         {
             if (OpenDocumentId != document)

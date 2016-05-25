@@ -17,13 +17,13 @@
         Name="This">
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
-                    Command="{Binding NewDocumentCommand}" />
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+W"
-                    Command="{Binding CloseCurrentDocumentCommand}" />
+                    Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
         <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
-                                  ItemsSource="{Binding Children}">
+                                  ItemsSource="{Binding Children, Mode=OneTime}">
             <DockPanel Margin="0 0 0 3">
                 <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
 
@@ -31,7 +31,7 @@
                        Source="{StaticResource CsFile}"
                        Height="12"
                        Margin="0 0 3 0" />
-                <TextBlock Text="{Binding Name}" />
+                <TextBlock Text="{Binding Name, Mode=OneTime}" />
             </DockPanel>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
@@ -58,7 +58,7 @@
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
-    <av:InlineModalDecorator Target="{Binding ElementName=This}">
+    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
@@ -74,7 +74,7 @@
                     <Button Background="Transparent"
                             Content=""
                             FontFamily="Segoe UI Symbol"
-                            Command="{Binding ClearErrorCommand}"
+                            Command="{Binding ClearErrorCommand, Mode=OneTime}"
                             Margin="3" />
                     <TextBlock VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"
@@ -83,7 +83,7 @@
             </Border>
             <Grid>
                 <dock:DockingManager Name="DockingManager"
-                                     DocumentsSource="{Binding OpenDocuments}"
+                                     DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
                                      DocumentClosing="DockingManager_OnDocumentClosing">
                     <dock:DockingManager.DocumentHeaderTemplate>
@@ -121,7 +121,7 @@
                                                        Title="Documents">
                                     <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
-                                                           ItemsSource="{Binding Documents}"
+                                                           ItemsSource="{Binding Documents, Mode=OneTime}"
                                                            ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>

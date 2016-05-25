@@ -55,33 +55,39 @@ namespace RoslynPad.Editor
             _providers.CollectionChanged += providers_CollectionChanged;
 
             editor.TextArea.TextView.ScrollOffsetChanged += ScrollChanged;
-            _delayMoveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(DelayMoveMilliseconds) };
+            _delayMoveTimer = new DispatcherTimer {Interval = TimeSpan.FromMilliseconds(DelayMoveMilliseconds)};
             _delayMoveTimer.Stop();
             _delayMoveTimer.Tick += TimerMoveTick;
 
             if (editor.IsLoaded)
             {
-                HookupWindowMove();
+                HookupWindowMove(enable: true);
             }
-            else
-            {
-                editor.Loaded += OnEditorLoaded;
-            }
+
+            editor.Loaded += OnEditorLoaded;
+            editor.Unloaded += OnEditorUnloaded;
         }
 
         private void OnEditorLoaded(object sender, RoutedEventArgs e)
         {
-            _editor.Loaded -= OnEditorLoaded;
-
-            HookupWindowMove();
+            HookupWindowMove(enable: true);
         }
 
-        private void HookupWindowMove()
+        private void OnEditorUnloaded(object sender, RoutedEventArgs e)
+        {
+            HookupWindowMove(enable: false);
+        }
+
+        private void HookupWindowMove(bool enable)
         {
             var window = Window.GetWindow(_editor);
             if (window != null)
             {
-                window.LocationChanged += WindowOnLocationChanged;
+                window.LocationChanged -= WindowOnLocationChanged;
+                if (enable)
+                {
+                    window.LocationChanged += WindowOnLocationChanged;
+                }
             }
         }
 

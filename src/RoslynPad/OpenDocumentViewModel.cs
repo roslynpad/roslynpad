@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
@@ -21,10 +20,9 @@ namespace RoslynPad
     {
         private readonly string _workingDirectory;
         private readonly Dispatcher _dispatcher;
-        private readonly object _resultsLock;
 
         private ExecutionHost _executionHost;
-        private ObservableCollection<ResultObjectViewModel> _results;
+        private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
         private Action<object> _executionHostOnDumped;
@@ -33,7 +31,7 @@ namespace RoslynPad
         private bool _isSaving;
         private IDisposable _viewDisposable;
 
-        public ObservableCollection<ResultObjectViewModel> Results
+        public ObservableCollection<ResultObject> Results
         {
             get { return _results; }
             private set { SetProperty(ref _results, value); }
@@ -60,10 +58,6 @@ namespace RoslynPad
             _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
                 roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, mainViewModel.ChildProcessManager);
-
-            _resultsLock = new object();
-            Results = new ObservableCollection<ResultObjectViewModel>();
-            BindingOperations.EnableCollectionSynchronization(Results, _resultsLock);
 
             SaveCommand = new DelegateCommand(() => Save(promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);
@@ -244,7 +238,7 @@ namespace RoslynPad
 
             SetIsRunning(true);
 
-            var results = new ObservableCollection<ResultObjectViewModel>();
+            var results = new ObservableCollection<ResultObject>();
             Results = results;
 
             var cancellationToken = _cts.Token;
@@ -265,12 +259,9 @@ namespace RoslynPad
             }
             catch (CompilationErrorException ex)
             {
-                lock (_resultsLock)
+                foreach (var diagnostic in ex.Diagnostics)
                 {
-                    foreach (var diagnostic in ex.Diagnostics)
-                    {
-                        results.Add(new ResultObjectViewModel(ResultObject.Create(diagnostic)));
-                    }
+                    results.Add(ResultObject.Create(diagnostic));
                 }
             }
             catch (Exception ex)
@@ -293,24 +284,21 @@ namespace RoslynPad
             _cts = new CancellationTokenSource();
         }
 
-        private void AddResult(object o, ObservableCollection<ResultObjectViewModel> results, CancellationToken cancellationToken)
+        private void AddResult(object o, ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
         {
             _dispatcher.InvokeAsync(() =>
             {
-                lock (_resultsLock)
+                var list = o as IList<ResultObject>;
+                if (list != null)
                 {
-                    var list = o as IList<ResultObject>;
-                    if (list != null)
+                    foreach (var resultObject in list)
                     {
-                        foreach (var resultObject in list)
-                        {
-                            results.Add(new ResultObjectViewModel(resultObject));
-                        }
+                        results.Add(resultObject);
                     }
-                    else
-                    {
-                        results.Add(new ResultObjectViewModel(ResultObject.Create(o)));
-                    }
+                }
+                else
+                {
+                    results.Add(ResultObject.Create(o));
                 }
             }, DispatcherPriority.SystemIdle, cancellationToken);
         }

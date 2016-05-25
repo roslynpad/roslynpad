@@ -20,28 +20,28 @@
                                                      FalseValue="Hidden" />
 
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
-                                      ItemsSource="{Binding Fixes}">
-                <TextBlock Text="{Binding Provider}" />
+                                      ItemsSource="{Binding Fixes, Mode=OneTime}">
+                <TextBlock Text="{Binding Provider, Mode=OneTime}" />
             </HierarchicalDataTemplate>
 
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFix}"
-                                      ItemsSource="{Binding Action, Converter={formatting:CodeActionsConverter}}">
-                <ContentPresenter Content="{Binding Action}" />
+                                      ItemsSource="{Binding Action, Mode=OneTime, Converter={formatting:CodeActionsConverter}}">
+                <ContentPresenter Content="{Binding Action, Mode=OneTime}" />
             </HierarchicalDataTemplate>
 
             <DataTemplate DataType="{x:Type codeActions:CodeAction}">
                 <DockPanel>
-                    <Image Source="{Binding Converter={formatting:CodeActionToGlyphConverter}}" />
-                    <TextBlock Text="{Binding Title}" />
+                    <Image Source="{Binding Mode=OneTime, Converter={formatting:CodeActionToGlyphConverter}}" />
+                    <TextBlock Text="{Binding Title, Mode=OneTime}" />
                 </DockPanel>
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
-                <TextBlock Text="{Binding Descriptor.Title}" />
+                <TextBlock Text="{Binding Descriptor.Title, Mode=OneTime}" />
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type ImageSource}">
-                <Image Source="{Binding}" />
+                <Image Source="{Binding Mode=OneTime}" />
             </DataTemplate>
 
             <Style TargetType="cc:InsightWindow">
@@ -209,7 +209,7 @@
             <Style x:Key="TreeListViewToggleStyle"
                    TargetType="{x:Type ToggleButton}">
                 <Setter Property="Margin"
-                        Value="{Binding Path=Level, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                        Value="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                 <Setter Property="IsChecked"
                         Value="{Binding Path=IsExpanded, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                 <Setter Property="Visibility"
