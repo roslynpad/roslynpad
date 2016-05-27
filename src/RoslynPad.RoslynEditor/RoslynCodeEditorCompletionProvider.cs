@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
-using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Roslyn.Snippets;
 
@@ -53,24 +53,31 @@ namespace RoslynPad.RoslynEditor
                 }
                 else
                 {
-                    isCompletion = await CompletionService.IsCompletionTriggerCharacterAsync(document, position - 1).ConfigureAwait(false);
+                    var text = await document.GetTextAsync().ConfigureAwait(false);
+                    isCompletion = CompletionService.GetService(document)
+                        .ShouldTriggerCompletion(text, position, GetCompletionTrigger(triggerChar));
                 }
             }
 
             if (overloadProvider == null && isCompletion != false)
             {
-                var data = await CompletionService.GetCompletionListAsync(
+                var data = await CompletionService.GetService(document).GetCompletionsAsync(
                     document,
                     position,
-                    triggerChar != null
-                        ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
-                        : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo()
+                    GetCompletionTrigger(triggerChar)
                     ).ConfigureAwait(false);
-                completionData = data?.Items.Select(item => new RoslynCompletionData(item, _snippetService.SnippetManager)).ToArray<ICompletionDataEx>()
+                completionData = data?.Items.Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager)).ToArray<ICompletionDataEx>()
                     ?? Array.Empty<ICompletionDataEx>();
             }
 
             return new CompletionResult(completionData, overloadProvider);
+        }
+
+        private static CompletionTrigger GetCompletionTrigger(char? triggerChar)
+        {
+            return triggerChar != null
+                ? CompletionTrigger.CreateInsertionTrigger(triggerChar.Value)
+                : CompletionTrigger.Default;
         }
     }
 }

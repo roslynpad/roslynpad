@@ -1,25 +1,27 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.ComponentModel.Composition.Hosting;
 using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace RoslynPad.Roslyn.SignatureHelp
 {
     [Export(typeof(ISignatureHelpProvider)), Shared]
     internal sealed class AggregateSignatureHelpProvider : ISignatureHelpProvider
     {
-        private ImmutableArray<ISignatureHelpProvider> _providers;
+        private ImmutableArray<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider> _providers;
 
-        internal void Initialize(CompositionContainer container)
+        [ImportingConstructor]
+        public AggregateSignatureHelpProvider([ImportMany] IEnumerable<Lazy<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider, OrderableLanguageMetadata>> providers)
         {
-            _providers = container.GetExportedValues<Microsoft.CodeAnalysis.Editor.ISignatureHelpProvider>()
-                .Select(x => (ISignatureHelpProvider)new SignatureHelperProvider(x))
-                .ToImmutableArray();
+            _providers = providers.Where(x => x.Metadata.Language == LanguageNames.CSharp)
+                .Select(x => x.Value).ToImmutableArray();
         }
-
+     
         public bool IsTriggerCharacter(char ch)
         {
             return _providers.Any(p => p.IsTriggerCharacter(ch));
@@ -34,11 +36,11 @@ namespace RoslynPad.Roslyn.SignatureHelp
         {
             foreach (var provider in _providers)
             {
-                var items = await provider.GetItemsAsync(document, position, trigger, CancellationToken.None)
+                var items = await provider.GetItemsAsync(document, position, trigger.Inner, CancellationToken.None)
                     .ConfigureAwait(false);
                 if (items != null)
                 {
-                    return items;
+                    return new SignatureHelpItems(items);
                 }
             }
             return null;

@@ -5,6 +5,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
@@ -13,31 +15,46 @@ namespace RoslynPad.RoslynEditor
 {
     internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyChanged
     {
+        private readonly Document _document;
         private readonly CompletionItem _item;
+        private readonly char? _completionChar;
         private readonly SnippetManager _snippetManager;
+        private readonly Glyph? _glyph;
         private object _description;
 
-        public RoslynCompletionData(CompletionItem item, SnippetManager snippetManager)
+        public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
         {
+            _document = document;
             _item = item;
+            _completionChar = completionChar;
             _snippetManager = snippetManager;
             Text = item.DisplayText;
             Content = item.DisplayText;
-            if (item.Glyph != null)
+            _glyph = item.GetGlyph();
+            if (_glyph != null)
             {
-                Image = item.Glyph.Value.ToImageSource();
+                Image = _glyph.Value.ToImageSource();
             }
         }
 
-        public void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
+        public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
         {
-            if (_item.Glyph == Glyph.Snippet && CompleteSnippet(textArea, completionSegment, e))
+            if (_glyph == Glyph.Snippet && CompleteSnippet(textArea, completionSegment, e))
             {
                 return;
             }
-            var change = _item.Rules.GetTextChange(_item);
-            var text = change?.NewText ?? _item.DisplayText; // workaround for keywords
-            textArea.Document.Replace(completionSegment, text);
+
+            var changes = await CompletionService.GetService(_document)
+                .GetChangeAsync(_document, _item, _completionChar).ConfigureAwait(false);
+            if (!changes.TextChanges.IsDefaultOrEmpty)
+            {
+                textArea.Document.Replace(completionSegment, changes.TextChanges[0].NewText);
+            }
+
+            if (changes.NewPosition != null)
+            {
+                textArea.Caret.Offset = changes.NewPosition.Value;
+            }
         }
 
         private bool CompleteSnippet(TextArea textArea, ISegment completionSegment, EventArgs e)
@@ -81,7 +98,7 @@ namespace RoslynPad.RoslynEditor
             {
                 if (_description == null)
                 {
-                    _description = _item.GetDescriptionAsync().Result.ToTextBlock();
+                    _description = _item.GetDescription().TaggedParts.ToTextBlock();
                 }
                 return _description;
             }
@@ -90,7 +107,7 @@ namespace RoslynPad.RoslynEditor
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public double Priority { get; private set; }
 
-        public bool IsSelected => _item.Preselect;
+        public bool IsSelected => _item.Rules.Preselect;
 
         public string SortText => _item.SortText;
 

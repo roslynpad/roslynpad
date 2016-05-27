@@ -23,7 +23,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         public Func<CancellationToken, IEnumerable<SymbolDisplayPart>> DocumentationFactory { get; }
 
-        internal SignatureHelpItem(Microsoft.CodeAnalysis.Editor.SignatureHelpItem inner)
+        internal SignatureHelpItem(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItem inner)
         {
             IsVariadic = inner.IsVariadic;
             PrefixDisplayParts = inner.PrefixDisplayParts;

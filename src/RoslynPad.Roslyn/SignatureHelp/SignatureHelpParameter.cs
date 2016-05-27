@@ -21,7 +21,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         public IList<SymbolDisplayPart> SelectedDisplayParts { get; }
 
-        internal SignatureHelpParameter(Microsoft.CodeAnalysis.Editor.SignatureHelpParameter inner)
+        internal SignatureHelpParameter(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpParameter inner)
         {
             Name = inner.Name;
             DocumentationFactory = inner.DocumentationFactory;

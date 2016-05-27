@@ -1,5 +1,4 @@
 using RoslynPad.Roslyn.Diagnostics;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.CodeFixes
 {
