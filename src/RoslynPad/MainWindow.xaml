@@ -11,7 +11,7 @@
         d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
-        Title="RoslynPad"
+        Title="{Binding WindowTitle, Mode=OneTime}"
         Height="600"
         Width="800"
         Name="This">
