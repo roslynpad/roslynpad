@@ -27,7 +27,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options)
         {
-            return PathCompletionUtilities.IsTriggerCharacter(text, caretPosition);
+            return PathCompletionUtilities.IsTriggerCharacter(text, caretPosition - 1);
         }
 
         private static TextSpan GetTextChangeSpan(SyntaxToken stringLiteral, int position)
