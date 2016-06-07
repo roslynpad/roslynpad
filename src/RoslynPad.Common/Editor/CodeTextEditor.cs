@@ -23,6 +23,13 @@ namespace RoslynPad.Editor
 
         public CodeTextEditor()
         {
+            Options = new TextEditorOptions
+            {
+                ConvertTabsToSpaces = true,
+                AllowScrollBelowDocument = true,
+                IndentationSize = 4,
+                EnableEmailHyperlinks = false,
+            };
             MouseHover += OnMouseHover;
             MouseHoverStopped += OnMouseHoverStopped;
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
