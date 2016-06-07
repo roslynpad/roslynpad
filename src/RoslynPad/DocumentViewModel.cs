@@ -29,6 +29,22 @@ namespace RoslynPad
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
 
+        public string GetSavePath()
+        {
+            return IsAutoSave
+                // ReSharper disable once AssignNullToNotNullAttribute
+                ? System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), Name + DefaultFileExtension)
+                : Path;
+        }
+
+        public string GetAutoSavePath()
+        {
+            return IsAutoSave ?
+                Path
+                // ReSharper disable once AssignNullToNotNullAttribute
+                : System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), GetAutoSaveName(Name));
+        }
+
         public static string GetAutoSaveName(string name)
         {
             return name + AutoSaveSuffix + DefaultFileExtension;
