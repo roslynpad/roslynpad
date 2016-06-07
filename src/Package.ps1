@@ -9,6 +9,12 @@ try
 	$archive = [System.IO.Compression.ZipFile]::Open($archiveFile, [System.IO.Compression.ZipArchiveMode]::Create)
 	$exclude =
 	@(
+		"Microsoft.AI.Agent.Intercept.dll",
+		"Microsoft.AI.DependencyCollector.dll",
+		"Microsoft.AI.PerfCounterCollector.dll",
+		"Microsoft.AI.WindowsServer.dll",
+		"Microsoft.CodeAnalysis.CSharp.EditorFeatures.dll",
+		"Microsoft.CodeAnalysis.VisualBasic.EditorFeatures.dll",
 		"Xceed.Wpf.AvalonDock.Themes.Aero.dll",
 		"Xceed.Wpf.AvalonDock.Themes.Metro.dll",
 		"Xceed.Wpf.AvalonDock.Themes.VS2010.dll",

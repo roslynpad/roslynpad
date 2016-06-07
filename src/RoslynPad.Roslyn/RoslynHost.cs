@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Composition;
 using System.Composition.Convention;
 using System.Composition.Hosting;
 using System.IO;
@@ -21,10 +20,7 @@ using Microsoft.CodeAnalysis.Notification;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Diagnostics;
-using RoslynPad.Runtime;
-using ExportAttribute = System.Composition.ExportAttribute;
-using ImportAttribute = System.Composition.ImportAttribute;
-using ImportingConstructorAttribute = System.Composition.ImportingConstructorAttribute;
+using ObjectExtensions = RoslynPad.Runtime.ObjectExtensions;
 
 namespace RoslynPad.Roslyn
 {
@@ -93,14 +89,10 @@ namespace RoslynPad.Roslyn
                 assemblies = assemblies.Concat(additionalAssemblies).ToArray();
             }
 
-            var editorFeaturesTypes = SafeGetAssemblyTypes(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures"));
-            var csharpEditorFeaturesTypes = SafeGetAssemblyTypes(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"));
-
             var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
                     .Distinct()
-                    .SelectMany(SafeGetAssemblyTypes)
-                    .Concat(editorFeaturesTypes.Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes"))
-                    //.Concat(csharpEditorFeaturesTypes)
+                    .SelectMany(x => x.GetTypes())
+                    .Concat(new[] { typeof(Microsoft.CodeAnalysis.CodeFixes.CodeFixService) })
                     .Concat(new[] { typeof(DocumentationProviderServiceFactory) })
                     .ToArray();
 
@@ -128,21 +120,6 @@ namespace RoslynPad.Roslyn
                 OnOpenedDocumentSemanticChanged;
         }
 
-        private static IReadOnlyList<Type> SafeGetAssemblyTypes(Assembly assembly)
-        {
-            IReadOnlyList<Type> types;
-            try
-            {
-                types = assembly.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                // this can happen if VS is not installed
-                types = ex.Types;
-            }
-            return types;
-        }
-
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
             if (diagnosticsUpdatedArgs?.DocumentId == null) return;
@@ -168,37 +145,6 @@ namespace RoslynPad.Roslyn
                 var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
                 //ReplaceMefV1Attributes(customAttributes);
                 return customAttributes;
-            }
-
-            private void ReplaceMefV1Attributes(Attribute[] customAttributes)
-            {
-                for (int i = 0; i < customAttributes.Length; i++)
-                {
-                    var customAttribute = customAttributes[i];
-                    var export = customAttribute as System.ComponentModel.Composition.ExportAttribute;
-                    if (export != null)
-                    {
-                        customAttributes[i] = new ExportAttribute(export.ContractName, export.ContractType);
-                        continue;
-                    }
-                    var import = customAttribute as System.ComponentModel.Composition.ImportAttribute;
-                    if (import != null)
-                    {
-                        customAttributes[i] = new ImportAttribute(import.ContractName);
-                        continue;
-                    }
-                    var importingConstructor = customAttribute as System.ComponentModel.Composition.ImportingConstructorAttribute;
-                    if (importingConstructor != null)
-                    {
-                        customAttributes[i] = new ImportingConstructorAttribute();
-                        continue;
-                    }
-                    var creationPolicy = customAttribute as System.ComponentModel.Composition.PartCreationPolicyAttribute;
-                    if (creationPolicy != null && creationPolicy.CreationPolicy == System.ComponentModel.Composition.CreationPolicy.Shared)
-                    {
-                        customAttributes[i] = new SharedAttribute();
-                    }
-                }
             }
         }
 

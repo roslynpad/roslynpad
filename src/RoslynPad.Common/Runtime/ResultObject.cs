@@ -156,21 +156,30 @@ namespace RoslynPad.Runtime
 
         private void InitializeEnumerable(string headerPrefix, IEnumerable e, int targetDepth)
         {
-            Header = headerPrefix;
-            var items = new List<ResultObject>();
-            var enumerator = e.GetEnumerator();
-            var index = 0;
-            while (index++ < MaxEnumerableLength && enumerator.MoveNext())
+            try
             {
-                items.Add(new ResultObject(enumerator.Current, targetDepth));
+                Header = headerPrefix;
+                var items = new List<ResultObject>();
+                var enumerator = e.GetEnumerator();
+                var index = 0;
+                while (index++ < MaxEnumerableLength && enumerator.MoveNext())
+                {
+                    items.Add(new ResultObject(enumerator.Current, targetDepth));
+                }
+                var hasMore = enumerator.MoveNext() ? "+" : "";
+                var groupingInterface = e.GetType().GetInterfaces()
+                        .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
+                Value = groupingInterface != null
+                    ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetProperty("Key").GetValue(e)}>"
+                    : $"<enumerable Count: {items.Count}{hasMore}>";
+                Children = items;
             }
-            var hasMore = enumerator.MoveNext() ? "+" : "";
-            var groupingInterface = e.GetType().GetInterfaces()
-                    .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
-            Value = groupingInterface != null
-                ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetProperty("Key").GetValue(e)}>"
-                : $"<enumerable Count: {items.Count}{hasMore}>";
-            Children = items;
+            catch (Exception exception)
+            {
+                Header = _property.Name;
+                Value = $"Threw {exception.GetType().Name}";
+                Children = new[] { new ResultObject(exception, targetDepth) };
+            }
         }
 
         private static void GetHeaderValue(object o, out string header, out string value)
