@@ -52,7 +52,7 @@ namespace RoslynPad.RoslynEditor
                 textArea.Document.Replace(
                     // we don't use the span.End because AvalonEdit filters the list on its own
                     // so Roslyn isn't aware of document changes since the completion window was opened
-                    new TextSegment { StartOffset = span.Start, EndOffset = textArea.Caret.Offset }, 
+                    new TextSegment { StartOffset = span.Start, EndOffset = textArea.Caret.Offset },
                     changes.TextChanges[0].NewText);
             }
 
@@ -103,7 +103,9 @@ namespace RoslynPad.RoslynEditor
             {
                 if (_description == null)
                 {
-                    _description = _item.GetDescription().TaggedParts.ToTextBlock();
+                    _description = CompletionService.GetService(_document)
+                        .GetDescriptionAsync(_document, _item)
+                        .Result.TaggedParts.ToTextBlock();
                 }
                 return _description;
             }
