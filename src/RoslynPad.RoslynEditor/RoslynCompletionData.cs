@@ -48,7 +48,12 @@ namespace RoslynPad.RoslynEditor
                 .GetChangeAsync(_document, _item, _completionChar).ConfigureAwait(false);
             if (!changes.TextChanges.IsDefaultOrEmpty)
             {
-                textArea.Document.Replace(completionSegment, changes.TextChanges[0].NewText);
+                var span = changes.TextChanges[0].Span;
+                textArea.Document.Replace(
+                    // we don't use the span.End because AvalonEdit filters the list on its own
+                    // so Roslyn isn't aware of document changes since the completion window was opened
+                    new TextSegment { StartOffset = span.Start, EndOffset = textArea.Caret.Offset }, 
+                    changes.TextChanges[0].NewText);
             }
 
             if (changes.NewPosition != null)

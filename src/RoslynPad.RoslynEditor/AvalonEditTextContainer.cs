@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis.Text;
@@ -20,7 +24,7 @@ namespace RoslynPad.RoslynEditor
         public AvalonEditTextContainer(TextEditor editor)
         {
             _editor = editor;
-            _currentText = SourceText.From(_editor.Text);
+            _currentText = new AvalonEditSourceText(this, _editor.Text);
 
             _editor.Document.Changed += DocumentOnChanged;
         }
@@ -68,6 +72,64 @@ namespace RoslynPad.RoslynEditor
             {
                 _updatding = false;
                 _editor.Document.EndUpdate();
+            }
+        }
+
+        private class AvalonEditSourceText : SourceText
+        {
+            private readonly AvalonEditTextContainer _container;
+            private readonly SourceText _sourceText;
+
+            public AvalonEditSourceText(AvalonEditTextContainer container, string text) : this(container, From(text))
+            {
+            }
+
+            private AvalonEditSourceText(AvalonEditTextContainer container, SourceText sourceText)
+            {
+                _container = container;
+                _sourceText = sourceText;
+            }
+
+            public override void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
+            {
+                _sourceText.CopyTo(sourceIndex, destination, destinationIndex, count);
+            }
+
+            public override Encoding Encoding => _sourceText.Encoding;
+
+            public override int Length => _sourceText.Length;
+
+            public override char this[int position] => _sourceText[position];
+
+            public override SourceText GetSubText(TextSpan span) => new AvalonEditSourceText(_container, _sourceText.GetSubText(span));
+
+            public override void Write(TextWriter writer, TextSpan span, CancellationToken cancellationToken = new CancellationToken())
+            {
+                _sourceText.Write(writer, span, cancellationToken);
+            }
+
+            public override string ToString() => _sourceText.ToString();
+
+            public override string ToString(TextSpan span) => _sourceText.ToString(span);
+            
+            public override IReadOnlyList<TextChangeRange> GetChangeRanges(SourceText oldText)
+                => _sourceText.GetChangeRanges(oldText);
+
+            public override IReadOnlyList<TextChange> GetTextChanges(SourceText oldText) => _sourceText.GetTextChanges(oldText);
+
+            protected override TextLineCollection GetLinesCore() => _sourceText.Lines;
+
+            protected override bool ContentEqualsImpl(SourceText other) => _sourceText.ContentEquals(other);
+
+            public override SourceTextContainer Container => _container ?? _sourceText.Container;
+
+            public override bool Equals(object obj) => _sourceText.Equals(obj);
+
+            public override int GetHashCode() => _sourceText.GetHashCode();
+
+            public override SourceText WithChanges(IEnumerable<TextChange> changes)
+            {
+                return new AvalonEditSourceText(_container, _sourceText.WithChanges(changes));
             }
         }
     }

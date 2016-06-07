@@ -61,6 +61,7 @@
     <Compile Include="CodeRefactorings\CodeRefactoring.cs" />
     <Compile Include="CodeRefactorings\CodeRefactoringService.cs" />
     <Compile Include="CodeRefactorings\ICodeRefactoringService.cs" />
+    <Compile Include="Completion\CompletionHelper.cs" />
     <Compile Include="Completion\DummyWaitIndicator.cs" />
     <Compile Include="Completion\Glyph.cs" />
     <Compile Include="Completion\CompletionItemExtensions.cs" />

@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
-    internal abstract class AbstractReferenceDirectiveCompletionProvider : CompletionProvider
+    internal abstract class AbstractReferenceDirectiveCompletionProvider : CommonCompletionProvider
     {
         private static readonly ImmutableArray<CharacterSetModificationRule> _commitRules =
             ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, '"', '\\', ','));
@@ -25,14 +25,17 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
-        public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options)
+        internal override bool IsInsertionTrigger(SourceText text, int characterPosition, OptionSet options)
         {
-            return PathCompletionUtilities.IsTriggerCharacter(text, caretPosition);
+            return PathCompletionUtilities.IsTriggerCharacter(text, characterPosition);
         }
 
         private static TextSpan GetTextChangeSpan(SyntaxToken stringLiteral, int position)
         {
-            return PathCompletionUtilities.GetTextChangeSpan(stringLiteral.ToString(), stringLiteral.SpanStart, position);
+            return PathCompletionUtilities.GetTextChangeSpan(
+                quotedPath: stringLiteral.ToString(),
+                quotedPathStart: stringLiteral.SpanStart,
+                position: position);
         }
 
         public override async Task ProvideCompletionsAsync(CompletionContext context)
@@ -95,7 +98,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         private static string GetPathThroughLastSlash(SyntaxToken stringLiteral, int position)
         {
-            return PathCompletionUtilities.GetPathThroughLastSlash(stringLiteral.ToString(), stringLiteral.SpanStart, position);
+            return PathCompletionUtilities.GetPathThroughLastSlash(
+                quotedPath: stringLiteral.ToString(),
+                quotedPathStart: stringLiteral.SpanStart,
+                position: position);
         }
 
         private class CurrentWorkingDirectoryDiscoveryService : ICurrentWorkingDirectoryDiscoveryService
