@@ -119,9 +119,7 @@ namespace RoslynPad
                 Document = DocumentViewModel.CreateAutoSave(MainViewModel, path);
             }
 
-            await SaveDocument(Document.IsAutoSave ? Document.Path
-                // ReSharper disable once AssignNullToNotNullAttribute
-                : Path.Combine(Path.GetDirectoryName(Document.Path), DocumentViewModel.GetAutoSaveName(Document.Name))).ConfigureAwait(false);
+            await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);
         }
 
         public async Task<SaveResult> Save(bool promptSave)
@@ -166,7 +164,7 @@ namespace RoslynPad
                 if (result == SaveResult.Save)
                 {
                     // ReSharper disable once PossibleNullReferenceException
-                    await SaveDocument(Document.Path).ConfigureAwait(true);
+                    await SaveDocument(Document.GetSavePath()).ConfigureAwait(true);
                     IsDirty = false;
                 }
                 return result;
