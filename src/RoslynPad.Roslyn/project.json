@@ -6,10 +6,10 @@
     "win": { }
   },
   "dependencies": {
-    "Microsoft.CodeAnalysis.CSharp": "1.2.0",
-    "Microsoft.CodeAnalysis.EditorFeatures": "1.2.0",
-    "Microsoft.CodeAnalysis.CSharp.Workspaces": "1.2.0",
-    "Microsoft.CodeAnalysis.CSharp.Scripting": "1.2.0",
-    "Microsoft.CodeAnalysis.CSharp.Features": "1.2.0"
+    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta1-20160523-02",
+    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta1-20160523-02",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta1-20160523-02",
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta1-20160523-02",
+    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-beta1-20160523-02"
   }
 }

@@ -12,21 +12,33 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
-    internal abstract class AbstractReferenceDirectiveCompletionProvider : CompletionListProvider
+    internal abstract class AbstractReferenceDirectiveCompletionProvider : CommonCompletionProvider
     {
+        private static readonly ImmutableArray<CharacterSetModificationRule> _commitRules =
+            ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, '"', '\\', ','));
+
+        private static readonly ImmutableArray<CharacterSetModificationRule> _filterRules = 
+            ImmutableArray<CharacterSetModificationRule>.Empty;
+
+        private static readonly CompletionItemRules _rules = CompletionItemRules.Create(
+            filterCharacterRules: _filterRules, commitCharacterRules: _commitRules, enterKeyRule: EnterKeyRule.Never);
+
         protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
-        public override bool IsTriggerCharacter(SourceText text, int characterPosition, OptionSet options)
+        internal override bool IsInsertionTrigger(SourceText text, int characterPosition, OptionSet options)
         {
             return PathCompletionUtilities.IsTriggerCharacter(text, characterPosition);
         }
 
-        private TextSpan GetTextChangeSpan(SyntaxToken stringLiteral, int position)
+        private static TextSpan GetTextChangeSpan(SyntaxToken stringLiteral, int position)
         {
-            return PathCompletionUtilities.GetTextChangeSpan(stringLiteral.ToString(), stringLiteral.SpanStart, position);
+            return PathCompletionUtilities.GetTextChangeSpan(
+                quotedPath: stringLiteral.ToString(),
+                quotedPathStart: stringLiteral.SpanStart,
+                position: position);
         }
-        
-        public override async Task ProduceCompletionListAsync(CompletionListContext context)
+
+        public override async Task ProvideCompletionsAsync(CompletionContext context)
         {
             var document = context.Document;
             var position = context.Position;
@@ -44,7 +56,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
             var textChangeSpan = GetTextChangeSpan(stringLiteral, position);
 
-            var gacHelper = new GlobalAssemblyCacheCompletionHelper(this, textChangeSpan, ItemRules.Instance);
+            var gacHelper = new GlobalAssemblyCacheCompletionHelper(textChangeSpan, _rules);
             var referenceResolver = document.Project.CompilationOptions.MetadataReferenceResolver;
 
             // TODO: https://github.com/dotnet/roslyn/issues/5263
@@ -74,7 +86,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 this, textChangeSpan,
                 new CurrentWorkingDirectoryDiscoveryService(Directory.GetCurrentDirectory()),
                 Microsoft.CodeAnalysis.Glyph.OpenFolder,
-                Microsoft.CodeAnalysis.Glyph.Assembly, searchPaths, new[] { ".dll", ".exe" }, path => path.Contains(","), ItemRules.Instance);
+                Microsoft.CodeAnalysis.Glyph.Assembly, searchPaths, new[] { ".dll", ".exe" }, path => path.Contains(","), _rules);
 
             var pathThroughLastSlash = GetPathThroughLastSlash(stringLiteral, position);
 
@@ -86,7 +98,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         private static string GetPathThroughLastSlash(SyntaxToken stringLiteral, int position)
         {
-            return PathCompletionUtilities.GetPathThroughLastSlash(stringLiteral.ToString(), stringLiteral.SpanStart, position);
+            return PathCompletionUtilities.GetPathThroughLastSlash(
+                quotedPath: stringLiteral.ToString(),
+                quotedPathStart: stringLiteral.SpanStart,
+                position: position);
         }
 
         private class CurrentWorkingDirectoryDiscoveryService : ICurrentWorkingDirectoryDiscoveryService
@@ -97,26 +112,6 @@ namespace RoslynPad.Roslyn.Completion.Providers
             }
 
             public string WorkingDirectory { get; }
-        }
-
-        private class ItemRules : Microsoft.CodeAnalysis.Completion.CompletionItemRules
-        {
-            public static readonly ItemRules Instance = new ItemRules();
-
-            public override bool? IsCommitCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem completionItem, char ch, string textTypedSoFar)
-            {
-                return PathCompletionUtilities.IsCommitcharacter(completionItem, ch, textTypedSoFar);
-            }
-
-            public override bool? IsFilterCharacter(Microsoft.CodeAnalysis.Completion.CompletionItem completionItem, char ch, string textTypedSoFar)
-            {
-                return PathCompletionUtilities.IsFilterCharacter(completionItem, ch, textTypedSoFar);
-            }
-
-            public override bool? SendEnterThroughToEditor(Microsoft.CodeAnalysis.Completion.CompletionItem completionItem, string textTypedSoFar, OptionSet options)
-            {
-                return PathCompletionUtilities.SendEnterThroughToEditor(completionItem, textTypedSoFar);
-            }
         }
     }
 }

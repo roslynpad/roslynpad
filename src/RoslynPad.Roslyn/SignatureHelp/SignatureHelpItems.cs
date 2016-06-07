@@ -18,7 +18,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         public int? SelectedItemIndex { get; }
 
-        internal SignatureHelpItems(Microsoft.CodeAnalysis.Editor.SignatureHelpItems inner)
+        internal SignatureHelpItems(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems inner)
         {
             Items = inner.Items.Select(x => new SignatureHelpItem(x)).ToArray();
             ApplicableSpan = inner.ApplicableSpan;

@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editor;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {

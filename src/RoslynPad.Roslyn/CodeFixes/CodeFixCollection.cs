@@ -14,17 +14,10 @@ namespace RoslynPad.Roslyn.CodeFixes
 
         public ImmutableArray<CodeFix> Fixes { get; }
 
-        public FixAllCodeActionContext FixAllContext { get; }
-
         internal CodeFixCollection(Microsoft.CodeAnalysis.CodeFixes.CodeFixCollection inner)
         {
             _inner = inner;
             Fixes = inner.Fixes.Select(x => new CodeFix(x)).ToImmutableArray();
-            var fixAllContext = inner.FixAllContext;
-            if (fixAllContext != null)
-            {
-                FixAllContext = new FixAllCodeActionContext(inner.FixAllContext);
-            }
         }
     }
 }

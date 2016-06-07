@@ -19,7 +19,7 @@ namespace RoslynPad
     internal sealed class MainViewModel : NotificationObject
     {
         private static readonly Version _currentVersion = new Version(0, 8);
-        private static readonly string _currentVersionVariant = "";
+        private static readonly string _currentVersionVariant = "future";
 
         private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";

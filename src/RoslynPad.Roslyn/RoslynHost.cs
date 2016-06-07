@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.ComponentModel.Composition.Hosting;
+using System.Composition;
 using System.Composition.Convention;
 using System.Composition.Hosting;
 using System.IO;
@@ -20,10 +20,11 @@ using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Notification;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
-using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.Diagnostics;
-using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Runtime;
+using ExportAttribute = System.Composition.ExportAttribute;
+using ImportAttribute = System.Composition.ImportAttribute;
+using ImportingConstructorAttribute = System.Composition.ImportingConstructorAttribute;
 
 namespace RoslynPad.Roslyn
 {
@@ -92,24 +93,25 @@ namespace RoslynPad.Roslyn
                 assemblies = assemblies.Concat(additionalAssemblies).ToArray();
             }
 
-            var editorFeaturesAssembly = Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures");
-            var editorFeaturesTypes = SafeGetAssemblyTypes(editorFeaturesAssembly);
+            var editorFeaturesTypes = SafeGetAssemblyTypes(Assembly.Load("Microsoft.CodeAnalysis.EditorFeatures"));
+            var csharpEditorFeaturesTypes = SafeGetAssemblyTypes(Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures"));
 
-            // we can't import this entire assembly due to composition errors
-            // and we don't need all the VS services
-            var editorFeaturesParts = editorFeaturesTypes
-                .Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes")
-                .Concat(new[] {typeof(DocumentationProviderServiceFactory)});
+            var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
+                    .Distinct()
+                    .SelectMany(SafeGetAssemblyTypes)
+                    .Concat(editorFeaturesTypes.Where(x => x.Namespace == "Microsoft.CodeAnalysis.CodeFixes"))
+                    //.Concat(csharpEditorFeaturesTypes)
+                    .Concat(new[] { typeof(DocumentationProviderServiceFactory) })
+                    .ToArray();
 
             _compositionContext = new ContainerConfiguration()
-                .WithAssemblies(MefHostServices.DefaultAssemblies.Concat(assemblies))
-                .WithParts(editorFeaturesParts)
+                .WithParts(partTypes)
                 .WithDefaultConventions(new AttributeFilterProvider())
                 .CreateContainer();
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" });
 
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
@@ -124,19 +126,6 @@ namespace RoslynPad.Roslyn
 
             _compositionContext.GetExport<ISemanticChangeNotificationService>().OpenedDocumentSemanticChanged +=
                 OnOpenedDocumentSemanticChanged;
-
-            // MEF v1
-            var csharpEditorFeatures = Assembly.Load("Microsoft.CodeAnalysis.CSharp.EditorFeatures");
-
-            var container = new CompositionContainer(new AggregateCatalog(
-                new TypeCatalog(editorFeaturesTypes),
-                new TypeCatalog(SafeGetAssemblyTypes(csharpEditorFeatures)),
-                new AssemblyCatalog(typeof(RoslynHost).Assembly)),
-                CompositionOptions.DisableSilentRejection | CompositionOptions.IsThreadSafe);
-
-            ((AggregateSignatureHelpProvider)GetService<ISignatureHelpProvider>()).Initialize(container);
-
-            CompletionService.Initialize(container);
         }
 
         private static IReadOnlyList<Type> SafeGetAssemblyTypes(Assembly assembly)
@@ -169,12 +158,47 @@ namespace RoslynPad.Roslyn
         {
             public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
             {
-                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+                var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
+                //ReplaceMefV1Attributes(customAttributes);
+                return customAttributes;
             }
 
             public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
             {
-                return member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute));
+                var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
+                //ReplaceMefV1Attributes(customAttributes);
+                return customAttributes;
+            }
+
+            private void ReplaceMefV1Attributes(Attribute[] customAttributes)
+            {
+                for (int i = 0; i < customAttributes.Length; i++)
+                {
+                    var customAttribute = customAttributes[i];
+                    var export = customAttribute as System.ComponentModel.Composition.ExportAttribute;
+                    if (export != null)
+                    {
+                        customAttributes[i] = new ExportAttribute(export.ContractName, export.ContractType);
+                        continue;
+                    }
+                    var import = customAttribute as System.ComponentModel.Composition.ImportAttribute;
+                    if (import != null)
+                    {
+                        customAttributes[i] = new ImportAttribute(import.ContractName);
+                        continue;
+                    }
+                    var importingConstructor = customAttribute as System.ComponentModel.Composition.ImportingConstructorAttribute;
+                    if (importingConstructor != null)
+                    {
+                        customAttributes[i] = new ImportingConstructorAttribute();
+                        continue;
+                    }
+                    var creationPolicy = customAttribute as System.ComponentModel.Composition.PartCreationPolicyAttribute;
+                    if (creationPolicy != null && creationPolicy.CreationPolicy == System.ComponentModel.Composition.CreationPolicy.Shared)
+                    {
+                        customAttributes[i] = new SharedAttribute();
+                    }
+                }
             }
         }
 

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
+using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
@@ -28,10 +30,8 @@ namespace RoslynPad.RoslynEditor
         {
             IList<ICompletionDataEx> completionData = null;
             IOverloadProviderEx overloadProvider = null;
-            bool? isCompletion = null;
 
             var document = _roslynHost.GetDocument(_documentId);
-
             if (useSignatureHelp || triggerChar != null)
             {
                 var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
@@ -51,26 +51,61 @@ namespace RoslynPad.RoslynEditor
                         overloadProvider = new RoslynOverloadProvider(signatureHelp);
                     }
                 }
+            }
+
+            if (overloadProvider == null)
+            {
+                var completionService = CompletionService.GetService(document);
+                var completionTrigger = GetCompletionTrigger(triggerChar);
+                var data = await completionService.GetCompletionsAsync(
+                    document,
+                    position,
+                    completionTrigger
+                    ).ConfigureAwait(false);
+                if (data != null && data.Items.Any())
+                {
+                    var helper = CompletionHelper.GetHelper(document, completionService);
+                    var text = await document.GetTextAsync().ConfigureAwait(false);
+                    var textSpanToText = new Dictionary<TextSpan, string>();
+                    
+                    completionData = data.Items
+                        .Where(item => MatchesFilterText(helper, item, text, textSpanToText, completionTrigger))
+                        .Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager))
+                            .ToArray<ICompletionDataEx>();
+                }
                 else
                 {
-                    isCompletion = await CompletionService.IsCompletionTriggerCharacterAsync(document, position - 1).ConfigureAwait(false);
+                    completionData = Array.Empty<ICompletionDataEx>();
                 }
             }
 
-            if (overloadProvider == null && isCompletion != false)
-            {
-                var data = await CompletionService.GetCompletionListAsync(
-                    document,
-                    position,
-                    triggerChar != null
-                        ? CompletionTriggerInfo.CreateTypeCharTriggerInfo(triggerChar.Value)
-                        : CompletionTriggerInfo.CreateInvokeCompletionTriggerInfo()
-                    ).ConfigureAwait(false);
-                completionData = data?.Items.Select(item => new RoslynCompletionData(item, _snippetService.SnippetManager)).ToArray<ICompletionDataEx>()
-                    ?? Array.Empty<ICompletionDataEx>();
-            }
-
             return new CompletionResult(completionData, overloadProvider);
+        }
+
+        private static bool MatchesFilterText(CompletionHelper helper, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText, CompletionTrigger completionTrigger)
+        {
+            var filterText = GetFilterText(item, text, textSpanToText);
+            if (string.IsNullOrEmpty(filterText)) return true;
+            return helper.MatchesFilterText(item, filterText, completionTrigger);
+        }
+
+        private static string GetFilterText(CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)
+        {
+            var textSpan = item.Span;
+            string filterText;
+            if (!textSpanToText.TryGetValue(textSpan, out filterText))
+            {
+                filterText = text.GetSubText(textSpan).ToString();
+                textSpanToText[textSpan] = filterText;
+            }
+            return filterText;
+        }
+
+        private static CompletionTrigger GetCompletionTrigger(char? triggerChar)
+        {
+            return triggerChar != null
+                ? CompletionTrigger.CreateInsertionTrigger(triggerChar.Value)
+                : CompletionTrigger.Default;
         }
     }
 }
