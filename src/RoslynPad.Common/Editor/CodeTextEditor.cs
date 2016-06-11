@@ -9,6 +9,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Search;
 
@@ -18,7 +19,7 @@ namespace RoslynPad.Editor
 
     public class CodeTextEditor : TextEditor
     {
-        private CompletionWindow _completionWindow;
+        private CustomCompletionWindow _completionWindow;
         private OverloadInsightWindow _insightWindow;
 
         public CodeTextEditor()
@@ -242,7 +243,7 @@ namespace RoslynPad.Editor
                 _insightWindow?.Close();
 
                 // Open code completion after the user has pressed dot:
-                _completionWindow = new CompletionWindow(TextArea)
+                _completionWindow = new CustomCompletionWindow(TextArea)
                 {
                     MinWidth = 200,
                     Background = CompletionBackground,
@@ -299,5 +300,18 @@ namespace RoslynPad.Editor
         }
 
         #endregion
+
+        private class CustomCompletionWindow : CompletionWindow
+        {
+            public CustomCompletionWindow(TextArea textArea) : base(textArea)
+            {
+            }
+
+            protected override void OnKeyDown(KeyEventArgs e)
+            {
+                if (e.Key == Key.Home || e.Key == Key.End) return;
+                base.OnKeyDown(e);
+            }
+        }
     }
 }
