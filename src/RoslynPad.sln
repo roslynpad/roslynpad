@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host32", "RoslynPad.Host\RoslynPad.Host32.csproj", "{CA953492-94C7-4F25-9CF2-EB70AA07A55F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host64", "RoslynPad.Host64\RoslynPad.Host64.csproj", "{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Hosting", "RoslynPad.Hosting\RoslynPad.Hosting.csproj", "{BBAC330F-94A5-4838-87C8-98055079626D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBAC330F-94A5-4838-87C8-98055079626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBAC330F-94A5-4838-87C8-98055079626D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBAC330F-94A5-4838-87C8-98055079626D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBAC330F-94A5-4838-87C8-98055079626D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

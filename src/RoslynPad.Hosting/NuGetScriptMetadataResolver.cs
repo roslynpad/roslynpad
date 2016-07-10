@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using RoslynPad.Roslyn;
 
-namespace RoslynPad.Host
+namespace RoslynPad.Hosting
 {
     internal sealed class NuGetScriptMetadataResolver : MetadataReferenceResolver
     {

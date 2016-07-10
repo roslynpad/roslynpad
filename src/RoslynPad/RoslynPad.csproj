@@ -166,6 +166,10 @@
       <Project>{4dab681a-d6ce-4b39-8ed1-6218bb6679fd}</Project>
       <Name>RoslynPad.Host64</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj">
+      <Project>{BBAC330F-94A5-4838-87C8-98055079626D}</Project>
+      <Name>RoslynPad.Hosting</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj">
       <Project>{ca953492-94c7-4f25-9cf2-eb70aa07a55f}</Project>
       <Name>RoslynPad.Host32</Name>

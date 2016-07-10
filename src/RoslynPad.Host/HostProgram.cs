@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using RoslynPad.Hosting;
 
 namespace RoslynPad.Host
 {

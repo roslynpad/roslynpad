@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.ApplicationInsights;
-using RoslynPad.Host;
+using RoslynPad.Hosting;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 

@@ -102,6 +102,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynHost.cs" />
     <Compile Include="RoslynWorkspace.cs" />
+    <Compile Include="Scripting\DesktopAssemblyLoader.cs" />
+    <Compile Include="Scripting\InteractiveAssemblyLoader.cs" />
+    <Compile Include="Scripting\ScriptRunner.cs" />
     <Compile Include="SignatureHelp\AggregateSignatureHelpProvider.cs" />
     <Compile Include="SignatureHelp\ISignatureHelpProvider.cs" />
     <Compile Include="SignatureHelp\SignatureHelpItem.cs" />

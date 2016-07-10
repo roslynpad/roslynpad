@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.ServiceModel;
 using System.Threading;
@@ -15,13 +14,13 @@ using System.Windows.Threading;
 using System.Xml;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using RoslynPad.Roslyn;
+using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 
-namespace RoslynPad.Host
+namespace RoslynPad.Hosting
 {
     internal class ExecutionHost : IDisposable
     {
@@ -368,6 +367,7 @@ namespace RoslynPad.Host
 
             private ScriptOptions _scriptOptions;
             private IServiceCallback _callbackChannel;
+            private CSharpParseOptions _parseOptions;
 
             public Service()
             {
@@ -380,12 +380,7 @@ namespace RoslynPad.Host
 
             public Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory)
             {
-                // TODO: remove this once C# 7 is finalized
-                var scriptCompilerType = Type.GetType("Microsoft.CodeAnalysis.CSharp.Scripting.CSharpScriptCompiler, Microsoft.CodeAnalysis.CSharp.Scripting", throwOnError: true);
-                var optionsField = scriptCompilerType.GetField("s_defaultOptions", BindingFlags.Static | BindingFlags.NonPublic);
-                Debug.Assert(optionsField != null, "optionsField != null");
-                var options = ((CSharpParseOptions)optionsField.GetValue(null)).WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
-                optionsField.SetValue(null, options);
+                _parseOptions = new CSharpParseOptions().WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
 
                 var scriptOptions = _scriptOptions
                     .WithReferences(references)
@@ -494,9 +489,9 @@ namespace RoslynPad.Host
                 }
             }
 
-            private static Script<object> TryCompile(string code, ScriptOptions options)
+            private ScriptRunner TryCompile(string code, ScriptOptions options)
             {
-                var script = CSharpScript.Create<object>(code, options);
+                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, options.MetadataResolver);
 
                 var diagnostics = script.Compile();
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -516,17 +511,17 @@ namespace RoslynPad.Host
                 }
             }
 
-            private static void DisplaySubmissionResult(ScriptState<object> state)
+            private static void DisplaySubmissionResult(object state)
             {
                 // TODO
                 //if (state.Script.GetCompilation().HasSubmissionResult())
-                if (state.ReturnValue != null)
+                if (state != null)
                 {
-                    state.ReturnValue.Dump();
+                    state.Dump();
                 }
             }
 
-            private static async Task<ScriptState<object>> ExecuteOnUIThread(Script<object> script)
+            private static async Task<object> ExecuteOnUIThread(ScriptRunner script)
             {
                 return await (await _serverDispatcher.InvokeAsync(
                     async () =>

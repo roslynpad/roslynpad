@@ -92,7 +92,7 @@ namespace RoslynPad.Runtime
                 {
                     var exception = o as Exception;
                     value = exception != null && _property.Name == nameof(Exception.StackTrace)
-                        ? new StackTrace(exception).ToAsyncString()
+                        ? new StackTrace(exception, fNeedFileInfo: true).ToAsyncString()
                         : _property.GetValue(o);
                 }
                 catch (TargetInvocationException exception)

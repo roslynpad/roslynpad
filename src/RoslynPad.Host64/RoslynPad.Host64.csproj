@@ -77,6 +77,10 @@
       <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj">
+      <Project>{bbac330f-94a5-4838-87c8-98055079626d}</Project>
+      <Name>RoslynPad.Hosting</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

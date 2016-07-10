@@ -9,7 +9,7 @@ using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Host;
+using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;

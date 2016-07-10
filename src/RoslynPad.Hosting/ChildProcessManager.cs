@@ -4,7 +4,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace RoslynPad.Host
+namespace RoslynPad.Hosting
 {
     internal sealed class ChildProcessManager : IDisposable
     {
