@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
+using RoslynPad.Utilities;
 using Xceed.Wpf.AvalonDock;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
@@ -150,7 +151,7 @@ namespace RoslynPad
             if (!_viewModel.HasError) return;
 
             TaskDialog.ShowInline(this, "Unhandled Exception",
-                _viewModel.LastError.ToString(), string.Empty, TaskDialogButtons.Close);
+                _viewModel.LastError.ToAsyncString(), string.Empty, TaskDialogButtons.Close);
         }
 
         private void ViewUpdateClick(object sender, RoutedEventArgs e)

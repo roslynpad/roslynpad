@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Runtime.Serialization;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
@@ -88,7 +90,10 @@ namespace RoslynPad.Runtime
                 object value;
                 try
                 {
-                    value = _property.GetValue(o);
+                    var exception = o as Exception;
+                    value = exception != null && _property.Name == nameof(Exception.StackTrace)
+                        ? new StackTrace(exception).ToAsyncString()
+                        : _property.GetValue(o);
                 }
                 catch (TargetInvocationException exception)
                 {

@@ -39,6 +39,7 @@ namespace RoslynPad.Host
         private readonly ChildProcessManager _childProcessManager;
 
         private LazyRemoteService _lazyRemoteService;
+        private bool _disposed;
 
         public static void RunServer(string serverPort, string semaphoreName)
         {
@@ -239,22 +240,36 @@ namespace RoslynPad.Host
             }
         }
 
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(ExecutionHost));
+            }
+        }
+
         public void Dispose()
         {
+            _disposed = true;
             _lazyRemoteService?.Dispose();
+            _lazyRemoteService = null;
         }
 
         private async Task<IService> TryGetOrCreateRemoteServiceAsync()
         {
+            ThrowIfDisposed();
+
             try
             {
                 var currentRemoteService = _lazyRemoteService;
-
-                // disposed or not reset:
-                Debug.Assert(currentRemoteService != null);
-
+                
                 for (var attempt = 0; attempt < MaxAttemptsToCreateProcess; attempt++)
                 {
+                    if (currentRemoteService == null)
+                    {
+                        return null;
+                    }
+
                     var initializedService = await currentRemoteService.InitializedService.Value.ConfigureAwait(false);
                     if (initializedService != null && initializedService.Process.IsAlive())
                     {
@@ -368,6 +383,7 @@ namespace RoslynPad.Host
                 // TODO: remove this once C# 7 is finalized
                 var scriptCompilerType = Type.GetType("Microsoft.CodeAnalysis.CSharp.Scripting.CSharpScriptCompiler, Microsoft.CodeAnalysis.CSharp.Scripting", throwOnError: true);
                 var optionsField = scriptCompilerType.GetField("s_defaultOptions", BindingFlags.Static | BindingFlags.NonPublic);
+                Debug.Assert(optionsField != null, "optionsField != null");
                 var options = ((CSharpParseOptions)optionsField.GetValue(null)).WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
                 optionsField.SetValue(null, options);
 

@@ -75,10 +75,13 @@
     <Compile Include="Runtime\ResultObject.cs" />
     <Compile Include="Utilities\DelegateCommand.cs" />
     <Compile Include="Utilities\DelegatingTextWriter.cs" />
+    <Compile Include="Utilities\ExceptionExtensions.cs" />
     <Compile Include="Utilities\NotificationObject.cs" />
     <Compile Include="Host\ChildProcessManager.cs" />
     <Compile Include="Utilities\ProcessExtensions.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
+    <Compile Include="Utilities\ReflectionUtil.cs" />
+    <Compile Include="Utilities\StackTraceExtensions.cs" />
     <Compile Include="Utilities\StringExtensions.cs" />
     <Compile Include="Utilities\TaskExtensions.cs" />
     <Compile Include="Utilities\WindowExtensions.cs" />

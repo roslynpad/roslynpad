@@ -6,11 +6,11 @@
     "win": { }
   },
   "dependencies": {
-    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta1-20160603-02",
-    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta1-20160603-02",
-    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta1-20160603-02",
-    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta1-20160603-02",
-    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-beta1-20160603-02",
+    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta1-20160607-01",
+    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta1-20160607-01",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta1-20160607-01",
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta1-20160607-01",
+    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-beta1-20160607-01",
     "AvalonEdit": "5.0.2",
     "Extended.Wpf.Toolkit": "2.6.0",
     "AvalonLibrary": "2.3.0",
