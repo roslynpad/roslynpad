@@ -61,6 +61,7 @@
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />
     <Compile Include="Editor\IContextActionProvider.cs" />
+    <Compile Include="Editor\SearchReplacePanel.cs" />
     <Compile Include="Editor\TextMarker.cs" />
     <Compile Include="Editor\TextMarkerService.cs" />
     <Compile Include="Editor\TextMarkerToolTipProvider.cs" />
@@ -86,7 +87,12 @@
   <ItemGroup>
     <None Include="project.json" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Page Include="Themes\Generic.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
