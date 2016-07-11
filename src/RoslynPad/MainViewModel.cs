@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.ApplicationInsights;
+using Microsoft.HockeyApp;
 using RoslynPad.Hosting;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
@@ -18,13 +18,11 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private static readonly Version _currentVersion = new Version(0, 8);
+        private static readonly Version _currentVersion = new Version(0, 9);
         private static readonly string _currentVersionVariant = "";
 
-        private const string ApplicationInsightsInstrumentationKey = "86551688-26d9-4124-8376-3f7ddcf84b8e";
+        private const string HockeyAppId = "109aaf1a23174568a9cf856137c8503d";
         public const string NuGetPathVariableName = "$NuGet";
-
-        private readonly TelemetryClient _telemetryClient;
 
         private OpenDocumentViewModel _currentOpenDocument;
         private Exception _lastError;
@@ -37,19 +35,16 @@ namespace RoslynPad
 
         public MainViewModel()
         {
-            _telemetryClient = new TelemetryClient { InstrumentationKey = ApplicationInsightsInstrumentationKey };
-            _telemetryClient.Context.Component.Version = _currentVersion.ToString();
-#if DEBUG
-            _telemetryClient.Context.Properties["DEBUG"] = "1";
-#endif
+            HockeyClient.Current.Configure(HockeyAppId)
+                .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
+                .UnregisterDefaultUnobservedTaskExceptionHandler();
+            ((HockeyPlatformHelperWPF)((HockeyClient)HockeyClient.Current).PlatformHelper).AppVersion 
+                = _currentVersion.ToString();
+
             if (SendTelemetry)
             {
-                _telemetryClient.TrackEvent(TelemetryEventNames.Start);
+                HockeyClient.Current.TrackEvent(TelemetryEventNames.Start);
             }
-
-            Application.Current.DispatcherUnhandledException += (o, e) => OnUnhandledDispatcherException(e);
-            AppDomain.CurrentDomain.UnhandledException += (o, e) => OnUnhandledException((Exception)e.ExceptionObject, flushSync: true);
-            TaskScheduler.UnobservedTaskException += (o, e) => OnUnhandledException(e.Exception);
 
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
@@ -231,12 +226,6 @@ namespace RoslynPad
             }
         }
 
-        private void OnUnhandledException(Exception exception, bool flushSync = false)
-        {
-            if (exception is OperationCanceledException) return;
-            TrackException(exception, flushSync);
-        }
-
         private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
         {
             var exception = args.Exception;
@@ -245,7 +234,6 @@ namespace RoslynPad
                 args.Handled = true;
                 return;
             }
-            TrackException(exception);
             LastError = exception;
             args.Handled = true;
         }
@@ -253,25 +241,6 @@ namespace RoslynPad
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
-            _telemetryClient.Flush();
-        }
-
-        private void TrackException(Exception exception, bool flushSync = false)
-        {
-            // ReSharper disable once RedundantLogicalConditionalExpressionOperand
-            if (SendTelemetry && ApplicationInsightsInstrumentationKey != null)
-            {
-                var typeLoadException = exception as ReflectionTypeLoadException;
-                if (typeLoadException != null)
-                {
-                    exception = new AggregateException(exception.Message, typeLoadException.LoaderExceptions);
-                }
-                _telemetryClient.TrackException(exception);
-                if (flushSync)
-                {
-                    _telemetryClient.Flush();
-                }
-            }
         }
 
         public Exception LastError
@@ -333,14 +302,10 @@ namespace RoslynPad
 
         public Task SubmitFeedback(string feedbackText, string email)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
-                _telemetryClient.TrackEvent(TelemetryEventNames.Feedback, new Dictionary<string, string>
-                {
-                    ["Content"] = feedbackText,
-                    ["Email"] = email
-                });
-                _telemetryClient.Flush();
+                var feedback = HockeyClient.Current.CreateFeedbackThread();
+                await feedback.PostFeedbackMessageAsync(feedbackText, email);
             });
         }
     }
@@ -348,6 +313,5 @@ namespace RoslynPad
     internal static class TelemetryEventNames
     {
         public const string Start = "Start";
-        public const string Feedback = "Feedback";
     }
 }

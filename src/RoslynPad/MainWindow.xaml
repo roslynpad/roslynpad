@@ -85,7 +85,8 @@
                 <dock:DockingManager Name="DockingManager"
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
-                                     DocumentClosing="DockingManager_OnDocumentClosing">
+                                     DocumentClosing="DockingManager_OnDocumentClosing"
+                                     AnchorableContextMenu="{x:Null}">
                     <dock:DockingManager.DocumentHeaderTemplate>
                         <DataTemplate>
                             <TextBlock>
