@@ -206,8 +206,12 @@ namespace RoslynPad.Roslyn
                     ? Environment.SpecialFolder.ProgramFilesX86
                     : Environment.SpecialFolder.ProgramFiles);
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
-            var directories = Directory.EnumerateDirectories(path).OrderByDescending(Path.GetFileName);
-            return directories.FirstOrDefault();
+            if (Directory.Exists(path))
+            {
+                var directories = Directory.EnumerateDirectories(path).OrderByDescending(Path.GetFileName);
+                return directories.FirstOrDefault();
+            }
+            return null;
         }
 
         private DocumentationProvider GetDocumentationProvider(string location)
