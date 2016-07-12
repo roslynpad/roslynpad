@@ -30,6 +30,7 @@ namespace RoslynPad
         private Platform _platform;
         private bool _isSaving;
         private IDisposable _viewDisposable;
+        private Action<ExceptionResultObject> _onError;
 
         public ObservableCollection<ResultObject> Results
         {
@@ -191,9 +192,10 @@ namespace RoslynPad
             }
         }
 
-        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, IDisposable viewDisposable)
+        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, Action<ExceptionResultObject> onError, IDisposable viewDisposable)
         {
             _viewDisposable = viewDisposable;
+            _onError = onError;
             var roslynHost = MainViewModel.RoslynHost;
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated, onTextUpdated);
@@ -248,12 +250,15 @@ namespace RoslynPad
             _executionHost.Dumped += _executionHostOnDumped;
             try
             {
-                var code =
-                    await
-                        MainViewModel.RoslynHost.GetDocument(DocumentId)
+                var code = await MainViewModel.RoslynHost.GetDocument(DocumentId)
                             .GetTextAsync(cancellationToken)
                             .ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
+                var errorResult = await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
+                _onError?.Invoke(errorResult);
+                if (errorResult != null)
+                {
+                    results.Add(errorResult);
+                }
             }
             catch (CompilationErrorException ex)
             {

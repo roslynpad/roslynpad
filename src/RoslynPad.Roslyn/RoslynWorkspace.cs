@@ -6,7 +6,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -20,7 +19,6 @@ namespace RoslynPad.Roslyn
     {
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
-        private int _referenceDirectivesLock;
 
         public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
@@ -118,48 +116,44 @@ namespace RoslynPad.Roslyn
 
         internal async Task ProcessReferenceDirectives(Document document)
         {
-            if (Interlocked.CompareExchange(ref _referenceDirectivesLock, 1, 0) != 0)
-            {
-                return;
-            }
-            try
-            {
-                var project = document.Project;
-                var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false))
-                    .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
+            var project = document.Project;
+            var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false))
+                .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
 
-                var changed = false;
-                foreach (var referenceDirective in _referencesDirectives)
+            var changed = false;
+            foreach (var referenceDirective in _referencesDirectives)
+            {
+                if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
                 {
-                    if (referenceDirective.Value.IsActive && !directives.Contains(referenceDirective.Key))
+                    referenceDirective.Value.IsActive = false;
+                    changed = true;
+                }
+            }
+
+            foreach (var directive in directives)
+            {
+                DirectiveInfo referenceDirective;
+                if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
+                {
+                    if (!referenceDirective.IsActive)
                     {
-                        referenceDirective.Value.IsActive = false;
+                        referenceDirective.IsActive = true;
                         changed = true;
                     }
                 }
-
-                foreach (var directive in directives)
+                else
                 {
-                    DirectiveInfo referenceDirective;
-                    if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
+                    if (_referencesDirectives.TryAdd(directive, new DirectiveInfo(ResolveReference(directive))))
                     {
-                        if (!referenceDirective.IsActive)
-                        {
-                            referenceDirective.IsActive = true;
-                            changed = true;
-                        }
-                    }
-                    else
-                    {
-                        if (_referencesDirectives.TryAdd(directive, new DirectiveInfo(ResolveReference(directive))))
-                        {
-                            changed = true;
-                        }
+                        changed = true;
                     }
                 }
+            }
+            
+            if (!changed) return;
 
-                if (!changed) return;
-
+            lock (_referencesDirectives)
+            {
                 var solution = project.Solution;
                 var references =
                     _referencesDirectives.Where(x => x.Value.IsActive)
@@ -169,10 +163,6 @@ namespace RoslynPad.Roslyn
                     RoslynHost.DefaultReferences.Concat(references));
 
                 SetCurrentSolution(newSolution);
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _referenceDirectivesLock, 0);
             }
         }
 

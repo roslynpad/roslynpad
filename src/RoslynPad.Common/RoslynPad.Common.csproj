@@ -57,6 +57,7 @@
     <Compile Include="Editor\ContextActionsBulbPopup.cs" />
     <Compile Include="Editor\ContextActionsRenderer.cs" />
     <Compile Include="Editor\DocumentUtilities.cs" />
+    <Compile Include="Editor\ErrorMargin.cs" />
     <Compile Include="Editor\ExtendedPopup.cs" />
     <Compile Include="Editor\ICodeEditorCompletionProvider.cs" />
     <Compile Include="Editor\ICompletionDataEx.cs" />

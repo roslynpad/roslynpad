@@ -16,7 +16,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Notification;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Diagnostics;
@@ -103,7 +102,7 @@ namespace RoslynPad.Roslyn
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" });
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script);
 
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
@@ -115,17 +114,17 @@ namespace RoslynPad.Roslyn
             DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
-
-            _compositionContext.GetExport<ISemanticChangeNotificationService>().OpenedDocumentSemanticChanged +=
-                OnOpenedDocumentSemanticChanged;
         }
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
-            if (diagnosticsUpdatedArgs?.DocumentId == null) return;
+            var documentId = diagnosticsUpdatedArgs?.DocumentId;
+            if (documentId == null) return;
+
+            OnOpenedDocumentSemanticChanged(GetDocument(documentId));
 
             Action<DiagnosticsUpdatedArgs> notifier;
-            if (_diagnosticsUpdatedNotifiers.TryGetValue(diagnosticsUpdatedArgs.DocumentId, out notifier))
+            if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out notifier))
             {
                 notifier(diagnosticsUpdatedArgs);
             }
@@ -148,7 +147,7 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        private async void OnOpenedDocumentSemanticChanged(object sender, Document document)
+        private async void OnOpenedDocumentSemanticChanged(Document document)
         {
             RoslynWorkspace workspace;
             if (_workspaces.TryGetValue(document.Id, out workspace))

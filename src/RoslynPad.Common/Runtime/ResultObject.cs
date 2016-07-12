@@ -12,7 +12,8 @@ using RoslynPad.Utilities;
 namespace RoslynPad.Runtime
 {
     [DataContract(IsReference = true)]
-    internal sealed class ResultObject : INotifyPropertyChanged
+    [KnownType(typeof(ExceptionResultObject))]
+    internal class ResultObject : INotifyPropertyChanged
     {
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
@@ -26,7 +27,7 @@ namespace RoslynPad.Runtime
             return new ResultObject(o, 0, header);
         }
 
-        private ResultObject(object o, int depth, string header = null, PropertyDescriptor property = null)
+        internal ResultObject(object o, int depth, string header = null, PropertyDescriptor property = null)
         {
             _depth = depth;
             _property = property;
@@ -92,7 +93,7 @@ namespace RoslynPad.Runtime
                 {
                     var exception = o as Exception;
                     value = exception != null && _property.Name == nameof(Exception.StackTrace)
-                        ? new StackTrace(exception, fNeedFileInfo: true).ToAsyncString()
+                        ? GetStackTrace(exception)
                         : _property.GetValue(o);
                 }
                 catch (TargetInvocationException exception)
@@ -157,6 +158,35 @@ namespace RoslynPad.Runtime
             var children = propertyDescriptors.Cast<PropertyDescriptor>()
                 .Select(p => new ResultObject(o, targetDepth, property: p));
             Children = children.ToArray();
+        }
+
+        protected static string GetStackTrace(Exception exception)
+        {
+            return GetStackFrames(exception).ToAsyncString();
+        }
+
+        protected static IEnumerable<StackFrame> GetStackFrames(Exception exception)
+        {
+            var frames = new StackTrace(exception, fNeedFileInfo: true).GetFrames();
+            if (frames == null || frames.Length == 0)
+            {
+                return Array.Empty<StackFrame>();
+            }
+            int index;
+            for (index = frames.Length - 1; index >= 0; --index)
+            {
+                if (IsScriptMethod(frames[index]))
+                {
+                    break;
+                }
+            }
+            return frames.Take(index + 1);
+        }
+
+        protected static bool IsScriptMethod(StackFrame stackFrame)
+        {
+            return stackFrame.GetMethod()?.DeclaringType?.
+                   Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
         }
 
         private void InitializeEnumerable(string headerPrefix, IEnumerable e, int targetDepth)
@@ -224,5 +254,32 @@ namespace RoslynPad.Runtime
             add { }
             remove { }
         }
+    }
+
+    [DataContract(IsReference = true)]
+    internal class ExceptionResultObject : ResultObject
+    {
+        private ExceptionResultObject(Exception exception) : base(exception, 0)
+        {
+            Message = exception.Message;
+
+            var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
+            foreach (var stackFrame in stackFrames)
+            {
+                if (IsScriptMethod(stackFrame))
+                {
+                    LineNumber = stackFrame.GetFileLineNumber();
+                    break;
+                }
+            }
+        }
+
+        public static ExceptionResultObject Create(Exception exception) => new ExceptionResultObject(exception);
+
+        [DataMember]
+        public int LineNumber { get; private set; }
+
+        [DataMember]
+        public string Message { get; private set; }
     }
 }

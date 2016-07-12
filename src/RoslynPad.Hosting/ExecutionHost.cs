@@ -261,7 +261,7 @@ namespace RoslynPad.Hosting
             try
             {
                 var currentRemoteService = _lazyRemoteService;
-                
+
                 for (var attempt = 0; attempt < MaxAttemptsToCreateProcess; attempt++)
                 {
                     if (currentRemoteService == null)
@@ -301,14 +301,14 @@ namespace RoslynPad.Hosting
             return null;
         }
 
-        public async Task ExecuteAsync(string code)
+        public async Task<ExceptionResultObject> ExecuteAsync(string code)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            await service.ExecuteAsync(code).ConfigureAwait(false);
+            return await service.ExecuteAsync(code).ConfigureAwait(false);
         }
 
         public async Task ResetAsync()
@@ -336,7 +336,7 @@ namespace RoslynPad.Hosting
             Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory);
 
             [OperationContract]
-            Task ExecuteAsync(string code);
+            Task<ExceptionResultObject> ExecuteAsync(string code);
         }
 
         [CallbackBehavior(UseSynchronizationContext = false)]
@@ -399,7 +399,12 @@ namespace RoslynPad.Hosting
 
             private void OnDumped(object o, string header)
             {
-                _dumpQueue.Enqueue(ResultObject.Create(o, header));
+                EnqueueResult(ResultObject.Create(o, header));
+            }
+
+            private void EnqueueResult(ResultObject resultObject)
+            {
+                _dumpQueue.Enqueue(resultObject);
                 _dumpLock.Release();
             }
 
@@ -454,7 +459,7 @@ namespace RoslynPad.Hosting
                 ObjectExtensions.Dumped -= OnDumped;
             }
 
-            public async Task ExecuteAsync(string code)
+            public async Task<ExceptionResultObject> ExecuteAsync(string code)
             {
                 Debug.Assert(code != null);
 
@@ -468,11 +473,13 @@ namespace RoslynPad.Hosting
                     var script = TryCompile(code, _scriptOptions);
                     if (script != null)
                     {
-                        var scriptState = await ExecuteOnUIThread(script).ConfigureAwait(false);
-                        if (scriptState != null)
+                        var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
+                        var errorResult = result as ExceptionResultObject;
+                        if (errorResult == null && result != null)
                         {
-                            DisplaySubmissionResult(scriptState);
+                            DisplaySubmissionResult(result);
                         }
+                        return errorResult;
                     }
                 }
                 catch (Exception e)
@@ -487,6 +494,7 @@ namespace RoslynPad.Hosting
                     processCancelSource.Cancel();
                     await processTask.ConfigureAwait(false);
                 }
+                return null;
             }
 
             private ScriptRunner TryCompile(string code, ScriptOptions options)
@@ -521,7 +529,7 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private static async Task<object> ExecuteOnUIThread(ScriptRunner script)
+            private async Task<object> ExecuteOnUIThread(ScriptRunner script)
             {
                 return await (await _serverDispatcher.InvokeAsync(
                     async () =>
@@ -538,8 +546,7 @@ namespace RoslynPad.Hosting
                         }
                         catch (Exception e)
                         {
-                            e.Dump();
-                            return null;
+                            return ExceptionResultObject.Create(e);
                         }
                     })).ConfigureAwait(false);
             }

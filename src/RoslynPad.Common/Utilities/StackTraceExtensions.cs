@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -17,25 +18,17 @@ namespace RoslynPad.Utilities
         private const string LineFormat = "in {0}:line {1}";
         private const string AsyncMethodPrefix = "async ";
 
-        /// <summary>
-        /// Produces an async-friendly readable representation of the stack trace.
-        /// </summary>
-        /// <remarks>
-        /// The async-friendly formatting is archieved by:
-        /// * Skipping all awaiter frames (all methods in types implementing <see cref="INotifyCompletion"/>).
-        /// * Inferring the original method name from the async state machine class (<see cref="IAsyncStateMachine"/>)
-        ///   and removing the "MoveNext" - currently only for C#.
-        /// * Adding the "async" prefix after "at" on each line for async invocations.
-        /// * Appending "(?)" to the method signature to indicate that parameter information is missing.
-        /// * Removing the "End of stack trace from previous location..." text.
-        /// </remarks>
-        /// <param name="stackTrace">The stack trace.</param>
-        /// <returns>An async-friendly readable representation of the stack trace.</returns>
         public static string ToAsyncString(this StackTrace stackTrace)
         {
             if (stackTrace == null) throw new ArgumentNullException(nameof(stackTrace));
+
             var stackFrames = stackTrace.GetFrames();
-            if (stackFrames == null) return string.Empty;
+            return stackFrames == null ? string.Empty : stackFrames.ToAsyncString();
+        }
+
+        public static string ToAsyncString(this IEnumerable<StackFrame> stackFrames)
+        {
+            if (stackFrames == null) throw new ArgumentNullException(nameof(stackFrames));
 
             var displayFilenames = true;
             var firstFrame = true;
@@ -44,7 +37,7 @@ namespace RoslynPad.Utilities
             foreach (var frame in stackFrames)
             {
                 var method = frame.GetMethod();
-                
+
                 if (method == null) continue;
                 var declaringType = method.DeclaringType?.GetTypeInfo();
                 // skip awaiters

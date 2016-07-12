@@ -19,9 +19,10 @@ namespace RoslynPad
     {
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly TextMarkerService _textMarkerService;
+        private readonly SynchronizationContext _syncContext;
+        private readonly ErrorMargin _errorMargin;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private ContextActionsRenderer _contextActionsRenderer;
-        private readonly SynchronizationContext _syncContext;
         private RoslynHost _roslynHost;
         private OpenDocumentViewModel _viewModel;
 
@@ -30,8 +31,10 @@ namespace RoslynPad
             InitializeComponent();
 
             _textMarkerService = new TextMarkerService(Editor);
+            _errorMargin = new ErrorMargin { Visibility = Visibility.Collapsed, MarkerBrush = TryFindResource("ExceptionMarker") as Brush, Width = 10 };
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
+            Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
             Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
             Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
 
@@ -74,6 +77,7 @@ namespace RoslynPad
                 avalonEditTextContainer,
                 a => _syncContext.Post(o => ProcessDiagnostics(a), null),
                 text => avalonEditTextContainer.UpdateText(text),
+                OnError,
                 this).ConfigureAwait(true);
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
@@ -87,6 +91,20 @@ namespace RoslynPad
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
+        }
+
+        private void OnError(ExceptionResultObject e)
+        {
+            if (e != null)
+            {
+                _errorMargin.Visibility = Visibility.Visible;
+                _errorMargin.LineNumber = e.LineNumber;
+                _errorMargin.Message = "Exception: " + e.Message;
+            }
+            else
+            {
+                _errorMargin.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void OnEditorFontSizeChanged(double fontSize)
