@@ -234,7 +234,7 @@ namespace RoslynPad
 
             Reset();
 
-            await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(false);
+            await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(true);
 
             SetIsRunning(true);
 
