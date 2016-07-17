@@ -145,6 +145,13 @@ namespace RoslynPad.RoslynEditor
                 "Using statement",
                 "using (${resource=null})\n{\n\t${Selection}\n}",
                 "try"
+            ),
+            new CodeSnippet
+            (
+                "cw",
+                "Console.WriteLine",
+                "Console.WriteLine(${Selection})",
+                "if"
             )
         }.ToImmutableDictionary(x => x.Name);
 

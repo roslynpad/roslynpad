@@ -1,12 +1,14 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
+using RoslynPad.Annotations;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
@@ -103,12 +105,17 @@ namespace RoslynPad.RoslynEditor
             {
                 if (_description == null)
                 {
-                    _description = CompletionService.GetService(_document)
-                        .GetDescriptionAsync(_document, _item)
-                        .Result.TaggedParts.ToTextBlock();
+                    RetrieveDescription();
                 }
                 return _description;
             }
+        }
+
+        private async void RetrieveDescription()
+        {
+            var description = await CompletionService.GetService(_document).GetDescriptionAsync(_document, _item).ConfigureAwait(true);
+            _description = description.TaggedParts.ToTextBlock();
+            OnPropertyChanged(nameof(Description));
         }
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
@@ -118,11 +125,12 @@ namespace RoslynPad.RoslynEditor
 
         public string SortText => _item.SortText;
 
-        // avoids WPF PropertyDescriptor binding leaks
-        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            add { }
-            remove { }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

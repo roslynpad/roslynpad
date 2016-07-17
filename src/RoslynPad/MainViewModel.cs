@@ -21,7 +21,7 @@ namespace RoslynPad
         private static readonly Version _currentVersion = new Version(0, 9);
         private static readonly string _currentVersionVariant = "";
 
-        private const string HockeyAppId = "109aaf1a23174568a9cf856137c8503d";
+        private const string HockeyAppId = "8655168826d9412483763f7ddcf84b8e";
         public const string NuGetPathVariableName = "$NuGet";
 
         private OpenDocumentViewModel _currentOpenDocument;
