@@ -2,12 +2,12 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
@@ -79,6 +79,7 @@ namespace RoslynPad
                 a => _syncContext.Post(o => ProcessDiagnostics(a), null),
                 text => avalonEditTextContainer.UpdateText(text),
                 OnError,
+                () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
                 this).ConfigureAwait(true);
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
@@ -122,7 +123,7 @@ namespace RoslynPad
                 .Concat(installResult.FrameworkReferences.Distinct())
                 .Where(r => !_roslynHost.HasReference(_viewModel.DocumentId, r))
                 .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
-
+            
             Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
         }
 

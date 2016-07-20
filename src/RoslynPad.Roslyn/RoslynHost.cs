@@ -278,11 +278,23 @@ namespace RoslynPad.Roslyn
             return currentDocument.Id;
         }
 
+        public void UpdateDocument(Document document)
+        {
+            RoslynWorkspace workspace;
+            if (!_workspaces.TryGetValue(document.Id, out workspace))
+            {
+                return;
+            }
+
+            workspace.TryApplyChanges(document.Project.Solution);
+        }
+
         private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory)
         {
             var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory);
             var compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
                 usings: DefaultImports,
+                allowUnsafe: true,
                 metadataReferenceResolver: metadataReferenceResolver);
             return compilationOptions;
         }

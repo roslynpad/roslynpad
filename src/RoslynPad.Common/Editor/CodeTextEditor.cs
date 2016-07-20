@@ -30,14 +30,23 @@ namespace RoslynPad.Editor
                 IndentationSize = 4,
                 EnableEmailHyperlinks = false,
             };
+            ShowLineNumbers = true;
+
             MouseHover += OnMouseHover;
             MouseHoverStopped += OnMouseHoverStopped;
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
             TextArea.TextEntered += OnTextEntered;
-            ShowLineNumbers = true;
+            
             ToolTipService.SetInitialShowDelay(this, 0);
             SearchReplacePanel.Install(this);
+
+            var commandBindings = TextArea.CommandBindings;
+            var deleteLineCommand = commandBindings.OfType<CommandBinding>().FirstOrDefault(x => x.Command == AvalonEditCommands.DeleteLine);
+            if (deleteLineCommand != null)
+            {
+                commandBindings.Remove(deleteLineCommand);
+            }
         }
 
         public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(

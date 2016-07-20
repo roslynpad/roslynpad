@@ -53,12 +53,12 @@ namespace RoslynPad.RoslynEditor
         {
             _updatding = true;
             _editor.Document.BeginUpdate();
+            var caret = _editor.CaretOffset;
+            var offset = 0;
             try
             {
                 var changes = newText.GetTextChanges(_currentText);
-
-                var offset = 0;
-
+                
                 foreach (var change in changes)
                 {
                     _editor.Document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
@@ -71,6 +71,7 @@ namespace RoslynPad.RoslynEditor
             finally
             {
                 _updatding = false;
+                _editor.CaretOffset = caret + offset;
                 _editor.Document.EndUpdate();
             }
         }

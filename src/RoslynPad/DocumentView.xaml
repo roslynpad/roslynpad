@@ -16,6 +16,12 @@
                     Command="{Binding RestartHostCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+D"
+                    Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+K"
+                    Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+U"
+                    Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
@@ -165,6 +171,16 @@
                               ToolTip="Match exact package name"
                               Content="Exact" />
                 </Decorator>
+                <Separator />
+                <Button Content="{StaticResource FormatDocument}"
+                        ToolTip="Format Document (Ctrl-D)"
+                        Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
+                <Button Content="{StaticResource CommentCode}"
+                        ToolTip="Comment Selection (Ctrl-K)"
+                        Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
+                <Button Content="{StaticResource UncommentCode}"
+                        ToolTip="Uncomment Selection (Ctrl-U)"
+                        Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"
@@ -189,7 +205,7 @@
                         <ColumnDefinition Width="150"
                                           SharedSizeGroup="ResultNameGroup" />
                         <ColumnDefinition Width="1" />
-                        <ColumnDefinition Width="300"
+                        <ColumnDefinition Width="550"
                                           SharedSizeGroup="ResultValueGroup" />
                         <ColumnDefinition Width="1" />
                     </Grid.ColumnDefinitions>
@@ -221,11 +237,9 @@
                         <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"
-                                                      SharedSizeGroup="ResultNameGroup" />
+                                    <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
                                     <ColumnDefinition Width="2" />
-                                    <ColumnDefinition Width="*"
-                                                      SharedSizeGroup="ResultValueGroup" />
+                                    <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
                                 </Grid.ColumnDefinitions>
                                 <DockPanel Grid.Column="0">
                                     <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
@@ -243,6 +257,7 @@
                                 </DockPanel>
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding Value, Mode=OneTime}"
+                                           TextWrapping="Wrap"
                                            Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                             </Grid>
                         </HierarchicalDataTemplate>

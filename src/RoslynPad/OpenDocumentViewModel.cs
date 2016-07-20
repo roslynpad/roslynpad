@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Hosting;
@@ -31,6 +32,7 @@ namespace RoslynPad
         private bool _isSaving;
         private IDisposable _viewDisposable;
         private Action<ExceptionResultObject> _onError;
+        private Func<TextSpan> _getSelection;
 
         public ObservableCollection<ResultObject> Results
         {
@@ -63,6 +65,65 @@ namespace RoslynPad
             SaveCommand = new DelegateCommand(() => Save(promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);
             RestartHostCommand = new DelegateCommand(RestartHost);
+            FormatDocumentCommand = new DelegateCommand(FormatDocument);
+            CommentSelectionCommand = new DelegateCommand(() => CommentUncommentSelection(CommentAction.Comment));
+            UncommentSelectionCommand = new DelegateCommand(() => CommentUncommentSelection(CommentAction.Uncomment));
+        }
+
+        private enum CommentAction
+        {
+            Comment,
+            Uncomment
+        }
+
+        private async Task CommentUncommentSelection(CommentAction action)
+        {
+            const string singleLineCommentString = "//";
+            var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            var selection = _getSelection();
+            var documentText = await document.GetTextAsync().ConfigureAwait(false);
+            var changes = new List<TextChange>();
+            var lines = documentText.Lines.SkipWhile(x => !x.Span.IntersectsWith(selection))
+                .TakeWhile(x => x.Span.IntersectsWith(selection)).ToArray();
+
+            if (action == CommentAction.Comment)
+            {
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(documentText.GetSubText(line.Span).ToString()))
+                    {
+                        changes.Add(new TextChange(new TextSpan(line.Start, 0), singleLineCommentString));
+                    }
+                }
+            }
+            else if (action == CommentAction.Uncomment)
+            {
+                foreach (var line in lines)
+                {
+                    var text = documentText.GetSubText(line.Span).ToString();
+                    if (text.TrimStart().StartsWith(singleLineCommentString, StringComparison.Ordinal))
+                    {
+                        changes.Add(new TextChange(new TextSpan(
+                            line.Start + text.IndexOf(singleLineCommentString, StringComparison.Ordinal), 
+                            singleLineCommentString.Length), string.Empty));
+                    }
+                }
+            }
+
+            if (changes.Count == 0) return;
+
+            MainViewModel.RoslynHost.UpdateDocument(document.WithText(documentText.WithChanges(changes)));
+            if (action == CommentAction.Uncomment)
+            {
+                await FormatDocument().ConfigureAwait(false);
+            }
+        }
+
+        private async Task FormatDocument()
+        {
+            var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            var formattedDocument = await Formatter.FormatAsync(document).ConfigureAwait(false);
+            MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
         private string GetHostExeName()
@@ -192,13 +253,18 @@ namespace RoslynPad
             }
         }
 
-        public async Task Initialize(SourceTextContainer sourceTextContainer, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, Action<ExceptionResultObject> onError, IDisposable viewDisposable)
+        public async Task Initialize(SourceTextContainer sourceTextContainer,
+            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
+            Action<ExceptionResultObject> onError,
+            Func<TextSpan> getSelection, IDisposable viewDisposable)
         {
             _viewDisposable = viewDisposable;
             _onError = onError;
+            _getSelection = getSelection;
             var roslynHost = MainViewModel.RoslynHost;
             // ReSharper disable once AssignNullToNotNullAttribute
-            DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated, onTextUpdated);
+            DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
+                onTextUpdated);
             await _executionHost.ResetAsync().ConfigureAwait(false);
         }
 
@@ -215,6 +281,12 @@ namespace RoslynPad
         public DelegateCommand RunCommand { get; }
 
         public DelegateCommand RestartHostCommand { get; }
+
+        public DelegateCommand FormatDocumentCommand { get; }
+
+        public DelegateCommand CommentSelectionCommand { get; }
+
+        public DelegateCommand UncommentSelectionCommand { get; }
 
         public bool IsRunning
         {
@@ -251,8 +323,8 @@ namespace RoslynPad
             try
             {
                 var code = await MainViewModel.RoslynHost.GetDocument(DocumentId)
-                            .GetTextAsync(cancellationToken)
-                            .ConfigureAwait(true);
+                    .GetTextAsync(cancellationToken)
+                    .ConfigureAwait(true);
                 var errorResult = await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
                 _onError?.Invoke(errorResult);
                 if (errorResult != null)
