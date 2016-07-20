@@ -121,7 +121,7 @@ namespace RoslynPad.RoslynEditor
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public double Priority { get; private set; }
 
-        public bool IsSelected => _item.Rules.Preselect;
+        public bool IsSelected => _item.Rules.MatchPriority == MatchPriority.Preselect;
 
         public string SortText => _item.SortText;
 

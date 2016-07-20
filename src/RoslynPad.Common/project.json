@@ -6,10 +6,10 @@
     "win": { }
   },
   "dependencies": {
-    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta1-20160607-01",
-    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta1-20160607-01",
-    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta1-20160607-01",
-    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta1-20160607-01",
+    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta3",
+    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta3",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta3",
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta3",
     "AvalonEdit": "5.0.2"
   }
 }
