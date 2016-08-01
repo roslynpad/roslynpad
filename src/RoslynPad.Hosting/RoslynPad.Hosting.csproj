@@ -52,7 +52,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChildProcessManager.cs" />
     <Compile Include="ExecutionHost.cs" />
     <Compile Include="NuGetScriptMetadataResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

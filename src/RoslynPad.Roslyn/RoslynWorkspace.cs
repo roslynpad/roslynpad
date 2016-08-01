@@ -174,7 +174,7 @@ namespace RoslynPad.Roslyn
             }
             if (File.Exists(name))
             {
-                return MetadataReference.CreateFromFile(name);
+                return RoslynHost.CreateMetadataReference(name);
             }
             try
             {
@@ -184,7 +184,7 @@ namespace RoslynPad.Roslyn
                     return null;
                 }
                 var assembly = Assembly.Load(assemblyName.ToString());
-                return MetadataReference.CreateFromFile(assembly.Location);
+                return RoslynHost.CreateMetadataReference(assembly.Location);
             }
             catch (Exception)
             {

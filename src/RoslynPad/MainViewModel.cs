@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.HockeyApp;
-using RoslynPad.Hosting;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -49,7 +48,6 @@ namespace RoslynPad
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
-            ChildProcessManager = new ChildProcessManager();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
@@ -267,8 +265,6 @@ namespace RoslynPad
                 OnPropertyChanged(nameof(SendTelemetry));
             }
         }
-
-        public ChildProcessManager ChildProcessManager { get; }
 
         public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 

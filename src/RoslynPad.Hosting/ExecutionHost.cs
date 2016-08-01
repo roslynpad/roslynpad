@@ -27,6 +27,8 @@ namespace RoslynPad.Hosting
         private const int MillisecondsTimeout = 5000;
         private const int MaxAttemptsToCreateProcess = 2;
 
+        private static readonly ManualResetEventSlim _clientExited = new ManualResetEventSlim(false);
+
         private static Dispatcher _serverDispatcher;
         private static DelegatingTextWriter _outWriter;
         private static DelegatingTextWriter _errorWriter;
@@ -35,13 +37,17 @@ namespace RoslynPad.Hosting
         private readonly IEnumerable<string> _references;
         private readonly IEnumerable<string> _imports;
         private readonly NuGetConfiguration _nuGetConfiguration;
-        private readonly ChildProcessManager _childProcessManager;
 
         private LazyRemoteService _lazyRemoteService;
         private bool _disposed;
 
-        public static void RunServer(string serverPort, string semaphoreName)
+        public static void RunServer(string serverPort, string semaphoreName, int clientProcessId)
         {
+            if (!AttachToClientProcess(clientProcessId))
+            {
+                return;
+            }
+
             // Disables Windows Error Reporting for the process, so that the process fails fast.
             if (Environment.OSVersion.Version >= new Version(6, 1, 0, 0))
             {
@@ -83,7 +89,7 @@ namespace RoslynPad.Hosting
                     semaphore.Release();
                 }
 
-                Thread.Sleep(Timeout.Infinite); // TODO
+                _clientExited.Wait();
             }
             finally
             {
@@ -96,6 +102,28 @@ namespace RoslynPad.Hosting
             // force exit even if there are foreground threads running:
             Environment.Exit(0);
         }
+
+        private static bool AttachToClientProcess(int clientProcessId)
+        {
+            Process clientProcess;
+            try
+            {
+                clientProcess = Process.GetProcessById(clientProcessId);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+
+            clientProcess.EnableRaisingEvents = true;
+            clientProcess.Exited += (o, e) =>
+            {
+                _clientExited.Set();
+            };
+
+            return clientProcess.IsAlive();
+        }
+
 
         private static Uri GetAddress(string serverPort)
         {
@@ -124,14 +152,13 @@ namespace RoslynPad.Hosting
 
         public ExecutionHost(string hostPath, string initialWorkingDirectory,
             IEnumerable<string> references, IEnumerable<string> imports,
-            NuGetConfiguration nuGetConfiguration, ChildProcessManager childProcessManager)
+            NuGetConfiguration nuGetConfiguration)
         {
             HostPath = hostPath;
             _initialWorkingDirectory = initialWorkingDirectory;
             _references = references;
             _imports = imports;
             _nuGetConfiguration = nuGetConfiguration;
-            _childProcessManager = childProcessManager;
         }
 
         public string HostPath { get; set; }
@@ -166,11 +193,13 @@ namespace RoslynPad.Hosting
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
+                var currentProcessId = Process.GetCurrentProcess().Id;
+
                 var remoteServerPort = "HostChannel-" + Guid.NewGuid();
 
                 var processInfo = new ProcessStartInfo(HostPath)
                 {
-                    Arguments = remoteServerPort + " " + semaphoreName,
+                    Arguments = remoteServerPort + " " + semaphoreName + " " + currentProcessId,
                     WorkingDirectory = _initialWorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false
@@ -184,7 +213,6 @@ namespace RoslynPad.Hosting
                 try
                 {
                     newProcessId = newProcess.Id;
-                    _childProcessManager.AddProcess(newProcess);
                 }
                 catch
                 {

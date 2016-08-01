@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using RoslynPad.Hosting;
+﻿using RoslynPad.Hosting;
 
 namespace RoslynPad.Host
 {
@@ -7,8 +6,8 @@ namespace RoslynPad.Host
     {
         private static void Main(string[] args)
         {
-            ExecutionHost.RunServer(args[0], args[1]);
-            Thread.Sleep(Timeout.Infinite);
+            if (args.Length != 3) return;
+            ExecutionHost.RunServer(args[0], args[1], int.Parse(args[2]));
         }
     }
 }

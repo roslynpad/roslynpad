@@ -60,7 +60,7 @@ namespace RoslynPad
             Platform = Platform.X86;
             _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, mainViewModel.ChildProcessManager);
+                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration);
 
             SaveCommand = new DelegateCommand(() => Save(promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);

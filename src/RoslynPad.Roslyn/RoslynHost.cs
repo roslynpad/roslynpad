@@ -107,13 +107,16 @@ namespace RoslynPad.Roslyn
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
-            DefaultReferences = _defaultReferenceAssemblies.Select(t =>
-                (MetadataReference)MetadataReference.CreateFromFile(t.Location,
-                    documentation: GetDocumentationProvider(t.Location))).ToImmutableArray();
+            DefaultReferences = _defaultReferenceAssemblies.Select(t => CreateMetadataReference(t.Location)).ToImmutableArray();
 
             DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
+        }
+
+        internal MetadataReference CreateMetadataReference(string location)
+        {
+            return MetadataReference.CreateFromFile(location, documentation: GetDocumentationProvider(location));
         }
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
@@ -215,6 +218,10 @@ namespace RoslynPad.Roslyn
 
         private DocumentationProvider GetDocumentationProvider(string location)
         {
+            if (File.Exists(Path.ChangeExtension(location, "xml")))
+            {
+                return _documentationProviderService.GetDocumentationProvider(location);
+            }
             if (_referenceAssembliesPath != null)
             {
                 var fileName = Path.GetFileName(location);
@@ -222,10 +229,10 @@ namespace RoslynPad.Roslyn
                 var referenceLocation = Path.Combine(_referenceAssembliesPath, fileName);
                 if (File.Exists(referenceLocation))
                 {
-                    location = referenceLocation;
+                    return _documentationProviderService.GetDocumentationProvider(referenceLocation);
                 }
             }
-            return _documentationProviderService.GetDocumentationProvider(location);
+            return null;
         }
 
         #endregion

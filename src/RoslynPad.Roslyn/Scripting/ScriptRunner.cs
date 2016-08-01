@@ -68,7 +68,7 @@ namespace RoslynPad.Roslyn.Scripting
         {
             var entryPoint = GetExecutor(cancellationToken);
 
-            var result = await entryPoint(new object[2]);
+            var result = await entryPoint(new object[2]).ConfigureAwait(false);
 
             return result;
         }
