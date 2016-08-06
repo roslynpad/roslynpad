@@ -92,6 +92,8 @@ namespace RoslynPad.Editor
         public static readonly RoutedEvent ToolTipRequestEvent = EventManager.RegisterRoutedEvent("ToolTipRequest",
             RoutingStrategy.Bubble, typeof(ToolTipRequestEventHandler), typeof(CodeTextEditor));
 
+        public Func<ToolTipRequestEventArgs, Task> AsyncToolTipRequest { get; set; }
+
         public event ToolTipRequestEventHandler ToolTipRequest
         {
             add { AddHandler(ToolTipRequestEvent, value); }
@@ -115,7 +117,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        private void OnMouseHover(object sender, MouseEventArgs e)
+        private async void OnMouseHover(object sender, MouseEventArgs e)
         {
             TextViewPosition? position;
             try
@@ -135,14 +137,23 @@ namespace RoslynPad.Editor
             }
 
             args.LogicalPosition = position.Value.Location;
+            args.Position = Document.GetOffset(position.Value.Line, position.Value.Column);
 
             RaiseEvent(args);
+
+            if (args.ContentToShow == null)
+            {
+                if (AsyncToolTipRequest != null)
+                {
+                    await AsyncToolTipRequest.Invoke(args).ConfigureAwait(true);
+                }
+            }
 
             if (args.ContentToShow == null) return;
 
             if (_toolTip == null)
             {
-                _toolTip = new ToolTip { MaxWidth = 300 };
+                _toolTip = new ToolTip { MaxWidth = 400 };
                 _toolTip.Closed += ToolTipClosed;
                 ToolTipService.SetInitialShowDelay(_toolTip, 0);
             }

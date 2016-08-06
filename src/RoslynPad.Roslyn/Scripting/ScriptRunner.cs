@@ -67,6 +67,10 @@ namespace RoslynPad.Roslyn.Scripting
         public async Task<object> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var entryPoint = GetExecutor(cancellationToken);
+            if (entryPoint == null)
+            {
+                return null;
+            }
 
             var result = await entryPoint(new object[2]).ConfigureAwait(false);
 
@@ -153,6 +157,9 @@ namespace RoslynPad.Roslyn.Scripting
         {
             return !string.IsNullOrEmpty(qualifier) ? string.Concat(qualifier, ".", name) : name;
         }
+
+        // TODO:
+        //public bool HasSubmissionResult => GetCompilation().HasSubmissionResult;
 
         private Compilation GetCompilation()
         {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -101,7 +102,7 @@ namespace RoslynPad.Roslyn
 
         public static TextBlock ToTextBlock(this ImmutableArray<TaggedText> text)
         {
-            var result = new TextBlock();
+            var result = new TextBlock { TextWrapping = TextWrapping.Wrap };
 
             foreach (var part in text)
             {
@@ -118,7 +119,7 @@ namespace RoslynPad.Roslyn
 
         public static TextBlock ToTextBlock(this IEnumerable<SymbolDisplayPart> parts)
         {
-            var result = new TextBlock();
+            var result = new TextBlock { TextWrapping = TextWrapping.Wrap };
             
             foreach (var part in parts)
             {

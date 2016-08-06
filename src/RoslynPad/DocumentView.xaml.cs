@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -11,6 +12,7 @@ using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.QuickInfo;
 using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
 
@@ -26,6 +28,7 @@ namespace RoslynPad
         private ContextActionsRenderer _contextActionsRenderer;
         private RoslynHost _roslynHost;
         private OpenDocumentViewModel _viewModel;
+        private IQuickInfoProvider _quickInfoProvider;
 
         public DocumentView()
         {
@@ -68,6 +71,7 @@ namespace RoslynPad
             _viewModel = (OpenDocumentViewModel)args.NewValue;
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
             _roslynHost = _viewModel.MainViewModel.RoslynHost;
+            _quickInfoProvider = _roslynHost.GetService<IQuickInfoProvider>();
 
             _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
             Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
@@ -86,6 +90,7 @@ namespace RoslynPad
             Editor.AppendText(documentText);
             Editor.Document.UndoStack.ClearAll();
             Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty(Editor.Document.TextLength);
+            Editor.AsyncToolTipRequest = AsyncToolTipRequest;
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
@@ -93,6 +98,17 @@ namespace RoslynPad
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
+        }
+
+        private async Task AsyncToolTipRequest(ToolTipRequestEventArgs arg)
+        {
+            // TODO: consider invoking this with a delay, then showing the tool-tip without one
+            var document = _roslynHost.GetDocument(_viewModel.DocumentId);
+            var info = await _quickInfoProvider.GetItemAsync(document, arg.Position, CancellationToken.None).ConfigureAwait(true);
+            if (info != null)
+            {
+                arg.SetToolTip(info.Create());
+            }
         }
 
         private void OnError(ExceptionResultObject e)

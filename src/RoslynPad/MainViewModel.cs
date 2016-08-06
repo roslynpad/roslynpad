@@ -17,7 +17,7 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private static readonly Version _currentVersion = new Version(0, 9);
+        private static readonly Version _currentVersion = new Version(0, 10);
         private static readonly string _currentVersionVariant = "";
 
         private const string HockeyAppId = "8655168826d9412483763f7ddcf84b8e";
@@ -34,15 +34,23 @@ namespace RoslynPad
 
         public MainViewModel()
         {
-            HockeyClient.Current.Configure(HockeyAppId)
-                .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
-                .UnregisterDefaultUnobservedTaskExceptionHandler();
-            ((HockeyPlatformHelperWPF)((HockeyClient)HockeyClient.Current).PlatformHelper).AppVersion 
-                = _currentVersion.ToString();
-
+            var hockeyClient = (HockeyClient)HockeyClient.Current;
             if (SendTelemetry)
             {
-                HockeyClient.Current.TrackEvent(TelemetryEventNames.Start);
+                hockeyClient.Configure(HockeyAppId)
+                    .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
+                    .UnregisterDefaultUnobservedTaskExceptionHandler();
+
+                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
+                platformHelper.AppVersion = _currentVersion.ToString();
+
+                hockeyClient.TrackEvent(TelemetryEventNames.Start);
+            }
+            else
+            {
+                var platformHelper = new HockeyPlatformHelperWPF { AppVersion = _currentVersion.ToString() };
+                hockeyClient.PlatformHelper = platformHelper;
+                hockeyClient.AppIdentifier = HockeyAppId;
             }
 
             NuGet = new NuGetViewModel();
@@ -301,7 +309,7 @@ namespace RoslynPad
             return Task.Run(async () =>
             {
                 var feedback = HockeyClient.Current.CreateFeedbackThread();
-                await feedback.PostFeedbackMessageAsync(feedbackText, email);
+                await feedback.PostFeedbackMessageAsync(feedbackText, email).ConfigureAwait(false);
             });
         }
     }

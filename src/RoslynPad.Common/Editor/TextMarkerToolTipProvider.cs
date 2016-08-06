@@ -77,6 +77,8 @@ namespace RoslynPad.Editor
 
         public TextLocation LogicalPosition { get; set; }
 
+        public int Position { get; set; }
+
         public object ContentToShow { get; set; }
 
         public void SetToolTip(object content)
