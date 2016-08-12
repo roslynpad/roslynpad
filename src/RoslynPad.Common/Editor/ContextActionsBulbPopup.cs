@@ -116,7 +116,7 @@ namespace RoslynPad.Editor
 
         public new void Focus()
         {
-            Child.Focus();
+            _mainItem.Focus();
         }
 
         public void OpenAtLineStart(CodeTextEditor editor)

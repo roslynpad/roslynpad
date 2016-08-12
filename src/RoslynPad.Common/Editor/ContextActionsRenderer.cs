@@ -55,7 +55,7 @@ namespace RoslynPad.Editor
             _providers.CollectionChanged += providers_CollectionChanged;
 
             editor.TextArea.TextView.ScrollOffsetChanged += ScrollChanged;
-            _delayMoveTimer = new DispatcherTimer {Interval = TimeSpan.FromMilliseconds(DelayMoveMilliseconds)};
+            _delayMoveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(DelayMoveMilliseconds) };
             _delayMoveTimer.Stop();
             _delayMoveTimer.Tick += TimerMoveTick;
 
@@ -156,7 +156,10 @@ namespace RoslynPad.Editor
                         _popup.ItemsSource = _actions;
                     }
                 };
-                _popup.MenuClosed += (sender, args) => _editor.Dispatcher.InvokeAsync(() => _editor.Focus(), DispatcherPriority.ApplicationIdle);
+                _popup.Closed += (sender, args) =>
+                {
+                    _editor.Dispatcher.InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
+                };
             }
         }
 
