@@ -77,6 +77,17 @@ namespace RoslynPad.Roslyn.Scripting
             return result;
         }
 
+        public async Task SaveAssembly(string assemblyPath, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var compilation = GetCompilation().WithAssemblyName(Path.GetFileNameWithoutExtension(assemblyPath));
+
+            var diagnosticFormatter = CSharpDiagnosticFormatter.Instance;
+            var diagnostics = DiagnoseCompilation(compilation, diagnosticFormatter);
+
+            await SaveAssembly(assemblyPath, compilation, diagnostics, cancellationToken).ConfigureAwait(false);
+            ThrowIfAnyCompilationErrors(diagnostics, diagnosticFormatter);
+        }
+
         private Func<object[], Task<object>> GetExecutor(CancellationToken cancellationToken)
         {
             if (_lazyExecutor == null)
@@ -92,15 +103,51 @@ namespace RoslynPad.Roslyn.Scripting
             var compilation = GetCompilation();
 
             var diagnosticFormatter = CSharpDiagnosticFormatter.Instance;
-
-            var diagnostics = new DiagnosticBag();
-            diagnostics.AddRange(compilation.GetParseDiagnostics());
-            ThrowIfAnyCompilationErrors(diagnostics, diagnosticFormatter);
-            diagnostics.Clear();
+            var diagnostics = DiagnoseCompilation(compilation, diagnosticFormatter);
 
             var entryPoint = Build(compilation, diagnostics, cancellationToken);
             ThrowIfAnyCompilationErrors(diagnostics, diagnosticFormatter);
             return entryPoint;
+        }
+
+        private static DiagnosticBag DiagnoseCompilation(Compilation compilation, DiagnosticFormatter diagnosticFormatter)
+        {
+            var diagnostics = new DiagnosticBag();
+            diagnostics.AddRange(compilation.GetParseDiagnostics());
+            ThrowIfAnyCompilationErrors(diagnostics, diagnosticFormatter);
+            diagnostics.Clear();
+            return diagnostics;
+        }
+
+        private static async Task SaveAssembly(string assemblyPath, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
+        {
+            using (var peStream = new MemoryStream())
+            using (var pdbStream = new MemoryStream())
+            {
+                var emitResult = compilation.Emit(
+                    peStream: peStream,
+                    pdbStream: pdbStream,
+                    cancellationToken: cancellationToken);
+
+                diagnostics.AddRange(emitResult.Diagnostics);
+
+                if (emitResult.Success)
+                {
+                    peStream.Position = 0;
+                    pdbStream.Position = 0;
+
+                    await CopyToFileAsync(assemblyPath, peStream).ConfigureAwait(false);
+                    await CopyToFileAsync(Path.ChangeExtension(assemblyPath, "pdb"), pdbStream).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private static async Task CopyToFileAsync(string path, Stream stream)
+        {
+            using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
+            {
+                await stream.CopyToAsync(fileStream).ConfigureAwait(false);
+            }
         }
 
         private Func<object[], Task<object>> Build(Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)

@@ -339,6 +339,16 @@ namespace RoslynPad.Hosting
             return await service.ExecuteAsync(code).ConfigureAwait(false);
         }
 
+        public async Task CompileAndSave(string code, string assemblyPath)
+        {
+            var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
+            if (service == null)
+            {
+                throw new InvalidOperationException("Unable to create host process");
+            }
+            await service.CompileAndSave(code, assemblyPath).ConfigureAwait(false);
+        }
+
         public async Task ResetAsync()
         {
             // replace the existing service with a new one:
@@ -365,6 +375,9 @@ namespace RoslynPad.Hosting
 
             [OperationContract]
             Task<ExceptionResultObject> ExecuteAsync(string code);
+
+            [OperationContract]
+            Task CompileAndSave(string code, string assemblyPath);
         }
 
         [CallbackBehavior(UseSynchronizationContext = false)]
@@ -485,6 +498,24 @@ namespace RoslynPad.Hosting
             public void Dispose()
             {
                 ObjectExtensions.Dumped -= OnDumped;
+            }
+
+            public async Task CompileAndSave(string code, string assemblyPath)
+            {
+                var processCancelSource = new CancellationTokenSource();
+                var processCancelToken = processCancelSource.Token;
+                // ReSharper disable once MethodSupportsCancellation
+                var processTask = Task.Run(() => ProcessDumpQueue(processCancelToken));
+
+                var script = TryCompile(code, _scriptOptions);
+                // ReSharper disable once MethodSupportsCancellation
+                if (script != null)
+                {
+                    await script.SaveAssembly(assemblyPath).ConfigureAwait(false);
+                }
+
+                processCancelSource.Cancel();
+                await processTask.ConfigureAwait(false);
             }
 
             public async Task<ExceptionResultObject> ExecuteAsync(string code)

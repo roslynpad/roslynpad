@@ -124,7 +124,7 @@ namespace RoslynPad.Roslyn
             var documentId = diagnosticsUpdatedArgs?.DocumentId;
             if (documentId == null) return;
 
-            OnOpenedDocumentSemanticChanged(GetDocument(documentId));
+            OnOpenedDocumentSyntaxChanged(GetDocument(documentId));
 
             Action<DiagnosticsUpdatedArgs> notifier;
             if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out notifier))
@@ -150,7 +150,7 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        private async void OnOpenedDocumentSemanticChanged(Document document)
+        private async void OnOpenedDocumentSyntaxChanged(Document document)
         {
             RoslynWorkspace workspace;
             if (_workspaces.TryGetValue(document.Id, out workspace))
@@ -294,6 +294,16 @@ namespace RoslynPad.Roslyn
             }
 
             workspace.TryApplyChanges(document.Project.Solution);
+        }
+
+        public ImmutableArray<string> GetReferencesDirectives(DocumentId documentId)
+        {
+            RoslynWorkspace workspace;
+            if (_workspaces.TryGetValue(documentId, out workspace))
+            {
+                return workspace.ReferencesDirectives;
+            }
+            return ImmutableArray<string>.Empty;
         }
 
         private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory)

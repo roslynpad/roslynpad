@@ -100,6 +100,7 @@ namespace RoslynPad.Roslyn
             base.UnregisterText(textContainer);
         }
 
+        public ImmutableArray<string> ReferencesDirectives => _referencesDirectives.Select(x => x.Key).ToImmutableArray();
 
         private class DirectiveInfo
         {
