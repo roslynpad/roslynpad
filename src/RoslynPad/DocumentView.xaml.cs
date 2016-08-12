@@ -178,6 +178,16 @@ namespace RoslynPad
             }
         }
 
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+            if (e.Key == Key.U && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                e.Handled = true;
+                NuGetSearch.Focus();
+            }
+        }
+
         private void Editor_OnKeyDown(object sender, KeyEventArgs e)
         {
             //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
@@ -218,6 +228,23 @@ namespace RoslynPad
             var element = (FrameworkElement) sender;
             var result = (ResultObject) element.DataContext;
             Clipboard.SetText(result.ToString());
+        }
+
+        private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Down && _viewModel.NuGet.Packages?.Any() == true)
+            {
+                if (!_viewModel.NuGet.IsPackagesMenuOpen)
+                {
+                    _viewModel.NuGet.IsPackagesMenuOpen = true;
+                }
+                RootNuGetMenu.Focus();
+            }
+            else if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                Editor.Focus();
+            }
         }
     }
 }

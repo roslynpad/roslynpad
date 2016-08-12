@@ -60,32 +60,33 @@
                     </Grid>
                 </Button>
                 <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
-                        ToolTip="Restart host process (Shift-F5)"
+                        ToolTip="Restart host process (Shift+F5)"
                         Content="{StaticResource Restart}" />
                 <ComboBox SelectedItem="{Binding Platform}">
                     <codeAnalysis:Platform>X86</codeAnalysis:Platform>
                     <codeAnalysis:Platform>X64</codeAnalysis:Platform>
                 </ComboBox>
+                <Button Content="{StaticResource BuildSolution}"
+                        Command="{Binding CompileAndSaveCommand}"
+                        ToolTip="Compile and save assembly" />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
-                        ToolTip="Save (Ctrl-S)"
+                        ToolTip="Save (Ctrl+S)"
                         Content="{StaticResource Save}" />
                 <Separator />
-                <Label Content="NuGet" />
                 <Menu Background="Transparent"
                       Name="RootMenu"
                       IsEnabled="{Binding NuGet.IsEnabled}">
-                    <MenuItem IsSubmenuOpen="{Binding NuGet.HasPackages}"
+                    <MenuItem Name="RootNuGetMenu"
+                              IsSubmenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
                               ItemsSource="{Binding NuGet.Packages}"
                               Header="{Binding NuGet, Mode=OneTime}"
-                              ToolTip="Packages"
+                              ToolTip="NuGet Packages"
                               IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
                             <DataTemplate DataType="{x:Type roslynPad:NuGetDocumentViewModel}">
                                 <Grid>
-                                    <TextBlock Name="Text"
-                                               Text=""
-                                               FontFamily="Segoe UI Symbol" />
+                                    <Image Source="{StaticResource NuGet}" />
                                     <ProgressBar VerticalAlignment="Bottom"
                                                  Height="4"
                                                  BorderThickness="0"
@@ -140,14 +141,15 @@
                     </MenuItem>
                 </Menu>
                 <Grid>
-                    <TextBox Name="SearchTerm"
+                    <TextBox Name="NuGetSearch"
                              IsEnabled="{Binding NuGet.IsEnabled}"
                              BorderBrush="#eee"
+                             PreviewKeyDown="SearchTerm_OnPreviewKeyDown"
                              Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource {x:Static ToolBar.TextBoxStyleKey}}"
                              Width="200" />
                     <TextBlock IsHitTestVisible="False"
-                               Text="Search NuGet"
+                               Text="Search NuGet (Ctrl+U)"
                                VerticalAlignment="Center"
                                Margin="10,0,0,0"
                                Foreground="DarkGray">
@@ -156,7 +158,7 @@
                                 <Setter Property="Visibility"
                                         Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=SearchTerm}"
+                                    <DataTrigger Binding="{Binding Text, ElementName=NuGetSearch}"
                                                  Value="">
                                         <Setter Property="Visibility"
                                                 Value="Visible" />
@@ -173,13 +175,13 @@
                 </Decorator>
                 <Separator />
                 <Button Content="{StaticResource FormatDocument}"
-                        ToolTip="Format Document (Ctrl-D)"
+                        ToolTip="Format Document (Ctrl+D)"
                         Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
                 <Button Content="{StaticResource CommentCode}"
-                        ToolTip="Comment Selection (Ctrl-K)"
+                        ToolTip="Comment Selection (Ctrl+K)"
                         Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
                 <Button Content="{StaticResource UncommentCode}"
-                        ToolTip="Uncomment Selection (Ctrl-U)"
+                        ToolTip="Uncomment Selection (Ctrl+U)"
                         Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"

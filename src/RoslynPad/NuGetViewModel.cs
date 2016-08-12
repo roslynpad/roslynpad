@@ -250,7 +250,7 @@ namespace RoslynPad
 
         private class DummyPackagePathResolver : PackagePathResolver
         {
-            public DummyPackagePathResolver() : base(Directory.GetCurrentDirectory(), true)
+            public DummyPackagePathResolver() : base(Directory.GetCurrentDirectory())
             {
             }
 
@@ -522,7 +522,7 @@ namespace RoslynPad
         private string _searchTerm;
         private CancellationTokenSource _cts;
         private IReadOnlyList<PackageData> _packages;
-        private bool _hasPackages;
+        private bool _isPackagesMenuOpen;
 
         public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel)
         {
@@ -538,7 +538,7 @@ namespace RoslynPad
             return InstallPackage(package.Id, package.Version);
         }
 
-        public async Task InstallPackage(string id, NuGetVersion version)
+        public async Task InstallPackage(string id, NuGetVersion version, bool reportInstalled = true)
         {
             IsBusy = true;
             IsEnabled = false;
@@ -546,7 +546,10 @@ namespace RoslynPad
             {
                 var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
 
-                OnPackageInstalled(result);
+                if (reportInstalled)
+                {
+                    OnPackageInstalled(result);
+                }
             }
             finally
             {
@@ -597,10 +600,10 @@ namespace RoslynPad
             private set { SetProperty(ref _packages, value); }
         }
 
-        public bool HasPackages
+        public bool IsPackagesMenuOpen
         {
-            get { return _hasPackages; }
-            set { SetProperty(ref _hasPackages, value); }
+            get { return _isPackagesMenuOpen; }
+            set { SetProperty(ref _isPackagesMenuOpen, value); }
         }
 
         public bool ExactMatch { get; set; }
@@ -612,7 +615,7 @@ namespace RoslynPad
             {
                 if (string.IsNullOrWhiteSpace(searchTerm))
                 {
-                    HasPackages = false;
+                    IsPackagesMenuOpen = false;
                     Packages = null;
                     return;
                 }
@@ -623,7 +626,7 @@ namespace RoslynPad
                         cancellationToken).ConfigureAwait(false);
 
                     Packages = packages;
-                    HasPackages = Packages.Count > 0;
+                    IsPackagesMenuOpen = Packages.Count > 0;
                 }
                 catch (OperationCanceledException)
                 {

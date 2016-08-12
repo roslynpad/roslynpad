@@ -5,11 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Win32;
+using NuGet.Versioning;
 using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Runtime;
@@ -64,6 +67,7 @@ namespace RoslynPad
 
             SaveCommand = new DelegateCommand(() => Save(promptSave: false));
             RunCommand = new DelegateCommand(Run, () => !IsRunning);
+            CompileAndSaveCommand = new DelegateCommand(CompileAndSave);
             RestartHostCommand = new DelegateCommand(RestartHost);
             FormatDocumentCommand = new DelegateCommand(FormatDocument);
             CommentSelectionCommand = new DelegateCommand(() => CommentUncommentSelection(CommentAction.Comment));
@@ -104,7 +108,7 @@ namespace RoslynPad
                     if (text.TrimStart().StartsWith(singleLineCommentString, StringComparison.Ordinal))
                     {
                         changes.Add(new TextChange(new TextSpan(
-                            line.Start + text.IndexOf(singleLineCommentString, StringComparison.Ordinal), 
+                            line.Start + text.IndexOf(singleLineCommentString, StringComparison.Ordinal),
                             singleLineCommentString.Length), string.Empty));
                     }
                 }
@@ -280,6 +284,8 @@ namespace RoslynPad
 
         public DelegateCommand RunCommand { get; }
 
+        public DelegateCommand CompileAndSaveCommand { get; }
+
         public DelegateCommand RestartHostCommand { get; }
 
         public DelegateCommand FormatDocumentCommand { get; }
@@ -300,9 +306,54 @@ namespace RoslynPad
             }
         }
 
+        private async Task CompileAndSave()
+        {
+            var saveDialog = new SaveFileDialog
+            {
+                OverwritePrompt = true,
+                AddExtension = true,
+                Filter = "Assemblies|*.dll",
+                DefaultExt = "dll"
+            };
+            if (saveDialog.ShowDialog(Application.Current.MainWindow) != true) return;
+
+            var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
+
+            var results = new ObservableCollection<ResultObject>();
+            Results = results;
+
+            HookDumped(results, CancellationToken.None);
+
+            try
+            {
+                await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName)).ConfigureAwait(true);
+            }
+            catch (CompilationErrorException ex)
+            {
+                foreach (var diagnostic in ex.Diagnostics)
+                {
+                    results.Add(ResultObject.Create(diagnostic));
+                }
+            }
+            catch (Exception ex)
+            {
+                AddResult(ex, results, CancellationToken.None);
+            }
+        }
+
         private async Task Run()
         {
             if (IsRunning) return;
+
+            try
+            {
+                await EnsureNuGetPackages().ConfigureAwait(true);
+            }
+            catch (Exception)
+            {
+                IsRunning = false;
+                throw;
+            }
 
             Reset();
 
@@ -314,18 +365,11 @@ namespace RoslynPad
             Results = results;
 
             var cancellationToken = _cts.Token;
-            if (_executionHostOnDumped != null)
-            {
-                _executionHost.Dumped -= _executionHostOnDumped;
-            }
-            _executionHostOnDumped = o => AddResult(o, results, cancellationToken);
-            _executionHost.Dumped += _executionHostOnDumped;
+            HookDumped(results, cancellationToken);
             try
             {
-                var code = await MainViewModel.RoslynHost.GetDocument(DocumentId)
-                    .GetTextAsync(cancellationToken)
-                    .ConfigureAwait(true);
-                var errorResult = await _executionHost.ExecuteAsync(code.ToString()).ConfigureAwait(true);
+                var code = await GetCode(cancellationToken).ConfigureAwait(true);
+                var errorResult = await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
                 _onError?.Invoke(errorResult);
                 if (errorResult != null)
                 {
@@ -347,6 +391,44 @@ namespace RoslynPad
             {
                 SetIsRunning(false);
             }
+        }
+
+        private async Task EnsureNuGetPackages()
+        {
+            var nugetVariable = MainViewModel.NuGetConfiguration.PathVariableName;
+            var pathToRepository = MainViewModel.NuGetConfiguration.PathToRepository;
+            foreach (var directive in MainViewModel.RoslynHost.GetReferencesDirectives(DocumentId))
+            {
+                if (directive.StartsWith(nugetVariable, StringComparison.OrdinalIgnoreCase))
+                {
+                    var directiveWithoutRoot = directive.Substring(nugetVariable.Length + 1);
+                    if (!File.Exists(Path.Combine(pathToRepository, directiveWithoutRoot)))
+                    {
+                        var sections = directiveWithoutRoot.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                        NuGetVersion version;
+                        if (sections.Length > 2 && NuGetVersion.TryParse(sections[1], out version))
+                        {
+                            await NuGet.InstallPackage(sections[0], version, reportInstalled: false).ConfigureAwait(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void HookDumped(ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
+        {
+            if (_executionHostOnDumped != null)
+            {
+                _executionHost.Dumped -= _executionHostOnDumped;
+            }
+            _executionHostOnDumped = o => AddResult(o, results, cancellationToken);
+            _executionHost.Dumped += _executionHostOnDumped;
+        }
+
+        private async Task<string> GetCode(CancellationToken cancellationToken)
+        {
+            return (await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken)
+                .ConfigureAwait(false)).ToString();
         }
 
         private void Reset()
