@@ -31,7 +31,7 @@ namespace RoslynPad.Roslyn.Scripting
             _assemblyLoader = new InteractiveAssemblyLoader();
             ParseOptions = (parseOptions ?? new CSharpParseOptions())
                                .WithKind(SourceCodeKind.Script)
-                               .WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
+                               .WithPreprocessorSymbols(RoslynHost.PreprocessorSymbols);
             References = references?.AsImmutable() ?? ImmutableArray<MetadataReference>.Empty;
             Usings = usings?.AsImmutable() ?? ImmutableArray<string>.Empty;
             FilePath = filePath ?? string.Empty;

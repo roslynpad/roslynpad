@@ -48,6 +48,8 @@ namespace RoslynPad
             }
             else
             {
+                Application.Current.DispatcherUnhandledException += (sender, args) => OnUnhandledDispatcherException(args);
+
                 var platformHelper = new HockeyPlatformHelperWPF { AppVersion = _currentVersion.ToString() };
                 hockeyClient.PlatformHelper = platformHelper;
                 hockeyClient.AppIdentifier = HockeyAppId;

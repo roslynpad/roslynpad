@@ -32,6 +32,7 @@ namespace RoslynPad.Editor
     internal sealed class ContextActionsBulbPopup : ExtendedPopup
     {
         private readonly MenuItem _mainItem;
+        private bool _isOpen;
 
         public ContextActionsBulbPopup(UIElement parent) : base(parent)
         {
@@ -54,13 +55,15 @@ namespace RoslynPad.Editor
             {
                 if (ReferenceEquals(args.OriginalSource, _mainItem))
                 {
+                    _isOpen = true;
                     MenuOpened?.Invoke(this, EventArgs.Empty);
                 }
             };
-            _mainItem.SubmenuClosed += (sender, args) =>
+            Closed += (sender, args) =>
             {
-                if (ReferenceEquals(args.OriginalSource, _mainItem))
+                if (_isOpen)
                 {
+                    _isOpen = false;
                     MenuClosed?.Invoke(this, EventArgs.Empty);
                 }
             };
