@@ -25,6 +25,10 @@ namespace RoslynPad.RoslynEditor
         {
             _signatureHelp = signatureHelp;
             _items = signatureHelp.Items;
+            if (signatureHelp.SelectedItemIndex != null)
+            {
+                _selectedIndex = signatureHelp.SelectedItemIndex.Value;
+            }
         }
 
         public int SelectedIndex

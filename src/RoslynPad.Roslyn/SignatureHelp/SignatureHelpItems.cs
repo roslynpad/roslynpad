@@ -16,7 +16,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         public string ArgumentName { get; }
 
-        public int? SelectedItemIndex { get; }
+        public int? SelectedItemIndex { get; internal set; }
 
         internal SignatureHelpItems(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems inner)
         {
