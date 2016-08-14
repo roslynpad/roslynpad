@@ -181,7 +181,7 @@ namespace RoslynPad
         protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
             base.OnPreviewKeyDown(e);
-            if (e.Key == Key.U && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            if (e.Key == Key.T && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
             {
                 e.Handled = true;
                 NuGetSearch.Focus();

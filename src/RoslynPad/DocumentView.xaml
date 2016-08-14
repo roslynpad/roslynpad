@@ -149,7 +149,7 @@
                              Style="{StaticResource {x:Static ToolBar.TextBoxStyleKey}}"
                              Width="200" />
                     <TextBlock IsHitTestVisible="False"
-                               Text="Search NuGet (Ctrl+U)"
+                               Text="Search NuGet (Ctrl+T)"
                                VerticalAlignment="Center"
                                Margin="10,0,0,0"
                                Foreground="DarkGray">
