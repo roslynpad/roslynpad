@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -8,6 +9,7 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
+using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
@@ -50,12 +52,27 @@ namespace RoslynPad.RoslynEditor
                 .GetChangeAsync(_document, _item, _completionChar).ConfigureAwait(false);
             if (!changes.TextChanges.IsDefaultOrEmpty)
             {
-                var span = changes.TextChanges[0].Span;
-                textArea.Document.Replace(
-                    // we don't use the span.End because AvalonEdit filters the list on its own
-                    // so Roslyn isn't aware of document changes since the completion window was opened
-                    new TextSegment { StartOffset = span.Start, EndOffset = textArea.Caret.Offset },
-                    changes.TextChanges[0].NewText);
+                var document = textArea.Document;
+                using (document.RunUpdate())
+                {
+                    // find the change that contains the completionSegment
+                    // we may need to remove a few typed chars since the Roslyn document isn't updated
+                    // while the completion window is open
+                    var firstSpan = changes.TextChanges.FirstOrDefault(x => completionSegment.Contains(x.Span.Start, x.Span.Length));
+                    if (firstSpan != default(TextChange) && completionSegment.EndOffset > firstSpan.Span.End)
+                    {
+                        document.Replace(new TextSegment { StartOffset = firstSpan.Span.End, EndOffset = completionSegment.EndOffset }, string.Empty);
+                    }
+
+                    var offset = 0;
+
+                    foreach (var change in changes.TextChanges)
+                    {
+                        document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
+
+                        offset += change.NewText.Length - change.Span.Length;
+                    }
+                }
             }
 
             if (changes.NewPosition != null)
