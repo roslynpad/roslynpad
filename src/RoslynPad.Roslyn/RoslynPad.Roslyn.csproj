@@ -74,6 +74,7 @@
     <Compile Include="DocumentExtensions.cs" />
     <Compile Include="DocumentTrackingService.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="IRoslynHost.cs" />
     <Compile Include="ISymbolExtensions.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureOptionsService.cs" />

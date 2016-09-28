@@ -35,7 +35,7 @@ namespace RoslynPad.Editor.Windows
     {
         private readonly IDocument _document;
         private readonly DocumentId _documentId;
-        private readonly RoslynHost _roslynHost;
+        private readonly IRoslynHost _roslynHost;
         private readonly List<CachedLine> _cachedLines;
         private readonly SemaphoreSlim _semaphore;
         private readonly ConcurrentQueue<HighlightedLine> _queue;
@@ -44,7 +44,7 @@ namespace RoslynPad.Editor.Windows
 
         private bool _inHighlightingGroup;
 
-        public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, RoslynHost roslynHost)
+        public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, IRoslynHost roslynHost)
         {
             _document = document ?? throw new ArgumentNullException(nameof(document));
             _documentId = documentId;

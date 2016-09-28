@@ -10,7 +10,7 @@ using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
+    public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {
         private readonly TextEditor _editor;
 
