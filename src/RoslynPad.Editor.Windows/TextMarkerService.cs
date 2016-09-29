@@ -27,7 +27,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextViewConnect
+    public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextViewConnect
     {
         #region Fields
 
