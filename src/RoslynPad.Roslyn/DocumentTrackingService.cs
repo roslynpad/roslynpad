@@ -6,46 +6,53 @@ using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace RoslynPad.Roslyn
 {
-    [ExportWorkspaceServiceFactory(typeof(IDocumentTrackingService))]
+    public interface IDocumentTrackingService : IWorkspaceService
+    {
+        event EventHandler<DocumentId> ActiveDocumentChanged;
+        event EventHandler<EventArgs> NonRoslynBufferTextChanged;
+        DocumentId GetActiveDocument();
+        ImmutableArray<DocumentId> GetVisibleDocuments();
+    }
+
+    [ExportWorkspaceServiceFactory(typeof(Microsoft.CodeAnalysis.IDocumentTrackingService))]
     internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
     {
-        private class DocumentTrackingService : IDocumentTrackingService
+        private class DocumentTrackingService : Microsoft.CodeAnalysis.IDocumentTrackingService
         {
-            private readonly RoslynWorkspace _workspace;
+            private readonly IDocumentTrackingService _inner;
 
-            public DocumentTrackingService(Workspace workspace)
+            public DocumentTrackingService(IDocumentTrackingService inner)
             {
-                _workspace = (RoslynWorkspace)workspace;
+                _inner = inner;
+            }
+
+            public event EventHandler<DocumentId> ActiveDocumentChanged
+            {
+                add { _inner.ActiveDocumentChanged += value; }
+                remove { _inner.ActiveDocumentChanged -= value; }
+            }
+
+            public event EventHandler<EventArgs> NonRoslynBufferTextChanged
+            {
+                add { _inner.NonRoslynBufferTextChanged += value; }
+                remove { _inner.NonRoslynBufferTextChanged -= value; }
             }
 
             public DocumentId GetActiveDocument()
             {
-                return _workspace.OpenDocumentId;
+                return _inner.GetActiveDocument();
             }
 
             public ImmutableArray<DocumentId> GetVisibleDocuments()
             {
-                return ImmutableArray.Create(_workspace.OpenDocumentId);
-            }
-
-            public event EventHandler<DocumentId> ActiveDocumentChanged;
-
-            public event EventHandler<EventArgs> NonRoslynBufferTextChanged;
-
-            private void OnActiveDocumentChanged(DocumentId e)
-            {
-                ActiveDocumentChanged?.Invoke(this, e);
-            }
-
-            private void OnNonRoslynBufferTextChanged()
-            {
-                NonRoslynBufferTextChanged?.Invoke(this, EventArgs.Empty);
+                return _inner.GetVisibleDocuments();
             }
         }
 
         public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)
         {
-            return new DocumentTrackingService(workspaceServices.Workspace);
+            var innerService = workspaceServices.GetService<IDocumentTrackingService>();
+            return innerService != null ? new DocumentTrackingService(innerService) : null;
         }
     }
 }
