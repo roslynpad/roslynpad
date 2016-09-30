@@ -96,7 +96,7 @@ namespace RoslynPad
             Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty();
             Editor.AsyncToolTipRequest = AsyncToolTipRequest;
 
-            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
+            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost, new ClassificationHighlightColors()));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.CommandProvider,
