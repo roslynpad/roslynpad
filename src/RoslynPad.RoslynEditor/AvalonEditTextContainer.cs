@@ -71,7 +71,12 @@ namespace RoslynPad.RoslynEditor
             finally
             {
                 _updatding = false;
-                _editor.CaretOffset = caret + offset;
+                var carretOffset = caret + offset;
+                if (carretOffset < 0)
+                    carretOffset = 0;
+                if (carretOffset > newText.Length)
+                    carretOffset = newText.Length;
+                _editor.CaretOffset = carretOffset;
                 _editor.Document.EndUpdate();
             }
         }
