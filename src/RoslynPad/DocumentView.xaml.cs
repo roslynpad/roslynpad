@@ -80,7 +80,7 @@ namespace RoslynPad
             _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
             Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
 
-            var avalonEditTextContainer = new AvalonEditTextContainer(Editor);
+            var avalonEditTextContainer = new AvalonEditTextContainer(Editor.Document) { Editor = Editor };
 
             await _viewModel.Initialize(
                 avalonEditTextContainer,

@@ -12,26 +12,31 @@ namespace RoslynPad.Editor.Windows
 {
     public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {
-        private readonly TextEditor _editor;
+        private readonly TextDocument _document;
 
         private SourceText _currentText;
         private bool _updatding;
 
-        public TextDocument Document => _editor.Document;
+        public TextDocument Document => _document;
+
+        /// <summary>
+        /// If set, <see cref="TextEditor.CaretOffset"/> will be updated.
+        /// </summary>
+        public TextEditor Editor { get; set; }
 
         public override SourceText CurrentText => _currentText;
 
-        public AvalonEditTextContainer(TextEditor editor)
+        public AvalonEditTextContainer(TextDocument document)
         {
-            _editor = editor;
-            _currentText = new AvalonEditSourceText(this, _editor.Text);
+            _document = document;
+            _currentText = new AvalonEditSourceText(this, _document.Text);
 
-            _editor.Document.Changed += DocumentOnChanged;
+            _document.Changed += DocumentOnChanged;
         }
 
         public void Dispose()
         {
-            _editor.Document.Changed -= DocumentOnChanged;
+            _document.Changed -= DocumentOnChanged;
         }
 
         private void DocumentOnChanged(object sender, DocumentChangeEventArgs e)
@@ -52,8 +57,9 @@ namespace RoslynPad.Editor.Windows
         public void UpdateText(SourceText newText)
         {
             _updatding = true;
-            _editor.Document.BeginUpdate();
-            var caret = _editor.CaretOffset;
+            _document.BeginUpdate();
+            var editor = Editor;
+            var caret = editor?.CaretOffset ?? 0;
             var offset = 0;
             try
             {
@@ -61,7 +67,7 @@ namespace RoslynPad.Editor.Windows
                 
                 foreach (var change in changes)
                 {
-                    _editor.Document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
+                    _document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
 
                     offset += change.NewText.Length - change.Span.Length;
                 }
@@ -76,8 +82,9 @@ namespace RoslynPad.Editor.Windows
                     carretOffset = 0;
                 if (carretOffset > newText.Length)
                     carretOffset = newText.Length;
-                _editor.CaretOffset = carretOffset;
-                _editor.Document.EndUpdate();
+                if (editor != null)
+                    editor.CaretOffset = carretOffset;
+                _document.EndUpdate();
             }
         }
 
