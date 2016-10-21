@@ -314,6 +314,7 @@ namespace RoslynPad.Roslyn
             var compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
                 usings: DefaultImports,
                 allowUnsafe: true,
+                sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
                 metadataReferenceResolver: metadataReferenceResolver);
             return compilationOptions;
         }

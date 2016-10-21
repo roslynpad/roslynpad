@@ -409,6 +409,7 @@ namespace RoslynPad.Hosting
             private ScriptOptions _scriptOptions;
             private IServiceCallback _callbackChannel;
             private CSharpParseOptions _parseOptions;
+            private string _workingDirectory;
 
             public Service()
             {
@@ -422,6 +423,8 @@ namespace RoslynPad.Hosting
             public Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory)
             {
                 _parseOptions = new CSharpParseOptions().WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
+
+                _workingDirectory = workingDirectory;
 
                 var scriptOptions = _scriptOptions
                     .WithReferences(references)
@@ -558,7 +561,7 @@ namespace RoslynPad.Hosting
 
             private ScriptRunner TryCompile(string code, ScriptOptions options)
             {
-                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, options.MetadataResolver);
+                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, _workingDirectory);
 
                 var diagnostics = script.Compile();
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
