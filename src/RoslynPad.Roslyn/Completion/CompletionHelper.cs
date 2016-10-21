@@ -1,25 +1,26 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
+using System.Globalization;
 
 namespace RoslynPad.Roslyn.Completion
 {
     public sealed class CompletionHelper
     {
-        private readonly Microsoft.CodeAnalysis.Editor.CompletionHelper _inner;
+        private readonly Microsoft.CodeAnalysis.Completion.CompletionHelper _inner;
 
-        private CompletionHelper(Microsoft.CodeAnalysis.Editor.CompletionHelper inner)
+        private CompletionHelper(Microsoft.CodeAnalysis.Completion.CompletionHelper inner)
         {
             _inner = inner;
         }
 
         public static CompletionHelper GetHelper(Document document, CompletionService service)
         {
-            return new CompletionHelper(Microsoft.CodeAnalysis.Editor.CompletionHelper.GetHelper(document, service));
+            return new CompletionHelper(Microsoft.CodeAnalysis.Completion.CompletionHelper.GetHelper(document));
         }
 
-        public bool MatchesFilterText(CompletionItem item, string filterText, CompletionTrigger trigger)
+        public bool MatchesFilterText(CompletionItem item, string filterText)
         {
-            return _inner.MatchesFilterText(item, filterText, trigger, CompletionFilterReason.TypeChar);
+            return _inner.MatchesFilterText(item, filterText, CultureInfo.InvariantCulture);
         }
     }
 }

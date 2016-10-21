@@ -4,7 +4,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Utilities;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 
@@ -14,12 +13,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
     {
         private static readonly Lazy<List<string>> _lazyAssemblySimpleNames =
             new Lazy<List<string>>(() => GlobalAssemblyCache.Instance.GetAssemblySimpleNames().ToList());
-        private readonly TextSpan _textChangeSpan;
         private readonly CompletionItemRules _itemRules;
 
-        public GlobalAssemblyCacheCompletionHelper(TextSpan textChangeSpan, CompletionItemRules itemRules = null)
+        public GlobalAssemblyCacheCompletionHelper(CompletionItemRules itemRules = null)
         {
-            _textChangeSpan = textChangeSpan;
             _itemRules = itemRules;
         }
 
@@ -42,15 +39,14 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 var path = pathSoFar.Substring(0, comma);
                 return from identity in GetAssemblyIdentities(path)
                     let text = identity.GetDisplayName()
-                    select CompletionItem.Create(text, span: _textChangeSpan, rules: _itemRules);
+                    select CommonCompletionItem.Create(text, glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules);
             }
 
             return from displayName in _lazyAssemblySimpleNames.Value
                 select CommonCompletionItem.Create(
                     displayName, 
                     description: GlobalAssemblyCache.Instance.ResolvePartialName(displayName).GetDisplayName().ToSymbolDisplayParts(),
-                    glyph: Microsoft.CodeAnalysis.Glyph.Assembly, 
-                    span: _textChangeSpan,
+                    glyph: Microsoft.CodeAnalysis.Glyph.Assembly,
                     rules: _itemRules);
         }
 

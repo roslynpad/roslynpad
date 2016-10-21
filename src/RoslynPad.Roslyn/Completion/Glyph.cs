@@ -2,6 +2,7 @@ namespace RoslynPad.Roslyn.Completion
 {
     public enum Glyph
     {
+        None,
         Assembly,
         BasicFile,
         BasicProject,
@@ -25,6 +26,7 @@ namespace RoslynPad.Roslyn.Completion
         EnumInternal,
         EnumMember,
         Error,
+        StatusInformation,
         EventPublic,
         EventProtected,
         EventPrivate,
@@ -69,6 +71,8 @@ namespace RoslynPad.Roslyn.Completion
         StructureInternal,
         TypeParameter,
         Snippet,
-        CompletionWarning
+        CompletionWarning,
+        AddReference,
+        NuGet,
     }
 }

@@ -191,13 +191,13 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             var sections = await descriptionService.ToDescriptionGroupsAsync(workspace, semanticModel, token.SpanStart, symbols.AsImmutable(), cancellationToken).ConfigureAwait(false);
 
-            var mainDescriptionBuilder = new List<SymbolDisplayPart>();
+            var mainDescriptionBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.MainDescription))
             {
                 mainDescriptionBuilder.AddRange(sections[SymbolDescriptionGroups.MainDescription]);
             }
 
-            var typeParameterMapBuilder = new List<SymbolDisplayPart>();
+            var typeParameterMapBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.TypeParameterMap))
             {
                 var parts = sections[SymbolDescriptionGroups.TypeParameterMap];
@@ -208,7 +208,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 }
             }
 
-            var anonymousTypesBuilder = new List<SymbolDisplayPart>();
+            var anonymousTypesBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.AnonymousTypes))
             {
                 var parts = sections[SymbolDescriptionGroups.AnonymousTypes];
@@ -219,7 +219,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 }
             }
 
-            var usageTextBuilder = new List<SymbolDisplayPart>();
+            var usageTextBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.AwaitableUsageText))
             {
                 var parts = sections[SymbolDescriptionGroups.AwaitableUsageText];
@@ -231,10 +231,10 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             if (supportedPlatforms != null)
             {
-                usageTextBuilder.AddRange(supportedPlatforms.ToDisplayParts());
+                usageTextBuilder.AddRange(supportedPlatforms.ToDisplayParts().ToTaggedText());
             }
 
-            var exceptionsTextBuilder = new List<SymbolDisplayPart>();
+            var exceptionsTextBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.Exceptions))
             {
                 var parts = sections[SymbolDescriptionGroups.Exceptions];
@@ -273,12 +273,12 @@ namespace RoslynPad.Roslyn.QuickInfo
             ISymbol symbol,
             bool showWarningGlyph,
             bool showSymbolGlyph,
-            IList<SymbolDisplayPart> mainDescription,
+            IList<TaggedText> mainDescription,
             IDeferredQuickInfoContent documentation,
-            IList<SymbolDisplayPart> typeParameterMap,
-            IList<SymbolDisplayPart> anonymousTypes,
-            IList<SymbolDisplayPart> usageText,
-            IList<SymbolDisplayPart> exceptionText)
+            IList<TaggedText> typeParameterMap,
+            IList<TaggedText> anonymousTypes,
+            IList<TaggedText> usageText,
+            IList<TaggedText> exceptionText)
         {
             return new QuickInfoDisplayDeferredContent(
                 symbolGlyph: showSymbolGlyph ? CreateGlyphDeferredContent(symbol) : null,
@@ -306,7 +306,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             return new DocumentationCommentDeferredContent(documentationComment);
         }
 
-        private static IDeferredQuickInfoContent CreateClassifiableDeferredContent(IList<SymbolDisplayPart> content)
+        private static IDeferredQuickInfoContent CreateClassifiableDeferredContent(IList<TaggedText> content)
         {
             return new ClassifiableDeferredContent(content);
         }
@@ -334,9 +334,9 @@ namespace RoslynPad.Roslyn.QuickInfo
 
         private class ClassifiableDeferredContent : IDeferredQuickInfoContent
         {
-            private readonly IList<SymbolDisplayPart> _classifiableContent;
+            private readonly IList<TaggedText> _classifiableContent;
 
-            public ClassifiableDeferredContent(IList<SymbolDisplayPart> content)
+            public ClassifiableDeferredContent(IList<TaggedText> content)
             {
                 _classifiableContent = content;
             }
@@ -386,7 +386,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 
         private IDeferredQuickInfoContent GetDocumentationContent(
             IEnumerable<ISymbol> symbols,
-            IDictionary<SymbolDescriptionGroups, ImmutableArray<SymbolDisplayPart>> sections,
+            IDictionary<SymbolDescriptionGroups, ImmutableArray<TaggedText>> sections,
             SemanticModel semanticModel,
             SyntaxToken token,
             IDocumentationCommentFormattingService formatter,
@@ -395,7 +395,7 @@ namespace RoslynPad.Roslyn.QuickInfo
         {
             if (sections.ContainsKey(SymbolDescriptionGroups.Documentation))
             {
-                var documentationBuilder = new List<SymbolDisplayPart>();
+                var documentationBuilder = new List<TaggedText>();
                 documentationBuilder.AddRange(sections[SymbolDescriptionGroups.Documentation]);
                 return CreateClassifiableDeferredContent(documentationBuilder);
             }

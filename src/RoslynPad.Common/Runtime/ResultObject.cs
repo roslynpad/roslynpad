@@ -83,6 +83,8 @@ namespace RoslynPad.Runtime
                 return;
             }
 
+            // TODO-BUG: expand properties inline
+
             var targetDepth = _depth + 1;
             var isMaxDepth = targetDepth >= MaxDepth;
 
@@ -99,6 +101,7 @@ namespace RoslynPad.Runtime
                 catch (TargetInvocationException exception)
                 {
                     Header = _property.Name;
+                    // ReSharper disable once PossibleNullReferenceException
                     Value = $"Threw {exception.InnerException.GetType().Name}";
                     Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
                     return;

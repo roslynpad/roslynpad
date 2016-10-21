@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -9,7 +8,6 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
@@ -50,29 +48,21 @@ namespace RoslynPad.RoslynEditor
 
             var changes = await CompletionService.GetService(_document)
                 .GetChangeAsync(_document, _item, _completionChar).ConfigureAwait(false);
-            if (!changes.TextChanges.IsDefaultOrEmpty)
+            var textChange = changes.TextChange;
+            var document = textArea.Document;
+            using (document.RunUpdate())
             {
-                var document = textArea.Document;
-                using (document.RunUpdate())
+                // we may need to remove a few typed chars since the Roslyn document isn't updated
+                // while the completion window is open
+                if (completionSegment.EndOffset > textChange.Span.End)
                 {
-                    // find the change that contains the completionSegment
-                    // we may need to remove a few typed chars since the Roslyn document isn't updated
-                    // while the completion window is open
-                    var firstSpan = changes.TextChanges.FirstOrDefault(x => completionSegment.Contains(x.Span.Start, x.Span.Length));
-                    if (firstSpan != default(TextChange) && completionSegment.EndOffset > firstSpan.Span.End)
-                    {
-                        document.Replace(new TextSegment { StartOffset = firstSpan.Span.End, EndOffset = completionSegment.EndOffset }, string.Empty);
-                    }
-
-                    var offset = 0;
-
-                    foreach (var change in changes.TextChanges)
-                    {
-                        document.Replace(change.Span.Start + offset, change.Span.Length, new StringTextSource(change.NewText));
-
-                        offset += change.NewText.Length - change.Span.Length;
-                    }
+                    document.Replace(
+                        new TextSegment {StartOffset = textChange.Span.End, EndOffset = completionSegment.EndOffset},
+                        string.Empty);
                 }
+
+                document.Replace(textChange.Span.Start, textChange.Span.Length,
+                    new StringTextSource(textChange.NewText));
             }
 
             if (changes.NewPosition != null)

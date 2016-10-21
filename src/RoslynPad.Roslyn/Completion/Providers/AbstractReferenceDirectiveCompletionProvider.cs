@@ -56,7 +56,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
             var textChangeSpan = GetTextChangeSpan(stringLiteral, position);
 
-            var gacHelper = new GlobalAssemblyCacheCompletionHelper(textChangeSpan, _rules);
+            var gacHelper = new GlobalAssemblyCacheCompletionHelper(_rules);
             var referenceResolver = document.Project.CompilationOptions.MetadataReferenceResolver;
 
             // TODO: https://github.com/dotnet/roslyn/issues/5263

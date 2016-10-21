@@ -69,7 +69,7 @@ namespace RoslynPad.RoslynEditor
                     var textSpanToText = new Dictionary<TextSpan, string>();
                     
                     completionData = data.Items
-                        .Where(item => MatchesFilterText(helper, item, text, textSpanToText, completionTrigger))
+                        .Where(item => MatchesFilterText(helper, item, text, textSpanToText))
                         .Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager))
                             .ToArray<ICompletionDataEx>();
                 }
@@ -82,11 +82,11 @@ namespace RoslynPad.RoslynEditor
             return new CompletionResult(completionData, overloadProvider);
         }
 
-        private static bool MatchesFilterText(CompletionHelper helper, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText, CompletionTrigger completionTrigger)
+        private static bool MatchesFilterText(CompletionHelper helper, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)
         {
             var filterText = GetFilterText(item, text, textSpanToText);
             if (string.IsNullOrEmpty(filterText)) return true;
-            return helper.MatchesFilterText(item, filterText, completionTrigger);
+            return helper.MatchesFilterText(item, filterText);
         }
 
         private static string GetFilterText(CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)

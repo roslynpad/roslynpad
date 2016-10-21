@@ -9,17 +9,17 @@ namespace RoslynPad.Roslyn.SignatureHelp
     {
         public string Name { get; }
 
-        public Func<CancellationToken, IEnumerable<SymbolDisplayPart>> DocumentationFactory { get; }
+        public Func<CancellationToken, IEnumerable<TaggedText>> DocumentationFactory { get; }
 
-        public IList<SymbolDisplayPart> PrefixDisplayParts { get; }
+        public IList<TaggedText> PrefixDisplayParts { get; }
 
-        public IList<SymbolDisplayPart> SuffixDisplayParts { get; }
+        public IList<TaggedText> SuffixDisplayParts { get; }
 
-        public IList<SymbolDisplayPart> DisplayParts { get; }
+        public IList<TaggedText> DisplayParts { get; }
 
         public bool IsOptional { get; }
 
-        public IList<SymbolDisplayPart> SelectedDisplayParts { get; }
+        public IList<TaggedText> SelectedDisplayParts { get; }
 
         internal SignatureHelpParameter(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpParameter inner)
         {

@@ -11,17 +11,17 @@ namespace RoslynPad.Roslyn.SignatureHelp
     {
         public bool IsVariadic { get; }
 
-        public ImmutableArray<SymbolDisplayPart> PrefixDisplayParts { get; }
+        public ImmutableArray<TaggedText> PrefixDisplayParts { get; }
 
-        public ImmutableArray<SymbolDisplayPart> SuffixDisplayParts { get; }
+        public ImmutableArray<TaggedText> SuffixDisplayParts { get; }
 
-        public ImmutableArray<SymbolDisplayPart> SeparatorDisplayParts { get; }
+        public ImmutableArray<TaggedText> SeparatorDisplayParts { get; }
 
         public ImmutableArray<SignatureHelpParameter> Parameters { get; }
 
-        public ImmutableArray<SymbolDisplayPart> DescriptionParts { get; }
+        public ImmutableArray<TaggedText> DescriptionParts { get; }
 
-        public Func<CancellationToken, IEnumerable<SymbolDisplayPart>> DocumentationFactory { get; }
+        public Func<CancellationToken, IEnumerable<TaggedText>> DocumentationFactory { get; }
 
         internal SignatureHelpItem(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItem inner)
         {

@@ -159,7 +159,8 @@ namespace RoslynPad
             if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
             {
                 // ReSharper disable once PossibleNullReferenceException
-                using (var stream = Application.GetResourceStream(new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
+                using (var stream = Application.GetResourceStream(
+                    new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
                 using (var archive = new ZipArchive(stream))
                 {
                     archive.ExtractToDirectory(root.Path);
@@ -209,10 +210,14 @@ namespace RoslynPad
             {
                 return;
             }
-            if (document.Document?.IsAutoSave == true)
+
+            // ReSharper disable once PossibleNullReferenceException
+            var autoSavePath = document.Document?.GetAutoSavePath();
+            if (autoSavePath != null && File.Exists(autoSavePath))
             {
-                File.Delete(document.Document.Path);
+                File.Delete(autoSavePath);
             }
+
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
             document.Close();

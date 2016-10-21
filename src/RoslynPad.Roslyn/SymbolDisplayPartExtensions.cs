@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -100,7 +99,7 @@ namespace RoslynPad.Roslyn
             return run;
         }
 
-        public static TextBlock ToTextBlock(this ImmutableArray<TaggedText> text)
+        public static TextBlock ToTextBlock(this IEnumerable<TaggedText> text)
         {
             var result = new TextBlock { TextWrapping = TextWrapping.Wrap };
 
@@ -110,11 +109,6 @@ namespace RoslynPad.Roslyn
             }
 
             return result;
-        }
-
-        public static TextBlock ToTextBlock(this ImmutableArray<SymbolDisplayPart> parts)
-        {
-            return parts.AsEnumerable().ToTextBlock();
         }
 
         public static TextBlock ToTextBlock(this IEnumerable<SymbolDisplayPart> parts)

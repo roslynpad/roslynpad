@@ -25,7 +25,7 @@ namespace RoslynPad.Roslyn.Scripting
         private Func<object[], Task<object>> _lazyExecutor;
         private Compilation _lazyCompilation;
 
-        public ScriptRunner(string code, CSharpParseOptions parseOptions = null, IEnumerable<MetadataReference> references = null, IEnumerable<string> usings = null, string filePath = null, MetadataReferenceResolver metadataResolver = null)
+        public ScriptRunner(string code, CSharpParseOptions parseOptions = null, IEnumerable<MetadataReference> references = null, IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null)
         {
             Code = code;
             _assemblyLoader = new InteractiveAssemblyLoader();
@@ -35,7 +35,11 @@ namespace RoslynPad.Roslyn.Scripting
             References = references?.AsImmutable() ?? ImmutableArray<MetadataReference>.Empty;
             Usings = usings?.AsImmutable() ?? ImmutableArray<string>.Empty;
             FilePath = filePath ?? string.Empty;
-            MetadataResolver = metadataResolver;
+            MetadataResolver = metadataResolver ?? ScriptMetadataResolver.Default;
+            SourceResolver = sourceResolver ??
+                             (workingDirectory != null
+                                 ? new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory)
+                                 : SourceFileResolver.Default);
         }
 
         public string Code { get; }
@@ -44,11 +48,13 @@ namespace RoslynPad.Roslyn.Scripting
 
         public MetadataReferenceResolver MetadataResolver { get; }
 
+        public SourceReferenceResolver SourceResolver { get; }
+
         public ImmutableArray<string> Usings { get; }
 
-        public string FilePath { get; set; }
+        public string FilePath { get; }
 
-        public CSharpParseOptions ParseOptions { get; set; }
+        public CSharpParseOptions ParseOptions { get; }
 
         public ImmutableArray<Diagnostic> Compile(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -240,7 +246,7 @@ namespace RoslynPad.Roslyn.Scripting
                     platform: Platform.AnyCpu,
                     warningLevel: 4,
                     xmlReferenceResolver: null,
-                    sourceReferenceResolver: null,
+                    sourceReferenceResolver: SourceResolver,
                     metadataReferenceResolver: MetadataResolver,
                     assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default
                 ), //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),

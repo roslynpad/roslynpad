@@ -99,7 +99,7 @@ namespace RoslynPad.RoslynEditor
             }
         }
 
-        private static TextBlock ToTextBlock(IEnumerable<SymbolDisplayPart> parts, bool bold = false)
+        private static TextBlock ToTextBlock(IEnumerable<TaggedText> parts, bool bold = false)
         {
             if (parts == null) return new TextBlock();
             var textBlock = parts.ToTextBlock();

@@ -226,10 +226,9 @@ namespace RoslynPad.Roslyn
             }
             if (_referenceAssembliesPath != null)
             {
-                var fileName = Path.GetFileName(location);
                 // ReSharper disable once AssignNullToNotNullAttribute
-                var referenceLocation = Path.Combine(_referenceAssembliesPath, fileName);
-                if (File.Exists(referenceLocation))
+                var referenceLocation = Path.Combine(_referenceAssembliesPath, Path.GetFileName(location));
+                if (File.Exists(Path.ChangeExtension(referenceLocation, "xml")))
                 {
                     return _documentationProviderService.GetDocumentationProvider(referenceLocation);
                 }
