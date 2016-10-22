@@ -22,7 +22,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Hosting
 {
-    internal class ExecutionHost : IDisposable
+    internal class ExecutionHost : IExecutionHost
     {
         private const int MillisecondsTimeout = 5000;
         private const int MaxAttemptsToCreateProcess = 2;
@@ -38,6 +38,7 @@ namespace RoslynPad.Hosting
         private readonly IEnumerable<string> _imports;
         private readonly NuGetConfiguration _nuGetConfiguration;
 
+        private Platform _platform;
         private LazyRemoteService _lazyRemoteService;
         private bool _disposed;
 
@@ -150,15 +151,26 @@ namespace RoslynPad.Hosting
             return new DelegatingTextWriter(line => line.Dump());
         }
 
-        public ExecutionHost(string hostPath, string initialWorkingDirectory,
+        public ExecutionHost(Platform platform, string initialWorkingDirectory,
             IEnumerable<string> references, IEnumerable<string> imports,
             NuGetConfiguration nuGetConfiguration)
         {
-            HostPath = hostPath;
+            _platform = platform;
+            HostPath = GetHostExeName();
             _initialWorkingDirectory = initialWorkingDirectory;
             _references = references;
             _imports = imports;
             _nuGetConfiguration = nuGetConfiguration;
+        }
+
+        public Platform Platform
+        {
+            get { return _platform; }
+            set
+            {
+                _platform = value;
+                HostPath = GetHostExeName();
+            }
         }
 
         public string HostPath { get; set; }
@@ -329,14 +341,21 @@ namespace RoslynPad.Hosting
             return null;
         }
 
-        public async Task<ExceptionResultObject> ExecuteAsync(string code)
+        public async Task<ExceptionResultObject> ExecuteAsync(string code, CancellationToken ct = default(CancellationToken))
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            return await service.ExecuteAsync(code).ConfigureAwait(false);
+            CancellationTokenRegistration ctRegistration = default(CancellationTokenRegistration);
+            if (ct.CanBeCanceled)
+            {
+                ctRegistration = ct.Register(async () => await this.ResetAsync());
+            }
+            var result = await service.ExecuteAsync(code).ConfigureAwait(false);
+            if(ct.CanBeCanceled) ctRegistration.Dispose();
+            return result;
         }
 
         public async Task CompileAndSave(string code, string assemblyPath)
@@ -351,11 +370,20 @@ namespace RoslynPad.Hosting
 
         public async Task ResetAsync()
         {
-            // replace the existing service with a new one:
-            var newService = new LazyRemoteService(this);
+            var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
+            if (service != null)
+            {
+                service?.Abort().Wait();
+            }
+            else
+            {
+                // replace the existing service with a new one:
+                var newService = new LazyRemoteService(this);
 
-            var oldService = Interlocked.Exchange(ref _lazyRemoteService, newService);
-            oldService?.Dispose();
+                var oldService = Interlocked.Exchange(ref _lazyRemoteService, newService);
+                oldService?.Dispose();
+            }
+
 
             await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
         }
@@ -378,6 +406,9 @@ namespace RoslynPad.Hosting
 
             [OperationContract]
             Task CompileAndSave(string code, string assemblyPath);
+
+            [OperationContract]
+            Task Abort();
         }
 
         [CallbackBehavior(UseSynchronizationContext = false)]
@@ -410,6 +441,7 @@ namespace RoslynPad.Hosting
             private IServiceCallback _callbackChannel;
             private CSharpParseOptions _parseOptions;
             private string _workingDirectory;
+            private Thread _runnerThread;
 
             public Service()
             {
@@ -521,6 +553,12 @@ namespace RoslynPad.Hosting
                 await processTask.ConfigureAwait(false);
             }
 
+            public Task Abort()
+            {
+                _runnerThread?.Abort();
+                return Task.CompletedTask;
+            }
+
             public async Task<ExceptionResultObject> ExecuteAsync(string code)
             {
                 Debug.Assert(code != null);
@@ -535,7 +573,7 @@ namespace RoslynPad.Hosting
                     var script = TryCompile(code, _scriptOptions);
                     if (script != null)
                     {
-                        var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
+                        var result = await ExecuteOnUIThread(script, processCancelToken).ConfigureAwait(false);
                         var errorResult = result as ExceptionResultObject;
                         if (errorResult == null && result != null)
                         {
@@ -591,15 +629,34 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private async Task<object> ExecuteOnUIThread(ScriptRunner script)
+            private async Task<object> ExecuteOnUIThread(ScriptRunner script, CancellationToken ct = default(CancellationToken))
             {
+                var ctRegistration = default(CancellationTokenRegistration);
+                var tcs = new TaskCompletionSource<object>();
+                object result;
+                
                 return await (await _serverDispatcher.InvokeAsync(
                     async () =>
                     {
                         try
                         {
-                            var task = script.RunAsync();
-                            return await task.ConfigureAwait(false);
+                            _runnerThread = new Thread(async () => {
+                                try {
+                                    result = await script.RunAsync(ct);
+                                    tcs.TrySetResult(result);
+                                } catch (Exception e) {
+                                    result = ExceptionResultObject.Create(e);
+                                    tcs.TrySetResult(result);
+                                }
+                            });
+                            _runnerThread.SetApartmentState(ApartmentState.MTA);
+                            _runnerThread.Start();
+                            if (ct.CanBeCanceled) {
+                                ctRegistration = ct.Register(() => _runnerThread.Abort());
+                            }
+                            return await tcs.Task.ConfigureAwait(false);
+                            //var task = script.RunAsync(ct);
+                            //return await task.ConfigureAwait(false);
                         }
                         catch (FileLoadException e) when (e.InnerException is NotSupportedException)
                         {
@@ -609,6 +666,11 @@ namespace RoslynPad.Hosting
                         catch (Exception e)
                         {
                             return ExceptionResultObject.Create(e);
+                        }
+                        finally
+                        {
+                            ctRegistration.Dispose();
+                            _runnerThread = null;
                         }
                     })).ConfigureAwait(false);
             }
@@ -689,6 +751,18 @@ namespace RoslynPad.Hosting
             {
                 var cancellationToken = _cancellationSource.Token;
                 return Task.Run(() => _host.TryStartProcess(cancellationToken), cancellationToken);
+            }
+        }
+
+        private string GetHostExeName() 
+        {
+            switch (_platform) {
+                case Platform.X86:
+                    return "RoslynPad.Host32.exe";
+                case Platform.X64:
+                    return "RoslynPad.Host64.exe";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Platform));
             }
         }
 

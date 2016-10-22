@@ -25,7 +25,7 @@ namespace RoslynPad
         private readonly string _workingDirectory;
         private readonly Dispatcher _dispatcher;
 
-        private ExecutionHost _executionHost;
+        private IExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
@@ -61,7 +61,7 @@ namespace RoslynPad
                 : MainViewModel.DocumentRoot.Path;
 
             Platform = Platform.X86;
-            _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
+            _executionHost = new ExecutionHost(Platform, _workingDirectory,
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
                 roslynHost.DefaultImports, mainViewModel.NuGetConfiguration);
 
@@ -130,19 +130,6 @@ namespace RoslynPad
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
-        private string GetHostExeName()
-        {
-            switch (Platform)
-            {
-                case Platform.X86:
-                    return "RoslynPad.Host32.exe";
-                case Platform.X64:
-                    return "RoslynPad.Host64.exe";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(Platform));
-            }
-        }
-
         public Platform Platform
         {
             get { return _platform; }
@@ -152,7 +139,8 @@ namespace RoslynPad
                 {
                     if (_executionHost != null)
                     {
-                        _executionHost.HostPath = GetHostExeName();
+                        _executionHost.Platform = value;
+                        
                         RestartHostCommand.Execute();
                     }
                 }
