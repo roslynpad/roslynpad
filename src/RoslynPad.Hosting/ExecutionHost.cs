@@ -561,7 +561,7 @@ namespace RoslynPad.Hosting
 
             private ScriptRunner TryCompile(string code, ScriptOptions options)
             {
-                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, _workingDirectory);
+                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, _workingDirectory, options.MetadataResolver);
 
                 var diagnostics = script.Compile();
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
