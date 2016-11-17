@@ -126,13 +126,13 @@ namespace RoslynPad.Editor.Windows
             public override string ToString(TextSpan span) => _sourceText.ToString(span);
             
             public override IReadOnlyList<TextChangeRange> GetChangeRanges(SourceText oldText)
-                => _sourceText.GetChangeRanges(oldText);
+                => _sourceText.GetChangeRanges(GetInnerSourceText(oldText));
 
-            public override IReadOnlyList<TextChange> GetTextChanges(SourceText oldText) => _sourceText.GetTextChanges(oldText);
+            public override IReadOnlyList<TextChange> GetTextChanges(SourceText oldText) => _sourceText.GetTextChanges(GetInnerSourceText(oldText));
 
             protected override TextLineCollection GetLinesCore() => _sourceText.Lines;
 
-            protected override bool ContentEqualsImpl(SourceText other) => _sourceText.ContentEquals(other);
+            protected override bool ContentEqualsImpl(SourceText other) => _sourceText.ContentEquals(GetInnerSourceText(other));
 
             public override SourceTextContainer Container => _container ?? _sourceText.Container;
 
@@ -143,6 +143,11 @@ namespace RoslynPad.Editor.Windows
             public override SourceText WithChanges(IEnumerable<TextChange> changes)
             {
                 return new AvalonEditSourceText(_container, _sourceText.WithChanges(changes));
+            }
+
+            private static SourceText GetInnerSourceText(SourceText oldText)
+            {
+                return (oldText as AvalonEditSourceText)?._sourceText ?? oldText;
             }
         }
     }
