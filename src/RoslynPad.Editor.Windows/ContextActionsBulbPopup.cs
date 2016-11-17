@@ -82,7 +82,7 @@ namespace RoslynPad.Editor.Windows
 
         private Style CreateItemContainerStyle()
         {
-            var style = new Style(typeof(MenuItem));
+            var style = new Style(typeof(MenuItem), TryFindResource(typeof(MenuItem)) as Style);
             style.Setters.Add(new Setter(MenuItem.CommandProperty,
                 new Binding { Converter = new ActionCommandConverter(this) }));
             style.Seal();
