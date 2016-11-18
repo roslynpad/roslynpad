@@ -2,6 +2,7 @@
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{AC9F325F-A3FF-4561-941E-49CE4736CBD0}</ProjectGuid>
@@ -9,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <AssemblyName>RoslynETAHost</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,8 +33,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
@@ -62,11 +62,12 @@
     <Compile Include="CodeRefactorings\CodeRefactoringService.cs" />
     <Compile Include="CodeRefactorings\ICodeRefactoringService.cs" />
     <Compile Include="Completion\CompletionHelper.cs" />
-    <Compile Include="Completion\DummyWaitIndicator.cs" />
     <Compile Include="Completion\Glyph.cs" />
     <Compile Include="Completion\CompletionItemExtensions.cs" />
     <Compile Include="Completion\Providers\AbstractReferenceDirectiveCompletionProvider.cs" />
+    <Compile Include="Completion\Providers\FileSystemCompletionHelper.cs" />
     <Compile Include="Completion\Providers\GlobalAssemblyCacheCompletionHelper.cs" />
+    <Compile Include="Completion\Providers\PathCompletionUtilities.cs" />
     <Compile Include="Completion\Providers\ReferenceDirectiveCompletionProvider.cs" />
     <Compile Include="Diagnostics\DiagnosticData.cs" />
     <Compile Include="Diagnostics\DiagnosticDataLocation.cs" />
@@ -78,11 +79,6 @@
     <Compile Include="Diagnostics\WorkspaceDiagnosticAnalyzerProviderService.cs" />
     <Compile Include="DocumentExtensions.cs" />
     <Compile Include="DocumentTrackingService.cs" />
-    <Compile Include="Editor\IInlineRenameService.cs" />
-    <Compile Include="Editor\IInlineRenameSession.cs" />
-    <Compile Include="Editor\InlineRenameService.cs" />
-    <Compile Include="Editor\InlineRenameSession.cs" />
-    <Compile Include="Editor\InlineRenameSessionInfo.cs" />
     <Compile Include="GlyphExtensions.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
     <Compile Include="ISymbolExtensions.cs" />

@@ -14,7 +14,6 @@
     "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-beta5",
     "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta5",
     "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta5",
-    "Microsoft.CodeAnalysis.EditorFeatures": "2.0.0-beta5",
     "Nuget.PackageManagement": "3.4.3",
     "HockeySDK.WPF": "4.1.2"
   }

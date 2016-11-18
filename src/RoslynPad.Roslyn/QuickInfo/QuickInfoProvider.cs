@@ -4,16 +4,16 @@ using System.Collections.Immutable;
 using System.Composition;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.DocumentationComments;
-using Microsoft.CodeAnalysis.Editor;
-using Microsoft.CodeAnalysis.Editor.Implementation.IntelliSense.QuickInfo;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
@@ -309,6 +309,204 @@ namespace RoslynPad.Roslyn.QuickInfo
         private static IDeferredQuickInfoContent CreateClassifiableDeferredContent(IList<TaggedText> content)
         {
             return new ClassifiableDeferredContent(content);
+        }
+
+        private interface IDeferredQuickInfoContent
+        {
+            FrameworkElement Create();
+        }
+
+        private class QuickInfoDisplayDeferredContent : IDeferredQuickInfoContent
+        {
+            private readonly IDeferredQuickInfoContent _symbolGlyph;
+            private readonly IDeferredQuickInfoContent _mainDescription;
+            private readonly IDeferredQuickInfoContent _documentation;
+            private readonly IDeferredQuickInfoContent _typeParameterMap;
+            private readonly IDeferredQuickInfoContent _anonymousTypes;
+            private readonly IDeferredQuickInfoContent _usageText;
+            private readonly IDeferredQuickInfoContent _exceptionText;
+            private readonly IDeferredQuickInfoContent _warningGlyph;
+            
+            public QuickInfoDisplayDeferredContent(IDeferredQuickInfoContent symbolGlyph, IDeferredQuickInfoContent warningGlyph, IDeferredQuickInfoContent mainDescription, IDeferredQuickInfoContent documentation, IDeferredQuickInfoContent typeParameterMap, IDeferredQuickInfoContent anonymousTypes, IDeferredQuickInfoContent usageText, IDeferredQuickInfoContent exceptionText)
+            {
+                _symbolGlyph = symbolGlyph;
+                _warningGlyph = warningGlyph;
+                _mainDescription = mainDescription;
+                _documentation = documentation;
+                _typeParameterMap = typeParameterMap;
+                _anonymousTypes = anonymousTypes;
+                _usageText = usageText;
+                _exceptionText = exceptionText;
+            }
+
+            public FrameworkElement Create()
+            {
+                FrameworkElement warningGlyph = null;
+                if (_warningGlyph != null)
+                {
+                    warningGlyph = _warningGlyph.Create();
+                }
+                FrameworkElement symbolGlyph = null;
+                if (_symbolGlyph != null)
+                {
+                    symbolGlyph = _symbolGlyph.Create();
+                }
+                return new QuickInfoDisplayPanel(symbolGlyph, warningGlyph, _mainDescription.Create(), _documentation.Create(), _typeParameterMap.Create(), _anonymousTypes.Create(), _usageText.Create(), _exceptionText.Create());
+            }
+        }
+
+        private class QuickInfoDisplayPanel : StackPanel
+        {
+            private TextBlock MainDescription { get; }
+            private TextBlock Documentation { get; }
+            private TextBlock TypeParameterMap { get; }
+            private TextBlock AnonymousTypes { get; }
+            private TextBlock UsageText { get; }
+            private TextBlock ExceptionText { get; }
+
+            public QuickInfoDisplayPanel(
+                FrameworkElement symbolGlyph,
+                FrameworkElement warningGlyph,
+                FrameworkElement mainDescription,
+                FrameworkElement documentation,
+                FrameworkElement typeParameterMap,
+                FrameworkElement anonymousTypes,
+                FrameworkElement usageText,
+                FrameworkElement exceptionText)
+            {
+                MainDescription = (TextBlock)mainDescription;
+                Documentation = (TextBlock)documentation;
+                TypeParameterMap = (TextBlock)typeParameterMap;
+                AnonymousTypes = (TextBlock)anonymousTypes;
+                UsageText = (TextBlock)usageText;
+                ExceptionText = (TextBlock)exceptionText;
+
+                Orientation = Orientation.Vertical;
+
+                Border symbolGlyphBorder = null;
+                if (symbolGlyph != null)
+                {
+                    symbolGlyph.Margin = new Thickness(1, 1, 3, 1);
+                    symbolGlyphBorder = new Border()
+                    {
+                        BorderThickness = new Thickness(0),
+                        BorderBrush = Brushes.Transparent,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Child = symbolGlyph
+                    };
+                }
+
+                mainDescription.Margin = new Thickness(1);
+                var mainDescriptionBorder = new Border()
+                {
+                    BorderThickness = new Thickness(0),
+                    BorderBrush = Brushes.Transparent,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = mainDescription
+                };
+
+                var symbolGlyphAndMainDescriptionDock = new DockPanel()
+                {
+                    LastChildFill = true,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Background = Brushes.Transparent
+                };
+
+                if (symbolGlyphBorder != null)
+                {
+                    symbolGlyphAndMainDescriptionDock.Children.Add(symbolGlyphBorder);
+                }
+
+                symbolGlyphAndMainDescriptionDock.Children.Add(mainDescriptionBorder);
+
+                if (warningGlyph != null)
+                {
+                    warningGlyph.Margin = new Thickness(1, 1, 3, 1);
+                    var warningGlyphBorder = new Border()
+                    {
+                        BorderThickness = new Thickness(0),
+                        BorderBrush = Brushes.Transparent,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Child = warningGlyph
+                    };
+
+                    symbolGlyphAndMainDescriptionDock.Children.Add(warningGlyphBorder);
+                }
+
+                Children.Add(symbolGlyphAndMainDescriptionDock);
+                Children.Add(documentation);
+                Children.Add(usageText);
+                Children.Add(typeParameterMap);
+                Children.Add(anonymousTypes);
+                Children.Add(exceptionText);
+            }
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+
+                BuildStringFromInlineCollection(MainDescription.Inlines, sb);
+
+                if (Documentation.Inlines.Count > 0)
+                {
+                    sb.AppendLine();
+                    BuildStringFromInlineCollection(Documentation.Inlines, sb);
+                }
+
+                if (TypeParameterMap.Inlines.Count > 0)
+                {
+                    sb.AppendLine();
+                    BuildStringFromInlineCollection(TypeParameterMap.Inlines, sb);
+                }
+
+                if (AnonymousTypes.Inlines.Count > 0)
+                {
+                    sb.AppendLine();
+                    BuildStringFromInlineCollection(AnonymousTypes.Inlines, sb);
+                }
+
+                if (UsageText.Inlines.Count > 0)
+                {
+                    sb.AppendLine();
+                    BuildStringFromInlineCollection(UsageText.Inlines, sb);
+                }
+
+                if (ExceptionText.Inlines.Count > 0)
+                {
+                    sb.AppendLine();
+                    BuildStringFromInlineCollection(ExceptionText.Inlines, sb);
+                }
+
+                return sb.ToString();
+            }
+
+            private static void BuildStringFromInlineCollection(InlineCollection inlines, StringBuilder sb)
+            {
+                foreach (var inline in inlines)
+                {
+                    if (inline != null)
+                    {
+                        var inlineText = GetStringFromInline(inline);
+                        if (!string.IsNullOrEmpty(inlineText))
+                        {
+                            sb.Append(inlineText);
+                        }
+                    }
+                }
+            }
+
+            private static string GetStringFromInline(Inline currentInline)
+            {
+                var lineBreak = currentInline as LineBreak;
+                if (lineBreak != null)
+                {
+                    return Environment.NewLine;
+                }
+
+                var run = currentInline as Run;
+                return run?.Text;
+            }
         }
 
         private class SymbolGlyphDeferredContent : IDeferredQuickInfoContent

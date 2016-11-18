@@ -93,7 +93,6 @@ namespace RoslynPad.Roslyn
             var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
                     .Distinct()
                     .SelectMany(x => x.GetTypes())
-                    .Concat(new[] { typeof(Microsoft.CodeAnalysis.CodeFixes.CodeFixService) })
                     .Concat(new[] { typeof(DocumentationProviderServiceFactory) })
                     .ToArray();
 

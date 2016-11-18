@@ -17,7 +17,7 @@ namespace RoslynPad
 {
     internal sealed class MainViewModel : NotificationObject
     {
-        private static readonly Version _currentVersion = new Version(0, 10, 1);
+        private static readonly Version _currentVersion = new Version(0, 11);
         private static readonly string _currentVersionVariant = "";
 
         private const string HockeyAppId = "8655168826d9412483763f7ddcf84b8e";
