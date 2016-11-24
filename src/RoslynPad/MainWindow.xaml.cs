@@ -158,5 +158,10 @@ namespace RoslynPad
         {
             Task.Run(() => Process.Start("https://roslynpad.net/"));
         }
+
+        private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(UserSettingsDialog.GetUserDocumentPath());
+        }
     }
 }

@@ -129,7 +129,13 @@
                                     <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
                                                            ItemsSource="{Binding Documents, Mode=OneTime}"
-                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"/>
+                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}">
+                                        <controls:TreeListView.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
+                                            </ContextMenu>
+                                        </controls:TreeListView.ContextMenu>
+                                    </controls:TreeListView>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
