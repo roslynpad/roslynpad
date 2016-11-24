@@ -19,13 +19,11 @@ namespace RoslynPad
         private DocumentViewModel(MainViewModel mainViewModel)
         {
             MainViewModel = mainViewModel;
-            var defaultPath = GetDefaultPath();
-            Directory.CreateDirectory(defaultPath);
-            Path = defaultPath;
+            Directory.CreateDirectory(Path);
             IsFolder = true;
         }
 
-        public string Path { get; }
+        public string Path { get; } = UserSettingsDialog.GetUserDocumentPath();
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
 
@@ -58,11 +56,6 @@ namespace RoslynPad
         public static DocumentViewModel CreateAutoSave(MainViewModel mainViewModel, string path)
         {
             return new DocumentViewModel(mainViewModel, path, isFolder: false);
-        }
-
-        private static string GetDefaultPath()
-        {
-            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
         }
 
         private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder)

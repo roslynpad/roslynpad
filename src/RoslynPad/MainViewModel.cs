@@ -63,7 +63,7 @@ namespace RoslynPad
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
             ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
-
+            EditUserOptionsCommand = new DelegateCommand((Action)EditUserOptions);
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
@@ -156,14 +156,17 @@ namespace RoslynPad
         private DocumentViewModel CreateDocumentRoot()
         {
             var root = DocumentViewModel.CreateRoot(this);
-            if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
+            if (Properties.Settings.Default.CreateSamples)
             {
-                // ReSharper disable once PossibleNullReferenceException
-                using (var stream = Application.GetResourceStream(
-                    new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
-                using (var archive = new ZipArchive(stream))
+                if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
                 {
-                    archive.ExtractToDirectory(root.Path);
+                    // ReSharper disable once PossibleNullReferenceException
+                    using (var stream = Application.GetResourceStream(
+                        new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
+                    using (var archive = new ZipArchive(stream))
+                    {
+                        archive.ExtractToDirectory(root.Path);
+                    }
                 }
             }
             return root;
@@ -183,6 +186,8 @@ namespace RoslynPad
 
         public DelegateCommand NewDocumentCommand { get; }
 
+        public DelegateCommand EditUserOptionsCommand { get; }
+
         public DelegateCommand CloseCurrentDocumentCommand { get; }
 
         public void OpenDocument(DocumentViewModel document)
@@ -201,6 +206,12 @@ namespace RoslynPad
             var openDocument = new OpenDocumentViewModel(this, null);
             OpenDocuments.Add(openDocument);
             CurrentOpenDocument = openDocument;
+        }
+
+        public void EditUserOptions()
+        {
+            var dialog = new UserSettingsDialog(this);
+            dialog.Show();
         }
 
         public async Task CloseDocument(OpenDocumentViewModel document)

@@ -15,6 +15,7 @@
         Height="600"
         Width="800"
         Name="This">
+    
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}" />
@@ -60,6 +61,11 @@
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_Options" Margin="0, 0, 5, 0">
+                    <MenuItem Header="User Settings" Command="{Binding EditUserOptionsCommand}"></MenuItem>
+                </MenuItem>
+            </Menu>
             <Border Padding="3"
                     Margin="1"
                     Background="#eebbbb"
@@ -90,7 +96,7 @@
                     <dock:DockingManager.DocumentHeaderTemplate>
                         <DataTemplate>
                             <TextBlock>
-                                <Run Text="{Binding Content.Title, Mode=OneWay}" />
+                                <Run Text="{Binding Content.Title, Mode=OneWay}" ToolTip="{Binding Content.Path, Mode=OneWay}" />
                                 <Run Name="DirtyIndicator"
                                      Text="" />
                             </TextBlock>
@@ -123,7 +129,7 @@
                                     <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
                                                            ItemsSource="{Binding Documents, Mode=OneTime}"
-                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"/>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
