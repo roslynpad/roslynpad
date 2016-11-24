@@ -96,7 +96,7 @@
                     <dock:DockingManager.DocumentHeaderTemplate>
                         <DataTemplate>
                             <TextBlock>
-                                <Run Text="{Binding Content.Title, Mode=OneWay}" ToolTip="{Binding Content.Path, Mode=OneWay}" />
+                                <Run Text="{Binding Content.Title, Mode=OneWay}" />
                                 <Run Name="DirtyIndicator"
                                      Text="" />
                             </TextBlock>
