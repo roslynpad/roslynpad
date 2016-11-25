@@ -161,7 +161,7 @@ namespace RoslynPad
 
         private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(UserSettingsDialog.GetUserDocumentPath());
+            Task.Run(() => Process.Start(MainViewModel.GetUserDocumentPath()));
         }
     }
 }

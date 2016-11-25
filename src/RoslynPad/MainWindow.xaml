@@ -15,7 +15,7 @@
         Height="600"
         Width="800"
         Name="This">
-    
+
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}" />
@@ -61,11 +61,6 @@
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
-            <Menu DockPanel.Dock="Top">
-                <MenuItem Header="_Options" Margin="0, 0, 5, 0">
-                    <MenuItem Header="User Settings" Command="{Binding EditUserOptionsCommand}"></MenuItem>
-                </MenuItem>
-            </Menu>
             <Border Padding="3"
                     Margin="1"
                     Background="#eebbbb"
@@ -126,16 +121,16 @@
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                    <controls:TreeListView x:Name="DocumentTree"
+                                        <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
-                                                           ItemsSource="{Binding Documents, Mode=OneTime}"
+                                                           ItemsSource="{Binding Documents, Mode=TwoWay}"
                                                            ItemContainerStyle="{StaticResource DocumentItemContainerStyle}">
-                                        <controls:TreeListView.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
-                                            </ContextMenu>
-                                        </controls:TreeListView.ContextMenu>
-                                    </controls:TreeListView>
+                                            <controls:TreeListView.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
+                                                </ContextMenu>
+                                            </controls:TreeListView.ContextMenu>
+                                        </controls:TreeListView>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -156,11 +151,28 @@
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
+
+                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Bottom"
+                                            Margin="5">
+                    <Button HorizontalAlignment="Left"
+                                                VerticalAlignment="Bottom"
+                                                Background="Transparent"
+                                                Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
+                        <Image Source="{StaticResource Folder}"
+                                       Width="16"
+                                       Height="16" />
+
+                        
+                    </Button>
+                </StackPanel>
+                
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="5">
-                    
+
                     <Button Margin="10 0 10 0"
                             BorderThickness="0"
                             Background="Gold"
@@ -215,6 +227,7 @@
                         </MenuItem>
                     </Menu>
                 </StackPanel>
+
             </Grid>
         </DockPanel>
     </av:InlineModalDecorator>

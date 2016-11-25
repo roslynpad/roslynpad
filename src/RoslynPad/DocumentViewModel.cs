@@ -19,11 +19,12 @@ namespace RoslynPad
         private DocumentViewModel(MainViewModel mainViewModel)
         {
             MainViewModel = mainViewModel;
+            Path = MainViewModel.GetUserDocumentPath();
             Directory.CreateDirectory(Path);
             IsFolder = true;
         }
 
-        public string Path { get; } = UserSettingsDialog.GetUserDocumentPath();
+        public string Path { get; }
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
 

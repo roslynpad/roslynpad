@@ -94,9 +94,6 @@
       <DependentUpon>SaveDocumentDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\TreeListView.cs" />
-    <Compile Include="UserSettingsDialog.xaml.cs">
-      <DependentUpon>UserSettingsDialog.xaml</DependentUpon>
-    </Compile>
     <Page Include="DocumentView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -127,10 +124,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="SaveDocumentDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserSettingsDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

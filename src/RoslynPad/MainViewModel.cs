@@ -31,6 +31,7 @@ namespace RoslynPad
         public DocumentViewModel DocumentRoot { get; }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
+        public string UserDocumentPath { get; internal set; }
 
         public MainViewModel()
         {
@@ -58,12 +59,13 @@ namespace RoslynPad
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
+            UserDocumentPath = GetUserDocumentPath();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
             ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
-            EditUserOptionsCommand = new DelegateCommand((Action)EditUserOptions);
+            EditUserDocumentPathCommand = new DelegateCommand((Action)EditUserDocumentPath);
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
@@ -156,17 +158,14 @@ namespace RoslynPad
         private DocumentViewModel CreateDocumentRoot()
         {
             var root = DocumentViewModel.CreateRoot(this);
-            if (Properties.Settings.Default.CreateSamples)
+            if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
             {
-                if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
+                // ReSharper disable once PossibleNullReferenceException
+                using (var stream = Application.GetResourceStream(
+                    new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
+                using (var archive = new ZipArchive(stream))
                 {
-                    // ReSharper disable once PossibleNullReferenceException
-                    using (var stream = Application.GetResourceStream(
-                        new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
-                    using (var archive = new ZipArchive(stream))
-                    {
-                        archive.ExtractToDirectory(root.Path);
-                    }
+                    archive.ExtractToDirectory(root.Path);
                 }
             }
             return root;
@@ -186,7 +185,7 @@ namespace RoslynPad
 
         public DelegateCommand NewDocumentCommand { get; }
 
-        public DelegateCommand EditUserOptionsCommand { get; }
+        public DelegateCommand EditUserDocumentPathCommand { get; }
 
         public DelegateCommand CloseCurrentDocumentCommand { get; }
 
@@ -208,10 +207,38 @@ namespace RoslynPad
             CurrentOpenDocument = openDocument;
         }
 
-        public void EditUserOptions()
+        public void EditUserDocumentPath()
         {
-            var dialog = new UserSettingsDialog(this);
-            dialog.Show();
+            var dialog = new System.Windows.Forms.FolderBrowserDialog()
+            {
+                ShowNewFolderButton = false,
+                SelectedPath = GetUserDocumentPath()
+            };
+
+            var result = dialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                var path = dialog.SelectedPath;
+                if (Directory.Exists(path))
+                {
+                    SaveDocumentPath(path);
+                }
+            }
+
+            //var dialog = new Microsoft.Win32.OpenFileDialog()
+            //{
+            //    CheckPathExists = true,
+            //    Multiselect = false,
+            //    Title = "Select documents folder",
+            //    InitialDirectory = GetUserDocumentPath()
+            //};
+
+            //var result = dialog.ShowDialog();
+            //if (result == true)
+            //{
+            //    var path = dialog.FileName;
+            //    SaveDocumentPath(path);
+            //}
         }
 
         public async Task CloseDocument(OpenDocumentViewModel document)
@@ -329,6 +356,28 @@ namespace RoslynPad
                 var feedback = HockeyClient.Current.CreateFeedbackThread();
                 await feedback.PostFeedbackMessageAsync(feedbackText, email).ConfigureAwait(false);
             });
+        }
+
+        internal static string GetUserDocumentPath()
+        {
+            var userDefinedPath = Properties.Settings.Default.DocumentPath;
+            return !string.IsNullOrEmpty(userDefinedPath) && System.IO.Directory.Exists(userDefinedPath)
+                ? userDefinedPath
+                : GetDefaultDocumentPath();
+        }
+
+        private static string GetDefaultDocumentPath()
+        {
+            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
+        }
+
+        private void SaveDocumentPath(string documentPath)
+        {
+            if (Directory.Exists(documentPath))
+            {
+                Properties.Settings.Default.DocumentPath = documentPath;
+                Properties.Settings.Default.Save();
+            }
         }
     }
 
