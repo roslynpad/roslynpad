@@ -31,7 +31,6 @@ namespace RoslynPad
         public DocumentViewModel DocumentRoot { get; }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
-        public string UserDocumentPath { get; internal set; }
 
         public MainViewModel()
         {
@@ -59,17 +58,25 @@ namespace RoslynPad
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
             RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
-            UserDocumentPath = GetUserDocumentPath();
 
             NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
             ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
-            EditUserDocumentPathCommand = new DelegateCommand((Action)EditUserDocumentPath);
+
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
+
+            DocumentRoot.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName.Equals(nameof(DocumentRoot.Children)))
+                {
+                    Documents = DocumentRoot.Children;
+                }
+            };
             Documents = DocumentRoot.Children;
+
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>(LoadAutoSaves(DocumentRoot.Path));
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
             if (HasNoOpenDocuments)
@@ -181,7 +188,12 @@ namespace RoslynPad
             set { SetProperty(ref _currentOpenDocument, value); }
         }
 
-        public ObservableCollection<DocumentViewModel> Documents { get; }
+        private ObservableCollection<DocumentViewModel> _documents;
+        public ObservableCollection<DocumentViewModel> Documents
+        {
+            get { return _documents; }
+            internal set { SetProperty(ref _documents, value); }
+        }
 
         public DelegateCommand NewDocumentCommand { get; }
 
@@ -207,42 +219,13 @@ namespace RoslynPad
             CurrentOpenDocument = openDocument;
         }
 
-        public void EditUserDocumentPath()
-        {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog()
-            {
-                ShowNewFolderButton = false,
-                SelectedPath = GetUserDocumentPath()
-            };
-
-            var result = dialog.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
-            {
-                var path = dialog.SelectedPath;
-                if (Directory.Exists(path))
-                {
-                    SaveDocumentPath(path);
-                }
-            }
-
-            //var dialog = new Microsoft.Win32.OpenFileDialog()
-            //{
-            //    CheckPathExists = true,
-            //    Multiselect = false,
-            //    Title = "Select documents folder",
-            //    InitialDirectory = GetUserDocumentPath()
-            //};
-
-            //var result = dialog.ShowDialog();
-            //if (result == true)
-            //{
-            //    var path = dialog.FileName;
-            //    SaveDocumentPath(path);
-            //}
-        }
-
         public async Task CloseDocument(OpenDocumentViewModel document)
         {
+            if (document == null)
+            {
+                return;
+            }
+
             var result = await document.Save(promptSave: true).ConfigureAwait(true);
             if (result == SaveResult.Cancel)
             {
@@ -271,9 +254,16 @@ namespace RoslynPad
 
         private async Task CloseCurrentDocument()
         {
-            if (CurrentOpenDocument != null)
+            await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
+        }
+
+        public async Task CloseAllDocuments()
+        {
+            // can't modify the collection while enumerating it.
+            var openDocs = new ObservableCollection<OpenDocumentViewModel>(OpenDocuments);
+            foreach (var document in openDocs)
             {
-                await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
+                await CloseDocument(document).ConfigureAwait(false);
             }
         }
 
@@ -358,27 +348,6 @@ namespace RoslynPad
             });
         }
 
-        internal static string GetUserDocumentPath()
-        {
-            var userDefinedPath = Properties.Settings.Default.DocumentPath;
-            return !string.IsNullOrEmpty(userDefinedPath) && System.IO.Directory.Exists(userDefinedPath)
-                ? userDefinedPath
-                : GetDefaultDocumentPath();
-        }
-
-        private static string GetDefaultDocumentPath()
-        {
-            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
-        }
-
-        private void SaveDocumentPath(string documentPath)
-        {
-            if (Directory.Exists(documentPath))
-            {
-                Properties.Settings.Default.DocumentPath = documentPath;
-                Properties.Settings.Default.Save();
-            }
-        }
     }
 
     internal static class TelemetryEventNames

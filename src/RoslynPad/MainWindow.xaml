@@ -121,16 +121,16 @@
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                        <controls:TreeListView x:Name="DocumentTree"
+                                    <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
-                                                           ItemsSource="{Binding Documents, Mode=TwoWay}"
+                                                           ItemsSource="{Binding Documents, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                                            ItemContainerStyle="{StaticResource DocumentItemContainerStyle}">
-                                            <controls:TreeListView.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
-                                                </ContextMenu>
-                                            </controls:TreeListView.ContextMenu>
-                                        </controls:TreeListView>
+                                        <controls:TreeListView.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
+                                            </ContextMenu>
+                                        </controls:TreeListView.ContextMenu>
+                                    </controls:TreeListView>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -156,18 +156,18 @@
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Bottom"
                                             Margin="5">
-                    <Button HorizontalAlignment="Left"
+                    <Button Name="EditDocumentPathButton" HorizontalAlignment="Left"
+                            ToolTip="Select Documents Folder"
                                                 VerticalAlignment="Bottom"
                                                 Background="Transparent"
-                                                Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
+                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                                Click="EditDocumentPathButton_Click">
                         <Image Source="{StaticResource Folder}"
-                                       Width="16"
-                                       Height="16" />
-
-                        
+                                       Width="20"
+                                       Height="20" />
                     </Button>
                 </StackPanel>
-                
+
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
