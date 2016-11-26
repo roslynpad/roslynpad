@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +11,9 @@ using System.Windows.Threading;
 using Microsoft.HockeyApp;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
+using Avalon.Windows.Dialogs;
+using NuGet;
+using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad
 {
@@ -28,65 +30,53 @@ namespace RoslynPad
         private bool _hasUpdate;
         private double _editorFontSize;
 
-        public DocumentViewModel DocumentRoot { get; }
+        public DocumentViewModel DocumentRoot { get; private set; }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
 
         public MainViewModel()
         {
-            var hockeyClient = (HockeyClient)HockeyClient.Current;
+            _dispatcher = Dispatcher.CurrentDispatcher;
+            var hockeyClient = (HockeyClient) HockeyClient.Current;
             if (SendTelemetry)
             {
                 hockeyClient.Configure(HockeyAppId)
                     .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
                     .UnregisterDefaultUnobservedTaskExceptionHandler();
 
-                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
+                var platformHelper = (HockeyPlatformHelperWPF) hockeyClient.PlatformHelper;
                 platformHelper.AppVersion = _currentVersion.ToString();
 
                 hockeyClient.TrackEvent(TelemetryEventNames.Start);
             }
             else
             {
-                Application.Current.DispatcherUnhandledException += (sender, args) => OnUnhandledDispatcherException(args);
+                Application.Current.DispatcherUnhandledException +=
+                    (sender, args) => OnUnhandledDispatcherException(args);
 
-                var platformHelper = new HockeyPlatformHelperWPF { AppVersion = _currentVersion.ToString() };
+                var platformHelper = new HockeyPlatformHelperWPF {AppVersion = _currentVersion.ToString()};
                 hockeyClient.PlatformHelper = platformHelper;
                 hockeyClient.AppIdentifier = HockeyAppId;
             }
 
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
+            RoslynHost = new RoslynHost(NuGetConfiguration, new[] {Assembly.Load("RoslynPad.RoslynEditor")});
 
-            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
+            NewDocumentCommand = new DelegateCommand((Action) CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
-            ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
+            ReportProblemCommand = new DelegateCommand((Action) ReportProblem);
+            EditUserDocumentPathCommand = new DelegateCommand((Action) EditUserDocumentPath);
 
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
 
-            DocumentRoot.PropertyChanged += (sender, args) =>
-            {
-                if (args.PropertyName.Equals(nameof(DocumentRoot.Children)))
-                {
-                    Documents = DocumentRoot.Children;
-                }
-            };
-            Documents = DocumentRoot.Children;
-
-            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>(LoadAutoSaves(DocumentRoot.Path));
+            OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
-            if (HasNoOpenDocuments)
-            {
-                CreateNewDocument();
-            }
-            else
-            {
-                CurrentOpenDocument = OpenDocuments[0];
-            }
+
+            Task.Run((Action)OpenAutoSavedDocuments);
 
             if (HasCachedUpdate())
             {
@@ -96,6 +86,29 @@ namespace RoslynPad
             {
                 Task.Run(CheckForUpdates);
             }
+        }
+
+        private void OpenAutoSavedDocuments()
+        {
+            OpenDocuments.AddRange(LoadAutoSavedDocuments(DocumentRoot.Path));
+
+            _dispatcher.InvokeAsync(() =>
+            {
+                if (HasNoOpenDocuments)
+                {
+                    CreateNewDocument();
+                }
+                else
+                {
+                    CurrentOpenDocument = OpenDocuments[0];
+                }
+            });
+        }
+
+        private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
+        {
+            return EnumerateFilesWithCatch(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
+                new OpenDocumentViewModel(this, DocumentViewModel.CreateAutoSave(x)));
         }
 
         public string WindowTitle
@@ -117,10 +130,25 @@ namespace RoslynPad
             dialog.Show();
         }
 
-        public IEnumerable<OpenDocumentViewModel> LoadAutoSaves(string root)
+        private static IEnumerable<string> EnumerateFilesWithCatch(string path, string searchPattern)
         {
-            return Directory.EnumerateFiles(root, DocumentViewModel.GetAutoSaveName("*"), SearchOption.AllDirectories)
-                .Select(x => new OpenDocumentViewModel(this, DocumentViewModel.CreateAutoSave(this, x)));
+            IEnumerable<string> files;
+            try
+            {
+                files = Directory.EnumerateFiles(path, searchPattern);
+            }
+            catch (Exception)
+            {
+                // TODO: log this
+                return Array.Empty<string>();
+            }
+
+            foreach (var directory in Directory.EnumerateDirectories(path))
+            {
+                files = files.Concat(EnumerateFilesWithCatch(directory, searchPattern));
+            }
+
+            return files;
         }
 
         public bool HasUpdate
@@ -164,7 +192,7 @@ namespace RoslynPad
 
         private DocumentViewModel CreateDocumentRoot()
         {
-            var root = DocumentViewModel.CreateRoot(this);
+            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
             if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
             {
                 // ReSharper disable once PossibleNullReferenceException
@@ -175,7 +203,46 @@ namespace RoslynPad
                     archive.ExtractToDirectory(root.Path);
                 }
             }
+
+            Documents = root.Children;
+
             return root;
+        }
+
+
+        internal static string GetUserDocumentPath()
+        {
+            var userDefinedPath = Properties.Settings.Default.DocumentPath;
+            return !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
+                ? userDefinedPath
+                : GetDefaultDocumentPath();
+        }
+
+        private static string GetDefaultDocumentPath()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
+        }
+
+        public void EditUserDocumentPath()
+        {
+            var dialog = new FolderBrowserDialog
+            {
+                ShowEditBox = true,
+                SelectedPath = GetUserDocumentPath()
+            };
+
+            var result = dialog.ShowDialog();
+            if (result == true)
+            {
+                string documentPath = dialog.SelectedPath;
+                if (!DocumentRoot.Path.Equals(documentPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    Properties.Settings.Default.DocumentPath = documentPath;
+                    Properties.Settings.Default.Save();
+
+                    DocumentRoot = CreateDocumentRoot();
+                }
+            }
         }
 
         public NuGetViewModel NuGet { get; }
@@ -189,6 +256,9 @@ namespace RoslynPad
         }
 
         private ObservableCollection<DocumentViewModel> _documents;
+
+        private readonly Dispatcher _dispatcher;
+
         public ObservableCollection<DocumentViewModel> Documents
         {
             get { return _documents; }
@@ -203,6 +273,8 @@ namespace RoslynPad
 
         public void OpenDocument(DocumentViewModel document)
         {
+            if (document.IsFolder) return;
+
             var openDocument = OpenDocuments.FirstOrDefault(x => x.Document == document);
             if (openDocument == null)
             {

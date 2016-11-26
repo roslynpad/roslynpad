@@ -79,7 +79,7 @@ namespace RoslynPad
             if (state != WindowState.Minimized)
             {
                 WindowState = state;
-            } 
+            }
         }
 
         private void SaveWindowLayout()
@@ -133,10 +133,10 @@ namespace RoslynPad
             }
         }
 
-        private static void OpenDocument(object source)
+        private void OpenDocument(object source)
         {
             var documentViewModel = (DocumentViewModel)((FrameworkElement)source).DataContext;
-            documentViewModel.OpenDocumentCommand.Execute();
+            _viewModel.OpenDocument(documentViewModel);
         }
 
         private async void DockingManager_OnDocumentClosing(object sender, DocumentClosingEventArgs e)
@@ -161,12 +161,18 @@ namespace RoslynPad
 
         private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            Task.Run(() => Process.Start(_viewModel.DocumentRoot.Path));
-        }
-
-        private void EditDocumentPathButton_Click(object sender, RoutedEventArgs e)
-        {
-            _viewModel.DocumentRoot.EditUserDocumentPath();
+            var documentViewModel = ((FrameworkElement)e.Source).DataContext as DocumentViewModel;
+            if (documentViewModel != null)
+            {
+                if (documentViewModel.IsFolder)
+                {
+                    Task.Run(() => Process.Start(documentViewModel.Path));
+                }
+                else
+                {
+                    Task.Run(() => Process.Start("explorer.exe", "/select," + documentViewModel.Path));
+                }
+            }
         }
     }
 }

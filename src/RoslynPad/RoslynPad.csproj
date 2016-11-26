@@ -65,7 +65,6 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -84,6 +83,7 @@
     </ApplicationDefinition>
     <Compile Include="DocumentViewModel.cs" />
     <Compile Include="Formatting\BooleanToVisibilityConverter.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="OpenDocumentViewModel.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />

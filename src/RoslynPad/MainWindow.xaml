@@ -48,6 +48,12 @@
             <roslynPad:DocumentView />
         </DataTemplate>
 
+        <ContextMenu x:Key="DocumentItemContextMenu"
+                     x:Shared="False">
+            <MenuItem Header="_Open in File Explorer"
+                      Click="DocumentsContextMenu_OpenFolder_Click" />
+        </ContextMenu>
+
         <Style x:Key="DocumentItemContainerStyle"
                TargetType="controls:TreeListViewItem"
                BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
@@ -55,6 +61,8 @@
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"
                          Handler="OnDocumentKeyDown" />
+            <Setter Property="ContextMenu"
+                    Value="{StaticResource DocumentItemContextMenu}" />
         </Style>
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -121,16 +129,19 @@
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
                                                        Title="Documents">
-                                    <controls:TreeListView x:Name="DocumentTree"
-                                                           ShowSeparator="False"
-                                                           ItemsSource="{Binding Documents, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}">
-                                        <controls:TreeListView.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
-                                            </ContextMenu>
-                                        </controls:TreeListView.ContextMenu>
-                                    </controls:TreeListView>
+                                    <DockPanel x:Name="DocumentTree">
+                                        <StackPanel Orientation="Horizontal"
+                                                    DockPanel.Dock="Bottom"
+                                                    Margin="5">
+                                            <Button Content="Change documents location..."
+                                                    Style="{StaticResource LinkButton}"
+                                                    Command="{Binding EditUserDocumentPathCommand}" />
+                                        </StackPanel>
+                                        <controls:TreeListView ShowSeparator="False"
+                                                               ItemsSource="{Binding Documents, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+
+                                    </DockPanel>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -151,22 +162,6 @@
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
-
-                <StackPanel Orientation="Horizontal"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Bottom"
-                                            Margin="5">
-                    <Button Name="EditDocumentPathButton" HorizontalAlignment="Left"
-                            ToolTip="Select Documents Folder"
-                                                VerticalAlignment="Bottom"
-                                                Background="Transparent"
-                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                                Click="EditDocumentPathButton_Click">
-                        <Image Source="{StaticResource Folder}"
-                                       Width="20"
-                                       Height="20" />
-                    </Button>
-                </StackPanel>
 
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
