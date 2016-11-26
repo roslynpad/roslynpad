@@ -94,5 +94,17 @@ namespace RoslynPad.Properties {
                 this["EditorFontSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DocumentPath {
+            get {
+                return ((string)(this["DocumentPath"]));
+            }
+            set {
+                this["DocumentPath"] = value;
+            }
+        }
     }
 }

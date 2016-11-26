@@ -67,7 +67,16 @@ namespace RoslynPad
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
+
+            DocumentRoot.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName.Equals(nameof(DocumentRoot.Children)))
+                {
+                    Documents = DocumentRoot.Children;
+                }
+            };
             Documents = DocumentRoot.Children;
+
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>(LoadAutoSaves(DocumentRoot.Path));
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
             if (HasNoOpenDocuments)
@@ -179,9 +188,16 @@ namespace RoslynPad
             set { SetProperty(ref _currentOpenDocument, value); }
         }
 
-        public ObservableCollection<DocumentViewModel> Documents { get; }
+        private ObservableCollection<DocumentViewModel> _documents;
+        public ObservableCollection<DocumentViewModel> Documents
+        {
+            get { return _documents; }
+            internal set { SetProperty(ref _documents, value); }
+        }
 
         public DelegateCommand NewDocumentCommand { get; }
+
+        public DelegateCommand EditUserDocumentPathCommand { get; }
 
         public DelegateCommand CloseCurrentDocumentCommand { get; }
 
@@ -205,6 +221,11 @@ namespace RoslynPad
 
         public async Task CloseDocument(OpenDocumentViewModel document)
         {
+            if (document == null)
+            {
+                return;
+            }
+
             var result = await document.Save(promptSave: true).ConfigureAwait(true);
             if (result == SaveResult.Cancel)
             {
@@ -233,9 +254,16 @@ namespace RoslynPad
 
         private async Task CloseCurrentDocument()
         {
-            if (CurrentOpenDocument != null)
+            await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
+        }
+
+        public async Task CloseAllDocuments()
+        {
+            // can't modify the collection while enumerating it.
+            var openDocs = new ObservableCollection<OpenDocumentViewModel>(OpenDocuments);
+            foreach (var document in openDocs)
             {
-                await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
+                await CloseDocument(document).ConfigureAwait(false);
             }
         }
 
@@ -319,6 +347,7 @@ namespace RoslynPad
                 await feedback.PostFeedbackMessageAsync(feedbackText, email).ConfigureAwait(false);
             });
         }
+
     }
 
     internal static class TelemetryEventNames

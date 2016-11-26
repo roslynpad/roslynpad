@@ -19,15 +19,75 @@ namespace RoslynPad
         private DocumentViewModel(MainViewModel mainViewModel)
         {
             MainViewModel = mainViewModel;
-            var defaultPath = GetDefaultPath();
-            Directory.CreateDirectory(defaultPath);
-            Path = defaultPath;
+            Path = GetUserDocumentPath();
+            Directory.CreateDirectory(Path);
             IsFolder = true;
         }
 
-        public string Path { get; }
+        public string Path { get; internal set; }
+
         public MainViewModel MainViewModel { get; }
         public bool IsFolder { get; }
+
+        internal static string GetUserDocumentPath()
+        {
+            var userDefinedPath = Properties.Settings.Default.DocumentPath;
+            return !string.IsNullOrEmpty(userDefinedPath) && System.IO.Directory.Exists(userDefinedPath)
+                ? userDefinedPath
+                : GetDefaultDocumentPath();
+        }
+
+        private static string GetDefaultDocumentPath()
+        {
+            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
+        }
+
+        public async void EditUserDocumentPath()
+        {
+            // TODO: Review expected behavior. 
+            // Currently rebinding documents pane.
+            // Dialog requesting restart? Auto-restart app? Rebind documents pane? What happens to open documents?
+
+            var dialog = new System.Windows.Forms.FolderBrowserDialog()
+            {
+                ShowNewFolderButton = false,
+                SelectedPath = GetUserDocumentPath()
+            };
+
+            var result = dialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                await MainViewModel.CloseAllDocuments();
+                SaveDocumentPath(dialog.SelectedPath);
+            }
+
+            //var dialog = new Microsoft.Win32.OpenFileDialog()
+            //{
+            //    CheckPathExists = true,
+            //    Multiselect = false,
+            //    Title = "Select documents folder",
+            //    InitialDirectory = GetUserDocumentPath()
+            //};
+
+            //var result = dialog.ShowDialog();
+            //if (result == true)
+            //{
+            //    var path = dialog.FileName;
+            //    SaveDocumentPath(path);
+            //}
+        }
+
+        private void SaveDocumentPath(string documentPath)
+        {
+            if (Directory.Exists(documentPath) && !Properties.Settings.Default.DocumentPath.Equals(documentPath))
+            {
+                Properties.Settings.Default.DocumentPath = documentPath;
+                Properties.Settings.Default.Save();
+
+                Path = documentPath;
+                Children = ReadChildren();
+            }
+        }
 
         public string GetSavePath()
         {
@@ -58,11 +118,6 @@ namespace RoslynPad
         public static DocumentViewModel CreateAutoSave(MainViewModel mainViewModel, string path)
         {
             return new DocumentViewModel(mainViewModel, path, isFolder: false);
-        }
-
-        private static string GetDefaultPath()
-        {
-            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
         }
 
         private DocumentViewModel(MainViewModel mainViewModel, string path, bool isFolder)
@@ -137,8 +192,13 @@ namespace RoslynPad
         {
             get
             {
-                if (IsFolder && _children == null) _children = ReadChildren();
+                if (IsFolder && _children == null)
+                    Children = ReadChildren();
                 return _children;
+            }
+            internal set
+            {
+                SetProperty(ref _children, value);
             }
         }
 

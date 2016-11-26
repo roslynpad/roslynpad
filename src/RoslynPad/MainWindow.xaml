@@ -15,6 +15,7 @@
         Height="600"
         Width="800"
         Name="This">
+
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}" />
@@ -122,8 +123,14 @@
                                                        Title="Documents">
                                     <controls:TreeListView x:Name="DocumentTree"
                                                            ShowSeparator="False"
-                                                           ItemsSource="{Binding Documents, Mode=OneTime}"
-                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                                                           ItemsSource="{Binding Documents, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                           ItemContainerStyle="{StaticResource DocumentItemContainerStyle}">
+                                        <controls:TreeListView.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Name="DocumentsContextMenu_OpenFolder" Header="_Open Folder in Windows Explorer" Click="DocumentsContextMenu_OpenFolder_Click"></MenuItem>
+                                            </ContextMenu>
+                                        </controls:TreeListView.ContextMenu>
+                                    </controls:TreeListView>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
                             <dock:LayoutDocumentPane />
@@ -144,11 +151,28 @@
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
+
+                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Bottom"
+                                            Margin="5">
+                    <Button Name="EditDocumentPathButton" HorizontalAlignment="Left"
+                            ToolTip="Select Documents Folder"
+                                                VerticalAlignment="Bottom"
+                                                Background="Transparent"
+                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                                Click="EditDocumentPathButton_Click">
+                        <Image Source="{StaticResource Folder}"
+                                       Width="20"
+                                       Height="20" />
+                    </Button>
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="5">
-                    
+
                     <Button Margin="10 0 10 0"
                             BorderThickness="0"
                             Background="Gold"
@@ -203,6 +227,7 @@
                         </MenuItem>
                     </Menu>
                 </StackPanel>
+
             </Grid>
         </DockPanel>
     </av:InlineModalDecorator>
