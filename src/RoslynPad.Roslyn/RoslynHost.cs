@@ -139,14 +139,12 @@ namespace RoslynPad.Roslyn
             public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
             {
                 var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
-                //ReplaceMefV1Attributes(customAttributes);
                 return customAttributes;
             }
 
             public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
             {
                 var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
-                //ReplaceMefV1Attributes(customAttributes);
                 return customAttributes;
             }
         }
@@ -244,8 +242,7 @@ namespace RoslynPad.Roslyn
             RoslynWorkspace workspace;
             if (_workspaces.TryGetValue(documentId, out workspace))
             {
-                workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
-                    .Unregister(workspace);
+                DiagnosticProvider.Disable(workspace);
                 workspace.Dispose();
                 _workspaces.TryRemove(documentId, out workspace);
             }
@@ -268,8 +265,8 @@ namespace RoslynPad.Roslyn
             {
                 workspace.ApplyingTextChange += (d, s) => onTextUpdated(s);
             }
-            workspace.Services.GetService<Microsoft.CodeAnalysis.SolutionCrawler.ISolutionCrawlerRegistrationService>()
-                .Register(workspace);
+
+            DiagnosticProvider.Enable(workspace, DiagnosticProvider.Options.Semantic);
 
             var currentSolution = workspace.CurrentSolution;
             var project = CreateSubmissionProject(currentSolution, CreateCompilationOptions(workspace, workingDirectory));

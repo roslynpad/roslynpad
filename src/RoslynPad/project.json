@@ -10,10 +10,11 @@
     "AvalonEdit": "5.0.2",
     "AvalonLibrary": "2.3.0",
     "Extended.Wpf.Toolkit": "2.9.0",
-    "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta5",
-    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-beta5",
-    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-beta5",
-    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-beta5",
+    "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
+    "Microsoft.CodeAnalysis.CSharp": "2.0.0-rc",
+    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-rc",
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-rc",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-rc",
     "Nuget.PackageManagement": "3.4.3",
     "HockeySDK.WPF": "4.1.2"
   }
