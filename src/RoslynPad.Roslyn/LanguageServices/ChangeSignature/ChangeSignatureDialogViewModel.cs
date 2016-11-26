@@ -154,7 +154,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 // TODO: Should probably use original syntax & formatting exactly instead of regenerating here
                 List<SymbolDisplayPart> displayParts = GetSignatureDisplayParts();
 
-                var textBlock = displayParts.ToTextBlock();
+                var textBlock = displayParts.ToTaggedText().ToTextBlock();
 
                 foreach (var inline in textBlock.Inlines)
                 {
