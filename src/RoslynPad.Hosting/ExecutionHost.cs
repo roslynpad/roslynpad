@@ -51,7 +51,8 @@ namespace RoslynPad.Hosting
             // Disables Windows Error Reporting for the process, so that the process fails fast.
             if (Environment.OSVersion.Version >= new Version(6, 1, 0, 0))
             {
-                SetErrorMode(GetErrorMode() | ErrorMode.SEM_FAILCRITICALERRORS | ErrorMode.SEM_NOOPENFILEERRORBOX | ErrorMode.SEM_NOGPFAULTERRORBOX);
+                SetErrorMode(GetErrorMode() | ErrorMode.SEM_FAILCRITICALERRORS | ErrorMode.SEM_NOOPENFILEERRORBOX |
+                             ErrorMode.SEM_NOGPFAULTERRORBOX);
             }
 
             ServiceHost serviceHost = null;
@@ -243,7 +244,8 @@ namespace RoslynPad.Hosting
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetConfiguration, _initialWorkingDirectory);
+                    newService.Initialize(_references.ToArray(), _imports.ToArray(), _nuGetConfiguration,
+                        _initialWorkingDirectory);
                 }
                 catch (CommunicationException) when (!newProcess.IsAlive())
                 {
@@ -306,7 +308,8 @@ namespace RoslynPad.Hosting
                     // Service failed to start or initialize or the process died.
                     var newService = new LazyRemoteService(this);
 
-                    var previousService = Interlocked.CompareExchange(ref _lazyRemoteService, newService, currentRemoteService);
+                    var previousService = Interlocked.CompareExchange(ref _lazyRemoteService, newService,
+                        currentRemoteService);
                     if (previousService == currentRemoteService)
                     {
                         // we replaced the service whose process we know is dead:
@@ -371,7 +374,8 @@ namespace RoslynPad.Hosting
         internal interface IService
         {
             [OperationContract]
-            Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory);
+            Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration,
+                string workingDirectory);
 
             [OperationContract]
             Task<ExceptionResultObject> ExecuteAsync(string code);
@@ -397,7 +401,8 @@ namespace RoslynPad.Hosting
             }
         }
 
-        [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant, UseSynchronizationContext = false)]
+        [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant,
+             UseSynchronizationContext = false)]
         internal class Service : IService, IDisposable
         {
             private const int WindowMillisecondsTimeout = 500;
@@ -420,7 +425,8 @@ namespace RoslynPad.Hosting
                 ObjectExtensions.Dumped += OnDumped;
             }
 
-            public Task Initialize(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory)
+            public Task Initialize(IList<string> references, IList<string> imports,
+                NuGetConfiguration nuGetConfiguration, string workingDirectory)
             {
                 _parseOptions = new CSharpParseOptions().WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
 
@@ -482,17 +488,20 @@ namespace RoslynPad.Hosting
                         list.Add(item);
                     }
 
-                    try
+                    if (list.Count > 0)
                     {
-                        var task = _callbackChannel?.Dump(list);
-                        if (task != null)
+                        try
                         {
-                            await task.ConfigureAwait(false);
+                            var task = _callbackChannel?.Dump(list);
+                            if (task != null)
+                            {
+                                await task.ConfigureAwait(false);
+                            }
                         }
-                    }
-                    catch
-                    {
-                        // ignored
+                        catch
+                        {
+                            // ignored
+                        }
                     }
                 }
                 // ReSharper disable once FunctionNeverReturns
@@ -510,15 +519,39 @@ namespace RoslynPad.Hosting
                 // ReSharper disable once MethodSupportsCancellation
                 var processTask = Task.Run(() => ProcessDumpQueue(processCancelToken));
 
-                var script = TryCompile(code, _scriptOptions);
-                // ReSharper disable once MethodSupportsCancellation
-                if (script != null)
-                {
-                    await script.SaveAssembly(assemblyPath).ConfigureAwait(false);
-                }
+                var outputKind = string.Equals(Path.GetExtension(assemblyPath), ".exe",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? OutputKind.ConsoleApplication
+                    : OutputKind.DynamicallyLinkedLibrary;
 
-                processCancelSource.Cancel();
-                await processTask.ConfigureAwait(false);
+                var platform = !Environment.Is64BitProcess &&
+                               (outputKind == OutputKind.ConsoleApplication ||
+                                outputKind == OutputKind.WindowsApplication)
+                    ? Platform.AnyCpu32BitPreferred
+                    : Platform.AnyCpu;
+
+                try
+                {
+                    var script = CreateScript(code, _scriptOptions, outputKind, platform);
+                    // ReSharper disable once MethodSupportsCancellation
+                    if (script != null)
+                    {
+                        var diagnostics = await script.SaveAssembly(assemblyPath).ConfigureAwait(false);
+                        DisplayErrors(diagnostics);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ReportUnhandledException(e);
+                }
+                finally
+                {
+                    _outWriter.Flush();
+                    _errorWriter.Flush();
+
+                    processCancelSource.Cancel();
+                    await processTask.ConfigureAwait(false);
+                }
             }
 
             public async Task<ExceptionResultObject> ExecuteAsync(string code)
@@ -561,7 +594,7 @@ namespace RoslynPad.Hosting
 
             private ScriptRunner TryCompile(string code, ScriptOptions options)
             {
-                var script = new ScriptRunner(code, _parseOptions, options.MetadataReferences, options.Imports, options.FilePath, _workingDirectory, options.MetadataResolver);
+                var script = CreateScript(code, options);
 
                 var diagnostics = script.Compile();
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -570,6 +603,14 @@ namespace RoslynPad.Hosting
                     return null;
                 }
 
+                return script;
+            }
+
+            private ScriptRunner CreateScript(string code, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
+            {
+                var script = new ScriptRunner(code, _parseOptions, outputKind, platform, 
+                    options.MetadataReferences, options.Imports,
+                    options.FilePath, _workingDirectory, options.MetadataResolver);
                 return script;
             }
 
@@ -615,8 +656,7 @@ namespace RoslynPad.Hosting
 
             private static void ReportUnhandledException(Exception e)
             {
-                Console.Error.WriteLine("Unexpected error:");
-                Console.Error.WriteLine(e);
+                e.Dump();
                 Debug.Fail("Unexpected error");
             }
         }

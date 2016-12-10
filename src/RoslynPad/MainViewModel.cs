@@ -36,15 +36,14 @@ namespace RoslynPad
 
         public MainViewModel()
         {
-            _dispatcher = Dispatcher.CurrentDispatcher;
-            var hockeyClient = (HockeyClient) HockeyClient.Current;
+            var hockeyClient = (HockeyClient)HockeyClient.Current;
             if (SendTelemetry)
             {
                 hockeyClient.Configure(HockeyAppId)
                     .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
                     .UnregisterDefaultUnobservedTaskExceptionHandler();
 
-                var platformHelper = (HockeyPlatformHelperWPF) hockeyClient.PlatformHelper;
+                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
                 platformHelper.AppVersion = _currentVersion.ToString();
 
                 hockeyClient.TrackEvent(TelemetryEventNames.Start);
@@ -54,20 +53,20 @@ namespace RoslynPad
                 Application.Current.DispatcherUnhandledException +=
                     (sender, args) => OnUnhandledDispatcherException(args);
 
-                var platformHelper = new HockeyPlatformHelperWPF {AppVersion = _currentVersion.ToString()};
+                var platformHelper = new HockeyPlatformHelperWPF { AppVersion = _currentVersion.ToString() };
                 hockeyClient.PlatformHelper = platformHelper;
                 hockeyClient.AppIdentifier = HockeyAppId;
             }
 
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[] {Assembly.Load("RoslynPad.RoslynEditor")});
+            RoslynHost = new RoslynHost(NuGetConfiguration, new[] { Assembly.Load("RoslynPad.RoslynEditor") });
 
-            NewDocumentCommand = new DelegateCommand((Action) CreateNewDocument);
+            NewDocumentCommand = new DelegateCommand((Action)CreateNewDocument);
             CloseCurrentDocumentCommand = new DelegateCommand(CloseCurrentDocument);
             ClearErrorCommand = new DelegateCommand(() => LastError = null);
-            ReportProblemCommand = new DelegateCommand((Action) ReportProblem);
-            EditUserDocumentPathCommand = new DelegateCommand((Action) EditUserDocumentPath);
+            ReportProblemCommand = new DelegateCommand((Action)ReportProblem);
+            EditUserDocumentPathCommand = new DelegateCommand((Action)EditUserDocumentPath);
 
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
@@ -76,7 +75,7 @@ namespace RoslynPad
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
 
-            Task.Run((Action)OpenAutoSavedDocuments);
+            OpenAutoSavedDocuments();
 
             if (HasCachedUpdate())
             {
@@ -92,17 +91,14 @@ namespace RoslynPad
         {
             OpenDocuments.AddRange(LoadAutoSavedDocuments(DocumentRoot.Path));
 
-            _dispatcher.InvokeAsync(() =>
+            if (HasNoOpenDocuments)
             {
-                if (HasNoOpenDocuments)
-                {
-                    CreateNewDocument();
-                }
-                else
-                {
-                    CurrentOpenDocument = OpenDocuments[0];
-                }
-            });
+                CreateNewDocument();
+            }
+            else
+            {
+                CurrentOpenDocument = OpenDocuments[0];
+            }
         }
 
         private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
@@ -256,8 +252,6 @@ namespace RoslynPad
         }
 
         private ObservableCollection<DocumentViewModel> _documents;
-
-        private readonly Dispatcher _dispatcher;
 
         public ObservableCollection<DocumentViewModel> Documents
         {

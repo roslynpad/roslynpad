@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
@@ -36,6 +37,9 @@ namespace RoslynPad.RoslynEditor
         {
             var textSpan = new TextSpan(offset, length);
             var document = _roslynHost.GetDocument(_documentId);
+            var text = await document.GetTextAsync(cancellationToken);
+            if (textSpan.End >= text.Length) return Array.Empty<object>();
+
             var codeFixes = await _codeFixService.GetFixesAsync(document,
                 textSpan, false, cancellationToken).ConfigureAwait(false);
 

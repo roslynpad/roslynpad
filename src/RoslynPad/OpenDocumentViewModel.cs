@@ -312,7 +312,7 @@ namespace RoslynPad
             {
                 OverwritePrompt = true,
                 AddExtension = true,
-                Filter = "Assemblies|*.dll",
+                Filter = "Libraries|*.dll|Executables|*.exe",
                 DefaultExt = "dll"
             };
             if (saveDialog.ShowDialog(Application.Current.MainWindow) != true) return;
