@@ -114,7 +114,7 @@ namespace RoslynPad
         {
             base.OnClosed(e);
 
-            Environment.Exit(0);
+            Application.Current.Shutdown();
         }
 
         private void OnDocumentClick(object sender, MouseButtonEventArgs e)

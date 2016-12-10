@@ -22,6 +22,8 @@
                     Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+U"
                     Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="F2"
+                    Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
@@ -183,6 +185,9 @@
                 <Button Content="{StaticResource UncommentCode}"
                         ToolTip="Uncomment Selection (Ctrl+U)"
                         Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
+                <Button Content="{StaticResource Rename}"
+                        ToolTip="Rename Symbol (F2)"
+                        Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
             </ToolBar>
             <editor:CodeTextEditor x:Name="Editor"
                                    x:FieldModifier="private"

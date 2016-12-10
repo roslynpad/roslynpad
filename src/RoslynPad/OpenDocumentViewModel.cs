@@ -9,12 +9,14 @@ using System.Windows;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Win32;
 using NuGet.Versioning;
 using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.Rename;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 
@@ -72,6 +74,25 @@ namespace RoslynPad
             FormatDocumentCommand = new DelegateCommand(FormatDocument);
             CommentSelectionCommand = new DelegateCommand(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = new DelegateCommand(() => CommentUncommentSelection(CommentAction.Uncomment));
+            RenameSymbolCommand = new DelegateCommand(RenameSymbol);
+        }
+
+        private async Task RenameSymbol()
+        {
+            var host = MainViewModel.RoslynHost;
+            var document = host.GetDocument(DocumentId);
+            var symbol = await RenameHelper.GetRenameSymbol(document, _getSelection().Start).ConfigureAwait(true);
+            if (symbol == null) return;
+
+            var dialog = new RenameSymbolDialog(symbol.Name);
+            dialog.Show();
+            if (dialog.ShouldRename)
+            {
+                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName, null);
+                var newDocument = newSolution.GetDocument(DocumentId);
+                // TODO: possibly update entire solution
+                host.UpdateDocument(newDocument);
+            }
         }
 
         private enum CommentAction
@@ -294,6 +315,8 @@ namespace RoslynPad
 
         public DelegateCommand UncommentSelectionCommand { get; }
 
+        public DelegateCommand RenameSymbolCommand { get; }
+
         public bool IsRunning
         {
             get { return _isRunning; }
@@ -484,7 +507,7 @@ namespace RoslynPad
             get { return _isDirty; }
             private set { SetProperty(ref _isDirty, value); }
         }
-
+        
         public void SetDirty(int textLength)
         {
             IsDirty = textLength > 0;

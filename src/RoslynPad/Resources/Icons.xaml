@@ -327,4 +327,21 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+    
+    <DrawingImage x:Key="Rename">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M0,14L16,14 16,1.999 0,1.999z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M5,10L6,10 6,11 5,11z M4,11L3,11 3,10 4,10z M6,6L5,6 5,5 6,5z M4,6L3,6 3,5 4,5z M5,10L4,10 4,6 5,6z M14,12L2,12 2,4 14,4z M1,13L15,13 15,3 1,3z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M6,6L5,6 5,10 6,10 6,11 5,11 5,10 4,10 4,11 3,11 3,10 4,10 4,6 3,6 3,5 4,5 4,6 5,6 5,5 6,5z M2,12L14,12 14,4 2,4z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>
