@@ -88,11 +88,12 @@ namespace RoslynPad
             dialog.Show();
             if (dialog.ShouldRename)
             {
-                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName, null);
+                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName, null).ConfigureAwait(true);
                 var newDocument = newSolution.GetDocument(DocumentId);
                 // TODO: possibly update entire solution
                 host.UpdateDocument(newDocument);
             }
+            OnEditorFocus();
         }
 
         private enum CommentAction
@@ -507,7 +508,14 @@ namespace RoslynPad
             get { return _isDirty; }
             private set { SetProperty(ref _isDirty, value); }
         }
-        
+
+        public event EventHandler EditorFocus;
+
+        private void OnEditorFocus()
+        {
+            EditorFocus?.Invoke(this, EventArgs.Empty);
+        }
+
         public void SetDirty(int textLength)
         {
             IsDirty = textLength > 0;

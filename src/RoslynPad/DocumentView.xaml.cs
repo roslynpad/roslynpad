@@ -70,6 +70,9 @@ namespace RoslynPad
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+
+            _viewModel.EditorFocus += (o, e) => Editor.Focus();
+
             _roslynHost = _viewModel.MainViewModel.RoslynHost;
             _quickInfoProvider = _roslynHost.GetService<IQuickInfoProvider>();
 

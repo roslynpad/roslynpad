@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -36,27 +37,7 @@ namespace RoslynPad
 
         public MainViewModel()
         {
-            var hockeyClient = (HockeyClient)HockeyClient.Current;
-            if (SendTelemetry)
-            {
-                hockeyClient.Configure(HockeyAppId)
-                    .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
-                    .UnregisterDefaultUnobservedTaskExceptionHandler();
-
-                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
-                platformHelper.AppVersion = _currentVersion.ToString();
-
-                hockeyClient.TrackEvent(TelemetryEventNames.Start);
-            }
-            else
-            {
-                Application.Current.DispatcherUnhandledException +=
-                    (sender, args) => OnUnhandledDispatcherException(args);
-
-                var platformHelper = new HockeyPlatformHelperWPF { AppVersion = _currentVersion.ToString() };
-                hockeyClient.PlatformHelper = platformHelper;
-                hockeyClient.AppIdentifier = HockeyAppId;
-            }
+            SetupHockeyApp();
 
             NuGet = new NuGetViewModel();
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
@@ -84,6 +65,40 @@ namespace RoslynPad
             else
             {
                 Task.Run(CheckForUpdates);
+            }
+        }
+
+        private void SetupHockeyApp()
+        {
+            var hockeyClient = (HockeyClient) HockeyClient.Current;
+            if (SendTelemetry)
+            {
+                hockeyClient.Configure(HockeyAppId)
+                    .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
+                    .UnregisterDefaultUnobservedTaskExceptionHandler();
+
+#if DEBUG
+                hockeyClient.OnHockeySDKInternalException += (sender, args) =>
+                {
+                    if (Debugger.IsAttached)
+                    {
+                        Debugger.Break();
+                    }
+                };
+#endif
+                var platformHelper = (HockeyPlatformHelperWPF) hockeyClient.PlatformHelper;
+                platformHelper.AppVersion = _currentVersion.ToString();
+
+                hockeyClient.TrackEvent(TelemetryEventNames.Start);
+            }
+            else
+            {
+                Application.Current.DispatcherUnhandledException +=
+                    (sender, args) => OnUnhandledDispatcherException(args);
+
+                var platformHelper = new HockeyPlatformHelperWPF {AppVersion = _currentVersion.ToString()};
+                hockeyClient.PlatformHelper = platformHelper;
+                hockeyClient.AppIdentifier = HockeyAppId;
             }
         }
 
