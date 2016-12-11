@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="34685EliArbel.RoslynPad"
+    ProcessorArchitecture="x86"
+    Publisher="CN=9C7E53B6-ADB4-497A-97E5-B4B9B239B179"
+    Version="0.11.0.0" />
+  <Properties>
+    <DisplayName>RoslynPad</DisplayName>
+    <PublisherDisplayName>Eli Arbel</PublisherDisplayName>
+    <Description>A simple C# editor based on Roslyn and AvalonEdit</Description>
+    <Logo>Assets\storelogo.scale-200.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="RoslynPad" Executable="RoslynPad.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="transparent"
+       DisplayName="RoslynPad"
+       Square150x150Logo="Assets\logo.scale-200.png"
+       Square44x44Logo="Assets\square44x44logo.scale-200.png"
+       Description="A simple C# editor based on Roslyn and AvalonEdit" />
+    </Application>
+  </Applications>
+</Package>

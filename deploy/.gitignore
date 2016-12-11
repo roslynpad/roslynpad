@@ -1,0 +1,6 @@
+*.pfx
+*.cer
+*.pvk
+*.mapping
+*.appx
+*.zip
