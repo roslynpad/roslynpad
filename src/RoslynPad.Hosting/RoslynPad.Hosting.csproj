@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExecutionHost.cs" />
+    <Compile Include="IExecutionHost.cs" />
     <Compile Include="NuGetScriptMetadataResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

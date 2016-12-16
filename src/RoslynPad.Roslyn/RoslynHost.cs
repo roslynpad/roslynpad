@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
@@ -40,6 +41,7 @@ namespace RoslynPad.Roslyn
             typeof(ObjectExtensions),
             typeof(Path),
             typeof(Assembly),
+            typeof(MessageBox),
         }.ToImmutableArray();
 
         private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =
