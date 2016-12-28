@@ -10,14 +10,14 @@ namespace RoslynPad.Roslyn.CodeActions
         {
             if (codeAction == null) throw new ArgumentNullException(nameof(codeAction));
 
-            return codeAction.HasCodeActions;
+            return !codeAction.NestedCodeActions.IsDefaultOrEmpty;
         }
 
         public static ImmutableArray<CodeAction> GetCodeActions(this CodeAction codeAction)
         {
             if (codeAction == null) throw new ArgumentNullException(nameof(codeAction));
 
-            return codeAction.GetCodeActions();
+            return codeAction.NestedCodeActions;
         }
 
         public static int? GetGlyph(this CodeAction codeAction)

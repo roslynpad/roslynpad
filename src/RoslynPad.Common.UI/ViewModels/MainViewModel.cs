@@ -316,6 +316,7 @@ namespace RoslynPad.UI
 
         private async Task CloseCurrentDocument()
         {
+            if (CurrentOpenDocument == null) return;
             await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
         }
 
