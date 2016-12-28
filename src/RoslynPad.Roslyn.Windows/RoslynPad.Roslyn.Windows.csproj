@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{075292F0-DBCD-4A01-9791-9637D396CCB8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>RoslynPad.Roslyn</RootNamespace>
+    <AssemblyName>RoslynPad.Roslyn.Windows</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="GlyphToImageSourceConverter.cs" />
+    <Compile Include="GlyphExtensions.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
+      <DependentUpon>ChangeSignatureDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml.cs">
+      <DependentUpon>ExtractInterfaceDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="QuickInfo\DeferredQuickInfoContentProvider.cs" />
+    <Compile Include="SymbolDisplayPartExtensions.cs" />
+    <Compile Include="TaggedTextToTextBlockConverter.cs" />
+    <Compile Include="WindowExtensions.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
+      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
+      <Name>RoslynPad.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
+      <Project>{ac9f325f-a3ff-4561-941e-49ce4736cbd0}</Project>
+      <Name>RoslynPad.Roslyn</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

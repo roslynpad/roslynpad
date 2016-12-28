@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -9,13 +10,15 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Avalon.Windows.Controls;
 using RoslynPad.Annotations;
+using RoslynPad.UI;
 
 namespace RoslynPad
 {
     /// <summary>
     /// Interaction logic for SaveDocumentDialog.xaml
     /// </summary>
-    public partial class SaveDocumentDialog : INotifyPropertyChanged
+    [Export(typeof(ISaveDocumentDialog))]
+    internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyPropertyChanged
     {
         private string _documentName;
         private bool _showDontSave;
@@ -200,12 +203,5 @@ namespace RoslynPad
                 PerformSave();
             }
         }
-    }
-
-    public enum SaveResult
-    {
-        Cancel,
-        Save,
-        DontSave
     }
 }

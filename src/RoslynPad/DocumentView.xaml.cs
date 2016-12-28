@@ -9,12 +9,12 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Editor;
+using RoslynPad.Editor.Windows;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.QuickInfo;
-using RoslynPad.RoslynEditor;
 using RoslynPad.Runtime;
+using RoslynPad.UI;
 
 namespace RoslynPad
 {
@@ -98,7 +98,8 @@ namespace RoslynPad
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
-            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.DocumentId, _roslynHost));
+            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.CommandProvider,
+                _viewModel.DocumentId, _roslynHost));
 
             Editor.CompletionProvider = new RoslynCodeEditorCompletionProvider(_viewModel.DocumentId, _roslynHost);
         }

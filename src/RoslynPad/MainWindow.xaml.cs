@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Composition.Hosting;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -7,6 +8,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
+using Microsoft.Practices.ServiceLocation;
+using RoslynPad.UI;
 using RoslynPad.Utilities;
 using Xceed.Wpf.AvalonDock;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
@@ -22,9 +25,16 @@ namespace RoslynPad
         private bool _isClosing;
         private bool _isClosed;
 
-        public MainWindow()
+        internal MainWindow()
         {
-            _viewModel = new MainViewModel();
+            var container = new ContainerConfiguration()
+                .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
+                .WithAssembly(typeof(MainWindow).Assembly);     // RoslynPad
+            var locator = container.CreateContainer().GetExport<IServiceLocator>();
+
+            _viewModel = locator.GetInstance<MainViewModel>();
+            _viewModel.Initialize();
+
             DataContext = _viewModel;
             InitializeComponent();
             DocumentsPane.ToggleAutoHide();
@@ -67,16 +77,22 @@ namespace RoslynPad
 
         private void LoadWindowLayout()
         {
-            var bounds = Properties.Settings.Default.WindowBounds;
-            if (bounds != new Rect())
+            var boundsString = Properties.Settings.Default.WindowBounds;
+            if (!string.IsNullOrEmpty(boundsString))
             {
-                Left = bounds.Left;
-                Top = bounds.Top;
-                Width = bounds.Width;
-                Height = bounds.Height;
+                var bounds = Rect.Parse(boundsString);
+                if (bounds != default(Rect))
+                {
+                    Left = bounds.Left;
+                    Top = bounds.Top;
+                    Width = bounds.Width;
+                    Height = bounds.Height;
+                }
             }
-            var state = Properties.Settings.Default.WindowState;
-            if (state != WindowState.Minimized)
+
+            WindowState state;
+            if (Enum.TryParse(Properties.Settings.Default.WindowState, out state) &&
+                state != WindowState.Minimized)
             {
                 WindowState = state;
             }
@@ -84,8 +100,8 @@ namespace RoslynPad
 
         private void SaveWindowLayout()
         {
-            Properties.Settings.Default.WindowBounds = RestoreBounds;
-            Properties.Settings.Default.WindowState = WindowState;
+            Properties.Settings.Default.WindowBounds = RestoreBounds.ToString();
+            Properties.Settings.Default.WindowState = WindowState.ToString();
         }
 
         private void LoadDockLayout()

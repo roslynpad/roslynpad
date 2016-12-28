@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Controls;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Utilities;
 
@@ -147,22 +146,14 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 SymbolDisplayParameterOptions.IncludeExtensionThis |
                 SymbolDisplayParameterOptions.IncludeName);
 
-        public TextBlock SignatureDisplay
+        public ImmutableArray<TaggedText> SignatureDisplay
         {
             get
             {
                 // TODO: Should probably use original syntax & formatting exactly instead of regenerating here
-                List<SymbolDisplayPart> displayParts = GetSignatureDisplayParts();
+                var displayParts = GetSignatureDisplayParts();
 
-                var textBlock = displayParts.ToTaggedText().ToTextBlock();
-
-                foreach (var inline in textBlock.Inlines)
-                {
-                    inline.FontSize = 12;
-                }
-
-                textBlock.IsEnabled = false;
-                return textBlock;
+                return displayParts.ToTaggedText();
             }
         }
 

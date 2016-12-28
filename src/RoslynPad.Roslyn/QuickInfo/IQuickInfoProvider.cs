@@ -14,13 +14,13 @@ namespace RoslynPad.Roslyn.QuickInfo
 
     public sealed class QuickInfoItem
     {
-        private readonly Func<FrameworkElement> _contentFactory;
+        private readonly Func<object> _contentFactory;
 
         public TextSpan TextSpan { get; }
 
-        public FrameworkElement Create() => _contentFactory();
+        public object Create() => _contentFactory();
 
-        internal QuickInfoItem(TextSpan textSpan, Func<FrameworkElement> contentFactory)
+        internal QuickInfoItem(TextSpan textSpan, Func<object> contentFactory)
         {
             TextSpan = textSpan;
             _contentFactory = contentFactory;

@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Windows.Media;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Utilities;
+using Glyph = RoslynPad.Roslyn.Completion.Glyph;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
@@ -158,7 +158,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 
             public string MemberName => MemberSymbol.ToDisplayString(_memberDisplayFormat);
 
-            public ImageSource Glyph => MemberSymbol.GetGlyph().ToImageSource();
+            public Glyph Glyph => MemberSymbol.GetGlyph();
         }
     }
 }

@@ -7,8 +7,9 @@
         xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         xmlns:controls="clr-namespace:RoslynPad.Controls"
+        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
+        d:DataContext="{d:DesignInstance ui:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         Title="{Binding WindowTitle, Mode=OneTime}"
@@ -23,7 +24,7 @@
                     Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
-        <HierarchicalDataTemplate DataType="{x:Type roslynPad:DocumentViewModel}"
+        <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
                                   ItemsSource="{Binding Children, Mode=OneTime}">
             <DockPanel Margin="0 0 0 3">
                 <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
@@ -44,7 +45,7 @@
             </DataTemplate.Triggers>
         </HierarchicalDataTemplate>
 
-        <DataTemplate DataType="{x:Type roslynPad:OpenDocumentViewModel}">
+        <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
             <roslynPad:DocumentView />
         </DataTemplate>
 

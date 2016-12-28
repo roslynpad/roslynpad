@@ -1,25 +1,33 @@
 ﻿using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.ExtractInterface;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Notification;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
     [ExportWorkspaceService(typeof(IExtractInterfaceOptionsService))]
     internal sealed class ExtractInterfaceOptionsService : IExtractInterfaceOptionsService
     {
+        private readonly ExportFactory<IExtractInterfaceDialog> _dialogFactory;
+
+        [ImportingConstructor]
+        public ExtractInterfaceOptionsService(ExportFactory<IExtractInterfaceDialog> dialogFactory)
+        {
+            _dialogFactory = dialogFactory;
+        }
+
         public ExtractInterfaceOptionsResult GetExtractInterfaceOptions(ISyntaxFactsService syntaxFactsService,
             INotificationService notificationService, List<ISymbol> extractableMembers, string defaultInterfaceName,
             List<string> conflictingTypeNames, string defaultNamespace, string generatedNameTypeParameterSuffix, string languageName)
         {
             var viewModel = new ExtractInterfaceDialogViewModel(syntaxFactsService, defaultInterfaceName, extractableMembers, conflictingTypeNames, defaultNamespace, generatedNameTypeParameterSuffix, languageName, languageName == LanguageNames.CSharp ? ".cs" : ".vb");
-            var dialog = new ExtractInterfaceDialog(viewModel);
-            dialog.SetOwnerToActive();
-            var options = dialog.ShowDialog() == true
+            var dialog = _dialogFactory.CreateExport().Value;
+            dialog.ViewModel = viewModel;
+            var options = dialog.Show() == true
                 ? new ExtractInterfaceOptionsResult(
                     isCancelled: false,
                     includedMembers: viewModel.MemberContainers.Where(c => c.IsChecked).Select(c => c.MemberSymbol),

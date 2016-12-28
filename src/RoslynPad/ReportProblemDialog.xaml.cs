@@ -1,22 +1,26 @@
-﻿using System.Diagnostics;
+﻿using System.Composition;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Avalon.Windows.Controls;
+using RoslynPad.UI;
 
 namespace RoslynPad
 {
     /// <summary>
     /// Interaction logic for ReportProblemDialog.xaml
     /// </summary>
-    internal partial class ReportProblemDialog
+    [Export(typeof(IReportProblemDialog))]
+    internal partial class ReportProblemDialog : IReportProblemDialog
     {
-        private readonly MainViewModel _mainViewModel;
+        private readonly ITelemetryProvider _telemetryProvider;
         private InlineModalDialog _dialog;
 
-        public ReportProblemDialog(MainViewModel mainViewModel)
+        [ImportingConstructor]
+        public ReportProblemDialog(ITelemetryProvider telemetryProvider)
         {
-            _mainViewModel = mainViewModel;
+            _telemetryProvider = telemetryProvider;
             InitializeComponent();
             Loaded += OnLoaded;
         }
@@ -47,7 +51,7 @@ namespace RoslynPad
             BusyIndicator.IsIndeterminate = true;
             try
             {
-                await _mainViewModel.SubmitFeedback(FeedbackText.Text, Email.Text).ConfigureAwait(true);
+                await _telemetryProvider.SubmitFeedback(FeedbackText.Text, Email.Text).ConfigureAwait(true);
                 Close();
             }
             finally

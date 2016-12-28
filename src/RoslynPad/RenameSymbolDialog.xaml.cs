@@ -1,27 +1,35 @@
 ﻿using System.ComponentModel;
+using System.Composition;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Avalon.Windows.Controls;
 using RoslynPad.Annotations;
+using RoslynPad.UI;
 
 namespace RoslynPad
 {
     /// <summary>
     /// Interaction logic for RenameSymbolDialog.xaml
     /// </summary>
-    public partial class RenameSymbolDialog : INotifyPropertyChanged
+    [Export(typeof(IRenameSymbolDialog))]
+    public partial class RenameSymbolDialog : INotifyPropertyChanged, IRenameSymbolDialog
     {
         private static readonly Regex _identifierRegex = new Regex(@"^(?:((?!\d)\w+(?:\.(?!\d)\w+)*)\.)?((?!\d)\w+)$");
 
         private string _symbolName;
         private InlineModalDialog _dialog;
 
-        public RenameSymbolDialog(string symbolName)
+        public RenameSymbolDialog()
         {
             DataContext = this;
             InitializeComponent();
+
+        }
+
+        public void Initialize(string symbolName)
+        {
             Loaded += (sender, args) =>
             {
                 SymbolTextBox.Focus();

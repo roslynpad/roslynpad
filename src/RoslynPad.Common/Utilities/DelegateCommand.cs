@@ -1,41 +1,46 @@
 using System;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace RoslynPad.Utilities
 {
-    internal sealed class DelegateCommand : ICommand
+    public interface IActionCommand
+    {
+        void Execute();
+        bool CanExecute();
+        void RaiseCanExecuteChanged();
+
+        event EventHandler CanExecuteChanged;
+    }
+
+    public interface IActionCommand<in T> : IActionCommand
+    {
+        void Execute(T parameter);
+        bool CanExecute(T parameter);
+    }
+
+    internal class DelegateCommandBase : IActionCommand
     {
         private readonly Action _action;
         private readonly Func<bool> _canExecute;
         private readonly Func<Task> _asyncAction;
 
-        public DelegateCommand(Action action, Func<bool> canExecute = null)
+        public DelegateCommandBase(Action action, Func<bool> canExecute = null)
         {
             _action = action;
             _canExecute = canExecute;
         }
 
-        public DelegateCommand(Func<Task> asyncAction, Func<bool> canExecute = null)
+        public DelegateCommandBase(Func<Task> asyncAction, Func<bool> canExecute = null)
         {
             _asyncAction = asyncAction;
             _canExecute = canExecute;
         }
-
-        bool ICommand.CanExecute(object parameter)
-        {
-            return CanExecute();
-        }
-
+        
         public bool CanExecute()
         {
             return _canExecute == null || _canExecute();
         }
 
-        void ICommand.Execute(object parameter)
-        {
-            Execute();
-        }
 
         public void Execute()
         {
@@ -62,37 +67,27 @@ namespace RoslynPad.Utilities
         }
     }
 
-    internal sealed class DelegateCommand<T> : ICommand
+    internal class DelegateCommandBase<T> : IActionCommand<T>
     {
         private readonly Action<T> _action;
         private readonly Func<T, bool> _canExecute;
         private readonly Func<T, Task> _asyncAction;
 
-        public DelegateCommand(Action<T> action, Func<T, bool> canExecute = null)
+        public DelegateCommandBase(Action<T> action, Func<T, bool> canExecute = null)
         {
             _action = action;
             _canExecute = canExecute;
         }
 
-        public DelegateCommand(Func<T, Task> asyncAction, Func<T, bool> canExecute = null)
+        public DelegateCommandBase(Func<T, Task> asyncAction, Func<T, bool> canExecute = null)
         {
             _asyncAction = asyncAction;
             _canExecute = canExecute;
         }
 
-        bool ICommand.CanExecute(object parameter)
-        {
-            return CanExecute((T)parameter);
-        }
-
         public bool CanExecute(T parameter)
         {
             return _canExecute == null || _canExecute(parameter);
-        }
-
-        void ICommand.Execute(object parameter)
-        {
-            Execute((T)parameter);
         }
 
         public void Execute(T parameter)
@@ -117,6 +112,16 @@ namespace RoslynPad.Utilities
         public void RaiseCanExecuteChanged()
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        void IActionCommand.Execute()
+        {
+            Execute(default(T));
+        }
+
+        bool IActionCommand.CanExecute()
+        {
+            return CanExecute(default(T));
         }
     }
 }

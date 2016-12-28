@@ -1,0 +1,279 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
+                    xmlns:windows="clr-namespace:RoslynPad.Editor.Windows">
+
+
+    <DrawingImage x:Key="FindNext">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M11.5,5C11.31,5,11.126,5.027,10.943,5.056L12,4 8,0 2,0 4,2 2,2 2,6 4,6 2,8 8,8 8.056,7.943C8.027,8.126 8,8.31 8,8.5 8,8.822 8.046,9.139 8.137,9.449L5.5,12 8,14.5 10.551,11.863C10.861,11.954 11.178,12 11.5,12 13.43,12 15,10.43 15,8.5 15,6.57 13.43,5 11.5,5" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M13,8.5C13,7.672 12.328,7 11.5,7 10.672,7 10,7.672 10,8.5 10,9.328 10.672,10 11.5,10 12.328,10 13,9.328 13,8.5 M14,8.5C14,9.881 12.881,11 11.5,11 11.068,11 10.668,10.881 10.312,10.688L8,13 7,12 9.312,9.688C9.119,9.332 9,8.932 9,8.5 9,7.119 10.119,6 11.5,6 12.881,6 14,7.119 14,8.5" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M5,7L7,5 3,5 3,3 7,3 5,1 7,1 10,4 7,7z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M10,8.5C10,9.328 10.672,10 11.5,10 12.328,10 13,9.328 13,8.5 13,7.672 12.328,7 11.5,7 10.672,7 10,7.672 10,8.5" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="FindPrevious">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M12.5,5C11.961,5,11.457,5.133,11,5.351L11,2 8.414,2 10.414,0 5.586,0 1.586,4 5.586,8 9.051,8C9.027,8.164 9,8.328 9,8.5 9,8.822 9.046,9.139 9.137,9.449L6.5,12 9,14.5 11.551,11.863C11.861,11.954 12.178,12 12.5,12 14.43,12 16,10.43 16,8.5 16,6.57 14.43,5 12.5,5" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M14,8.5C14,7.672 13.328,7 12.5,7 11.672,7 11,7.672 11,8.5 11,9.328 11.672,10 12.5,10 13.328,10 14,9.328 14,8.5 M15,8.5C15,9.881 13.881,11 12.5,11 12.068,11 11.668,10.881 11.312,10.688L9,13 8,12 10.312,9.688C10.119,9.332 10,8.932 10,8.5 10,7.119 11.119,6 12.5,6 13.881,6 15,7.119 15,8.5" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M8,7L6,7 3,4 6,1 8,1 6,3 10,3 10,5 6,5z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M11,8.5C11,9.328 11.672,10 12.5,10 13.328,10 14,9.328 14,8.5 14,7.672 13.328,7 12.5,7 11.672,7 11,7.672 11,8.5" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="ReplaceNext">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF424242"
+                                 Geometry="F1M12,6L10,6 10,4 12,4 12,6z M10,3L10,1 9,1 9,6 9,7 10,7 12,7 13,7 13,4 13,3 10,3z" />
+                <GeometryDrawing Brush="#FF424242"
+                                 Geometry="F1M3,10L6,10 6,11 4,11 4,13 6,13 6,14 3,14 3,10z M1,15L8,15 8,9 1,9 1,15z" />
+                <GeometryDrawing Brush="#FF00529B"
+                                 Geometry="F1M2.97,3.5L3,6 2,5 2,6.5 3.5,8 5,6.5 5,5 4,6 3.97,3.5C3.97,3.22,4.2,3,4.47,3L8,3 8,2 4.47,2C3.65,2,2.97,2.67,2.97,3.5z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="ReplaceAll">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M5,6L5,4 7.156,4C7.143,4.035 7.121,4.065 7.109,4.102 7.037,4.338 7,4.593 7,4.857 7,5.135 7.044,5.4 7.13,5.648 7.173,5.772 7.229,5.889 7.293,6z M15.903,2.917C15.832,2.582 15.717,2.277 15.56,2.008 15.376,1.696 15.134,1.442 14.847,1.26 14.524,1.052 14.148,0.946 13.73,0.946L13.697,0.946 13.697,0 11,0 11,1.365C10.869,1.275 10.729,1.198 10.577,1.138 10.29,1.023 9.961,0.965 9.598,0.965 9.425,0.965 9.247,0.981 9.047,1.016 8.885,1.045 8.728,1.082 8.578,1.126 8.427,1.172 8.289,1.221 8.149,1.28 8.093,1.306 8.047,1.33 8,1.354L8,1 3.479,1C2.1,1,0.979,2.122,0.979,3.509L0.979,3.565 0,2.586 0,6.914 1.086,8 0,8 0,16 12,16 12,14 14,14 14,6.927C14.253,6.88 14.495,6.807 14.707,6.678 15.016,6.492 15.275,6.235 15.478,5.916 15.658,5.635 15.794,5.305 15.882,4.932 15.96,4.597 16,4.236 16,3.861 16,3.54 15.968,3.223 15.903,2.917" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M5,8L12,8 12,13 13,13 13,7 5,7z" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M10.1836,4.3809C10.1836,4.5119 10.1626,4.6329 10.1246,4.7459 10.0866,4.8579 10.0326,4.9569 9.9596,5.0409 9.8876,5.1249 9.8026,5.1919 9.7046,5.2399 9.6036,5.2889 9.4916,5.3129 9.3676,5.3129 9.2776,5.3129 9.1976,5.2989 9.1246,5.2719 9.0516,5.2439 8.9906,5.2069 8.9396,5.1579 8.8896,5.1109 8.8506,5.0529 8.8236,4.9859 8.7956,4.9179 8.7826,4.8459 8.7826,4.7679 8.7826,4.6819 8.7916,4.6039 8.8096,4.5349 8.8276,4.4669 8.8606,4.4079 8.9076,4.3559 8.9546,4.3029 9.0196,4.2579 9.1026,4.2229 9.1856,4.1899 9.2916,4.1619 9.4226,4.1449L10.1836,4.0349z M10.6296,2.3609C10.5186,2.2329 10.3766,2.1339 10.2056,2.0669 10.0356,1.9989 9.8316,1.9649 9.5976,1.9649 9.4786,1.9649 9.3566,1.9769 9.2296,1.9989 9.1036,2.0219 8.9816,2.0489 8.8676,2.0839 8.7536,2.1179 8.6506,2.1539 8.5576,2.1929 8.4656,2.2349 8.3956,2.2719 8.3446,2.3069L8.3446,3.0739C8.5026,2.9429 8.6856,2.8399 8.8886,2.7619 9.0926,2.6839 9.3016,2.6449 9.5156,2.6449 9.7286,2.6449 9.8926,2.7069 10.0096,2.8299 10.1256,2.9549 10.1836,3.1539 10.1836,3.4299L9.1536,3.5839C8.9496,3.6109 8.7746,3.6619 8.6276,3.7359 8.4826,3.8109 8.3636,3.9019 8.2706,4.0159 8.1766,4.1269 8.1096,4.2539 8.0656,4.3969 8.0216,4.5389 7.9996,4.6939 7.9996,4.8579 7.9996,5.0269 8.0256,5.1799 8.0746,5.3199 8.1226,5.4609 8.1956,5.5799 8.2896,5.6819 8.3826,5.7809 8.4996,5.8599 8.6416,5.9159 8.7816,5.9729 8.9396,5.9999 9.1206,5.9999 9.3496,5.9999 9.5506,5.9469 9.7236,5.8399 9.8966,5.7349 10.0426,5.5799 10.1626,5.3769L10.1766,5.3769 10.1766,5.9059 10.9616,5.9059 10.9616,3.4689C10.9616,3.2309 10.9346,3.0179 10.8786,2.8319 10.8246,2.6489 10.7406,2.4899 10.6296,2.3609" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M3.1406,12.2573C3.0576,12.2923 2.9936,12.3373 2.9456,12.3903 2.8986,12.4433 2.8656,12.5013 2.8476,12.5703 2.8296,12.6383 2.8206,12.7163 2.8206,12.8023 2.8206,12.8803 2.8336,12.9523 2.8616,13.0213 2.8886,13.0873 2.9276,13.1463 2.9776,13.1933 3.0286,13.2413 3.0896,13.2783 3.1626,13.3063 3.2356,13.3333 3.3156,13.3473 3.4056,13.3473 3.5296,13.3473 3.6416,13.3233 3.7426,13.2753 3.8406,13.2263 3.9256,13.1593 3.9976,13.0753 4.0706,12.9913 4.1246,12.8923 4.1626,12.7803 4.2016,12.6673 4.2216,12.5463 4.2216,12.4153L4.2216,12.0693 3.4606,12.1793C3.3296,12.1963,3.2236,12.2243,3.1406,12.2573" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M10,11.0029C9.873,10.9109 9.735,10.8369 9.587,10.7809 9.44,10.7249 9.28,10.6969 9.107,10.6969 8.937,10.6969 8.778,10.7259 8.629,10.7849 8.48,10.8429 8.352,10.9279 8.243,11.0409 8.134,11.1519 8.049,11.2909 7.986,11.4549 7.924,11.6189 7.892,11.8069 7.892,12.0179 7.892,12.2149 7.92,12.3919 7.975,12.5499 8.03,12.7079 8.109,12.8419 8.213,12.9509 8.316,13.0609 8.442,13.1459 8.59,13.2049 8.737,13.2649 8.905,13.2949 9.092,13.2949 9.167,13.2949 9.245,13.2859 9.325,13.2689 9.405,13.2509 9.484,13.2279 9.563,13.1989 9.642,13.1709 9.719,13.1369 9.794,13.0989 9.869,13.0599 9.937,13.0189 10,12.9739L10,13.7459C9.865,13.8229 9.709,13.8849 9.533,13.9309 9.357,13.9769 9.149,13.9999 8.908,13.9999 8.616,13.9999 8.352,13.9519 8.117,13.8569 7.882,13.7609 7.682,13.6279 7.517,13.4569 7.352,13.2869 7.226,13.0849 7.137,12.8529 7.048,12.6199 7.003,12.3679 7.003,12.0969 7.003,11.7779 7.052,11.4899 7.148,11.2309 7.244,10.9719 7.382,10.7509 7.562,10.5679 7.742,10.3849 7.96,10.2439 8.217,10.1429 8.473,10.0419 8.76,9.9919 9.078,9.9919 9.18,9.9919 9.277,9.9979 9.37,10.0099 9.463,10.0229 9.548,10.0389 9.627,10.0569 9.706,10.0759 9.777,10.0959 9.841,10.1189 9.904,10.1409 9.958,10.1639 10,10.1859z M5,13.9409L4.215,13.9409 4.215,13.4119 4.201,13.4119C4.081,13.6149 3.935,13.7689 3.762,13.8749 3.589,13.9819 3.388,14.0349 3.158,14.0349 2.978,14.0349 2.819,14.0069 2.68,13.9509 2.538,13.8939 2.421,13.8159 2.328,13.7159 2.233,13.6149 2.161,13.4959 2.112,13.3549 2.063,13.2139 2.038,13.0619 2.038,12.8919 2.038,12.7279 2.06,12.5739 2.104,12.4309 2.147,12.2889 2.215,12.1619 2.309,12.0499 2.401,11.9369 2.521,11.8449 2.666,11.7709 2.812,11.6969 2.987,11.6459 3.191,11.6189L4.222,11.4639C4.222,11.1889 4.164,10.9899 4.048,10.8649 3.931,10.7419 3.767,10.6789 3.554,10.6789 3.34,10.6789 3.131,10.7179 2.927,10.7959 2.724,10.8749 2.541,10.9779 2.383,11.1089L2.383,10.3409C2.434,10.3059 2.504,10.2689 2.596,10.2279 2.688,10.1889 2.792,10.1519 2.905,10.1179 3.02,10.0839 3.142,10.0569 3.268,10.0329 3.395,10.0119 3.517,9.9999 3.636,9.9999 3.87,9.9999 4.073,10.0329 4.244,10.1019 4.415,10.1689 4.557,10.2669 4.668,10.3959 4.778,10.5249 4.862,10.6829 4.917,10.8669 4.973,11.0519 5,11.2649 5,11.5029z M1,14.9999L11,14.9999 11,8.9999 1,8.9999z M1,8.9999" />
+                    <GeometryDrawing Brush="#FF414141"
+                                     Geometry="F1M14.2217,4.4687C14.1827,4.6487 14.1267,4.7967 14.0537,4.9137 13.9817,5.0317 13.8937,5.1207 13.7897,5.1797 13.6857,5.2397 13.5707,5.2717 13.4407,5.2717 13.3327,5.2717 13.2317,5.2457 13.1397,5.1957 13.0487,5.1467 12.9697,5.0757 12.9027,4.9887 12.8357,4.9027 12.7847,4.7987 12.7477,4.6817 12.7107,4.5647 12.6917,4.4377 12.6917,4.3007L12.6917,3.7947C12.6917,3.6247 12.7117,3.4687 12.7517,3.3297 12.7917,3.1917 12.8477,3.0727 12.9197,2.9707 12.9927,2.8707 13.0757,2.7927 13.1767,2.7387 13.2767,2.6837 13.3867,2.6557 13.5077,2.6557 13.6297,2.6557 13.7397,2.6837 13.8347,2.7387 13.9307,2.7927 14.0117,2.8727 14.0787,2.9767 14.1457,3.0817 14.1957,3.2067 14.2297,3.3537 14.2637,3.4997 14.2817,3.6637 14.2817,3.8477 14.2817,4.0817 14.2617,4.2887 14.2217,4.4687 M14.9257,3.1267C14.8757,2.8947 14.8007,2.6917 14.6987,2.5157 14.5947,2.3397 14.4627,2.2007 14.3037,2.0997 14.1437,1.9967 13.9517,1.9467 13.7307,1.9467 13.6077,1.9467 13.4957,1.9637 13.3947,1.9987 13.2917,2.0337 13.2007,2.0827 13.1167,2.1447 13.0327,2.2067 12.9577,2.2807 12.8907,2.3667 12.8257,2.4547 12.7637,2.5507 12.7097,2.6557L12.6977,2.6557 12.6977,0.9997 11.9997,0.9997 11.9997,5.8867 12.6977,5.8867 12.6977,5.4027 12.7097,5.4027C12.7537,5.4847 12.8047,5.5607 12.8617,5.6307 12.9177,5.7007 12.9807,5.7637 13.0527,5.8167 13.1237,5.8687 13.2037,5.9077 13.2907,5.9377 13.3787,5.9667 13.4767,5.9807 13.5827,5.9807 13.8137,5.9807 14.0167,5.9277 14.1927,5.8207 14.3677,5.7147 14.5157,5.5667 14.6357,5.3767 14.7557,5.1897 14.8467,4.9647 14.9087,4.7047 14.9687,4.4457 14.9997,4.1657 14.9997,3.8617 14.9997,3.6037 14.9747,3.3597 14.9257,3.1267" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M1.9785,3.5L1.9995,6 0.9995,5 0.9995,6.5 2.4995,8 3.9995,6.5 3.9995,5 2.9995,6 2.9785,3.5C2.9785,3.225,3.2035,3,3.4785,3L6.9995,3 6.9995,2 3.4785,2C2.6515,2,1.9785,2.673,1.9785,3.5" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M4.2217,12.4155C4.2217,12.5465 4.2007,12.6675 4.1627,12.7805 4.1247,12.8925 4.0707,12.9915 3.9977,13.0755 3.9257,13.1595 3.8407,13.2265 3.7427,13.2745 3.6417,13.3235 3.5297,13.3475 3.4057,13.3475 3.3157,13.3475 3.2357,13.3335 3.1627,13.3065 3.0897,13.2785 3.0287,13.2415 2.9777,13.1925 2.9277,13.1455 2.8887,13.0875 2.8617,13.0205 2.8337,12.9525 2.8207,12.8805 2.8207,12.8025 2.8207,12.7165 2.8297,12.6385 2.8477,12.5695 2.8657,12.5015 2.8987,12.4425 2.9457,12.3905 2.9927,12.3375 3.0577,12.2925 3.1407,12.2575 3.2237,12.2245 3.3297,12.1965 3.4607,12.1795L4.2217,12.0695z M4.6677,10.3955C4.5567,10.2675 4.4147,10.1685 4.2437,10.1015 4.0737,10.0335 3.8697,9.9995 3.6357,9.9995 3.5167,9.9995 3.3947,10.0115 3.2677,10.0335 3.1417,10.0565 3.0197,10.0835 2.9057,10.1185 2.7917,10.1525 2.6887,10.1885 2.5957,10.2275 2.5037,10.2695 2.4337,10.3065 2.3827,10.3415L2.3827,11.1085C2.5407,10.9775 2.7237,10.8745 2.9267,10.7965 3.1307,10.7185 3.3397,10.6795 3.5537,10.6795 3.7667,10.6795 3.9307,10.7415 4.0477,10.8645 4.1637,10.9895 4.2217,11.1885 4.2217,11.4645L3.1917,11.6185C2.9877,11.6455 2.8127,11.6965 2.6657,11.7705 2.5207,11.8455 2.4017,11.9365 2.3087,12.0505 2.2147,12.1615 2.1477,12.2885 2.1037,12.4315 2.0597,12.5735 2.0377,12.7285 2.0377,12.8925 2.0377,13.0615 2.0637,13.2145 2.1127,13.3545 2.1607,13.4955 2.2337,13.6145 2.3277,13.7165 2.4207,13.8155 2.5377,13.8945 2.6797,13.9505 2.8197,14.0075 2.9777,14.0345 3.1587,14.0345 3.3877,14.0345 3.5887,13.9815 3.7617,13.8745 3.9347,13.7695 4.0807,13.6145 4.2007,13.4115L4.2147,13.4115 4.2147,13.9405 4.9997,13.9405 4.9997,11.5035C4.9997,11.2655 4.9727,11.0525 4.9167,10.8665 4.8627,10.6835 4.7787,10.5245 4.6677,10.3955" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M9.627,10.0571C9.548,10.0381 9.463,10.0231 9.37,10.0101 9.277,9.9981 9.18,9.9921 9.078,9.9921 8.76,9.9921 8.473,10.0421 8.217,10.1431 7.96,10.2441 7.742,10.3851 7.563,10.5681 7.382,10.7511 7.244,10.9721 7.148,11.2311 7.052,11.4901 7.003,11.7781 7.003,12.0971 7.003,12.3681 7.048,12.6201 7.137,12.8521 7.226,13.0851 7.352,13.2861 7.517,13.4571 7.682,13.6271 7.882,13.7611 8.117,13.8561 8.352,13.9521 8.616,14.0001 8.908,14.0001 9.149,14.0001 9.357,13.9771 9.533,13.9311 9.71,13.8851 9.865,13.8231 10,13.7461L10,12.9741C9.938,13.0181 9.869,13.0601 9.794,13.0991 9.719,13.1371 9.642,13.1711 9.563,13.1991 9.484,13.2281 9.405,13.2511 9.325,13.2681 9.245,13.2861 9.167,13.2941 9.092,13.2941 8.905,13.2941 8.737,13.2651 8.59,13.2051 8.442,13.1451 8.316,13.0601 8.213,12.9511 8.109,12.8421 8.03,12.7081 7.975,12.5501 7.92,12.3921 7.892,12.2151 7.892,12.0181 7.892,11.8071 7.924,11.6191 7.986,11.4541 8.049,11.2901 8.134,11.1521 8.243,11.0401 8.352,10.9281 8.481,10.8431 8.629,10.7851 8.778,10.7261 8.938,10.6971 9.107,10.6971 9.28,10.6971 9.44,10.7251 9.587,10.7811 9.735,10.8371 9.873,10.9111 10,11.0031L10,10.1851C9.958,10.1631 9.904,10.1411 9.841,10.1191 9.777,10.0961 9.706,10.0761 9.627,10.0571" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="ExpandChevronDown">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M7.7393,10.9297L2.7573,5.9427 5.0693,3.6287 7.7983,6.3617 10.7633,3.6617 13.0703,5.9677z" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M5.0683,5.044L4.1703,5.942 7.7643,9.54 11.6303,5.942 10.7313,5.044 7.7643,7.743z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <Style x:Key="ExpanderToggle"
+           TargetType="ToggleButton">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Image x:Name="Image"
+                           Source="{StaticResource ExpandChevronDown}"
+                           RenderTransformOrigin=".5 .5" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked"
+                                 Value="True">
+                            <Setter TargetName="Image"
+                                    Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleY="-1" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver"
+                                 Value="True">
+                            <Setter Property="Opacity"
+                                    Value="0.9" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="SearchReplacePanelTemplate"
+                     TargetType="windows:SearchReplacePanel">
+        <Border Background="#eeeeee"
+                BorderBrush="DarkGray"
+                BorderThickness="0 0 0 3"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Cursor="Arrow"
+                TextElement.FontFamily="{x:Static SystemFonts.MenuFontFamily}">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition  Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <ToggleButton Style="{StaticResource ExpanderToggle}"
+                              ToolTip="Toggle between find and replace modes"
+                              IsChecked="{Binding IsReplaceMode, RelativeSource={RelativeSource TemplatedParent}}"
+                              Grid.Column="0"
+                              Grid.Row="0"
+                              Width="16"
+                              Margin="2" />
+
+                <TextBox Name="PART_searchTextBox"
+                         Grid.Column="1"
+                         Grid.Row="0"
+                         Width="150"
+                         Height="24"
+                         Margin="3,3,3,0"
+                         Text="{Binding SearchPattern, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+
+                <TextBox Name="ReplaceBox"
+                         Visibility="Collapsed"
+                         Grid.Column="1"
+                         Grid.Row="1"
+                         Width="150"
+                         Height="24"
+                         Margin="3 3 3 0"
+                         Text="{Binding ReplacePattern, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+               
+                <StackPanel Orientation="Horizontal"
+                            Grid.Column="2"
+                            Grid.Row="0">
+                    <avalonedit:DropDownButton Height="24">
+                        <avalonedit:DropDownButton.DropDownContent>
+                            <Popup StaysOpen="False">
+                                <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                                        BorderThickness="1">
+                                    <StackPanel Orientation="Vertical">
+                                        <CheckBox IsChecked="{Binding MatchCase, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Content="{Binding Localization.MatchCaseText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Margin="3" />
+                                        <CheckBox IsChecked="{Binding WholeWords, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Content="{Binding Localization.MatchWholeWordsText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Margin="3" />
+                                        <CheckBox IsChecked="{Binding UseRegex, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Content="{Binding Localization.UseRegexText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Margin="3" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </avalonedit:DropDownButton.DropDownContent>
+                    </avalonedit:DropDownButton>
+                    <Button Margin="3"
+                            Height="24"
+                            Width="24"
+                            Command="avalonedit:SearchCommands.FindPrevious"
+                            ToolTip="{Binding Localization.FindPreviousText, RelativeSource={RelativeSource TemplatedParent}}">
+                        <Image Width="16"
+                               Height="16"
+                               Stretch="Fill"
+                               Source="{StaticResource FindPrevious}" />
+                    </Button>
+                    <Button Margin="3"
+                            Height="24"
+                            Width="24"
+                            Command="avalonedit:SearchCommands.FindNext"
+                            ToolTip="{Binding Localization.FindNextText, RelativeSource={RelativeSource TemplatedParent}}">
+                        <Image Width="16"
+                               Height="16"
+                               Stretch="Fill"
+                               Source="{StaticResource FindNext}" />
+                    </Button>
+                    <Button Height="16"
+                            Width="16"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Command="avalonedit:SearchCommands.CloseSearchPanel"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            Focusable="False">
+                        <Path Data="M 0,0 L 8,8 M 8,0 L 0,8"
+                              Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+                              StrokeThickness="1" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Name="ReplaceButtons"
+                            Visibility="Collapsed"
+                            Orientation="Horizontal"
+                            Grid.Column="2"
+                            Grid.Row="1">
+                    <Button Margin="3"
+                            Height="24"
+                            Width="24"
+                            Command="windows:SearchCommandsEx.ReplaceNext"
+                            ToolTip="Replace next (Alt+R)">
+                        <Image Width="16"
+                               Height="16"
+                               Stretch="Fill"
+                               Source="{StaticResource ReplaceNext}" />
+                    </Button>
+                    <Button Margin="3"
+                            Height="24"
+                            Width="24"
+                            Command="windows:SearchCommandsEx.ReplaceAll"
+                            ToolTip="Replace all (Alt+A)">
+                        <Image Width="16"
+                               Height="16"
+                               Stretch="Fill"
+                               Source="{StaticResource ReplaceAll}" />
+                    </Button>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsReplaceMode"
+                     Value="True">
+                <Setter TargetName="ReplaceBox"
+                        Property="Visibility"
+                        Value="Visible" />
+                <Setter TargetName="ReplaceButtons"
+                        Property="Visibility"
+                        Value="Visible" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style TargetType="windows:SearchReplacePanel">
+        <Setter Property="Template"
+                Value="{StaticResource SearchReplacePanelTemplate}" />
+    </Style>
+</ResourceDictionary>
