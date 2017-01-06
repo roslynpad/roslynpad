@@ -85,7 +85,6 @@ namespace RoslynPad
             await _viewModel.Initialize(
                 avalonEditTextContainer,
                 a => _syncContext.Post(o => ProcessDiagnostics(a), null),
-                text => avalonEditTextContainer.UpdateText(text),
                 OnError,
                 () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
                 this).ConfigureAwait(true);

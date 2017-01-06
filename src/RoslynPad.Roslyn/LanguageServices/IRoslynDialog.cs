@@ -1,6 +1,6 @@
 ﻿namespace RoslynPad.Roslyn.LanguageServices
 {
-    internal interface IRoslynDialog
+    public interface IRoslynDialog
     {
         object ViewModel { get; set; }
 

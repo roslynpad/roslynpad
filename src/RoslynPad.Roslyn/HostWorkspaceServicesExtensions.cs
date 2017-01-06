@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Host;
-using RoslynPad.Annotations;
 
 namespace RoslynPad.Roslyn
 {
     public static class HostWorkspaceServicesExtensions
     {
-        public static IEnumerable<object> FindLanguageServices([NotNull] this HostWorkspaceServices services, Type type)
+        public static IEnumerable<object> FindLanguageServices(this HostWorkspaceServices services, Type type)
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
 
@@ -16,7 +15,7 @@ namespace RoslynPad.Roslyn
                 .Invoke(services, new object[] { new HostWorkspaceServices.MetadataFilter(x => true) });
         }
 
-        public static object GetService([NotNull] this HostWorkspaceServices services, Type type)
+        public static object GetService(this HostWorkspaceServices services, Type type)
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
 

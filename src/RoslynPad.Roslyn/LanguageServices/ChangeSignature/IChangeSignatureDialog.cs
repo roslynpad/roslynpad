@@ -1,4 +1,4 @@
 ﻿namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
-    internal interface IChangeSignatureDialog : IRoslynDialog { }
+    public interface IChangeSignatureDialog : IRoslynDialog { }
 }

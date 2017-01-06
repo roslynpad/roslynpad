@@ -1,4 +1,4 @@
 ﻿namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
-    internal interface IExtractInterfaceDialog : IRoslynDialog { }
+    public interface IExtractInterfaceDialog : IRoslynDialog { }
 }

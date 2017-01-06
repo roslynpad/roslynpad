@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalyzerAssemblyLoader.cs" />
+    <Compile Include="ChangeSignatureDialogViewModel.cs" />
     <Compile Include="CodeActions\CodeActionExtensions.cs" />
     <Compile Include="CodeFixes\CodeFix.cs" />
     <Compile Include="CodeFixes\CodeFixCollection.cs" />
@@ -75,7 +76,6 @@
     <Compile Include="DocumentTrackingService.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
     <Compile Include="ISymbolExtensions.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureOptionsService.cs" />
     <Compile Include="LanguageServices\ChangeSignature\IChangeSignatureDialog.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ParameterConfiguration.cs" />
@@ -85,6 +85,8 @@
     <Compile Include="LanguageServices\ExtractInterface\IExtractInterfaceDialog.cs" />
     <Compile Include="LanguageServices\IRoslynDialog.cs" />
     <Compile Include="Navigation\DocumentNavigationService.cs" />
+    <Compile Include="NuGetConfiguration.cs" />
+    <Compile Include="NuGetConfigurationExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QuickInfo\IQuickInfoProvider.cs" />
     <Compile Include="QuickInfo\QuickInfoProvider.cs" />
@@ -104,13 +106,8 @@
     <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="Snippets\SnippetInfo.cs" />
     <Compile Include="Snippets\SnippetInfoService.cs" />
+    <Compile Include="Text\IUpdatableTextContainer.cs" />
     <Compile Include="WorkspaceServices\AddMetadataReferenceCodeActionOperationFactoryWorkspaceService.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
-      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
-      <Name>RoslynPad.Common</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="project.json" />

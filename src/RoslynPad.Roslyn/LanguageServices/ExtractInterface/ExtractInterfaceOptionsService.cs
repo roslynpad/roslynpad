@@ -12,12 +12,12 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
     [ExportWorkspaceService(typeof(IExtractInterfaceOptionsService))]
     internal sealed class ExtractInterfaceOptionsService : IExtractInterfaceOptionsService
     {
-        private readonly ExportFactory<IExtractInterfaceDialog> _dialogFactory;
+        private readonly CompositionContext _context;
 
         [ImportingConstructor]
-        public ExtractInterfaceOptionsService(ExportFactory<IExtractInterfaceDialog> dialogFactory)
+        public ExtractInterfaceOptionsService(CompositionContext context)
         {
-            _dialogFactory = dialogFactory;
+            _context = context;
         }
 
         public ExtractInterfaceOptionsResult GetExtractInterfaceOptions(ISyntaxFactsService syntaxFactsService,
@@ -25,7 +25,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             List<string> conflictingTypeNames, string defaultNamespace, string generatedNameTypeParameterSuffix, string languageName)
         {
             var viewModel = new ExtractInterfaceDialogViewModel(syntaxFactsService, defaultInterfaceName, extractableMembers, conflictingTypeNames, defaultNamespace, generatedNameTypeParameterSuffix, languageName, languageName == LanguageNames.CSharp ? ".cs" : ".vb");
-            var dialog = _dialogFactory.CreateExport().Value;
+            var dialog = _context.GetExport<IExtractInterfaceDialog>();
             dialog.ViewModel = viewModel;
             var options = dialog.Show() == true
                 ? new ExtractInterfaceOptionsResult(
