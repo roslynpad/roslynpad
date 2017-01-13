@@ -45,6 +45,7 @@ namespace RoslynPad
             {
                 SaveButton.Focus();
             }
+            SetSaveButtonStatus();
         }
 
         private void DocumentName_TextChanged(object sender, TextChangedEventArgs e)
@@ -71,8 +72,13 @@ namespace RoslynPad
             set
             {
                 SetProperty(ref _documentName, value);
-                SaveButton.IsEnabled = !AllowNameEdit || !string.IsNullOrWhiteSpace(DocumentName);
+                SetSaveButtonStatus();
             }
+        }
+
+        private void SetSaveButtonStatus()
+        {
+            SaveButton.IsEnabled = !AllowNameEdit || !string.IsNullOrWhiteSpace(DocumentName);
         }
 
         public SaveResult Result
