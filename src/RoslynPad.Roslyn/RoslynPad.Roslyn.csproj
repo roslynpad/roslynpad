@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalyzerAssemblyLoader.cs" />
-    <Compile Include="ChangeSignatureDialogViewModel.cs" />
+    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
     <Compile Include="CodeActions\CodeActionExtensions.cs" />
     <Compile Include="CodeFixes\CodeFix.cs" />
     <Compile Include="CodeFixes\CodeFixCollection.cs" />

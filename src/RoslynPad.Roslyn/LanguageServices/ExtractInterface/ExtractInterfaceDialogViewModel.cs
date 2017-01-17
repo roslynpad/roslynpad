@@ -11,7 +11,7 @@ using Glyph = RoslynPad.Roslyn.Completion.Glyph;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
-    public class ExtractInterfaceDialogViewModel : INotifyPropertyChanged
+    internal class ExtractInterfaceDialogViewModel : INotifyPropertyChanged
     {
         private readonly object _syntaxFactsService;
         private readonly List<string> _conflictingTypeNames;

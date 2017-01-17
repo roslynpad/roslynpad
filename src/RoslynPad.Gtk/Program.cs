@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Composition.Hosting;
@@ -13,7 +14,9 @@ using MonoDevelop.SourceEditor;
 using RoslynPad.UI;
 using System.Composition;
 using System.Threading.Tasks;
+using Gtk;
 using Microsoft.CodeAnalysis.Text;
+using MonoDevelop.Components;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.Projects;
 
@@ -29,6 +32,8 @@ namespace RoslynPad.Gtk
 
             EditorFactory.Initialize();
 
+            var locator = InitializeContainer();
+
             var startup = new IdeStartup();
             return startup.Run(() =>
             {
@@ -41,17 +46,20 @@ namespace RoslynPad.Gtk
                     FontService.SetFont("Editor", "Menlo 10");
                 }
 
-                Initialize();
+                Initialize(locator);
             });
         }
 
-        private static void Initialize()
+        private static IServiceLocator InitializeContainer()
         {
             var container = new ContainerConfiguration()
                 .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
                 .WithAssembly(typeof(Program).Assembly);        // RoslynPad.Gtk
-            var locator = container.CreateContainer().GetExport<IServiceLocator>();
+            return container.CreateContainer().GetExport<IServiceLocator>();
+        }
 
+        private static void Initialize(IServiceLocator locator)
+        {
             var viewModel = locator.GetInstance<MainContent>();
             viewModel.Initialize();
         }
@@ -98,11 +106,9 @@ namespace RoslynPad.Gtk
 
         private async Task<Document> AddDocument(OpenDocumentViewModel viewModel)
         {
-            var document = viewModel.Document == null 
-                ? IdeApp.Workbench.NewDocument("X", "text/plain", string.Empty)
-                : await IdeApp.Workbench.OpenDocument(new FilePath(viewModel.Document.Path), new Project());
-
-            var editor = document.Editor;
+            var viewContent = new DocumentViewContent();
+            var editor = viewContent.Editor;
+            
             var host = _viewModel.RoslynHost;
 
             var textContainer = new MonoDevelopSourceTextContainer(editor);
@@ -110,6 +116,10 @@ namespace RoslynPad.Gtk
             await viewModel.Initialize(textContainer, args => { }, o => { },
                 () => new TextSpan(editor.SelectionRange.Offset, editor.SelectionRange.Length),
                 null).ConfigureAwait(true);
+
+            IdeApp.Workbench.ShowView(viewContent);
+
+            var document = IdeApp.Workbench.WrapDocument(viewContent.WorkbenchWindow);
 
             var documentId = viewModel.DocumentId;
 
@@ -126,6 +136,51 @@ namespace RoslynPad.Gtk
             editor.SemanticHighlighting = new RoslynSemanticHighlighting(editor, document, host, documentId);
 
             return document;
+        }
+
+        class DocumentControl : Control
+        {
+            private readonly TextEditor textEditor;
+
+            public DocumentControl(TextEditor textEditor)
+            {
+                this.textEditor = textEditor;
+            }
+
+            protected override object CreateNativeWidget<T>()
+            {
+                var box = new VBox();
+                box.PackStart(textEditor.GetNativeWidget<Widget>());
+                box.PackStart(new TreeView());
+                box.ShowAll();
+                return box;
+            }
+        }
+
+        class DocumentViewContent : ViewContent
+        {
+            public TextEditor Editor { get; }
+
+            public DocumentViewContent()
+            {
+                Editor = TextEditorFactory.CreateNewEditor();
+                Editor.MimeType = "text/plain";
+                Control = new DocumentControl(Editor);
+                WorkbenchHandlesDirty = false;
+            }
+
+            public override Control Control { get; }
+
+            protected override IEnumerable<object> OnGetContents(Type type)
+            {
+                if (type == typeof(TextEditor))
+                {
+                    return new [] { Editor };
+                }
+                var baseContent = base.OnGetContents(type);
+                var editorContent = Editor.GetContents(type);
+                return baseContent.Concat(editorContent);
+            }
         }
     }
 }

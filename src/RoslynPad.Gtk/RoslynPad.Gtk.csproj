@@ -63,19 +63,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\Mono.Posix.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.TextEditor">
-      <HintPath>..\..\lib\Mono.TextEditor.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoDevelop.Core">
-      <HintPath>..\..\lib\MonoDevelop.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoDevelop.Ide, Version=2.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\MonoDevelop.Ide.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoDevelop.SourceEditor">
-      <HintPath>..\..\lib\MonoDevelop.SourceEditor.dll</HintPath>
-    </Reference>
     <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\pango-sharp.dll</HintPath>
@@ -124,6 +111,22 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\monodevelop\main\src\addins\MonoDevelop.SourceEditor2\MonoDevelop.SourceEditor.csproj">
+      <Project>{f8f92aa4-a376-4679-a9d4-60e7b7fbf477}</Project>
+      <Name>MonoDevelop.SourceEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\monodevelop\main\src\core\Mono.Texteditor\Mono.TextEditor.csproj">
+      <Project>{a2329308-3751-4dbd-9a75-5f7b8b024625}</Project>
+      <Name>Mono.TextEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\monodevelop\main\src\core\MonoDevelop.Core\MonoDevelop.Core.csproj">
+      <Project>{7525bb88-6142-4a26-93b9-a30c6983390a}</Project>
+      <Name>MonoDevelop.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\monodevelop\main\src\core\MonoDevelop.Ide\MonoDevelop.Ide.csproj">
+      <Project>{27096e7f-c91c-4ac6-b289-6897a701df21}</Project>
+      <Name>MonoDevelop.Ide</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj">
       <Project>{47c8dfa4-e7e9-4e44-86c4-b906229a25e0}</Project>
       <Name>RoslynPad.Common.UI</Name>

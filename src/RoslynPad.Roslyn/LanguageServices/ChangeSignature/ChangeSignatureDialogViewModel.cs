@@ -7,11 +7,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Roslyn.LanguageServices.ChangeSignature;
 
-namespace RoslynPad.Roslyn
+namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
-    public class ChangeSignatureDialogViewModel : INotifyPropertyChanged
+    internal class ChangeSignatureDialogViewModel : INotifyPropertyChanged
     {
         private readonly ParameterConfiguration _originalParameterConfiguration;
 
