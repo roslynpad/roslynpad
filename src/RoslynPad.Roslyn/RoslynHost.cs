@@ -47,7 +47,8 @@ namespace RoslynPad.Roslyn
             {
                 Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"),
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
-            }).ToImmutableArray();
+            })
+            .ToImmutableArray();
 
         internal static readonly ImmutableArray<string> PreprocessorSymbols = ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
 
@@ -108,7 +109,10 @@ namespace RoslynPad.Roslyn
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
-            DefaultReferences = _defaultReferenceAssemblies.Select(t => CreateMetadataReference(t.Location)).ToImmutableArray();
+            DefaultReferences = _defaultReferenceAssemblies.Select(x => x.Location)
+                .Concat(TryGetFacadeAssemblies())
+                .Select(CreateMetadataReference)
+                .ToImmutableArray();
 
             DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
@@ -209,10 +213,39 @@ namespace RoslynPad.Roslyn
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
             if (Directory.Exists(path))
             {
-                var directories = Directory.EnumerateDirectories(path).OrderByDescending(Path.GetFileName);
-                return directories.FirstOrDefault();
+                var directory = Directory.EnumerateDirectories(path)
+                    .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
+                    .OrderByDescending(x => x.version)
+                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")));
+                return directory?.path;
             }
             return null;
+        }
+
+        private static Version GetFxVersionFromPath(string path)
+        {
+            var name = Path.GetFileName(path);
+            if (name?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                Version version;
+                if (Version.TryParse(name.Substring(1), out version))
+                {
+                    return version;
+                }
+            }
+
+            return new Version(0, 0, 0);
+        }
+
+        private IEnumerable<string> TryGetFacadeAssemblies()
+        {
+            var facadesPath = Path.Combine(_referenceAssembliesPath, "Facades");
+            if (Directory.Exists(facadesPath))
+            {
+                return Directory.EnumerateFiles(facadesPath, "*.dll");
+            }
+
+            return Array.Empty<string>();
         }
 
         private DocumentationProvider GetDocumentationProvider(string location)
