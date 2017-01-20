@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Composition.Hosting;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -100,7 +101,7 @@ namespace RoslynPad
 
         private void SaveWindowLayout()
         {
-            Properties.Settings.Default.WindowBounds = RestoreBounds.ToString();
+            Properties.Settings.Default.WindowBounds = RestoreBounds.ToString(CultureInfo.InvariantCulture);
             Properties.Settings.Default.WindowState = WindowState.ToString();
         }
 
