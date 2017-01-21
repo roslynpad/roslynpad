@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
@@ -249,6 +250,11 @@ namespace RoslynPad
                 e.Handled = true;
                 Editor.Focus();
             }
+        }
+
+        private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            HeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
         }
     }
 }

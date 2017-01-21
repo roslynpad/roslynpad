@@ -207,46 +207,70 @@
             <DockPanel Grid.Column="0"
                        Grid.Row="3"
                        Grid.IsSharedSizeScope="True">
-                <Grid DockPanel.Dock="Top">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150"
-                                          SharedSizeGroup="ResultNameGroup" />
-                        <ColumnDefinition Width="1" />
-                        <ColumnDefinition Width="550"
-                                          SharedSizeGroup="ResultValueGroup" />
-                        <ColumnDefinition Width="1" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Name"
-                               HorizontalAlignment="Center"
-                               Grid.Column="0" />
-                    <GridSplitter Grid.Column="1"
-                                  ResizeBehavior="PreviousAndNext"
-                                  ResizeDirection="Columns"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch"
-                                  Background="DarkGray" />
-                    <TextBlock Text="Value"
-                               HorizontalAlignment="Center"
-                               Grid.Column="2" />
-                    <GridSplitter Grid.Column="3"
-                                  ResizeBehavior="PreviousAndCurrent"
-                                  ResizeDirection="Columns"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch"
-                                  Background="DarkGray" />
-                </Grid>
+                <ScrollViewer DockPanel.Dock="Top"
+                              Name="HeaderScroll"
+                              HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"
+                                              SharedSizeGroup="ResultNameGroup" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="450"
+                                              SharedSizeGroup="ResultValueGroup" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="Auto"
+                                              SharedSizeGroup="ResultTypeGroup" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Name"
+                                   Margin="20 0 20 0"
+                                   HorizontalAlignment="Center"
+                                   Grid.Column="0" />
+                        <GridSplitter Grid.Column="1"
+                                      ResizeBehavior="PreviousAndNext"
+                                      ResizeDirection="Columns"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Background="DarkGray" />
+                        <TextBlock Text="Value"
+                                   Margin="20 0 20 0"
+                                   HorizontalAlignment="Center"
+                                   Grid.Column="2" />
+                        <GridSplitter Grid.Column="3"
+                                      ResizeBehavior="PreviousAndNext"
+                                      ResizeDirection="Columns"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Background="DarkGray" />
+                        <TextBlock Text="Type"
+                                   Margin="20 0 20 0"
+                                   HorizontalAlignment="Center"
+                                   Grid.Column="4" />
+                        <GridSplitter Grid.Column="5"
+                                      ResizeBehavior="PreviousAndCurrent"
+                                      ResizeDirection="Columns"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Background="DarkGray" />
+                    </Grid>
+                </ScrollViewer>
                 <controls:TreeListView ItemsSource="{Binding Results}"
                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
                                        VirtualizingPanel.IsVirtualizing="True"
                                        VirtualizingPanel.VirtualizationMode="Recycling"
-                                       BorderBrush="#cccccc">
+                                       BorderBrush="#cccccc"
+                                       ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged">
                     <ItemsControl.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
-                                    <ColumnDefinition Width="2" />
+                                    <ColumnDefinition Width="1" />
                                     <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
                                 </Grid.ColumnDefinitions>
                                 <DockPanel Grid.Column="0">
                                     <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
@@ -265,6 +289,10 @@
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding Value, Mode=OneTime}"
                                            TextWrapping="Wrap"
+                                           Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                                <TextBlock Grid.Column="4"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding Type, Mode=OneTime}"
                                            Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                             </Grid>
                         </HierarchicalDataTemplate>

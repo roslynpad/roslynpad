@@ -70,11 +70,27 @@ namespace RoslynPad.Runtime
         public string Value { get; private set; }
 
         [DataMember]
+        public string Type { get; set; }
+
+        [DataMember]
         public IList<ResultObject> Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
         private void Initialize(object o, string headerPrefix)
+        {
+            var targetDepth = _depth + 1;
+
+            if (_property != null)
+            {
+                PopulateProperty(o, targetDepth);
+                return;
+            }
+
+            PopulateObject(o, headerPrefix, targetDepth);
+        }
+
+        private void PopulateObject(object o, string headerPrefix, int targetDepth)
         {
             if (o == null)
             {
@@ -83,49 +99,9 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            // TODO-BUG: expand properties inline
-
-            var targetDepth = _depth + 1;
             var isMaxDepth = targetDepth >= MaxDepth;
 
-            if (_property != null)
-            {
-                object value;
-                try
-                {
-                    var exception = o as Exception;
-                    value = exception != null && _property.Name == nameof(Exception.StackTrace)
-                        ? GetStackTrace(exception)
-                        : _property.GetValue(o);
-                }
-                catch (TargetInvocationException exception)
-                {
-                    Header = _property.Name;
-                    // ReSharper disable once PossibleNullReferenceException
-                    Value = $"Threw {exception.InnerException.GetType().Name}";
-                    Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
-                    return;
-                }
-
-                var propertyType = _property.PropertyType;
-                var isSimpleType = IsSimpleType(propertyType);
-                if (!isSimpleType)
-                {
-                    var enumerable = value as IEnumerable;
-                    if (enumerable != null)
-                    {
-                        InitializeEnumerable(_property.Name, enumerable, targetDepth);
-                        return;
-                    }
-                }
-                Header = _property.Name;
-                Value = GetString(value);
-                if (!isMaxDepth && !isSimpleType)
-                {
-                    Children = new[] { new ResultObject(value, targetDepth) };
-                }
-                return;
-            }
+            SetType(o);
 
             var s = o as string;
             if (s != null)
@@ -156,6 +132,61 @@ namespace RoslynPad.Runtime
             GetHeaderValue(o, out header, out valueString);
             Header = header ?? headerPrefix;
             Value = valueString;
+
+            PopulateChildren(o, targetDepth);
+        }
+
+        private void PopulateProperty(object o, int targetDepth)
+        {
+            object value;
+            try
+            {
+                var exception = o as Exception;
+                value = exception != null && _property.Name == nameof(Exception.StackTrace)
+                    ? GetStackTrace(exception)
+                    : _property.GetValue(o);
+            }
+            catch (TargetInvocationException exception)
+            {
+                Header = _property.Name;
+                // ReSharper disable once PossibleNullReferenceException
+                Value = $"Threw {exception.InnerException.GetType().Name}";
+                Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
+                return;
+            }
+
+            if (value == null)
+            {
+                SetType(_property.PropertyType);
+            }
+
+            PopulateObject(value, _property.Name, targetDepth);
+        }
+
+        private void SetType(object o)
+        {
+            if (o == null) return;
+
+            var type = o.GetType();
+            SetType(type);
+        }
+
+        private void SetType(Type type)
+        {
+            var ns = type.Namespace;
+            string typeName = null;
+            do
+            {
+                typeName = typeName != null ? type.Name + "+" + typeName : type.Name;
+                type = type.DeclaringType;
+            } while (type != null);
+
+            Type = $"{typeName} ({ns})";
+        }
+
+        private void PopulateChildren(object o, int targetDepth)
+        {
+            if (o == null) return;
 
             var propertyDescriptors = TypeDescriptor.GetProperties(o);
             var children = propertyDescriptors.Cast<PropertyDescriptor>()
@@ -237,18 +268,8 @@ namespace RoslynPad.Runtime
 
         private static string GetString(object o)
         {
-            var s = o + string.Empty;
+            var s = o.ToString();
             return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
-        }
-
-        private static bool IsSimpleType(Type propertyType)
-        {
-            return propertyType != null &&
-                (propertyType.IsPrimitive ||
-                propertyType.IsEnum ||
-                propertyType == typeof(string) ||
-                propertyType == typeof(Guid) ||
-                IsSimpleType(Nullable.GetUnderlyingType(propertyType)));
         }
 
         // avoids WPF PropertyDescriptor binding leaks
