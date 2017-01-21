@@ -29,6 +29,7 @@ namespace RoslynPad.Editor.Windows
         {
             IList<ICompletionDataEx> completionData = null;
             IOverloadProviderEx overloadProvider = null;
+            var useHardSelection = true;
 
             var document = _roslynHost.GetDocument(_documentId);
             if (useSignatureHelp || triggerChar != null)
@@ -63,10 +64,11 @@ namespace RoslynPad.Editor.Windows
                     ).ConfigureAwait(false);
                 if (data != null && data.Items.Any())
                 {
+                    useHardSelection = data.SuggestionModeItem == null;
                     var helper = CompletionHelper.GetHelper(document, completionService);
                     var text = await document.GetTextAsync().ConfigureAwait(false);
                     var textSpanToText = new Dictionary<TextSpan, string>();
-                    
+
                     completionData = data.Items
                         .Where(item => MatchesFilterText(helper, item, text, textSpanToText))
                         .Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager))
@@ -78,7 +80,7 @@ namespace RoslynPad.Editor.Windows
                 }
             }
 
-            return new CompletionResult(completionData, overloadProvider);
+            return new CompletionResult(completionData, overloadProvider, useHardSelection);
         }
 
         private static bool MatchesFilterText(CompletionHelper helper, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)

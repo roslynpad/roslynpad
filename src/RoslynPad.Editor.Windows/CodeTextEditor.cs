@@ -37,7 +37,7 @@ namespace RoslynPad.Editor.Windows
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
             TextArea.TextEntered += OnTextEntered;
-            
+
             ToolTipService.SetInitialShowDelay(this, 0);
             SearchReplacePanel.Install(this);
 
@@ -264,10 +264,12 @@ namespace RoslynPad.Editor.Windows
                 // Open code completion after the user has pressed dot:
                 _completionWindow = new CustomCompletionWindow(TextArea)
                 {
-                    MinWidth = 200,
+                    MinWidth = 300,
                     Background = CompletionBackground,
-                    CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion
+                    CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion,
+                    UseHardSelection = results.UseHardSelection
                 };
+
                 if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
                 {
                     _completionWindow.StartOffset -= 1;
@@ -275,7 +277,7 @@ namespace RoslynPad.Editor.Windows
 
                 var data = _completionWindow.CompletionList.CompletionData;
                 ICompletionDataEx selected = null;
-                foreach (var completion in results.CompletionData) //.OrderBy(item => item.SortText))
+                foreach (var completion in results.CompletionData)
                 {
                     if (completion.IsSelected)
                     {
@@ -283,10 +285,9 @@ namespace RoslynPad.Editor.Windows
                     }
                     data.Add(completion);
                 }
-                if (selected != null)
-                {
-                    _completionWindow.CompletionList.SelectedItem = selected;
-                }
+
+                _completionWindow.CompletionList.SelectedItem = selected;
+
                 _completionWindow.Show();
                 _completionWindow.Closed += (o, args) => { _completionWindow = null; };
             }
@@ -322,15 +323,53 @@ namespace RoslynPad.Editor.Windows
 
         private class CustomCompletionWindow : CompletionWindow
         {
+            private bool _isSoftSelectionActive;
+            private KeyEventArgs _keyDownArgs;
+
             public CustomCompletionWindow(TextArea textArea) : base(textArea)
             {
+                _isSoftSelectionActive = true;
+                CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
+                CompletionList.ListBox.BorderThickness = new Thickness();
+                CompletionList.ListBox.PreviewMouseDown += OnListBoxOnPreviewMouseDown;
+            }
+
+            private void OnListBoxOnPreviewMouseDown(object sender, MouseButtonEventArgs args)
+            {
+                _isSoftSelectionActive = false;
+            }
+
+            private void CompletionListOnSelectionChanged(object sender, SelectionChangedEventArgs args)
+            {
+                if (!UseHardSelection && 
+                    _isSoftSelectionActive && _keyDownArgs?.Handled != true 
+                    && args.AddedItems?.Count > 0)
+                {
+                    CompletionList.SelectedItem = null;
+                }
             }
 
             protected override void OnKeyDown(KeyEventArgs e)
             {
                 if (e.Key == Key.Home || e.Key == Key.End) return;
+
+                _keyDownArgs = e;
+
                 base.OnKeyDown(e);
+
+                SetSoftSelection(e);
             }
+
+            private void SetSoftSelection(RoutedEventArgs e)
+            {
+                if (e.Handled)
+                {
+                    _isSoftSelectionActive = false;
+                }
+            }
+
+            // ReSharper disable once MemberCanBePrivate.Local
+            public bool UseHardSelection { get; set; }
         }
     }
 }

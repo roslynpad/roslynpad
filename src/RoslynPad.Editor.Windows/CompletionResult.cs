@@ -4,14 +4,17 @@ namespace RoslynPad.Editor.Windows
 {
     public sealed class CompletionResult
     {
-        public CompletionResult(IList<ICompletionDataEx> completionData, IOverloadProviderEx overloadProvider)
+        public CompletionResult(IList<ICompletionDataEx> completionData, IOverloadProviderEx overloadProvider, bool useHardSelection)
         {
             CompletionData = completionData;
             OverloadProvider = overloadProvider;
+            UseHardSelection = useHardSelection;
         }
 
-        public IList<ICompletionDataEx> CompletionData { get; private set; }
+        public bool UseHardSelection { get; }
 
-        public IOverloadProviderEx OverloadProvider { get; private set; }
+        public IList<ICompletionDataEx> CompletionData { get; }
+
+        public IOverloadProviderEx OverloadProvider { get; }
     }
 }
