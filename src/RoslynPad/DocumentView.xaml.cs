@@ -93,7 +93,7 @@ namespace RoslynPad
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             Editor.AppendText(documentText);
             Editor.Document.UndoStack.ClearAll();
-            Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty(Editor.Document.TextLength);
+            Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty();
             Editor.AsyncToolTipRequest = AsyncToolTipRequest;
 
             Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost));

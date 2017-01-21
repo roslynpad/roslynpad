@@ -230,7 +230,7 @@ namespace RoslynPad.UI
         public async Task<SaveResult> Save(bool promptSave)
         {
             if (_isSaving) return SaveResult.Cancel;
-            if (!IsDirty) return SaveResult.Save;
+            if (!IsDirty && promptSave) return SaveResult.Save;
 
             _isSaving = true;
             try
@@ -528,9 +528,9 @@ namespace RoslynPad.UI
             EditorFocus?.Invoke(this, EventArgs.Empty);
         }
 
-        public void SetDirty(int textLength)
+        public void SetDirty()
         {
-            IsDirty = textLength > 0;
+            IsDirty = true;
         }
     }
 }
