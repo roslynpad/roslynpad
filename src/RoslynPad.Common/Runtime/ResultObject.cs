@@ -111,14 +111,10 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            string header;
-            string valueString;
-
             if (isMaxDepth)
             {
-                GetHeaderValue(o, out header, out valueString);
-                Header = header ?? headerPrefix;
-                Value = valueString;
+                Header = headerPrefix;
+                Value = GetString(o);
                 return;
             }
 
@@ -129,9 +125,8 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            GetHeaderValue(o, out header, out valueString);
-            Header = header ?? headerPrefix;
-            Value = valueString;
+            Header = headerPrefix;
+            Value = GetString(o);
 
             PopulateChildren(o, targetDepth);
         }
@@ -173,15 +168,37 @@ namespace RoslynPad.Runtime
 
         private void SetType(Type type)
         {
+            Type = GetTypeName(type);
+        }
+
+        private static string GetTypeName(Type type)
+        {
             var ns = type.Namespace;
             string typeName = null;
             do
             {
-                typeName = typeName != null ? type.Name + "+" + typeName : type.Name;
+                var currentName = GetSimpleTypeName(type);
+                typeName = typeName != null ? currentName + "+" + typeName : currentName;
                 type = type.DeclaringType;
             } while (type != null);
 
-            Type = $"{typeName} ({ns})";
+            typeName = $"{typeName} ({ns})";
+            return typeName;
+        }
+
+        private static string GetSimpleTypeName(Type type)
+        {
+            var typeName = type.Name;
+            if (type.IsGenericType)
+            {
+                var separatorIndex = typeName.IndexOf('`');
+                if (separatorIndex > 0)
+                {
+                    typeName = typeName.Substring(0, separatorIndex);
+                }
+                typeName += "<" + string.Join(", ", type.GenericTypeArguments.Select(GetSimpleTypeName)) + ">";
+            }
+            return typeName;
         }
 
         private void PopulateChildren(object o, int targetDepth)
@@ -228,13 +245,27 @@ namespace RoslynPad.Runtime
             try
             {
                 Header = headerPrefix;
+
                 var items = new List<ResultObject>();
+               
+                var enumerableInterface = e.GetType().GetInterfaces()
+                        .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                var enumerableType = enumerableInterface?.GenericTypeArguments[0] ?? typeof(object);
+                var enumerableTypeName = GetTypeName(enumerableType);
+
                 var enumerator = e.GetEnumerator();
                 var index = 0;
-                while (index++ < MaxEnumerableLength && enumerator.MoveNext())
+                while (index < MaxEnumerableLength && enumerator.MoveNext())
                 {
-                    items.Add(new ResultObject(enumerator.Current, targetDepth));
+                    var item = new ResultObject(enumerator.Current, targetDepth, $"[{index}]");
+                    if (item.Type == null)
+                    {
+                        item.Type = enumerableTypeName;
+                    }
+                    items.Add(item);
+                    ++index;
                 }
+
                 var hasMore = enumerator.MoveNext() ? "+" : "";
                 var groupingInterface = e.GetType().GetInterfaces()
                         .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
@@ -251,23 +282,14 @@ namespace RoslynPad.Runtime
             }
         }
 
-        private static void GetHeaderValue(object o, out string header, out string value)
-        {
-            var ex = o as Exception;
-            if (ex != null)
-            {
-                header = ex.GetType().FullName;
-                value = ex.Message;
-            }
-            else
-            {
-                header = null;
-                value = GetString(o);
-            }
-        }
-
         private static string GetString(object o)
         {
+            var exception = o as Exception;
+            if (exception != null)
+            {
+                return exception.Message;
+            }
+
             var s = o.ToString();
             return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
         }

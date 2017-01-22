@@ -335,7 +335,15 @@ namespace RoslynPad.UI
             await AutoSaveOpenDocuments().ConfigureAwait(false);
         }
 
-        public Exception LastError => _telemetryProvider.LastError;
+        public Exception LastError
+        {
+            get
+            {
+                var exception = _telemetryProvider.LastError;
+                var aggregateException = exception as AggregateException;
+                return aggregateException?.Flatten() ?? exception;
+            }
+        }
 
         public bool HasError => LastError != null;
 

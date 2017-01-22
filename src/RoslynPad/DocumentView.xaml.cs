@@ -144,7 +144,7 @@ namespace RoslynPad
                 .Concat(installResult.FrameworkReferences.Distinct())
                 .Where(r => !_roslynHost.HasReference(_viewModel.DocumentId, r))
                 .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
-            
+
             Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
         }
 
@@ -192,21 +192,12 @@ namespace RoslynPad
                 NuGetSearch.Focus();
             }
         }
-
-        private void Editor_OnKeyDown(object sender, KeyEventArgs e)
-        {
-            //if (e.Key == Key.R && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
-            //{
-            //    _roslynHost.GetService<IInlineRenameService>().StartInlineSession(
-            //        _roslynHost.CurrentDocument, new TextSpan(Editor.CaretOffset, 1));
-            //}
-        }
-
+        
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
             Editor.Focus();
         }
-        
+
         public void Dispose()
         {
             if (_viewModel?.MainViewModel != null)
@@ -230,9 +221,9 @@ namespace RoslynPad
 
         private static void CopyToClipboard(object sender)
         {
-            var element = (FrameworkElement) sender;
-            var result = (ResultObject) element.DataContext;
-            Clipboard.SetText(result.ToString());
+            var element = (FrameworkElement)sender;
+            var result = (ResultObject)element.DataContext;
+            Clipboard.SetText(element.Tag as string == "All" ? result.ToString() : result.Value);
         }
 
         private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)
