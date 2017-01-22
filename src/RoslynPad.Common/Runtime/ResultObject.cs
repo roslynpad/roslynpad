@@ -291,7 +291,8 @@ namespace RoslynPad.Runtime
             }
 
             var s = o.ToString();
-            return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
+            // ReSharper disable once ConstantConditionalAccessQualifier
+            return s?.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
         }
 
         // avoids WPF PropertyDescriptor binding leaks
