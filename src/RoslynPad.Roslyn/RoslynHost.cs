@@ -16,6 +16,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.SymbolSearch;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Diagnostics;
@@ -294,6 +295,10 @@ namespace RoslynPad.Roslyn
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
             var workspace = new RoslynWorkspace(_host, _nuGetConfiguration, this);
+            workspace.Options = workspace.Options
+                .WithChangedOption(SymbolSearchOptions.SuggestForTypesInReferenceAssemblies, LanguageNames.CSharp, true)
+                .WithChangedOption(SymbolSearchOptions.SuggestForTypesInNuGetPackages, LanguageNames.CSharp, true);
+
             if (onTextUpdated != null)
             {
                 workspace.ApplyingTextChange += (d, s) => onTextUpdated(s);

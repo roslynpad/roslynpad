@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -40,7 +41,7 @@ namespace RoslynPad.Editor.Windows
 
         private ContextActionsBulbPopup _popup;
         private CancellationTokenSource _cancellationTokenSource;
-        private IEnumerable<object> _actions;
+        private ObservableCollection<object> _actions;
 
         public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
         {
@@ -132,8 +133,9 @@ namespace RoslynPad.Editor.Windows
             else
             {
                 ClosePopup();
+
                 if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
-                _popup.ItemsSource = _actions;
+
                 if (_popup.HasItems)
                 {
                     _popup.IsMenuOpen = true;
@@ -149,16 +151,11 @@ namespace RoslynPad.Editor.Windows
             {
                 _popup = new ContextActionsBulbPopup(_editor.TextArea) { CommandProvider = GetActionCommand };
                 // TODO: workaround to refresh menu with latest document
-                _popup.MenuOpened += async (sender, args) =>
-                {
-                    if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
-                    {
-                        _popup.ItemsSource = _actions;
-                    }
-                };
+                _popup.MenuOpened += async (sender, args) => await LoadActionsWithCancellationAsync().ConfigureAwait(true);
                 _popup.MenuClosed += (sender, args) =>
                 {
                     _editor.Dispatcher.InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
+                    _actions = null;
                 };
             }
         }
@@ -168,7 +165,29 @@ namespace RoslynPad.Editor.Windows
             _cancellationTokenSource = new CancellationTokenSource();
             try
             {
-                _actions = await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+                var actions = await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(true);
+
+                if (_actions == null)
+                {
+                    _actions = new ObservableCollection<object>(actions);
+                    _popup.ItemsSource = _actions;
+                }
+                else
+                {
+                    foreach (var action in actions)
+                    {
+                        var existingAction = _actions.FirstOrDefault(a => _providers.Any(p => p.IsSameAction(action, a)));
+                        if (existingAction != null)
+                        {
+                            _actions[_actions.IndexOf(existingAction)] = action;
+                        }
+                        else
+                        {
+                            _actions.Add(action);
+                        }
+                    }
+                }
+
                 return true;
             }
             catch (Exception)
@@ -185,21 +204,31 @@ namespace RoslynPad.Editor.Windows
                 .FirstOrDefault(command => command != null);
         }
 
-        private async Task<IEnumerable<object>> LoadActionsAsync(CancellationToken cancellationToken)
+        private async Task<ImmutableList<object>> LoadActionsAsync(CancellationToken cancellationToken)
         {
-            var allActions = new List<object>();
+            var allActions = ImmutableList<object>.Empty;
             foreach (var provider in _providers)
             {
-                var offset = _editor.TextArea.Caret.Offset;
-                var length = 1;
-                var marker = _textMarkerService.GetMarkersAtOffset(offset).FirstOrDefault();
-                if (marker != null)
+                int offset;
+                int length;
+                if (_editor.SelectionLength > 0)
                 {
-                    offset = marker.StartOffset;
-                    length = marker.Length;
+                    offset = _editor.SelectionStart;
+                    length = _editor.SelectionLength;
                 }
-                var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(true);
-                allActions.AddRange(actions);
+                else
+                {
+                    offset = _editor.TextArea.Caret.Offset;
+                    length = 1;
+                    var marker = _textMarkerService.GetMarkersAtOffset(offset).FirstOrDefault();
+                    if (marker != null)
+                    {
+                        offset = marker.StartOffset;
+                        length = marker.Length;
+                    }
+                }
+                var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(false);
+                allActions = allActions.AddRange(actions);
             }
             return allActions;
         }
@@ -225,10 +254,10 @@ namespace RoslynPad.Editor.Windows
             // Don't show the context action popup when the text editor is invisible, i.e., the Forms Designer is active.
             if (PresentationSource.FromVisual(textView) == null) return;
 
+            CreatePopup();
+
             if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
 
-            CreatePopup();
-            _popup.ItemsSource = _actions;
             if (_popup.HasItems)
             {
                 _popup.OpenAtLineStart(_editor);
@@ -262,6 +291,7 @@ namespace RoslynPad.Editor.Windows
                 _popup.Close();
                 _popup.IsMenuOpen = false;
                 _popup.ItemsSource = null;
+                _actions = null;
             }
         }
     }

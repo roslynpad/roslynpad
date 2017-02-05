@@ -45,9 +45,12 @@ namespace RoslynPad.UI
             RoslynHost = new RoslynHost(NuGetConfiguration, new[]
             {
                 // TODO: xplat
+                Assembly.Load("RoslynPad.Common.UI"),
                 Assembly.Load("RoslynPad.Roslyn.Windows"),
-                Assembly.Load("RoslynPad.Editor.Windows")
+                Assembly.Load("RoslynPad.Editor.Windows"),
             });
+            // TODO: consider combining the MEF context of RoslynHost and the UI so this hack would not be necessary
+            RoslynHost.GetService<SymbolSearchService>().NuGet = NuGet;
 
             NewDocumentCommand = commands.Create(CreateNewDocument);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);

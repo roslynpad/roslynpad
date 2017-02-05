@@ -49,6 +49,8 @@
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Services\PackageInstallerService.cs" />
+    <Compile Include="Services\SymbolSearchService.cs" />
     <Compile Include="Services\SystemCompositionServiceLocator.cs" />
     <Compile Include="ViewModels\DocumentViewModel.cs" />
     <Compile Include="Dialogs\IDialog.cs" />

@@ -9,6 +9,8 @@ namespace RoslynPad.Editor.Windows
     {
         Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken);
 
+        bool IsSameAction(object a, object b);
+
         ICommand GetActionCommand(object action);
     }
 }

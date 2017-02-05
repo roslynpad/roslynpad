@@ -44,8 +44,8 @@ namespace RoslynPad.Editor.Windows
             var codeFixes = await _codeFixService.GetFixesAsync(document,
                 textSpan, false, cancellationToken).ConfigureAwait(false);
 
-            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(document,
-                textSpan, cancellationToken).ConfigureAwait(false);
+            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>()
+                .GetRefactoringsAsync(document, textSpan, cancellationToken).ConfigureAwait(false);
 
             return ((IEnumerable<object>)codeFixes.SelectMany(x => x.Fixes))
                 .Concat(codeRefactorings
@@ -72,6 +72,11 @@ namespace RoslynPad.Editor.Windows
             {
                 operation.Apply(_roslynHost.GetDocument(_documentId).Project.Solution.Workspace, CancellationToken.None);
             }
+        }
+
+        public bool IsSameAction(object a, object b)
+        {
+            return (a as CodeAction)?.EquivalenceKey == (b as CodeAction)?.EquivalenceKey;
         }
     }
 }

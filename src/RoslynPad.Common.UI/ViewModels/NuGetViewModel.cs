@@ -583,7 +583,6 @@ namespace RoslynPad.UI
             private set { SetProperty(ref _isEnabled, value); }
         }
 
-
         public string SearchTerm
         {
             get { return _searchTerm; }
