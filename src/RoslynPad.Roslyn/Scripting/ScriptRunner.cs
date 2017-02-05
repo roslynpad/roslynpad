@@ -183,15 +183,16 @@ namespace RoslynPad.Roslyn.Scripting
                 {
                     return null;
                 }
-
+                
                 foreach (var referencedAssembly in compilation.References.Select(
-                    x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) }))
+                    x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) as IAssemblySymbol }))
                 {
+                    if (referencedAssembly.Value == null) continue;
+                    
                     var path = (referencedAssembly.Key as PortableExecutableReference)?.FilePath;
-                    if (path != null)
-                    {
-                        _assemblyLoader.RegisterDependency(((IAssemblySymbol)referencedAssembly.Value).Identity, path);
-                    }
+                    if (path == null) continue;
+
+                    _assemblyLoader.RegisterDependency(referencedAssembly.Value.Identity, path);
                 }
 
                 peStream.Position = 0;

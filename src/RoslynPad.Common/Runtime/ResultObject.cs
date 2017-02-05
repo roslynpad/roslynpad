@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -18,6 +19,16 @@ namespace RoslynPad.Runtime
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
         private const int MaxEnumerableLength = 10000;
+
+        private static readonly ImmutableHashSet<string> _irrelevantEnumerableProperties = ImmutableHashSet<string>.Empty
+            .Add("Count").Add("Length").Add("Key");
+
+        private static readonly ImmutableHashSet<string> _doNotTreatAsEnumerableTypeNames = ImmutableHashSet<string>.Empty
+            .Add("JObject").Add("JProperty");
+
+        private static readonly ImmutableDictionary<string, string> _toStringAlternatives = ImmutableDictionary<string, string>.Empty
+            .Add("JArray", "[...]")
+            .Add("JObject", "{...}");
 
         private readonly int _depth;
         private readonly PropertyDescriptor _property;
@@ -118,17 +129,39 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            var e = o as IEnumerable;
+            var properties = GetProperties(o);
+
+            var type = o.GetType();
+
+            var e = GetEnumerable(o, type);
             if (e != null)
             {
-                InitializeEnumerable(headerPrefix, e, targetDepth);
+                if (IsSpecialEnumerable(type, properties))
+                {
+                    PopulateChildren(o, targetDepth, properties, headerPrefix);
+                    var enumerable = new ResultObject(o, targetDepth, headerPrefix);
+                    enumerable.InitializeEnumerable(headerPrefix, e, targetDepth);
+                    Children = Children.Concat(new[] { enumerable }).ToArray();
+                }
+                else
+                {
+                    InitializeEnumerable(headerPrefix, e, targetDepth);
+                }
                 return;
             }
 
-            Header = headerPrefix;
-            Value = GetString(o);
+            PopulateChildren(o, targetDepth, properties, headerPrefix);
+        }
 
-            PopulateChildren(o, targetDepth);
+        private IEnumerable GetEnumerable(object o, Type type)
+        {
+            var e = o as IEnumerable;
+            if (e != null && !_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
+            {
+                return e;
+            }
+
+            return null;
         }
 
         private void PopulateProperty(object o, int targetDepth)
@@ -201,14 +234,21 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, int targetDepth)
+        private void PopulateChildren(object o, int targetDepth, PropertyDescriptorCollection properties, string headerPrefix)
         {
+            Header = headerPrefix;
+            Value = GetString(o);
+
             if (o == null) return;
 
-            var propertyDescriptors = TypeDescriptor.GetProperties(o);
-            var children = propertyDescriptors.Cast<PropertyDescriptor>()
+            var children = properties.Cast<PropertyDescriptor>()
                 .Select(p => new ResultObject(o, targetDepth, property: p));
             Children = children.ToArray();
+        }
+
+        private static PropertyDescriptorCollection GetProperties(object o)
+        {
+            return TypeDescriptor.GetProperties(o);
         }
 
         protected static string GetStackTrace(Exception exception)
@@ -247,8 +287,10 @@ namespace RoslynPad.Runtime
                 Header = headerPrefix;
 
                 var items = new List<ResultObject>();
-               
-                var enumerableInterface = e.GetType().GetInterfaces()
+
+                var type = e.GetType();
+
+                var enumerableInterface = type.GetInterfaces()
                         .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
                 var enumerableType = enumerableInterface?.GenericTypeArguments[0] ?? typeof(object);
                 var enumerableTypeName = GetTypeName(enumerableType);
@@ -267,7 +309,7 @@ namespace RoslynPad.Runtime
                 }
 
                 var hasMore = enumerator.MoveNext() ? "+" : "";
-                var groupingInterface = e.GetType().GetInterfaces()
+                var groupingInterface = type.GetInterfaces()
                         .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
                 Value = groupingInterface != null
                     ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetProperty("Key").GetValue(e)}>"
@@ -281,7 +323,18 @@ namespace RoslynPad.Runtime
                 Children = new[] { new ResultObject(exception, targetDepth) };
             }
         }
-
+        
+        private static bool IsSpecialEnumerable(Type t, PropertyDescriptorCollection properties)
+        {
+            return properties.OfType<PropertyDescriptor>().Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
+                   && !typeof(IEnumerator).IsAssignableFrom(t)
+                   && !t.IsArray
+                   && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
+                   && t.Namespace?.StartsWith("System.Linq", StringComparison.Ordinal) != true
+                   && t.Name.IndexOf("Collection", StringComparison.Ordinal) < 0
+                   && !t.Name.Equals("JArray", StringComparison.Ordinal);
+        }
+        
         private static string GetString(object o)
         {
             var exception = o as Exception;
@@ -290,9 +343,15 @@ namespace RoslynPad.Runtime
                 return exception.Message;
             }
 
-            var s = o.ToString();
-            // ReSharper disable once ConstantConditionalAccessQualifier
-            return s?.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
+            var typeName = o?.GetType().Name;
+            string value;
+            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out value))
+            {
+                return value;
+            }
+
+            var s = o + string.Empty;
+            return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
         }
 
         // avoids WPF PropertyDescriptor binding leaks

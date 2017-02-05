@@ -16,6 +16,7 @@
     "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-rc2",
     "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-rc2",
     "Nuget.PackageManagement": "3.4.3",
-    "HockeySDK.WPF": "4.1.2"
+    "HockeySDK.WPF": "4.1.6",
+    "HockeySDK.WPF.TelemetryWorkaround": "0.1.0-workaround"
   }
 }

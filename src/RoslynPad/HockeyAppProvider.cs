@@ -24,6 +24,9 @@ namespace RoslynPad
                     .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)
                     .UnregisterDefaultUnobservedTaskExceptionHandler();
 
+                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
+                platformHelper.AppVersion = currentVersion;
+
 #if DEBUG
                 hockeyClient.OnHockeySDKInternalException += (sender, args) =>
                 {
@@ -33,10 +36,13 @@ namespace RoslynPad
                     }
                 };
 #endif
-                var platformHelper = (HockeyPlatformHelperWPF)hockeyClient.PlatformHelper;
-                platformHelper.AppVersion = currentVersion;
 
-                hockeyClient.TrackEvent(TelemetryEventNames.Start);
+                var task = HockeyAppWorkaroundInitializer.InitializeAsync();
+                task.ContinueWith(t =>
+                {
+                    Debug.Assert(hockeyClient.IsTelemetryInitialized, "hockeyClient.IsTelemetryInitialized");
+                    hockeyClient.TrackEvent(TelemetryEventNames.Start);
+                }, TaskScheduler.FromCurrentSynchronizationContext());
             }
             else
             {
@@ -48,7 +54,6 @@ namespace RoslynPad
                 hockeyClient.AppIdentifier = HockeyAppId;
             }
         }
-
 
         private void OnUnhandledDispatcherException(DispatcherUnhandledExceptionEventArgs args)
         {
