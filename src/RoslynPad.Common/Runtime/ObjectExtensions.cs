@@ -16,7 +16,7 @@ namespace RoslynPad.Runtime
 
         public static T DumpAs<T, TResult>(this T o, Func<T, TResult> selector, string header = null)
         {
-            selector?.Invoke(o).Dump(header);
+            Dump(selector != null ? (object)selector.Invoke(o) : null, header);
             return o;
         }
 
@@ -24,21 +24,21 @@ namespace RoslynPad.Runtime
             where TEnumerable : IEnumerable
             
         {
-            enumerable?.Cast<object>().FirstOrDefault().Dump(header);
+            Dump(enumerable?.Cast<object>().FirstOrDefault(), header);
             return enumerable;
         }
 
         public static TEnumerable DumpLast<TEnumerable>(this TEnumerable enumerable, string header = null)
             where TEnumerable : IEnumerable
         {
-            enumerable?.Cast<object>().LastOrDefault().Dump(header);
+            Dump(enumerable?.Cast<object>().LastOrDefault(), header);
             return enumerable;
         }
 
         public static TEnumerable DumpElementAt<TEnumerable>(this TEnumerable enumerable, int index, string header = null)
             where TEnumerable : IEnumerable
         {
-            enumerable?.Cast<object>().ElementAtOrDefault(index).Dump(header);
+            Dump(enumerable?.Cast<object>().ElementAtOrDefault(index), header);
             return enumerable;
         }
 
