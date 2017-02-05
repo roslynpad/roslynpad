@@ -4,7 +4,7 @@
 
 A simple C# editor based on Roslyn and AvalonEdit
 
-![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)]
+![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)
 
 ## Features
 
