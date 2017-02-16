@@ -214,9 +214,10 @@ namespace RoslynPad.Roslyn
             if (Directory.Exists(path))
             {
                 var directory = Directory.EnumerateDirectories(path)
-                    .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
+                    .Select(x => new {path = x, version = GetFxVersionFromPath(x)})
                     .OrderByDescending(x => x.version)
-                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")));
+                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")) &&
+                                         File.Exists(Path.Combine(x.path, "System.xml")));
                 return directory?.path;
             }
             return null;
