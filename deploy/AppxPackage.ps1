@@ -2,6 +2,8 @@ $env:Path += ";C:\Program Files (x86)\Windows Kits\10\bin\x64"
 
 $mapping = "RoslynPad.mapping"
 Remove-Item $mapping -ErrorAction Ignore
+Remove-Item RoslynPad.appx -ErrorAction Ignore
+Remove-Item *.pri
 
 $location = Get-Location
 
@@ -20,4 +22,17 @@ foreach ($file in $files)
 	$file
 }
 
+& "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\makepri.exe" new /pr . /cf priconfig.xml
+
+foreach ($file in Get-ChildItem *.pri)
+{
+	('"' + $file + '" "' + $file.BaseName + '.pri"') >> $mapping
+	$file
+}
+
 MakeAppx.exe pack /f $mapping /l /p RoslynPad.appx
+
+./SignAppx.ps1
+
+Remove-Item *.mapping -ErrorAction Ignore
+Remove-Item *.pri
