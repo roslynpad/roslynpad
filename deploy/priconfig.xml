@@ -22,8 +22,4 @@
 		<indexer-config type="resjson" initialPath=""/>
 		<indexer-config type="PRI"/>
 	</index>
-	<!--<index startIndexAt="Start Index Here" root="Root Here">-->
-	<!--        <indexer-config type="resfiles" qualifierDelimiter="."/>-->
-	<!--        <indexer-config type="priinfo" emitStrings="true" emitPaths="true" emitEmbeddedData="true"/>-->
-	<!--</index>-->
 </resources>

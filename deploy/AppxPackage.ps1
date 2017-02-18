@@ -10,8 +10,8 @@ $location = Get-Location
 . .\GetFiles.ps1
 
 "[Files]" >> $mapping
-('"' + $location + '\AppxManifest.xml" "AppxManifest.xml"') >> $mapping
-foreach ($asset in Get-ChildItem Assets)
+('"' + $location + '\PackageRoot\AppxManifest.xml" "AppxManifest.xml"') >> $mapping
+foreach ($asset in Get-ChildItem PackageRoot\Assets)
 {
 	('"' + $asset.FullName + '" "Assets\' + $asset.Name + '"') >> $mapping
 }
@@ -22,7 +22,7 @@ foreach ($file in $files)
 	$file
 }
 
-& "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\makepri.exe" new /pr . /cf priconfig.xml
+& "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\makepri.exe" new /pr PackageRoot /cf priconfig.xml
 
 foreach ($file in Get-ChildItem *.pri)
 {
@@ -33,6 +33,3 @@ foreach ($file in Get-ChildItem *.pri)
 MakeAppx.exe pack /f $mapping /l /p RoslynPad.appx
 
 ./SignAppx.ps1
-
-Remove-Item *.mapping -ErrorAction Ignore
-Remove-Item *.pri
