@@ -19,7 +19,7 @@ a {
     a:hover {
         text-decoration: underline;
     }
-
+	
 .btn {
     display: inline-block;
     margin-bottom: 1rem;
@@ -63,6 +63,11 @@ a {
         padding: 0.75rem;
         font-size: 0.9rem;
     }
+	
+	.btnimage
+	{
+		margin-top: 1rem;
+	}
 
         .btn + .btn {
             margin-top: 1rem;
