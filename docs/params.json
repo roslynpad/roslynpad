@@ -1,0 +1,6 @@
+{
+  "name": "RoslynPad",
+  "tagline": "A simple C# editor based on Roslyn and AvalonEdit",
+  "body": "<img src=\"https://raw.githubusercontent.com/aelij/RoslynPad/master/src/RoslynPad/Resources/RoslynPad.svg\" />",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
