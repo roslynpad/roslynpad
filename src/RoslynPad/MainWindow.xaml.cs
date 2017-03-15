@@ -199,8 +199,7 @@ namespace RoslynPad
 
         private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            var documentViewModel = ((FrameworkElement)e.Source).DataContext as DocumentViewModel;
-            if (documentViewModel != null)
+            if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel)
             {
                 if (documentViewModel.IsFolder)
                 {

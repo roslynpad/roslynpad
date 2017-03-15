@@ -20,7 +20,7 @@ namespace RoslynPad.Editor.Windows
         private readonly CompletionItem _item;
         private readonly char? _completionChar;
         private readonly SnippetManager _snippetManager;
-        private readonly Glyph? _glyph;
+        private readonly Glyph _glyph;
         private object _description;
 
         public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
@@ -32,10 +32,7 @@ namespace RoslynPad.Editor.Windows
             Text = item.DisplayText;
             Content = item.DisplayText;
             _glyph = item.GetGlyph();
-            if (_glyph != null)
-            {
-                Image = _glyph.Value.ToImageSource();
-            }
+            Image = _glyph.ToImageSource();
         }
 
         public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)

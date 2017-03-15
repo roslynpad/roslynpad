@@ -114,8 +114,7 @@ namespace RoslynPad.Runtime
 
             SetType(o);
 
-            var s = o as string;
-            if (s != null)
+            if (o is string s)
             {
                 Header = headerPrefix;
                 Value = s;
@@ -155,8 +154,7 @@ namespace RoslynPad.Runtime
 
         private IEnumerable GetEnumerable(object o, Type type)
         {
-            var e = o as IEnumerable;
-            if (e != null && !_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
+            if (o is IEnumerable e && !_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
             {
                 return e;
             }
@@ -337,8 +335,7 @@ namespace RoslynPad.Runtime
         
         private static string GetString(object o)
         {
-            var exception = o as Exception;
-            if (exception != null)
+            if (o is Exception exception)
             {
                 return exception.Message;
             }

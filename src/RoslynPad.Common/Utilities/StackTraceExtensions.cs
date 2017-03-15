@@ -57,8 +57,7 @@ namespace RoslynPad.Utilities
                 if (!isAsync)
                 {
                     stringBuilder.Append(method.Name);
-                    var methodInfo = method as MethodInfo;
-                    if (methodInfo != null && methodInfo.IsGenericMethod)
+                    if (method is MethodInfo methodInfo && methodInfo.IsGenericMethod)
                     {
                         FormatGenericArguments(stringBuilder, methodInfo.GetGenericArguments());
                     }

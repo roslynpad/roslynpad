@@ -71,6 +71,7 @@
     <None Include="..\RoslynPad.Host\App.config">
       <Link>App.config</Link>
     </None>
+    <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">

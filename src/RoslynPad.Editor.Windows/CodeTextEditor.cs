@@ -159,8 +159,7 @@ namespace RoslynPad.Editor.Windows
             }
             _toolTip.PlacementTarget = this; // required for property inheritance
 
-            var stringContent = args.ContentToShow as string;
-            if (stringContent != null)
+            if (args.ContentToShow is string stringContent)
             {
                 _toolTip.Content = new TextBlock
                 {

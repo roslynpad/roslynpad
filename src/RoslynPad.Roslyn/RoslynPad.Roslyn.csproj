@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
-    <AssemblyName>RoslynETAHost</AssemblyName>
+    <AssemblyName>Roslyn.Services.Editor.UnitTests</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>

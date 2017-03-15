@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 
 namespace RoslynPad.Utilities
 {
@@ -29,11 +31,16 @@ namespace RoslynPad.Utilities
         {
             if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-            var aggregate = exception as AggregateException;
-            if (aggregate != null)
+            if (exception is AggregateException aggregate)
             {
-                return ToAsyncAggregateString(exception, aggregate);
+                return ToAsyncAggregateString(exception, aggregate.InnerExceptions);
             }
+
+            if (exception is ReflectionTypeLoadException typeLoadException)
+            {
+                return ToAsyncAggregateString(exception, typeLoadException.LoaderExceptions);
+            }
+
             return ToAsyncStringCore(exception, includeMessageOnly: false);
         }
 
@@ -55,8 +62,7 @@ namespace RoslynPad.Utilities
 
             exception.Data[AsyncStackTraceExceptionData] = GetAsyncStackTrace(exception);
 
-            var aggregate = exception as AggregateException;
-            if (aggregate != null)
+            if (exception is AggregateException aggregate)
             {
                 foreach (var innerException in aggregate.InnerExceptions)
                 {
@@ -69,13 +75,13 @@ namespace RoslynPad.Utilities
             }
         }
 
-        private static string ToAsyncAggregateString(Exception exception, AggregateException aggregate)
+        private static string ToAsyncAggregateString(Exception exception, IList<Exception> inner)
         {
             var s = ToAsyncStringCore(exception, includeMessageOnly: true);
-            for (int i = 0; i < aggregate.InnerExceptions.Count; i++)
+            for (int i = 0; i < inner.Count; i++)
             {
                 s = string.Format(CultureInfo.InvariantCulture, AggregateExceptionFormatString, s,
-                    Environment.NewLine, i, aggregate.InnerExceptions[i].ToAsyncString(), "<---", Environment.NewLine);
+                    Environment.NewLine, i, inner[i].ToAsyncString(), "<---", Environment.NewLine);
             }
             return s;
         }

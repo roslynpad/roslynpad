@@ -89,8 +89,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 
         private void SelectAllInTextBox(object sender, RoutedEventArgs e)
         {
-            TextBox textbox = e.OriginalSource as TextBox;
-            if (textbox != null && Mouse.LeftButton == MouseButtonState.Released)
+            if (e.OriginalSource is TextBox textbox && Mouse.LeftButton == MouseButtonState.Released)
             {
                 textbox.SelectAll();
             }

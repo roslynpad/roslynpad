@@ -115,8 +115,10 @@ namespace RoslynPad.Roslyn.QuickInfo
             var candidateProjects = new List<ProjectId> { document.Project.Id };
             var invalidProjects = new List<ProjectId>();
 
-            var candidateResults = new List<Tuple<DocumentId, SemanticModel, IList<ISymbol>>>();
-            candidateResults.Add(Tuple.Create(document.Id, modelAndSymbols.Item1, modelAndSymbols.Item2));
+            var candidateResults = new List<Tuple<DocumentId, SemanticModel, IList<ISymbol>>>
+            {
+                Tuple.Create(document.Id, modelAndSymbols.Item1, modelAndSymbols.Item2)
+            };
 
             foreach (var link in linkedDocumentIds)
             {
@@ -317,7 +319,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             var semanticModel = await document.GetSemanticModelForNodeAsync(token.Parent, cancellationToken).ConfigureAwait(false);
             var enclosingType = semanticModel.GetEnclosingNamedType(token.SpanStart, cancellationToken);
 
-            var symbols = semanticModel.GetSymbols(token, document.Project.Solution.Workspace, bindLiteralsToUnderlyingType: true, cancellationToken: cancellationToken);
+            var symbols = semanticModel.GetSemanticInfo(token, document.Project.Solution.Workspace, cancellationToken).GetSymbols(includeType: true);
 
             var bindableParent = document.GetLanguageService<ISyntaxFactsService>().GetBindableParent(token);
             var overloads = semanticModel.GetMemberGroup(bindableParent, cancellationToken);
@@ -325,7 +327,8 @@ namespace RoslynPad.Roslyn.QuickInfo
             symbols = symbols.Where(IsOk)
                 .Where(s => IsAccessible(s, enclosingType))
                 .Concat(overloads)
-                .Distinct(SymbolEquivalenceComparer.Instance);
+                .Distinct(SymbolEquivalenceComparer.Instance)
+                .ToImmutableArray();
 
             if (symbols.Any())
             {

@@ -215,14 +215,12 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         private bool CanAccess(FileSystemInfo info)
         {
-            var d = info as DirectoryInfo;
-            if (d != null)
+            if (info is DirectoryInfo d)
             {
                 return CanAccessDirectory(d);
             }
 
-            var f = info as FileInfo;
-            if (f != null)
+            if (info is FileInfo f)
             {
                 return CanAccessFile(f);
             }

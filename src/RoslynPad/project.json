@@ -6,17 +6,17 @@
     "win": {}
   },
   "dependencies": {
-    "System.IO.Compression.ZipFile": "4.0.1",
     "AvalonEdit": "5.0.2",
     "AvalonLibrary": "2.3.0",
     "Extended.Wpf.Toolkit": "2.9.0",
-    "System.Runtime.InteropServices.RuntimeInformation": "4.0.0",
-    "Microsoft.CodeAnalysis.CSharp": "2.0.0-rc2",
-    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0-rc2",
-    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0-rc2",
-    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0-rc2",
-    "Nuget.PackageManagement": "3.4.3",
     "HockeySDK.WPF": "4.1.6",
-    "HockeySDK.WPF.TelemetryWorkaround": "0.1.0-workaround"
+    "HockeySDK.WPF.TelemetryWorkaround": "0.1.0-workaround",
+    "Microsoft.CodeAnalysis.CSharp": "2.0.0",
+    "Microsoft.CodeAnalysis.CSharp.Features": "2.0.0",
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "2.0.0",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "2.0.0",
+    "Nuget.PackageManagement": "3.4.3",
+    "System.IO.Compression.ZipFile": "4.3.0",
+    "System.Runtime.InteropServices.RuntimeInformation": "4.3.0"
   }
 }

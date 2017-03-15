@@ -4,7 +4,7 @@
              xmlns:formatting="clr-namespace:RoslynPad.Formatting"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
-             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynETAHost"
+             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=Roslyn.Services.Editor.UnitTests"
              xmlns:cc="clr-namespace:ICSharpCode.AvalonEdit.CodeCompletion;assembly=ICSharpCode.AvalonEdit"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              StartupUri="MainWindow.xaml">

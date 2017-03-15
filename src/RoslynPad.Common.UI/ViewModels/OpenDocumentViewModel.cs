@@ -478,8 +478,7 @@ namespace RoslynPad.UI
         {
             _dispatcher.InvokeAsync(() =>
             {
-                var list = o as IList<ResultObject>;
-                if (list != null)
+                if (o is IList<ResultObject> list)
                 {
                     foreach (var resultObject in list)
                     {

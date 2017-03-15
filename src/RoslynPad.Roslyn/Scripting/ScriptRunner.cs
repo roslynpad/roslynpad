@@ -280,8 +280,7 @@ namespace RoslynPad.Roslyn.Scripting
             var references = ImmutableList.CreateBuilder<MetadataReference>();
             foreach (var reference in References)
             {
-                var unresolved = reference as UnresolvedMetadataReference;
-                if (unresolved != null)
+                if (reference is UnresolvedMetadataReference unresolved)
                 {
                     var resolved = MetadataResolver.ResolveReference(unresolved.Reference, null, unresolved.Properties);
                     if (!resolved.IsDefault)

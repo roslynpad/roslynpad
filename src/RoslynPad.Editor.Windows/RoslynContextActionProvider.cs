@@ -55,8 +55,7 @@ namespace RoslynPad.Editor.Windows
 
         public ICommand GetActionCommand(object action)
         {
-            var codeAction = action as CodeAction;
-            if (codeAction != null)
+            if (action is CodeAction codeAction)
             {
                 return (ICommand)_commandProvider.CreateAsync(() => ExecuteCodeAction(codeAction));
             }

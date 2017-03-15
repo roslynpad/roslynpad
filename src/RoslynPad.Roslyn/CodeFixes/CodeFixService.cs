@@ -688,8 +688,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 {
                     // check whether the analyzer reference knows how to return fixers directly.
                     // ReSharper disable once SuspiciousTypeConversion.Global
-                    var codeFixProviderFactory = _reference as ICodeFixProviderFactory;
-                    if (codeFixProviderFactory != null)
+                    if (_reference is ICodeFixProviderFactory codeFixProviderFactory)
                     {
                         return codeFixProviderFactory.GetFixers();
                     }
