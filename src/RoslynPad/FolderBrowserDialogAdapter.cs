@@ -17,14 +17,14 @@ namespace RoslynPad
 
         public bool ShowEditBox
         {
-            get { return _dialog.ShowEditBox; }
-            set { _dialog.ShowEditBox = value; }
+            get => _dialog.ShowEditBox;
+            set => _dialog.ShowEditBox = value;
         }
 
         public string SelectedPath
         {
-            get { return _dialog.SelectedPath; }
-            set { _dialog.SelectedPath = value; }
+            get => _dialog.SelectedPath;
+            set => _dialog.SelectedPath = value;
         }
 
         public bool? Show()

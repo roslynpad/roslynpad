@@ -83,9 +83,8 @@ namespace RoslynPad.Editor.Windows
 
         public void SetToolTip(object content)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
             Handled = true;
-            ContentToShow = content;
+            ContentToShow = content ?? throw new ArgumentNullException(nameof(content));
         }
     }
 }

@@ -587,20 +587,17 @@ namespace RoslynPad.UI
 
         public bool IsBusy
         {
-            get { return _isBusy; }
-            private set { SetProperty(ref _isBusy, value); }
+            get => _isBusy; private set => SetProperty(ref _isBusy, value);
         }
 
         public bool IsEnabled
         {
-            get { return _isEnabled; }
-            private set { SetProperty(ref _isEnabled, value); }
+            get => _isEnabled; private set => SetProperty(ref _isEnabled, value);
         }
         
         public string SearchTerm
         {
-            get { return _searchTerm; }
-            set
+            get => _searchTerm; set
             {
                 if (SetProperty(ref _searchTerm, value))
                 {
@@ -613,14 +610,13 @@ namespace RoslynPad.UI
 
         public IReadOnlyList<PackageData> Packages
         {
-            get { return _packages; }
-            private set { SetProperty(ref _packages, value); }
+            get => _packages; private set => SetProperty(ref _packages, value);
         }
 
         public bool IsPackagesMenuOpen
         {
-            get { return _isPackagesMenuOpen; }
-            set { SetProperty(ref _isPackagesMenuOpen, value); }
+            get => _isPackagesMenuOpen;
+            set => SetProperty(ref _isPackagesMenuOpen, value);
         }
 
         public bool ExactMatch { get; set; }

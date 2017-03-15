@@ -63,8 +63,8 @@ namespace RoslynPad.Editor.Windows
 
         public Brush CompletionBackground
         {
-            get { return (Brush)GetValue(CompletionBackgroundProperty); }
-            set { SetValue(CompletionBackgroundProperty, value); }
+            get => (Brush)GetValue(CompletionBackgroundProperty);
+            set => SetValue(CompletionBackgroundProperty, value);
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
@@ -96,8 +96,8 @@ namespace RoslynPad.Editor.Windows
 
         public event ToolTipRequestEventHandler ToolTipRequest
         {
-            add { AddHandler(ToolTipRequestEvent, value); }
-            remove { RemoveHandler(ToolTipRequestEvent, value); }
+            add => AddHandler(ToolTipRequestEvent, value);
+            remove => RemoveHandler(ToolTipRequestEvent, value);
         }
 
         private void OnVisualLinesChanged(object sender, EventArgs e)

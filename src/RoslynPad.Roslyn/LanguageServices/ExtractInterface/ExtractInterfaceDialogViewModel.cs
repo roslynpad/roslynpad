@@ -107,10 +107,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         private string _interfaceName;
         public string InterfaceName
         {
-            get
-            {
-                return _interfaceName;
-            }
+            get => _interfaceName;
 
             set
             {
@@ -129,8 +126,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         private string _fileName;
         public string FileName
         {
-            get { return _fileName; }
-            set { SetProperty(ref _fileName, value); }
+            get => _fileName;
+            set => SetProperty(ref _fileName, value);
         }
 
         internal class MemberSymbolViewModel : NotificationObject
@@ -152,8 +149,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             private bool _isChecked;
             public bool IsChecked
             {
-                get { return _isChecked; }
-                set { SetProperty(ref _isChecked, value); }
+                get => _isChecked;
+                set => SetProperty(ref _isChecked, value);
             }
 
             public string MemberName => MemberSymbol.ToDisplayString(_memberDisplayFormat);

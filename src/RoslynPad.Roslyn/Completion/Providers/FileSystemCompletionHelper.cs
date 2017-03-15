@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
 namespace RoslynPad.Roslyn.Completion.Providers
@@ -25,14 +24,9 @@ namespace RoslynPad.Roslyn.Completion.Providers
         private readonly ISet<string> _allowableExtensions;
 
         private readonly Lazy<string[]> _lazyGetDrives;
-        private readonly CompletionProvider _completionProvider;
-        private readonly TextSpan _textChangeSpan;
         private readonly CompletionItemRules _itemRules;
 
-        public FileSystemCompletionHelper(
-            CompletionProvider completionProvider,
-            TextSpan textChangeSpan,
-            Microsoft.CodeAnalysis.Glyph folderGlyph,
+        public FileSystemCompletionHelper(Microsoft.CodeAnalysis.Glyph folderGlyph,
             Microsoft.CodeAnalysis.Glyph fileGlyph,
             ImmutableArray<string> searchPaths,
             IEnumerable<string> allowableExtensions,
@@ -41,8 +35,6 @@ namespace RoslynPad.Roslyn.Completion.Providers
         {
             Debug.Assert(searchPaths.All(path => PathUtilities.IsAbsolute(path)));
 
-            _completionProvider = completionProvider;
-            _textChangeSpan = textChangeSpan;
             _searchPaths = searchPaths;
             _allowableExtensions = allowableExtensions.Select(e => e.ToLowerInvariant()).ToSet();
             _folderGlyph = folderGlyph;
@@ -74,7 +66,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
             return CommonCompletionItem.Create("..", rules: _itemRules);
         }
 
-        private CompletionItem CreateNetworkRoot(TextSpan textChangeSpan)
+        private CompletionItem CreateNetworkRoot()
         {
             return CommonCompletionItem.Create("\\\\", rules: _itemRules);
         }
@@ -93,7 +85,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                         result.Add(CreateParentDirectoryItem());
                     }
 
-                    result.Add(CreateNetworkRoot(_textChangeSpan));
+                    result.Add(CreateNetworkRoot());
                     result.AddRange(GetLogicalDrives());
                     result.AddRange(GetFilesAndDirectoriesInSearchPaths());
                     break;
@@ -123,7 +115,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                             // The user has typed only "\".  In this case, we want to add "\\" to
                             // the list.  Also, the textChangeSpan needs to be backed up by one
                             // so that it will consume the "\" when "\\" is inserted.
-                            result.Add(CreateNetworkRoot(TextSpan.FromBounds(_textChangeSpan.Start - 1, _textChangeSpan.End)));
+                            result.Add(CreateNetworkRoot());
                         }
                     }
                     else
@@ -178,7 +170,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                     return from child in GetFileSystemInfos(directoryInfo)
                         where ShouldShow(child)
                         where CanAccess(child)
-                        select this.CreateCompletion(child);
+                        select CreateCompletion(child);
                 }
             }
 

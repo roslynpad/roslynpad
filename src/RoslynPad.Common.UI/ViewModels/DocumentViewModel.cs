@@ -94,8 +94,8 @@ namespace RoslynPad.UI
 
         public bool IsExpanded
         {
-            get { return _isExpanded; }
-            set { SetProperty(ref _isExpanded, value); }
+            get => _isExpanded;
+            set => SetProperty(ref _isExpanded, value);
         }
 
         public string Name { get; }
@@ -126,10 +126,7 @@ namespace RoslynPad.UI
                 }
                 return _children;
             }
-            internal set
-            {
-                SetProperty(ref _children, value);
-            }
+            internal set => SetProperty(ref _children, value);
         }
 
         private ObservableCollection<DocumentViewModel> ReadChildren()

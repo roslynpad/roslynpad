@@ -44,8 +44,7 @@ namespace RoslynPad.Editor.Windows
 
         public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
         {
-            if (editor == null) throw new ArgumentNullException(nameof(editor));
-            _editor = editor;
+            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
             _textMarkerService = textMarkerService;
 
             editor.TextArea.Caret.PositionChanged += CaretPositionChanged;

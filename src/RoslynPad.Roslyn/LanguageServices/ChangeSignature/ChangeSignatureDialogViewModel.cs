@@ -309,10 +309,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         private int? _selectedIndex;
         public int? SelectedIndex
         {
-            get
-            {
-                return _selectedIndex;
-            }
+            get => _selectedIndex;
 
             set
             {

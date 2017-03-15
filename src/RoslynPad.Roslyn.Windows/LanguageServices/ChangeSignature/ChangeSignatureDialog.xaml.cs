@@ -210,8 +210,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         public object ViewModel
         {
-            get { return DataContext; }
-            set
+            get => DataContext; set
             {
                 DataContext = value;
                 _viewModel = (ChangeSignatureDialogViewModel)value;

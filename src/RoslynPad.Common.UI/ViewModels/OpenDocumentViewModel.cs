@@ -46,8 +46,7 @@ namespace RoslynPad.UI
         private ObservableCollection<ResultObject> ResultsInternal
         {
             // ReSharper disable once UnusedMember.Local
-            get { return _results; }
-            set
+            get => _results; set
             {
                 _results = value;
                 OnPropertyChanged(nameof(Results));
@@ -184,8 +183,7 @@ namespace RoslynPad.UI
 
         public Platform Platform
         {
-            get { return _platform; }
-            set
+            get => _platform; set
             {
                 if (SetProperty(ref _platform, value))
                 {
@@ -334,8 +332,7 @@ namespace RoslynPad.UI
 
         public bool IsRunning
         {
-            get { return _isRunning; }
-            private set
+            get => _isRunning; private set
             {
                 if (SetProperty(ref _isRunning, value))
                 {
@@ -517,8 +514,7 @@ namespace RoslynPad.UI
 
         public bool IsDirty
         {
-            get { return _isDirty; }
-            private set { SetProperty(ref _isDirty, value); }
+            get => _isDirty; private set => SetProperty(ref _isDirty, value);
         }
 
         public event EventHandler EditorFocus;

@@ -32,8 +32,7 @@ namespace RoslynPad.Editor.Windows
 
         public int SelectedIndex
         {
-            get { return _selectedIndex; }
-            set
+            get => _selectedIndex; set
             {
                 if (SetProperty(ref _selectedIndex, value))
                 {
@@ -114,20 +113,17 @@ namespace RoslynPad.Editor.Windows
         // ReSharper disable once UnusedMember.Local
         public string CurrentIndexText
         {
-            get { return _currentIndexText; }
-            private set { SetProperty(ref _currentIndexText, value); }
+            get => _currentIndexText; private set => SetProperty(ref _currentIndexText, value);
         }
 
         public object CurrentHeader
         {
-            get { return _currentHeader; }
-            private set { SetProperty(ref _currentHeader, value); }
+            get => _currentHeader; private set => SetProperty(ref _currentHeader, value);
         }
 
         public object CurrentContent
         {
-            get { return _currentContent; }
-            private set { SetProperty(ref _currentContent, value); }
+            get => _currentContent; private set => SetProperty(ref _currentContent, value);
         }
     }
 }

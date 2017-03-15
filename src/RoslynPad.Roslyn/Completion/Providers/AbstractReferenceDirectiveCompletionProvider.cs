@@ -80,9 +80,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 return;
             }
 
-            var fileSystemHelper = new FileSystemCompletionHelper(
-                this, textChangeSpan,
-                Microsoft.CodeAnalysis.Glyph.OpenFolder,
+            var fileSystemHelper = new FileSystemCompletionHelper(Microsoft.CodeAnalysis.Glyph.OpenFolder,
                 Microsoft.CodeAnalysis.Glyph.Assembly, searchPaths, new[] { ".dll", ".exe" }, path => path.Contains(","), _rules);
 
             var pathThroughLastSlash = GetPathThroughLastSlash(stringLiteral, position);

@@ -39,10 +39,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         internal static string GetPathThroughLastSlash(string quotedPath, int quotedPathStart, int position)
         {
-            const int QuoteLength = 1;
+            const int quoteLength = 1;
 
             var positionInQuotedPath = position - quotedPathStart;
-            var path = quotedPath.Substring(QuoteLength, positionInQuotedPath - QuoteLength).Trim();
+            var path = quotedPath.Substring(quoteLength, positionInQuotedPath - quoteLength).Trim();
             var afterLastSlashIndex = AfterLastSlashIndex(path, path.Length);
 
             // We want the portion up to, and including the last slash if there is one.  That way if
@@ -60,7 +60,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
             // Where we want to start tracking is right after the slash (if we have one), or else
             // right after the string starts.
-            var afterLastSlashIndex = PathCompletionUtilities.AfterLastSlashIndex(quotedPath, positionInQuotedPath);
+            var afterLastSlashIndex = AfterLastSlashIndex(quotedPath, positionInQuotedPath);
             var afterFirstQuote = 1;
 
             var startIndex = Math.Max(afterLastSlashIndex, afterFirstQuote);

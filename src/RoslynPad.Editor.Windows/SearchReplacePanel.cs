@@ -47,8 +47,8 @@ namespace RoslynPad.Editor.Windows
 
         public bool IsReplaceMode
         {
-            get { return (bool)GetValue(IsReplaceModeProperty); }
-            set { SetValue(IsReplaceModeProperty, value); }
+            get => (bool)GetValue(IsReplaceModeProperty);
+            set => SetValue(IsReplaceModeProperty, value);
         }
 
         public static readonly DependencyProperty ReplacePatternProperty = DependencyProperty.Register(
@@ -56,8 +56,8 @@ namespace RoslynPad.Editor.Windows
 
         public string ReplacePattern
         {
-            get { return (string)GetValue(ReplacePatternProperty); }
-            set { SetValue(ReplacePatternProperty, value); }
+            get => (string)GetValue(ReplacePatternProperty);
+            set => SetValue(ReplacePatternProperty, value);
         }
 
         /// <summary>

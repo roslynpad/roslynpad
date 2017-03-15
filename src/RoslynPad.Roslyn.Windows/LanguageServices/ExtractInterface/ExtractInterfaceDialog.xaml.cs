@@ -127,8 +127,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 
         public object ViewModel
         {
-            get { return DataContext; }
-            set
+            get => DataContext; set
             {
                 DataContext = value;
                 _viewModel = (ExtractInterfaceDialogViewModel)value;

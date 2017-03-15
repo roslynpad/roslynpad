@@ -13,8 +13,8 @@ namespace RoslynPad.Controls
 
         public bool ShowSeparator
         {
-            get { return (bool) GetValue(ShowSeparatorProperty); }
-            set { SetValue(ShowSeparatorProperty, value); }
+            get => (bool)GetValue(ShowSeparatorProperty);
+            set => SetValue(ShowSeparatorProperty, value);
         }
 
         protected override DependencyObject GetContainerForItemOverride()
@@ -63,10 +63,7 @@ namespace RoslynPad.Controls
 
         public static readonly DependencyProperty ShowSeparatorProperty = ShowSeparatorPropertyKey.DependencyProperty;
 
-        public bool ShowSeparator
-        {
-            get { return (bool) GetValue(ShowSeparatorProperty); }
-        }
+        public bool ShowSeparator => (bool) GetValue(ShowSeparatorProperty);
 
         protected override DependencyObject GetContainerForItemOverride()
         {

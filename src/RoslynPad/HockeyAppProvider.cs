@@ -84,8 +84,7 @@ namespace RoslynPad
 
         public Exception LastError
         {
-            get { return _lastError; }
-            private set
+            get => _lastError; private set
             {
                 _lastError = value;
                 LastErrorChanged?.Invoke();

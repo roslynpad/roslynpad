@@ -46,8 +46,8 @@ namespace RoslynPad.Editor.Windows
 
         public int? LineNumber
         {
-            get { return (int?)GetValue(LineNumberProperty); }
-            set { SetValue(LineNumberProperty, value); }
+            get => (int?)GetValue(LineNumberProperty);
+            set => SetValue(LineNumberProperty, value);
         }
 
         public static readonly DependencyProperty MessageProperty = DependencyProperty.Register(
@@ -55,8 +55,8 @@ namespace RoslynPad.Editor.Windows
 
         public string Message
         {
-            get { return (string)GetValue(MessageProperty); }
-            set { SetValue(MessageProperty, value); }
+            get => (string)GetValue(MessageProperty);
+            set => SetValue(MessageProperty, value);
         }
 
         public static readonly DependencyProperty MarkerBrushProperty = DependencyProperty.Register(
@@ -64,8 +64,8 @@ namespace RoslynPad.Editor.Windows
 
         public Brush MarkerBrush
         {
-            get { return (Brush)GetValue(MarkerBrushProperty); }
-            set { SetValue(MarkerBrushProperty, value); }
+            get => (Brush)GetValue(MarkerBrushProperty);
+            set => SetValue(MarkerBrushProperty, value);
         }
 
         protected override void OnTextViewChanged(TextView oldTextView, TextView newTextView)

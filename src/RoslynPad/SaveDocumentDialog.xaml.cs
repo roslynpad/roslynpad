@@ -68,8 +68,7 @@ namespace RoslynPad
 
         public string DocumentName
         {
-            get { return _documentName; }
-            set
+            get => _documentName; set
             {
                 SetProperty(ref _documentName, value);
                 SetSaveButtonStatus();
@@ -83,26 +82,25 @@ namespace RoslynPad
 
         public SaveResult Result
         {
-            get { return _result; }
-            private set { SetProperty(ref _result, value); }
+            get => _result; private set => SetProperty(ref _result, value);
         }
 
         public bool AllowNameEdit
         {
-            get { return _allowNameEdit; }
-            set { SetProperty(ref _allowNameEdit, value); }
+            get => _allowNameEdit;
+            set => SetProperty(ref _allowNameEdit, value);
         }
 
         public bool ShowDontSave
         {
-            get { return _showDontSave; }
-            set { SetProperty(ref _showDontSave, value); }
+            get => _showDontSave;
+            set => SetProperty(ref _showDontSave, value);
         }
 
         public string FilePath
         {
-            get { return _filePath; }
-            private set { SetProperty(ref _filePath, value); }
+            get => _filePath;
+            private set => SetProperty(ref _filePath, value);
         }
 
         public Func<string, string> FilePathFactory { get; set; }
@@ -146,11 +144,7 @@ namespace RoslynPad
         {
             if (AllowNameEdit)
             {
-                if (FilePathFactory == null)
-                {
-                    throw new InvalidOperationException();
-                }
-                FilePath = FilePathFactory(DocumentName);
+                FilePath = FilePathFactory?.Invoke(DocumentName) ?? throw new InvalidOperationException();
                 if (File.Exists(FilePath))
                 {
                     SaveButton.Visibility = Visibility.Collapsed;

@@ -10,8 +10,7 @@ namespace RoslynPad.Editor.Windows
 
         public ExtendedPopup(UIElement parent)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-            _parent = parent;
+            _parent = parent ?? throw new ArgumentNullException(nameof(parent));
         }
 
         public new bool IsOpen => base.IsOpen;
@@ -20,8 +19,7 @@ namespace RoslynPad.Editor.Windows
 
         public bool IsOpenIfFocused
         {
-            get { return _openIfFocused; }
-            set
+            get => _openIfFocused; set
             {
                 if (_openIfFocused != value)
                 {

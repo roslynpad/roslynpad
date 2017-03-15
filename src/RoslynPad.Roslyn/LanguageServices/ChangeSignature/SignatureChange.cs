@@ -1,5 +1,3 @@
-using System;
-
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
     internal sealed class SignatureChange

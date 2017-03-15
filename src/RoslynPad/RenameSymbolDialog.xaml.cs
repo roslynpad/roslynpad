@@ -42,8 +42,7 @@ namespace RoslynPad
 
         public string SymbolName
         {
-            get { return _symbolName; }
-            set
+            get => _symbolName; set
             {
                 _symbolName = value;
                 OnPropertyChanged();

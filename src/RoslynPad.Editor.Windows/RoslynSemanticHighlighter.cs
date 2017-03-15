@@ -46,9 +46,7 @@ namespace RoslynPad.Editor.Windows
 
         public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, RoslynHost roslynHost)
         {
-            if (document == null)
-                throw new ArgumentNullException(nameof(document));
-            _document = document;
+            _document = document ?? throw new ArgumentNullException(nameof(document));
             _documentId = documentId;
             _roslynHost = roslynHost;
             _semaphore = new SemaphoreSlim(0);
@@ -266,13 +264,8 @@ namespace RoslynPad.Editor.Windows
 
             public CachedLine(HighlightedLine highlightedLine, ITextSourceVersion fileVersion)
             {
-                if (highlightedLine == null)
-                    throw new ArgumentNullException(nameof(highlightedLine));
-                if (fileVersion == null)
-                    throw new ArgumentNullException(nameof(fileVersion));
-
-                HighlightedLine = highlightedLine;
-                OldVersion = fileVersion;
+                HighlightedLine = highlightedLine ?? throw new ArgumentNullException(nameof(highlightedLine));
+                OldVersion = fileVersion ?? throw new ArgumentNullException(nameof(fileVersion));
                 IsValid = true;
             }
         }

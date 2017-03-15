@@ -168,8 +168,7 @@ namespace RoslynPad.UI
 
         public bool HasUpdate
         {
-            get { return _hasUpdate; }
-            private set { SetProperty(ref _hasUpdate, value); }
+            get => _hasUpdate; private set => SetProperty(ref _hasUpdate, value);
         }
 
         private static bool HasCachedUpdate()
@@ -265,16 +264,15 @@ namespace RoslynPad.UI
 
         public OpenDocumentViewModel CurrentOpenDocument
         {
-            get { return _currentOpenDocument; }
-            set { SetProperty(ref _currentOpenDocument, value); }
+            get => _currentOpenDocument;
+            set => SetProperty(ref _currentOpenDocument, value);
         }
 
         private ObservableCollection<DocumentViewModel> _documents;
 
         public ObservableCollection<DocumentViewModel> Documents
         {
-            get { return _documents; }
-            internal set { SetProperty(ref _documents, value); }
+            get => _documents; internal set => SetProperty(ref _documents, value);
         }
 
         public IActionCommand NewDocumentCommand { get; }
@@ -373,8 +371,7 @@ namespace RoslynPad.UI
 
         public bool SendTelemetry
         {
-            get { return Properties.Settings.Default.SendErrors; }
-            set
+            get => Properties.Settings.Default.SendErrors; set
             {
                 Properties.Settings.Default.SendErrors = value;
                 Properties.Settings.Default.Save();
@@ -384,15 +381,14 @@ namespace RoslynPad.UI
 
         public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 
-        public IActionCommand ReportProblemCommand { get; private set; }
+        public IActionCommand ReportProblemCommand { get; }
 
         public double MinimumEditorFontSize => 8;
         public double MaximumEditorFontSize => 72;
 
         public double EditorFontSize
         {
-            get { return _editorFontSize; }
-            set
+            get => _editorFontSize; set
             {
                 if (value < MinimumEditorFontSize || value > MaximumEditorFontSize) return;
 
