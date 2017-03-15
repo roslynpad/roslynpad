@@ -6,6 +6,7 @@ using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
@@ -44,6 +45,7 @@ namespace RoslynPad.UI
         private readonly IEnumerable<PackageSource> _packageSources;
         private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
         private readonly Lazy<Task> _initializationTask;
+        private readonly ExceptionDispatchInfo _initializationException;
 
         private AggregateRepository _repository;
 
@@ -51,21 +53,42 @@ namespace RoslynPad.UI
 
         public NuGetViewModel()
         {
-            _settings = Settings.LoadDefaultSettings(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                configFileName: null,
-                machineWideSettings: new CommandLineMachineWideSettings());
+            try
+            {
+                _settings = Settings.LoadDefaultSettings(
+                    root: null,
+                    configFileName: null,
+                    machineWideSettings: new CommandLineMachineWideSettings());
 
-            _sourceProvider = new PackageSourceProvider(_settings);
+                _sourceProvider = new PackageSourceProvider(_settings);
 
-            GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(_settings);
+                GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(_settings);
 
-            _packageSources = GetPackageSources();
+                _packageSources = GetPackageSources();
 
-            _sourceRepositoryProvider = new CommandLineSourceRepositoryProvider(_sourceProvider);
+                _sourceRepositoryProvider = new CommandLineSourceRepositoryProvider(_sourceProvider);
+            }
+            catch (Exception e)
+            {
+                _initializationException = ExceptionDispatchInfo.Capture(e);
+            }
 
             _initializationTask = new Lazy<Task>(Initialize);
+        }
 
+        private async Task Initialize()
+        {
+            _initializationException?.Throw();
+
+            var listEndpoints = await GetListEndpointsAsync(_sourceProvider).ConfigureAwait(false);
+
+            var repositoryFactory = new PackageRepositoryFactory();
+
+            var repositories = listEndpoints
+                .Select(s => repositoryFactory.CreateRepository(s))
+                .ToList();
+
+            _repository = new AggregateRepository(repositories);
         }
 
         public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
@@ -79,6 +102,8 @@ namespace RoslynPad.UI
             NuGetVersion version,
             bool prerelease)
         {
+            await _initializationTask.Value.ConfigureAwait(false);
+
             var installPath = Path.Combine(Path.GetTempPath(), "testnuget");
 
             var projectContext = new EmptyNuGetProjectContext
@@ -147,19 +172,6 @@ namespace RoslynPad.UI
             var packagesConfigNuGetProjectField = typeof(MSBuildNuGetProject).GetTypeInfo()
                 .DeclaredFields.First(x => x.FieldType == typeof(PackagesConfigNuGetProject));
             packagesConfigNuGetProjectField.SetValue(project, new DummyPackagesConfigNuGetProject(project.Metadata));
-        }
-
-        private async Task Initialize()
-        {
-            var listEndpoints = await GetListEndpointsAsync(_sourceProvider).ConfigureAwait(false);
-
-            var repositoryFactory = new PackageRepositoryFactory();
-
-            var repositories = listEndpoints
-                .Select(s => repositoryFactory.CreateRepository(s))
-                .ToList();
-
-            _repository = new AggregateRepository(repositories);
         }
 
         private static async Task<IList<string>> GetListEndpointsAsync(IPackageSourceProvider sourceProvider)
@@ -519,6 +531,7 @@ namespace RoslynPad.UI
     public sealed class NuGetDocumentViewModel : NotificationObject
     {
         private readonly NuGetViewModel _nuGetViewModel;
+        private readonly ITelemetryProvider _telemetryProvider;
 
         private bool _isBusy;
         private bool _isEnabled;
@@ -528,9 +541,10 @@ namespace RoslynPad.UI
         private bool _isPackagesMenuOpen;
 
         [ImportingConstructor]
-        public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands)
+        public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands, ITelemetryProvider telemetryProvider)
         {
             _nuGetViewModel = nuGetViewModel;
+            _telemetryProvider = telemetryProvider;
 
             InstallPackageCommand = commands.CreateAsync<PackageData>(InstallPackage);
 
@@ -582,8 +596,7 @@ namespace RoslynPad.UI
             get { return _isEnabled; }
             private set { SetProperty(ref _isEnabled, value); }
         }
-
-
+        
         public string SearchTerm
         {
             get { return _searchTerm; }
@@ -626,14 +639,19 @@ namespace RoslynPad.UI
                 try
                 {
                     var packages = await Task.Run(() =>
-                        _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true, exactMatch: ExactMatch, cancellationToken: cancellationToken),
-                        cancellationToken).ConfigureAwait(false);
+                            _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true,
+                                exactMatch: ExactMatch, cancellationToken: cancellationToken), cancellationToken)
+                        .ConfigureAwait(true);
 
                     Packages = packages;
                     IsPackagesMenuOpen = Packages.Count > 0;
                 }
                 catch (OperationCanceledException)
                 {
+                }
+                catch (Exception e)
+                {
+                    _telemetryProvider.ReportError(e);
                 }
             }
             finally

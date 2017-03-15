@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
 {
@@ -18,7 +19,7 @@ namespace RoslynPad.UI
         private DocumentViewModel(string rootPath)
         {
             Path = rootPath;
-            Directory.CreateDirectory(Path);
+            IOUtilities.PerformIO(() => Directory.CreateDirectory(Path));
             IsFolder = true;
         }
 
@@ -144,7 +145,7 @@ namespace RoslynPad.UI
                             .Where(x => !x.IsAutoSave)
                             .OrderBy(OrderByName)));
             }
-            catch (Exception)
+            catch (Exception e) when (IOUtilities.IsNormalIOException(e))
             {
                 return new ObservableCollection<DocumentViewModel>();
             }

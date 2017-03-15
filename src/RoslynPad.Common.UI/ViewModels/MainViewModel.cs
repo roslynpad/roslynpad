@@ -19,7 +19,7 @@ namespace RoslynPad.UI
     {
         private readonly IServiceLocator _serviceLocator;
         private readonly ITelemetryProvider _telemetryProvider;
-        private static readonly Version _currentVersion = new Version(0, 11);
+        private static readonly Version _currentVersion = new Version(0, 12);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
@@ -30,7 +30,8 @@ namespace RoslynPad.UI
 
         public DocumentViewModel DocumentRoot { get; private set; }
         public NuGetConfiguration NuGetConfiguration { get; }
-        public RoslynHost RoslynHost { get; }
+        public RoslynHost RoslynHost { get; private set; }
+        public bool IsInitialized { get; set; }
 
         [ImportingConstructor]
         public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands, NuGetViewModel nugetViewModel)
@@ -38,17 +39,15 @@ namespace RoslynPad.UI
             _serviceLocator = serviceLocator;
             _telemetryProvider = telemetryProvider;
             _telemetryProvider.Initialize(_currentVersion.ToString());
-            _telemetryProvider.LastErrorChanged += () => OnPropertyChanged(nameof(LastError));
+            _telemetryProvider.LastErrorChanged += () =>
+            {
+                OnPropertyChanged(nameof(LastError));
+                OnPropertyChanged(nameof(HasError));
+            };
 
             NuGet = nugetViewModel;
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[]
-            {
-                // TODO: xplat
-                Assembly.Load("RoslynPad.Roslyn.Windows"),
-                Assembly.Load("RoslynPad.Editor.Windows")
-            });
-
+            
             NewDocumentCommand = commands.Create(CreateNewDocument);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
@@ -65,6 +64,29 @@ namespace RoslynPad.UI
 
         public void Initialize()
         {
+            if (IsInitialized) return;
+
+            try
+            {
+                InitializeInternal();
+
+                IsInitialized = true;
+            }
+            catch (Exception e)
+            {
+                _telemetryProvider.ReportError(e);
+            }
+        }
+
+        private void InitializeInternal()
+        {
+            RoslynHost = new RoslynHost(NuGetConfiguration, new[]
+            {
+                // TODO: xplat
+                Assembly.Load("RoslynPad.Roslyn.Windows"),
+                Assembly.Load("RoslynPad.Editor.Windows")
+            });
+
             OpenAutoSavedDocuments();
 
             if (HasCachedUpdate())

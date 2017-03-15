@@ -57,6 +57,7 @@
     <Compile Include="Utilities\DelegateCommand.cs" />
     <Compile Include="Utilities\DelegatingTextWriter.cs" />
     <Compile Include="Utilities\ExceptionExtensions.cs" />
+    <Compile Include="Utilities\IOUtilities.cs" />
     <Compile Include="Utilities\NotificationObject.cs" />
     <Compile Include="Utilities\ProcessExtensions.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />

@@ -76,6 +76,12 @@ namespace RoslynPad
             });
         }
 
+        public void ReportError(Exception exception)
+        {
+            HockeyClient.Current.TrackException(exception);
+            LastError = exception;
+        }
+
         public Exception LastError
         {
             get { return _lastError; }

@@ -28,13 +28,14 @@ namespace RoslynPad
 
         internal MainWindow()
         {
+            Loaded += OnLoaded;
+
             var container = new ContainerConfiguration()
                 .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
                 .WithAssembly(typeof(MainWindow).Assembly);     // RoslynPad
             var locator = container.CreateContainer().GetExport<IServiceLocator>();
 
             _viewModel = locator.GetInstance<MainViewModel>();
-            _viewModel.Initialize();
 
             DataContext = _viewModel;
             InitializeComponent();
@@ -42,6 +43,13 @@ namespace RoslynPad
 
             LoadWindowLayout();
             LoadDockLayout();
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Loaded -= OnLoaded;
+
+            _viewModel.Initialize();
         }
 
         protected override async void OnClosing(CancelEventArgs e)
@@ -81,13 +89,19 @@ namespace RoslynPad
             var boundsString = Properties.Settings.Default.WindowBounds;
             if (!string.IsNullOrEmpty(boundsString))
             {
-                var bounds = Rect.Parse(boundsString);
-                if (bounds != default(Rect))
+                try
                 {
-                    Left = bounds.Left;
-                    Top = bounds.Top;
-                    Width = bounds.Width;
-                    Height = bounds.Height;
+                    var bounds = Rect.Parse(boundsString);
+                    if (bounds != default(Rect))
+                    {
+                        Left = bounds.Left;
+                        Top = bounds.Top;
+                        Width = bounds.Width;
+                        Height = bounds.Height;
+                    }
+                }
+                catch (FormatException)
+                {
                 }
             }
 
@@ -112,7 +126,14 @@ namespace RoslynPad
 
             var serializer = new XmlLayoutSerializer(DockingManager);
             var reader = new StringReader(layout);
-            serializer.Deserialize(reader);
+            try
+            {
+                serializer.Deserialize(reader);
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
         private void SaveDockLayout()

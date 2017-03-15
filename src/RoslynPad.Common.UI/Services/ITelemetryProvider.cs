@@ -10,5 +10,6 @@ namespace RoslynPad.UI
         event Action LastErrorChanged;
         void ClearLastError();
         Task SubmitFeedback(string feedbackText, string email);
+        void ReportError(Exception exception);
     }
 }
