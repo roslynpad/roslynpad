@@ -68,7 +68,7 @@ namespace RoslynPad.UI
 
             try
             {
-                InitializeInternal();
+                InitializeInternal(additionalAssemblies);
 
                 IsInitialized = true;
             }
@@ -78,7 +78,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void InitializeInternal()
+        private void InitializeInternal(IEnumerable<Assembly> additionalAssemblies)
         {
             RoslynHost = new RoslynHost(NuGetConfiguration, additionalAssemblies);
 

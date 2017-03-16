@@ -25,6 +25,10 @@ namespace RoslynPad.Gtk
             return Task.CompletedTask;
         }
 
+        public void ReportError(Exception exception)
+        {
+        }
+
         protected virtual void OnLastErrorChanged()
         {
             LastErrorChanged?.Invoke();

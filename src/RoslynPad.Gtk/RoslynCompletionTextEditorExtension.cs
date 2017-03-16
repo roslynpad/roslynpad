@@ -186,7 +186,7 @@ namespace RoslynPad.Gtk
                 get
                 {
                     var glyph = _item.GetGlyph();
-                    return glyph != null ? new IconId(glyph.Value.GetGlyphIcon()) : IconId.Null;
+                    return glyph != Glyph.None ? new IconId(glyph.GetGlyphIcon()) : IconId.Null;
                 }
                 set { }
             }
