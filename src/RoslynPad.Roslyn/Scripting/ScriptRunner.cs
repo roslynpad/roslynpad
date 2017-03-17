@@ -20,17 +20,21 @@ namespace RoslynPad.Roslyn.Scripting
     public sealed class ScriptRunner
     {
         private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid();
-
+        
         private readonly InteractiveAssemblyLoader _assemblyLoader;
         private Func<object[], Task<object>> _lazyExecutor;
         private Compilation _lazyCompilation;
 
-        public ScriptRunner(string code, CSharpParseOptions parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference> references = null, IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null)
+        public ScriptRunner(string code, CSharpParseOptions parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+            Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference> references = null,
+            IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, 
+            MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null,
+            InteractiveAssemblyLoader assemblyLoader = null)
         {
             Code = code;
             OutputKind = outputKind;
             Platform = platform;
-            _assemblyLoader = new InteractiveAssemblyLoader();
+            _assemblyLoader = assemblyLoader ?? new InteractiveAssemblyLoader();
             ParseOptions = (parseOptions ?? new CSharpParseOptions())
                                .WithKind(SourceCodeKind.Script)
                                .WithPreprocessorSymbols(RoslynHost.PreprocessorSymbols);

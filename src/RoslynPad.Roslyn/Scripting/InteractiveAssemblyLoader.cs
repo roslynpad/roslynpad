@@ -23,7 +23,7 @@ namespace RoslynPad.Roslyn.Scripting
     /// The class is thread-safe.
     /// </para>
     /// </remarks>
-    internal sealed class InteractiveAssemblyLoader : IDisposable
+    public sealed class InteractiveAssemblyLoader : IDisposable
     {
         private class LoadedAssembly
         {
@@ -206,9 +206,8 @@ namespace RoslynPad.Roslyn.Scripting
         {
             var identity = AssemblyIdentity.FromAssemblyDefinition(assembly);
             var info = new LoadedAssemblyInfo(assembly, identity, locationOpt);
-
-            List<LoadedAssemblyInfo> existingInfos;
-            if (_loadedAssembliesBySimpleName.TryGetValue(identity.Name, out existingInfos))
+            
+            if (_loadedAssembliesBySimpleName.TryGetValue(identity.Name, out var existingInfos))
             {
                 existingInfos.Add(info);
             }
@@ -220,9 +219,8 @@ namespace RoslynPad.Roslyn.Scripting
 
         private void RegisterDependencyNoLock(AssemblyIdentityAndLocation dependency)
         {
-            List<AssemblyIdentityAndLocation> sameSimpleNameAssemblyIdentities;
             string simpleName = dependency.Identity.Name;
-            if (_dependenciesWithLocationBySimpleName.TryGetValue(simpleName, out sameSimpleNameAssemblyIdentities))
+            if (_dependenciesWithLocationBySimpleName.TryGetValue(simpleName, out var sameSimpleNameAssemblyIdentities))
             {
                 sameSimpleNameAssemblyIdentities.Add(dependency);
             }
@@ -234,8 +232,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         internal Assembly ResolveAssembly(string assemblyDisplayName, Assembly requestingAssemblyOpt)
         {
-            AssemblyIdentity identity;
-            if (!AssemblyIdentity.TryParseDisplayName(assemblyDisplayName, out identity))
+            if (!AssemblyIdentity.TryParseDisplayName(assemblyDisplayName, out var identity))
             {
                 return null;
             }
@@ -243,9 +240,8 @@ namespace RoslynPad.Roslyn.Scripting
             string loadDirectoryOpt;
             lock (_referencesLock)
             {
-                LoadedAssembly loadedAssembly;
                 if (requestingAssemblyOpt != null &&
-                    _assembliesLoadedFromLocation.TryGetValue(requestingAssemblyOpt, out loadedAssembly))
+                    _assembliesLoadedFromLocation.TryGetValue(requestingAssemblyOpt, out var loadedAssembly))
                 {
                     loadDirectoryOpt = Path.GetDirectoryName(loadedAssembly.OriginalPath);
                 }
@@ -398,8 +394,7 @@ namespace RoslynPad.Roslyn.Scripting
             lock (_referencesLock)
             {
                 // already loaded assemblies:
-                List<LoadedAssemblyInfo> infos;
-                if (_loadedAssembliesBySimpleName.TryGetValue(identity.Name, out infos))
+                if (_loadedAssembliesBySimpleName.TryGetValue(identity.Name, out var infos))
                 {
                     assembly = FindHighestVersionOrFirstMatchingIdentity(identity, infos);
                     if (assembly != null)
@@ -409,15 +404,13 @@ namespace RoslynPad.Roslyn.Scripting
                 }
 
                 // names:
-                List<AssemblyIdentityAndLocation> sameSimpleNameIdentities;
-                if (_dependenciesWithLocationBySimpleName.TryGetValue(identity.Name, out sameSimpleNameIdentities))
+                if (_dependenciesWithLocationBySimpleName.TryGetValue(identity.Name, out var sameSimpleNameIdentities))
                 {
                     var identityAndLocation = FindHighestVersionOrFirstMatchingIdentity(identity, sameSimpleNameIdentities);
                     if (identityAndLocation.Identity != null)
                     {
                         assemblyFileToLoad = identityAndLocation.Location;
-                        AssemblyAndLocation assemblyAndLocation;
-                        if (_assembliesLoadedFromLocationByFullPath.TryGetValue(assemblyFileToLoad, out assemblyAndLocation))
+                        if (_assembliesLoadedFromLocationByFullPath.TryGetValue(assemblyFileToLoad, out var assemblyAndLocation))
                         {
                             return assemblyAndLocation.Assembly;
                         }
