@@ -19,6 +19,7 @@ namespace RoslynPad.UI
     {
         private readonly IServiceLocator _serviceLocator;
         private readonly ITelemetryProvider _telemetryProvider;
+        public IApplicationSettings Settings { get; }
         private static readonly Version _currentVersion = new Version(0, 12);
         private static readonly string _currentVersionVariant = "";
 
@@ -34,11 +35,12 @@ namespace RoslynPad.UI
         public bool IsInitialized { get; set; }
 
         [ImportingConstructor]
-        public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands, NuGetViewModel nugetViewModel)
+        public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
         {
             _serviceLocator = serviceLocator;
             _telemetryProvider = telemetryProvider;
-            _telemetryProvider.Initialize(_currentVersion.ToString());
+            Settings = settings;
+            _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
             {
                 OnPropertyChanged(nameof(LastError));
@@ -47,14 +49,14 @@ namespace RoslynPad.UI
 
             NuGet = nugetViewModel;
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            
+
             NewDocumentCommand = commands.Create(CreateNewDocument);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
 
-            _editorFontSize = Properties.Settings.Default.EditorFontSize;
+            _editorFontSize = Settings.EditorFontSize;
 
             DocumentRoot = CreateDocumentRoot();
 
@@ -171,10 +173,9 @@ namespace RoslynPad.UI
             get => _hasUpdate; private set => SetProperty(ref _hasUpdate, value);
         }
 
-        private static bool HasCachedUpdate()
+        private bool HasCachedUpdate()
         {
-            Version latestVersion;
-            return Version.TryParse(Properties.Settings.Default.LatestVersion, out latestVersion) &&
+            return Version.TryParse(Settings.LatestVersion, out var latestVersion) &&
                    latestVersion > _currentVersion;
         }
 
@@ -192,15 +193,14 @@ namespace RoslynPad.UI
                     return;
                 }
             }
-            Version latestVersion;
-            if (Version.TryParse(latestVersionString, out latestVersion))
+
+            if (Version.TryParse(latestVersionString, out var latestVersion))
             {
                 if (latestVersion > _currentVersion)
                 {
                     HasUpdate = true;
                 }
-                Properties.Settings.Default.LatestVersion = latestVersionString;
-                Properties.Settings.Default.Save();
+                Settings.LatestVersion = latestVersionString;
             }
         }
 
@@ -226,9 +226,9 @@ namespace RoslynPad.UI
         }
 
 
-        internal static string GetUserDocumentPath()
+        internal string GetUserDocumentPath()
         {
-            var userDefinedPath = Properties.Settings.Default.DocumentPath;
+            var userDefinedPath = Settings.DocumentPath;
             return !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
                 ? userDefinedPath
                 : GetDefaultDocumentPath();
@@ -250,8 +250,7 @@ namespace RoslynPad.UI
                 string documentPath = dialog.SelectedPath;
                 if (!DocumentRoot.Path.Equals(documentPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    Properties.Settings.Default.DocumentPath = documentPath;
-                    Properties.Settings.Default.Save();
+                    Settings.DocumentPath = documentPath;
 
                     DocumentRoot = CreateDocumentRoot();
                 }
@@ -371,10 +370,9 @@ namespace RoslynPad.UI
 
         public bool SendTelemetry
         {
-            get => Properties.Settings.Default.SendErrors; set
+            get => Settings.SendErrors; set
             {
-                Properties.Settings.Default.SendErrors = value;
-                Properties.Settings.Default.Save();
+                Settings.SendErrors = value;
                 OnPropertyChanged(nameof(SendTelemetry));
             }
         }
@@ -394,8 +392,7 @@ namespace RoslynPad.UI
 
                 if (SetProperty(ref _editorFontSize, value))
                 {
-                    Properties.Settings.Default.EditorFontSize = value;
-                    Properties.Settings.Default.Save();
+                    Settings.EditorFontSize = value;
                     EditorFontSizeChanged?.Invoke(value);
                 }
             }

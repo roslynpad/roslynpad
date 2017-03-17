@@ -15,10 +15,10 @@ namespace RoslynPad
         private Exception _lastError;
         private const string HockeyAppId = "8655168826d9412483763f7ddcf84b8e";
 
-        public void Initialize(string currentVersion)
+        public void Initialize(string currentVersion, IApplicationSettings settings)
         {
             var hockeyClient = (HockeyClient)HockeyClient.Current;
-            if (Properties.Settings.Default.SendErrors)
+            if (settings.SendErrors)
             {
                 hockeyClient.Configure(HockeyAppId)
                     .RegisterCustomDispatcherUnhandledExceptionLogic(OnUnhandledDispatcherException)

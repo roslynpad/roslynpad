@@ -60,8 +60,7 @@ namespace RoslynPad
             {
                 SaveDockLayout();
                 SaveWindowLayout();
-                Properties.Settings.Default.Save();
-
+                
                 _isClosing = true;
                 IsEnabled = false;
                 e.Cancel = true;
@@ -86,7 +85,7 @@ namespace RoslynPad
 
         private void LoadWindowLayout()
         {
-            var boundsString = Properties.Settings.Default.WindowBounds;
+            var boundsString = _viewModel.Settings.WindowBounds;
             if (!string.IsNullOrEmpty(boundsString))
             {
                 try
@@ -105,8 +104,7 @@ namespace RoslynPad
                 }
             }
 
-            WindowState state;
-            if (Enum.TryParse(Properties.Settings.Default.WindowState, out state) &&
+            if (Enum.TryParse(_viewModel.Settings.WindowState, out WindowState state) &&
                 state != WindowState.Minimized)
             {
                 WindowState = state;
@@ -115,13 +113,13 @@ namespace RoslynPad
 
         private void SaveWindowLayout()
         {
-            Properties.Settings.Default.WindowBounds = RestoreBounds.ToString(CultureInfo.InvariantCulture);
-            Properties.Settings.Default.WindowState = WindowState.ToString();
+            _viewModel.Settings.WindowBounds = RestoreBounds.ToString(CultureInfo.InvariantCulture);
+            _viewModel.Settings.WindowState = WindowState.ToString();
         }
 
         private void LoadDockLayout()
         {
-            var layout = Properties.Settings.Default.DockLayout;
+            var layout = _viewModel.Settings.DockLayout;
             if (string.IsNullOrEmpty(layout)) return;
 
             var serializer = new XmlLayoutSerializer(DockingManager);
@@ -145,7 +143,7 @@ namespace RoslynPad
                 serializer.Serialize(writer);
             }
             document.Root?.Element("FloatingWindows")?.Remove();
-            Properties.Settings.Default.DockLayout = document.ToString();
+            _viewModel.Settings.DockLayout = document.ToString();
         }
 
         protected override void OnClosed(EventArgs e)
