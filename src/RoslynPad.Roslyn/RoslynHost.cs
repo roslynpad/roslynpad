@@ -86,6 +86,7 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("Microsoft.CodeAnalysis.CSharp.Features"),
                 typeof(RoslynHost).Assembly,
             };
+
             if (additionalAssemblies != null)
             {
                 assemblies = assemblies.Concat(additionalAssemblies).ToArray();
@@ -109,14 +110,26 @@ namespace RoslynPad.Roslyn
             _referenceAssembliesPath = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
-            DefaultReferences = _defaultReferenceAssemblies.Select(x => x.Location)
-                .Concat(TryGetFacadeAssemblies())
-                .Select(CreateMetadataReference)
-                .ToImmutableArray();
+            DefaultReferences = GetMetadataReferences();
 
             DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
+        }
+
+        private ImmutableArray<MetadataReference> GetMetadataReferences()
+        {
+            // allow facade assemblies to take precedence
+            var dictionary = _defaultReferenceAssemblies.Select(x => x.Location)
+                .ToImmutableDictionary(Path.GetFileNameWithoutExtension)
+                .SetItems(TryGetFacadeAssemblies()
+                    .ToImmutableDictionary(Path.GetFileNameWithoutExtension));
+
+            var metadataReferences = dictionary.Values
+                .Select(CreateMetadataReference)
+                .ToImmutableArray();
+
+            return metadataReferences;
         }
 
         internal MetadataReference CreateMetadataReference(string location)
@@ -228,8 +241,7 @@ namespace RoslynPad.Roslyn
             var name = Path.GetFileName(path);
             if (name?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
             {
-                Version version;
-                if (Version.TryParse(name.Substring(1), out version))
+                if (Version.TryParse(name.Substring(1), out var version))
                 {
                     return version;
                 }
