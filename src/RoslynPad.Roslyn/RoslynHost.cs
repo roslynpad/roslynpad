@@ -18,9 +18,7 @@ using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Diagnostics;
-using ObjectExtensions = RoslynPad.Runtime.ObjectExtensions;
 
 namespace RoslynPad.Roslyn
 {
@@ -38,9 +36,9 @@ namespace RoslynPad.Roslyn
             typeof(Uri),
             typeof(Enumerable),
             typeof(IEnumerable),
-            typeof(ObjectExtensions),
             typeof(Path),
             typeof(Assembly),
+            Type.GetType("RoslynPad.Runtime.ObjectExtensions, RoslynPad.Common", throwOnError: true),
         }.ToImmutableArray();
 
         private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =
@@ -64,9 +62,9 @@ namespace RoslynPad.Roslyn
 
         private int _documentNumber;
 
-        internal ImmutableArray<MetadataReference> DefaultReferences { get; }
+        public ImmutableArray<MetadataReference> DefaultReferences { get; }
 
-        internal ImmutableArray<string> DefaultImports { get; }
+        public ImmutableArray<string> DefaultImports { get; }
 
         #endregion
 
@@ -311,7 +309,7 @@ namespace RoslynPad.Roslyn
             return _workspaces.TryGetValue(documentId, out workspace) ? workspace.CurrentSolution.GetDocument(documentId) : null;
         }
 
-        public DocumentId AddDocument([NotNull] SourceTextContainer sourceTextContainer, [NotNull] string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public DocumentId AddDocument(SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 

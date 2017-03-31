@@ -6,11 +6,12 @@ using System.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Roslyn.Text;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
+    internal sealed class AvalonEditTextContainer : SourceTextContainer, IUpdatableTextContainer, IDisposable
     {
         private readonly TextEditor _editor;
 

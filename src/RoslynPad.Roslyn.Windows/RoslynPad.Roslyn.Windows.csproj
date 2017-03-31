@@ -66,10 +66,6 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
-      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
-      <Name>RoslynPad.Common</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
       <Project>{ac9f325f-a3ff-4561-941e-49ce4736cbd0}</Project>
       <Name>RoslynPad.Roslyn</Name>

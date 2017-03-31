@@ -9,19 +9,19 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
     [ExportWorkspaceService(typeof(IChangeSignatureOptionsService))]
     internal sealed class ChangeSignatureOptionsService : IChangeSignatureOptionsService
     {
-        private readonly ExportFactory<IChangeSignatureDialog> _dialogFactory;
+        private readonly CompositionContext _context;
 
         [ImportingConstructor]
-        public ChangeSignatureOptionsService(ExportFactory<IChangeSignatureDialog> dialogFactory)
+        public ChangeSignatureOptionsService(CompositionContext context)
         {
-            _dialogFactory = dialogFactory;
+            _context = context;
         }
         public ChangeSignatureOptionsResult GetChangeSignatureOptions(ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters,
             INotificationService notificationService)
         {
             var viewModel = new ChangeSignatureDialogViewModel(new ParameterConfiguration(parameters), symbol);
 
-            var dialog = _dialogFactory.CreateExport().Value;
+            var dialog = _context.GetExport<IChangeSignatureDialog>();
             dialog.ViewModel = viewModel;
             var result = dialog.Show();
 

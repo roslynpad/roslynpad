@@ -1,15 +1,16 @@
-﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
-    internal class ChangeSignatureDialogViewModel : NotificationObject
+    internal class ChangeSignatureDialogViewModel : INotifyPropertyChanged
     {
         private readonly ParameterConfiguration _originalParameterConfiguration;
 
@@ -97,7 +98,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             }
         }
 
-        internal void Remove()
+        public void Remove()
         {
             AllParameters[_selectedIndex.Value].IsRemoved = true;
             OnPropertyChanged(nameof(AllParameters));
@@ -107,7 +108,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             OnPropertyChanged(nameof(CanRestore));
         }
 
-        internal void Restore()
+        public void Restore()
         {
             AllParameters[_selectedIndex.Value].IsRemoved = false;
             OnPropertyChanged(nameof(AllParameters));
@@ -159,7 +160,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         internal string TEST_GetSignatureDisplayText()
         {
-            return GetSignatureDisplayParts().Select(p => p.ToString()).Join("");
+            return string.Join("", GetSignatureDisplayParts().Select(p => p.ToString()));
         }
 
         private List<SymbolDisplayPart> GetSignatureDisplayParts()
@@ -248,7 +249,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             }
         }
 
-        internal void MoveUp()
+        public void MoveUp()
         {
             Debug.Assert(CanMoveUp);
 
@@ -257,7 +258,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             Move(index < _parameterGroup1.Count ? _parameterGroup1 : _parameterGroup2, index < _parameterGroup1.Count ? index : index - _parameterGroup1.Count, -1);
         }
 
-        internal void MoveDown()
+        public void MoveDown()
         {
             Debug.Assert(CanMoveDown);
 
@@ -279,7 +280,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             OnPropertyChanged(nameof(IsOkButtonEnabled));
         }
 
-        internal bool TrySubmit()
+        public bool TrySubmit()
         {
             return IsOkButtonEnabled;
         }
@@ -326,6 +327,13 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 OnPropertyChanged(nameof(CanRemove));
                 OnPropertyChanged(nameof(CanRestore));
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public class ParameterViewModel

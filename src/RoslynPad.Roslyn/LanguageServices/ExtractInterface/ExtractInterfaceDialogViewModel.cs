@@ -2,15 +2,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Utilities;
 using Glyph = RoslynPad.Roslyn.Completion.Glyph;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
-    internal class ExtractInterfaceDialogViewModel : NotificationObject
+    internal class ExtractInterfaceDialogViewModel : INotifyPropertyChanged
     {
         private readonly object _syntaxFactsService;
         private readonly List<string> _conflictingTypeNames;
@@ -41,7 +42,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             MemberContainers = extractableMembers.Select(m => new MemberSymbolViewModel(m)).OrderBy(s => s.MemberName).ToList();
         }
 
-        internal bool TrySubmit()
+        public bool TrySubmit()
         {
             var trimmedInterfaceName = InterfaceName.Trim();
             var trimmedFileName = FileName.Trim();
@@ -86,7 +87,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             //_notificationService.SendNotification(message, severity: NotificationSeverity.Information);
         }
 
-        internal void DeselectAll()
+        public void DeselectAll()
         {
             foreach (var memberContainer in MemberContainers)
             {
@@ -94,7 +95,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             }
         }
 
-        internal void SelectAll()
+        public void SelectAll()
         {
             foreach (var memberContainer in MemberContainers)
             {
@@ -130,7 +131,25 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             set => SetProperty(ref _fileName, value);
         }
 
-        internal class MemberSymbolViewModel : NotificationObject
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (!EqualityComparer<T>.Default.Equals(field, value))
+            {
+                field = value;
+                OnPropertyChanged(propertyName);
+                return true;
+            }
+            return false;
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public class MemberSymbolViewModel : INotifyPropertyChanged
         {
             public ISymbol MemberSymbol { get; }
 
@@ -156,6 +175,24 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             public string MemberName => MemberSymbol.ToDisplayString(_memberDisplayFormat);
 
             public Glyph Glyph => MemberSymbol.GetGlyph();
+            
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+
+            protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+            {
+                if (!EqualityComparer<T>.Default.Equals(field, value))
+                {
+                    field = value;
+                    OnPropertyChanged(propertyName);
+                    return true;
+                }
+                return false;
+            }
         }
     }
 }

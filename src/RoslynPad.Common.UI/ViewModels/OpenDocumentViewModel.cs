@@ -17,6 +17,7 @@ using NuGet.Versioning;
 using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.Rename;
+using RoslynPad.Roslyn.Text;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 
@@ -63,14 +64,9 @@ namespace RoslynPad.UI
             CommandProvider = commands;
             NuGet = serviceLocator.GetInstance<NuGetDocumentViewModel>();
             _dispatcher = Dispatcher.CurrentDispatcher;
-
-            var roslynHost = mainViewModel.RoslynHost;
-
+            
             Platform = Platform.X86;
-            _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
-                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration);
-
+            
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning);
             CompileAndSaveCommand = commands.CreateAsync(CompileAndSave);
@@ -90,6 +86,12 @@ namespace RoslynPad.UI
             _workingDirectory = Document != null
                 ? Path.GetDirectoryName(Document.Path)
                 : MainViewModel.DocumentRoot.Path;
+
+            var roslynHost = MainViewModel.RoslynHost;
+
+            _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
+                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
+                roslynHost.DefaultImports, MainViewModel.NuGetConfiguration);
         }
 
         private async Task RenameSymbol()
@@ -290,8 +292,8 @@ namespace RoslynPad.UI
             }
         }
 
-        internal async Task Initialize(SourceTextContainer sourceTextContainer,
-            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
+        public async Task Initialize(SourceTextContainer sourceTextContainer,
+            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated,
             Action<ExceptionResultObject> onError,
             Func<TextSpan> getSelection, IDisposable viewDisposable)
         {
@@ -299,9 +301,13 @@ namespace RoslynPad.UI
             _onError = onError;
             _getSelection = getSelection;
             var roslynHost = MainViewModel.RoslynHost;
+
+            var updatableTextContainer = sourceTextContainer as IUpdatableTextContainer;
+
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
-                onTextUpdated);
+                updatableTextContainer != null ? updatableTextContainer.UpdateText : (Action<SourceText>)null);
+            
             await _executionHost.ResetAsync().ConfigureAwait(false);
         }
 

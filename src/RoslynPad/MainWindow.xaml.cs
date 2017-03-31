@@ -4,6 +4,7 @@ using System.Composition.Hosting;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -49,7 +50,11 @@ namespace RoslynPad
         {
             Loaded -= OnLoaded;
 
-            _viewModel.Initialize();
+            _viewModel.Initialize(new[]
+            {
+                Assembly.Load("RoslynPad.Roslyn.Windows"),
+                Assembly.Load("RoslynPad.Editor.Windows")
+            });
         }
 
         protected override async void OnClosing(CancelEventArgs e)

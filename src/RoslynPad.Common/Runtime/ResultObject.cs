@@ -14,7 +14,7 @@ namespace RoslynPad.Runtime
 {
     [DataContract(IsReference = true)]
     [KnownType(typeof(ExceptionResultObject))]
-    internal class ResultObject : INotifyPropertyChanged
+    public class ResultObject : INotifyPropertyChanged
     {
         private const int MaxDepth = 5;
         private const int MaxStringLength = 10000;
@@ -360,7 +360,7 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract(IsReference = true)]
-    internal class ExceptionResultObject : ResultObject
+    public class ExceptionResultObject : ResultObject
     {
         private ExceptionResultObject(Exception exception) : base(exception, 0)
         {

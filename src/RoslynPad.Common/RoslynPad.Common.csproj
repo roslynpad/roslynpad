@@ -30,7 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
@@ -50,8 +50,6 @@
   <ItemGroup>
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Roslyn\NuGetConfiguration.cs" />
-    <Compile Include="Roslyn\NuGetConfigurationExtensions.cs" />
     <Compile Include="Runtime\ObjectExtensions.cs" />
     <Compile Include="Runtime\ResultObject.cs" />
     <Compile Include="Utilities\DelegateCommand.cs" />

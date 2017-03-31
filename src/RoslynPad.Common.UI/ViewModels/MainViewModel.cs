@@ -64,13 +64,13 @@ namespace RoslynPad.UI
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        public void Initialize()
+        public void Initialize(IEnumerable<Assembly> additionalAssemblies = null)
         {
             if (IsInitialized) return;
 
             try
             {
-                InitializeInternal();
+                InitializeInternal(additionalAssemblies);
 
                 IsInitialized = true;
             }
@@ -80,14 +80,9 @@ namespace RoslynPad.UI
             }
         }
 
-        private void InitializeInternal()
+        private void InitializeInternal(IEnumerable<Assembly> additionalAssemblies)
         {
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[]
-            {
-                // TODO: xplat
-                Assembly.Load("RoslynPad.Roslyn.Windows"),
-                Assembly.Load("RoslynPad.Editor.Windows")
-            });
+            RoslynHost = new RoslynHost(NuGetConfiguration, additionalAssemblies);
 
             OpenAutoSavedDocuments();
 

@@ -18,7 +18,7 @@ namespace RoslynPad.Utilities
         bool CanExecute(T parameter);
     }
 
-    internal class DelegateCommandBase : IActionCommand
+    public class DelegateCommandBase : IActionCommand
     {
         private readonly Action _action;
         private readonly Func<bool> _canExecute;
@@ -67,7 +67,7 @@ namespace RoslynPad.Utilities
         }
     }
 
-    internal class DelegateCommandBase<T> : IActionCommand<T>
+    public class DelegateCommandBase<T> : IActionCommand<T>
     {
         private readonly Action<T> _action;
         private readonly Func<T, bool> _canExecute;

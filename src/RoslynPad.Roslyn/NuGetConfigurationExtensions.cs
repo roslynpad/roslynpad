@@ -3,7 +3,7 @@ using System.IO;
 
 namespace RoslynPad.Roslyn
 {
-    internal static class NuGetConfigurationExtensions
+    public static class NuGetConfigurationExtensions
     {
         public static string ResolveReference(this NuGetConfiguration configuration, string reference)
         {
