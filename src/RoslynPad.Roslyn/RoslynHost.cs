@@ -16,6 +16,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn.Diagnostics;
@@ -226,11 +227,16 @@ namespace RoslynPad.Roslyn
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
             if (Directory.Exists(path))
             {
-                var directory = Directory.EnumerateDirectories(path)
-                    .Select(x => new {path = x, version = GetFxVersionFromPath(x)})
-                    .OrderByDescending(x => x.version)
-                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")) &&
-                                         File.Exists(Path.Combine(x.path, "System.xml")));
+                var directories = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
+                    .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
+                    .OrderByDescending(x => x.version);
+
+                var directory = directories
+                                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")) &&
+                                                         File.Exists(Path.Combine(x.path, "System.xml"))) ??
+                                directories
+                                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")));
+
                 return directory?.path;
             }
             return null;
@@ -252,10 +258,13 @@ namespace RoslynPad.Roslyn
 
         private IEnumerable<string> TryGetFacadeAssemblies()
         {
-            var facadesPath = Path.Combine(_referenceAssembliesPath, "Facades");
-            if (Directory.Exists(facadesPath))
+            if (_referenceAssembliesPath != null)
             {
-                return Directory.EnumerateFiles(facadesPath, "*.dll");
+                var facadesPath = Path.Combine(_referenceAssembliesPath, "Facades");
+                if (Directory.Exists(facadesPath))
+                {
+                    return Directory.EnumerateFiles(facadesPath, "*.dll");
+                }
             }
 
             return Array.Empty<string>();
