@@ -54,6 +54,7 @@
     <Compile Include="ClassificationHighlightColors.cs" />
     <Compile Include="CodeSnippet.cs" />
     <Compile Include="CodeTextEditor.cs" />
+    <Compile Include="IClassificationHighlightColors.cs" />
     <Compile Include="CompletionResult.cs" />
     <Compile Include="ContextActionsBulbPopup.cs" />
     <Compile Include="ContextActionsRenderer.cs" />

@@ -63,6 +63,7 @@
     <Compile Include="Completion\Providers\GlobalAssemblyCacheCompletionHelper.cs" />
     <Compile Include="Completion\Providers\PathCompletionUtilities.cs" />
     <Compile Include="Completion\Providers\ReferenceDirectiveCompletionProvider.cs" />
+    <Compile Include="DiagnosticOptions.cs" />
     <Compile Include="Diagnostics\DiagnosticData.cs" />
     <Compile Include="Diagnostics\DiagnosticDataLocation.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="DocumentExtensions.cs" />
     <Compile Include="DocumentTrackingService.cs" />
     <Compile Include="HostWorkspaceServicesExtensions.cs" />
+    <Compile Include="IRoslynHost.cs" />
     <Compile Include="ISymbolExtensions.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
     <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureOptionsService.cs" />
@@ -104,6 +106,7 @@
     <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
     <Compile Include="Snippets\SnippetInfo.cs" />
     <Compile Include="Snippets\SnippetInfoService.cs" />
+    <Compile Include="WorkspaceExtensions.cs" />
     <Compile Include="WorkspaceServices\AddMetadataReferenceCodeActionOperationFactoryWorkspaceService.cs" />
   </ItemGroup>
   <ItemGroup>

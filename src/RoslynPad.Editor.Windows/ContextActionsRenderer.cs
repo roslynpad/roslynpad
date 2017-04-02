@@ -29,7 +29,7 @@ using System.Windows.Threading;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class ContextActionsRenderer : IDisposable
+    public sealed class ContextActionsRenderer : IDisposable
     {
         private const int DelayMoveMilliseconds = 500;
 

@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal interface IContextActionProvider
+    public interface IContextActionProvider
     {
         Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken);
 

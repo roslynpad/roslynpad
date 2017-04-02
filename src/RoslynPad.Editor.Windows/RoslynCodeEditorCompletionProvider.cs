@@ -12,13 +12,13 @@ using RoslynPad.Roslyn.Snippets;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
+    public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
     {
         private readonly DocumentId _documentId;
-        private readonly RoslynHost _roslynHost;
+        private readonly IRoslynHost _roslynHost;
         private readonly SnippetInfoService _snippetService;
 
-        public RoslynCodeEditorCompletionProvider(DocumentId documentId, RoslynHost roslynHost)
+        public RoslynCodeEditorCompletionProvider(DocumentId documentId, IRoslynHost roslynHost)
         {
             _documentId = documentId;
             _roslynHost = roslynHost;

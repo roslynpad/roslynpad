@@ -16,17 +16,17 @@ using RoslynPad.UI;
 
 namespace RoslynPad.Editor.Windows
 {
-    internal sealed class RoslynContextActionProvider : IContextActionProvider
+    public sealed class RoslynContextActionProvider : IContextActionProvider
     {
         private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
             ImmutableArray.Create("ExtractInterface");
 
         private readonly ICommandProvider _commandProvider;
         private readonly DocumentId _documentId;
-        private readonly RoslynHost _roslynHost;
+        private readonly IRoslynHost _roslynHost;
         private readonly ICodeFixService _codeFixService;
 
-        public RoslynContextActionProvider(ICommandProvider commandProvider, DocumentId documentId, RoslynHost roslynHost)
+        public RoslynContextActionProvider(ICommandProvider commandProvider, DocumentId documentId, IRoslynHost roslynHost)
         {
             _commandProvider = commandProvider;
             _documentId = documentId;

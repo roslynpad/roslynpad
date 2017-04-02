@@ -24,7 +24,7 @@ using ObjectExtensions = RoslynPad.Runtime.ObjectExtensions;
 
 namespace RoslynPad.Roslyn
 {
-    public sealed class RoslynHost
+    public sealed class RoslynHost : IRoslynHost
     {
         #region Fields
 
