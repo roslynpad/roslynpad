@@ -6,18 +6,17 @@ using System.Threading;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Annotations;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
 namespace RoslynPad.Editor.Windows
 {
     public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {
-        private readonly TextDocument _document;
-
         private SourceText _currentText;
         private bool _updatding;
 
-        public TextDocument Document => _document;
+        public TextDocument Document { get; }
 
         /// <summary>
         /// If set, <see cref="TextEditor.CaretOffset"/> will be updated.
@@ -26,17 +25,17 @@ namespace RoslynPad.Editor.Windows
 
         public override SourceText CurrentText => _currentText;
 
-        public AvalonEditTextContainer(TextDocument document)
+        public AvalonEditTextContainer([NotNull] TextDocument document)
         {
-            _document = document;
-            _currentText = new AvalonEditSourceText(this, _document.Text);
+            Document = document ?? throw new ArgumentNullException(nameof(document));
+            _currentText = new AvalonEditSourceText(this, Document.Text);
 
-            _document.Changed += DocumentOnChanged;
+            Document.Changed += DocumentOnChanged;
         }
 
         public void Dispose()
         {
-            _document.Changed -= DocumentOnChanged;
+            Document.Changed -= DocumentOnChanged;
         }
 
         private void DocumentOnChanged(object sender, DocumentChangeEventArgs e)
@@ -52,14 +51,12 @@ namespace RoslynPad.Editor.Windows
             TextChanged?.Invoke(this, new TextChangeEventArgs(oldText, _currentText, textChangeRange));
         }
 
-        public int a;
-
         public override event EventHandler<TextChangeEventArgs> TextChanged;
 
         public void UpdateText(SourceText newText)
         {
             _updatding = true;
-            _document.BeginUpdate();
+            Document.BeginUpdate();
             var editor = Editor;
             var caret = editor?.CaretOffset ?? 0;
             var caretOffset = caret;
@@ -70,7 +67,7 @@ namespace RoslynPad.Editor.Windows
                 
                 foreach (var change in changes)
                 {
-                    _document.Replace(change.Span.Start + documentOffset, change.Span.Length, new StringTextSource(change.NewText));
+                    Document.Replace(change.Span.Start + documentOffset, change.Span.Length, new StringTextSource(change.NewText));
 
                     var changeOffset = change.NewText.Length - change.Span.Length;
                     if (caret >= change.Span.Start + documentOffset + change.Span.Length)
@@ -100,7 +97,7 @@ namespace RoslynPad.Editor.Windows
                     caretOffset = newText.Length;
                 if (editor != null)
                     editor.CaretOffset = caretOffset;
-                _document.EndUpdate();
+                Document.EndUpdate();
             }
         }
 

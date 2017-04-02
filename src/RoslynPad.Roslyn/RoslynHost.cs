@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Composition.Convention;
 using System.Composition.Hosting;
 using System.IO;
 using System.Linq;
@@ -59,6 +58,7 @@ namespace RoslynPad.Roslyn
         private readonly CSharpParseOptions _parseOptions;
         private readonly DocumentationProviderServiceFactory.DocumentationProviderService _documentationProviderService;
         private readonly string _referenceAssembliesPath;
+        private readonly string _documentationPath;
         private readonly CompositionHost _compositionContext;
         private readonly MefHostServices _host;
 
@@ -101,14 +101,13 @@ namespace RoslynPad.Roslyn
 
             _compositionContext = new ContainerConfiguration()
                 .WithParts(partTypes)
-                .WithDefaultConventions(new AttributeFilterProvider())
                 .CreateContainer();
 
             _host = MefHostServices.Create(_compositionContext);
 
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: PreprocessorSymbols);
 
-            _referenceAssembliesPath = GetReferenceAssembliesPath();
+            (_referenceAssembliesPath, _documentationPath) = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
             DefaultReferences = GetMetadataReferences();
@@ -145,32 +144,15 @@ namespace RoslynPad.Roslyn
 
             OnOpenedDocumentSyntaxChanged(GetDocument(documentId));
 
-            Action<DiagnosticsUpdatedArgs> notifier;
-            if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out notifier))
+            if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out var notifier))
             {
                 notifier(diagnosticsUpdatedArgs);
             }
         }
 
-        private class AttributeFilterProvider : AttributedModelProvider
-        {
-            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, MemberInfo member)
-            {
-                var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
-                return customAttributes;
-            }
-
-            public override IEnumerable<Attribute> GetCustomAttributes(Type reflectedType, ParameterInfo member)
-            {
-                var customAttributes = member.GetCustomAttributes().Where(x => !(x is ExtensionOrderAttribute)).ToArray();
-                return customAttributes;
-            }
-        }
-
         private async void OnOpenedDocumentSyntaxChanged(Document document)
         {
-            RoslynWorkspace workspace;
-            if (_workspaces.TryGetValue(document.Id, out workspace))
+            if (_workspaces.TryGetValue(document.Id, out var workspace))
             {
                 await workspace.ProcessReferenceDirectives(document).ConfigureAwait(false);
             }
@@ -192,8 +174,7 @@ namespace RoslynPad.Roslyn
 
         public bool HasReference(DocumentId documentId, string text)
         {
-            RoslynWorkspace workspace;
-            if (_workspaces.TryGetValue(documentId, out workspace) && workspace.HasReference(text))
+            if (_workspaces.TryGetValue(documentId, out var workspace) && workspace.HasReference(text))
             {
                 return true;
             }
@@ -218,8 +199,11 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
-        private static string GetReferenceAssembliesPath()
+        private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
         {
+            string assemblyPath = null;
+            string docPath = null;
+
             var programFiles =
                 Environment.GetFolderPath(Environment.Is64BitOperatingSystem
                     ? Environment.SpecialFolder.ProgramFilesX86
@@ -227,19 +211,40 @@ namespace RoslynPad.Roslyn
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
             if (Directory.Exists(path))
             {
-                var directories = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
+                assemblyPath = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
                     .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
-                    .OrderByDescending(x => x.version);
+                    .OrderByDescending(x => x.version)
+                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")))?.path;
 
-                var directory = directories
-                                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")) &&
-                                                         File.Exists(Path.Combine(x.path, "System.xml"))) ??
-                                directories
-                                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")));
-
-                return directory?.path;
+                if (assemblyPath == null || !File.Exists(Path.Combine(assemblyPath, "System.xml")))
+                {
+                    docPath = GetReferenceDocumentationPath(path);
+                }
             }
-            return null;
+
+            return (assemblyPath, docPath);
+        }
+
+        private static string GetReferenceDocumentationPath(string path)
+        {
+            string docPath = null;
+
+            var docPathTemp = Path.Combine(path, "V4.X");
+            if (File.Exists(Path.Combine(docPathTemp, "System.xml")))
+            {
+                docPath = docPathTemp;
+            }
+            else
+            {
+                var localeDirectory = IOUtilities.PerformIO(() => Directory.GetDirectories(docPathTemp),
+                        Array.Empty<string>()).FirstOrDefault();
+                if (localeDirectory != null && File.Exists(Path.Combine(localeDirectory, "System.xml")))
+                {
+                    docPath = localeDirectory;
+                }
+            }
+
+            return docPath;
         }
 
         private static Version GetFxVersionFromPath(string path)
@@ -252,8 +257,8 @@ namespace RoslynPad.Roslyn
                     return version;
                 }
             }
-
-            return new Version(0, 0, 0);
+            
+            return new Version(0, 0);
         }
 
         private IEnumerable<string> TryGetFacadeAssemblies()
@@ -276,15 +281,23 @@ namespace RoslynPad.Roslyn
             {
                 return _documentationProviderService.GetDocumentationProvider(location);
             }
-            if (_referenceAssembliesPath != null)
+
+            return GetDocumentationProviderFromPath(_documentationPath, location) ??
+                   GetDocumentationProviderFromPath(_referenceAssembliesPath, location);
+        }
+
+        private DocumentationProvider GetDocumentationProviderFromPath(string path, string location)
+        {
+            if (path != null)
             {
                 // ReSharper disable once AssignNullToNotNullAttribute
-                var referenceLocation = Path.Combine(_referenceAssembliesPath, Path.GetFileName(location));
+                var referenceLocation = Path.Combine(path, Path.GetFileName(location));
                 if (File.Exists(Path.ChangeExtension(referenceLocation, "xml")))
                 {
                     return _documentationProviderService.GetDocumentationProvider(referenceLocation);
                 }
             }
+
             return null;
         }
 
@@ -294,21 +307,20 @@ namespace RoslynPad.Roslyn
 
         public void CloseDocument(DocumentId documentId)
         {
-            RoslynWorkspace workspace;
-            if (_workspaces.TryGetValue(documentId, out workspace))
+            if (_workspaces.TryGetValue(documentId, out var workspace))
             {
                 DiagnosticProvider.Disable(workspace);
                 workspace.Dispose();
                 _workspaces.TryRemove(documentId, out workspace);
             }
-            Action<DiagnosticsUpdatedArgs> notifier;
-            _diagnosticsUpdatedNotifiers.TryRemove(documentId, out notifier);
+            _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
         }
 
         public Document GetDocument(DocumentId documentId)
         {
-            RoslynWorkspace workspace;
-            return _workspaces.TryGetValue(documentId, out workspace) ? workspace.CurrentSolution.GetDocument(documentId) : null;
+            return _workspaces.TryGetValue(documentId, out var workspace) 
+                ? workspace.CurrentSolution.GetDocument(documentId) 
+                : null;
         }
 
         public DocumentId AddDocument([NotNull] SourceTextContainer sourceTextContainer, [NotNull] string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
@@ -339,8 +351,7 @@ namespace RoslynPad.Roslyn
 
         public void UpdateDocument(Document document)
         {
-            RoslynWorkspace workspace;
-            if (!_workspaces.TryGetValue(document.Id, out workspace))
+            if (!_workspaces.TryGetValue(document.Id, out var workspace))
             {
                 return;
             }
@@ -350,11 +361,11 @@ namespace RoslynPad.Roslyn
 
         public ImmutableArray<string> GetReferencesDirectives(DocumentId documentId)
         {
-            RoslynWorkspace workspace;
-            if (_workspaces.TryGetValue(documentId, out workspace))
+            if (_workspaces.TryGetValue(documentId, out var workspace))
             {
                 return workspace.ReferencesDirectives;
             }
+
             return ImmutableArray<string>.Empty;
         }
 
