@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 
@@ -40,6 +42,69 @@ namespace RoslynPad.Utilities
             }
 
             return defaultValue;
+        }
+
+        public static string CurrentDirectory => PerformIO(Directory.GetCurrentDirectory, ".");
+
+        public static IEnumerable<string> EnumerateFilesRecursive(string path, string searchPattern = "*")
+        {
+            return EnumerateDirectories(path).Aggregate(
+                EnumerateFiles(path, searchPattern), 
+                (current, directory) => current.Concat(EnumerateFiles(directory, searchPattern)));
+        }
+
+        public static IEnumerable<string> ReadLines(string path)
+        {
+            var lines = PerformIO(() => File.ReadLines(path), Array.Empty<string>());
+            using (var enumerator = lines.GetEnumerator())
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                while (PerformIO(() => enumerator.MoveNext()))
+                {
+                    yield return enumerator.Current;
+                }
+            }
+        }
+
+        public static Task<string> ReadAllTextAsync(string path) => 
+            PerformIOAsync(() => ReadAllTextInternalAsync(path), string.Empty);
+
+        private static async Task<string> ReadAllTextInternalAsync(string path)
+        {
+            using (var reader = new StreamReader(path))
+            {
+                return await reader.ReadToEndAsync().ConfigureAwait(false);
+            }
+        }
+
+        public static IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*")
+        {
+            var files = PerformIO(() => Directory.EnumerateFiles(path, searchPattern),
+                Array.Empty<string>());
+
+            using (var enumerator = files.GetEnumerator())
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                while (PerformIO(() => enumerator.MoveNext()))
+                {
+                    yield return enumerator.Current;
+                }
+            }
+        }
+
+        public static IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*")
+        {
+            var directories = PerformIO(() => Directory.EnumerateDirectories(path, searchPattern),
+                Array.Empty<string>());
+
+            using (var enumerator = directories.GetEnumerator())
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                while (PerformIO(() => enumerator.MoveNext()))
+                {
+                    yield return enumerator.Current;
+                }
+            }
         }
 
         public static bool IsNormalIOException(Exception e)

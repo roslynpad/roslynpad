@@ -38,7 +38,7 @@ namespace RoslynPad.Editor.Windows
         {
             var textSpan = new TextSpan(offset, length);
             var document = _roslynHost.GetDocument(_documentId);
-            var text = await document.GetTextAsync(cancellationToken);
+            var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             if (textSpan.End >= text.Length) return Array.Empty<object>();
 
             var codeFixes = await _codeFixService.GetFixesAsync(document,

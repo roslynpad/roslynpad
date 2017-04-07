@@ -75,7 +75,8 @@ namespace RoslynPad
                 }
 
                 _isClosed = true;
-                Close();
+                // ReSharper disable once UnusedVariable
+                var closeTask = Dispatcher.InvokeAsync(Close);
             }
             else
             {
@@ -152,29 +153,7 @@ namespace RoslynPad
 
             Application.Current.Shutdown();
         }
-
-        private void OnDocumentClick(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                OpenDocument(e.Source);
-            }
-        }
-
-        private void OnDocumentKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                OpenDocument(e.Source);
-            }
-        }
-
-        private void OpenDocument(object source)
-        {
-            var documentViewModel = (DocumentViewModel)((FrameworkElement)source).DataContext;
-            _viewModel.OpenDocument(documentViewModel);
-        }
-
+        
         private async void DockingManager_OnDocumentClosing(object sender, DocumentClosingEventArgs e)
         {
             e.Cancel = true;
@@ -193,21 +172,6 @@ namespace RoslynPad
         private void ViewUpdateClick(object sender, RoutedEventArgs e)
         {
             Task.Run(() => Process.Start("https://roslynpad.net/"));
-        }
-
-        private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
-        {
-            if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel)
-            {
-                if (documentViewModel.IsFolder)
-                {
-                    Task.Run(() => Process.Start(documentViewModel.Path));
-                }
-                else
-                {
-                    Task.Run(() => Process.Start("explorer.exe", "/select," + documentViewModel.Path));
-                }
-            }
         }
     }
 }

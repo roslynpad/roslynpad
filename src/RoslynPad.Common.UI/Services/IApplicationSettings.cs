@@ -16,6 +16,8 @@ namespace RoslynPad.UI
         string WindowState { get; set; }
         double EditorFontSize { get; set; }
         string DocumentPath { get; set; }
+        bool SearchFileContents { get; set; }
+        bool SearchUsingRegex { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -37,6 +39,8 @@ namespace RoslynPad.UI
         public string WindowState { get => GetValue<string>(); set => SetValue(value); }
         public double EditorFontSize { get => GetValue<double>(); set => SetValue(value); }
         public string DocumentPath { get => GetValue<string>(); set => SetValue(value); }
+        public bool SearchFileContents { get => GetValue<bool>(); set => SetValue(value); }
+        public bool SearchUsingRegex { get => GetValue<bool>(); set => SetValue(value); }
 
         private T GetValue<T>([CallerMemberName] string propertyName = null)
         {

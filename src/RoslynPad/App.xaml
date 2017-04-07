@@ -19,6 +19,14 @@
             <formatting:BooleanToVisibilityConverter x:Key="BooleanToVisibilityHiddenConverter"
                                                      FalseValue="Hidden" />
 
+            <ControlTemplate x:Key="ErrorTemplate">
+                <Border BorderBrush="Red"
+                        ToolTip="{Binding AdornedElement.(Validation.Errors)[0].ErrorContent, ElementName=controlWithError}"
+                        BorderThickness="1">
+                    <AdornedElementPlaceholder x:Name="controlWithError" />
+                </Border>
+            </ControlTemplate>
+
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
                                       ItemsSource="{Binding Fixes, Mode=OneTime}">
                 <TextBlock Text="{Binding Provider, Mode=OneTime}" />

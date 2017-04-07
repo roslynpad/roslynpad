@@ -5,6 +5,7 @@ using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Practices.ServiceLocation;
 using RoslynPad.Roslyn;
@@ -19,6 +20,7 @@ namespace RoslynPad.UI
     {
         private readonly IServiceLocator _serviceLocator;
         private readonly ITelemetryProvider _telemetryProvider;
+        private readonly ICommandProvider _commands;
         public IApplicationSettings Settings { get; }
         private static readonly Version _currentVersion = new Version(0, 12);
         private static readonly string _currentVersionVariant = "";
@@ -39,6 +41,7 @@ namespace RoslynPad.UI
         {
             _serviceLocator = serviceLocator;
             _telemetryProvider = telemetryProvider;
+            _commands = commands;
             Settings = settings;
             _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
@@ -117,7 +120,7 @@ namespace RoslynPad.UI
 
         private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
         {
-            return EnumerateFilesWithCatch(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
+            return IOUtilities.EnumerateFilesRecursive(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
                 GetOpenDocumentViewModel(DocumentViewModel.CreateAutoSave(x)));
         }
 
@@ -145,27 +148,6 @@ namespace RoslynPad.UI
         {
             var dialog = _serviceLocator.GetInstance<IReportProblemDialog>();
             dialog.Show();
-        }
-
-        private static IEnumerable<string> EnumerateFilesWithCatch(string path, string searchPattern)
-        {
-            IEnumerable<string> files;
-            try
-            {
-                files = Directory.EnumerateFiles(path, searchPattern);
-            }
-            catch (Exception)
-            {
-                // TODO: log this
-                return Array.Empty<string>();
-            }
-
-            foreach (var directory in Directory.EnumerateDirectories(path))
-            {
-                files = files.Concat(EnumerateFilesWithCatch(directory, searchPattern));
-            }
-
-            return files;
         }
 
         public bool HasUpdate
@@ -220,11 +202,8 @@ namespace RoslynPad.UI
             //    }
             //}
 
-            Documents = root.Children;
-
             return root;
         }
-
 
         internal string GetUserDocumentPath()
         {
@@ -267,12 +246,8 @@ namespace RoslynPad.UI
             set => SetProperty(ref _currentOpenDocument, value);
         }
 
-        private ObservableCollection<DocumentViewModel> _documents;
-
-        public ObservableCollection<DocumentViewModel> Documents
-        {
-            get => _documents; internal set => SetProperty(ref _documents, value);
-        }
+        private string _searchText;
+        private bool _isWithinSearchResults;
 
         public IActionCommand NewDocumentCommand { get; }
 
@@ -404,5 +379,194 @@ namespace RoslynPad.UI
         {
             return DocumentRoot.CreateNew(documentName);
         }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                SetProperty(ref _searchText, value);
+                OnPropertyChanged(nameof(CanClearSearch));
+            }
+        }
+
+        public bool IsWithinSearchResults
+        {
+            get => _isWithinSearchResults;
+            private set
+            {
+                SetProperty(ref _isWithinSearchResults, value);
+                OnPropertyChanged(nameof(CanClearSearch));
+            }
+        }
+
+        public bool CanClearSearch => IsWithinSearchResults || !string.IsNullOrEmpty(SearchText);
+
+        public IActionCommand SearchCommand => _commands.CreateAsync(Search);
+
+        #region Search
+
+        private async Task Search()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                ClearSearch();
+                return;
+            }
+
+            if (!SearchFileContents)
+            {
+                IsWithinSearchResults = true;
+
+                foreach (var document in GetAllDocumentsForSearch(DocumentRoot))
+                {
+                    document.IsSearchMatch = SearchDocumentName(document);
+                }
+
+                return;
+            }
+
+            Regex regex = null;
+            if (SearchUsingRegex)
+            {
+                regex = CreateSearchRegex();
+
+                if (regex == null)
+                {
+                    return;
+                }
+            }
+
+            IsWithinSearchResults = true;
+
+            foreach (var document in GetAllDocumentsForSearch(DocumentRoot))
+            {
+                if (SearchDocumentName(document))
+                {
+                    document.IsSearchMatch = true;
+                }
+                else
+                {
+                    await SearchInFile(document, regex).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private bool SearchDocumentName(DocumentViewModel document)
+        {
+            return document.Name.IndexOf(SearchText, StringComparison.InvariantCultureIgnoreCase) >= 0;
+        }
+
+        private Regex CreateSearchRegex()
+        {
+            try
+            {
+                var regex = new Regex(SearchText, RegexOptions.Multiline | RegexOptions.Singleline | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
+
+                ClearError(nameof(SearchText), "Regex");
+
+                return regex;
+            }
+            catch (ArgumentException)
+            {
+                SetError(nameof(SearchText), "Regex", "Invalid regular expression");
+
+                return null;
+            }
+        }
+
+        private async Task SearchInFile(DocumentViewModel document, Regex regex)
+        {
+            // a regex can span many lines so we need to load the entire file;
+            // otherwise, search line-by-line
+
+            if (regex != null)
+            {
+                var documentText = await IOUtilities.ReadAllTextAsync(document.Path).ConfigureAwait(false);
+                try
+                {
+                    document.IsSearchMatch = regex.IsMatch(documentText);
+                }
+                catch (RegexMatchTimeoutException)
+                {
+                    document.IsSearchMatch = false;
+                }
+            }
+            else
+            {
+                // need IAsyncEnumerable here, but for now just push it to the thread-pool
+                await Task.Run(() =>
+                {
+                    var lines = IOUtilities.ReadLines(document.Path);
+                    document.IsSearchMatch = lines.Any(line =>
+                        line.IndexOf(SearchText, StringComparison.InvariantCultureIgnoreCase) >= 0);
+                }).ConfigureAwait(false);
+            }
+        }
+        
+        private static IEnumerable<DocumentViewModel> GetAllDocumentsForSearch(DocumentViewModel root)
+        {
+            foreach (var document in root.Children)
+            {
+                if (document.IsFolder)
+                {
+                    foreach (var childDocument in GetAllDocumentsForSearch(document))
+                    {
+                        yield return childDocument;
+                    }
+
+                    // TODO: I'm lazy :)
+                    document.IsSearchMatch = document.Children.Any(c => c.IsSearchMatch);
+                }
+                else
+                {
+                    yield return document;
+                }
+            }
+        }
+
+        public bool SearchFileContents
+        {
+            get => Settings.SearchFileContents;
+            set
+            {
+                Settings.SearchFileContents = value;
+                if (!value)
+                {
+                    SearchUsingRegex = false;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SearchUsingRegex
+        {
+            get => Settings.SearchUsingRegex;
+            set
+            {
+                Settings.SearchUsingRegex = value;
+                if (value)
+                {
+                    SearchFileContents = true;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        public IActionCommand ClearSearchCommand => _commands.Create(ClearSearch);
+
+        private void ClearSearch()
+        {
+            SearchText = null;
+            IsWithinSearchResults = false;
+            ClearErrors(nameof(SearchText));
+
+            foreach (var document in GetAllDocumentsForSearch(DocumentRoot))
+            {
+                document.IsSearchMatch = true;
+            }
+        }
+
+        #endregion
     }
 }

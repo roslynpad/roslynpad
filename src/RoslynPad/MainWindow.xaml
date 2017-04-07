@@ -6,7 +6,6 @@
         xmlns:roslynPad="clr-namespace:RoslynPad"
         xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
-        xmlns:controls="clr-namespace:RoslynPad.Controls"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance ui:MainViewModel}"
@@ -24,47 +23,10 @@
                     Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
-        <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
-                                  ItemsSource="{Binding Children, Mode=OneTime}">
-            <DockPanel Margin="0 0 0 3">
-                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
-
-                <Image Name="Icon"
-                       Source="{StaticResource CsFile}"
-                       Height="12"
-                       Margin="0 0 3 0" />
-                <TextBlock Text="{Binding Name, Mode=OneTime}" />
-            </DockPanel>
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
-                             Value="True">
-                    <Setter TargetName="Icon"
-                            Property="Source"
-                            Value="{StaticResource Folder}" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </HierarchicalDataTemplate>
-
+     
         <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
             <roslynPad:DocumentView />
         </DataTemplate>
-
-        <ContextMenu x:Key="DocumentItemContextMenu"
-                     x:Shared="False">
-            <MenuItem Header="_Open in File Explorer"
-                      Click="DocumentsContextMenu_OpenFolder_Click" />
-        </ContextMenu>
-
-        <Style x:Key="DocumentItemContainerStyle"
-               TargetType="controls:TreeListViewItem"
-               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-            <EventSetter Event="MouseDoubleClick"
-                         Handler="OnDocumentClick" />
-            <EventSetter Event="KeyDown"
-                         Handler="OnDocumentKeyDown" />
-            <Setter Property="ContextMenu"
-                    Value="{StaticResource DocumentItemContextMenu}" />
-        </Style>
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
@@ -131,17 +93,9 @@
                                                        AutoHideWidth="200"
                                                        Title="Documents">
                                     <DockPanel x:Name="DocumentTree">
-                                        <StackPanel Orientation="Horizontal"
-                                                    DockPanel.Dock="Bottom"
-                                                    Margin="5">
-                                            <Button Content="Change documents location..."
-                                                    Style="{StaticResource LinkButton}"
-                                                    Command="{Binding EditUserDocumentPathCommand}" />
-                                        </StackPanel>
-                                        <controls:TreeListView ShowSeparator="False"
-                                                               ItemsSource="{Binding Documents, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
-
+                                        <AdornerDecorator>
+                                            <roslynPad:DocumentTreeView />
+                                        </AdornerDecorator>
                                     </DockPanel>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>

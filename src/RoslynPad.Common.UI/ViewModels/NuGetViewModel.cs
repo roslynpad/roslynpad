@@ -264,7 +264,7 @@ namespace RoslynPad.UI
 
         private class DummyPackagePathResolver : PackagePathResolver
         {
-            public DummyPackagePathResolver() : base(Directory.GetCurrentDirectory())
+            public DummyPackagePathResolver() : base(IOUtilities.CurrentDirectory)
             {
             }
 
@@ -276,7 +276,7 @@ namespace RoslynPad.UI
 
         private class DummyFolderNuGetProject : FolderNuGetProject
         {
-            public DummyFolderNuGetProject() : base(Directory.GetCurrentDirectory(), new DummyPackagePathResolver())
+            public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory, new DummyPackagePathResolver())
             {
             }
 
@@ -310,7 +310,7 @@ namespace RoslynPad.UI
 
         private class DummyPackagesConfigNuGetProject : PackagesConfigNuGetProject
         {
-            public DummyPackagesConfigNuGetProject(IReadOnlyDictionary<string, object> metadata) : base(Directory.GetCurrentDirectory(), metadata.ToDictionary(x => x.Key, x => x.Value))
+            public DummyPackagesConfigNuGetProject(IReadOnlyDictionary<string, object> metadata) : base(IOUtilities.CurrentDirectory, metadata.ToDictionary(x => x.Key, x => x.Value))
             {
             }
 

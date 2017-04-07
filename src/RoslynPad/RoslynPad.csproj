@@ -83,6 +83,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CommandProvider.cs" />
+    <Compile Include="DocumentTreeView.xaml.cs">
+      <DependentUpon>DocumentTreeView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FolderBrowserDialogAdapter.cs" />
     <Compile Include="Formatting\BooleanToVisibilityConverter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
@@ -101,6 +104,10 @@
     </Compile>
     <Compile Include="Controls\TreeListView.cs" />
     <Compile Include="SaveFileDialogAdapter.cs" />
+    <Page Include="DocumentTreeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DocumentView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -147,7 +154,6 @@
     </Compile>
     <None Include="project.json" />
     <AppDesigner Include="Properties\" />
-    <Resource Include="Resources\Samples.zip" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Data;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -15,16 +17,33 @@ namespace RoslynPad.UI
         private ObservableCollection<DocumentViewModel> _children;
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
+        private bool _isSearchMatch;
+        private ICollectionView _childrenView;
 
         private DocumentViewModel(string rootPath)
         {
             Path = rootPath;
             IOUtilities.PerformIO(() => Directory.CreateDirectory(Path));
             IsFolder = true;
+            IsSearchMatch = true;
+        }
+
+        private DocumentViewModel(string path, bool isFolder)
+        {
+            Path = path;
+            IsFolder = isFolder;
+            Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            // ReSharper disable once PossibleNullReferenceException
+            IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
+            if (IsAutoSave)
+            {
+                Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
+            }
+            IsSearchMatch = true;
         }
 
         public string Path { get; set; }
-        
+
         public bool IsFolder { get; }
 
         public string GetSavePath()
@@ -58,17 +77,15 @@ namespace RoslynPad.UI
             return new DocumentViewModel(path, isFolder: false);
         }
 
-        private DocumentViewModel(string path, bool isFolder)
+        public DocumentViewModel CreateNew(string documentName)
         {
-            Path = path;
-            IsFolder = isFolder;
-            Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
-            // ReSharper disable once PossibleNullReferenceException
-            IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
-            if (IsAutoSave)
-            {
-                Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
-            }
+            if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
+
+            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName), isFolder: false);
+
+            var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
+            Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
+            return document;
         }
 
         public static string GetDocumentPathFromName(string path, string name)
@@ -79,17 +96,6 @@ namespace RoslynPad.UI
             }
 
             return System.IO.Path.Combine(path, name);
-        }
-
-        public DocumentViewModel CreateNew(string documentName)
-        {
-            if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
-
-            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName), isFolder: false);
-
-            var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
-            Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
-            return document;
         }
 
         public bool IsExpanded
@@ -116,36 +122,52 @@ namespace RoslynPad.UI
             }
         }
 
+        public ICollectionView ChildrenView
+        {
+            get
+            {
+                if (_childrenView == null)
+                {
+                    var childrenView = new ListCollectionView(Children);
+                    childrenView.LiveFilteringProperties.Add(nameof(IsSearchMatch));
+                    childrenView.IsLiveFiltering = true;
+                    childrenView.Filter = o => ((DocumentViewModel)o).IsSearchMatch;
+                    _childrenView = childrenView;
+                }
+
+                return _childrenView;
+            }
+        }
+
         public ObservableCollection<DocumentViewModel> Children
         {
             get
             {
                 if (IsFolder && _children == null)
                 {
-                    Children = ReadChildren();
+                    _children = ReadChildren();
                 }
+
                 return _children;
             }
-            internal set => SetProperty(ref _children, value);
+        }
+
+        public bool IsSearchMatch
+        {
+            get => _isSearchMatch;
+            internal set => SetProperty(ref _isSearchMatch, value);
         }
 
         private ObservableCollection<DocumentViewModel> ReadChildren()
         {
-            try
-            {
-                return new ObservableCollection<DocumentViewModel>(
-                    Directory.EnumerateDirectories(Path)
-                    .Select(x => new DocumentViewModel(x, isFolder: true))
-                    .OrderBy(OrderByName)
-                        .Concat(Directory.EnumerateFiles(Path, "*" + DefaultFileExtension)
-                            .Select(x => new DocumentViewModel(x, isFolder: false))
-                            .Where(x => !x.IsAutoSave)
-                            .OrderBy(OrderByName)));
-            }
-            catch (Exception e) when (IOUtilities.IsNormalIOException(e))
-            {
-                return new ObservableCollection<DocumentViewModel>();
-            }
+            return new ObservableCollection<DocumentViewModel>(
+                IOUtilities.EnumerateDirectories(Path)
+                .Select(x => new DocumentViewModel(x, isFolder: true))
+                .OrderBy(OrderByName)
+                    .Concat(IOUtilities.EnumerateFiles(Path, "*" + DefaultFileExtension)
+                        .Select(x => new DocumentViewModel(x, isFolder: false))
+                        .Where(x => !x.IsAutoSave)
+                        .OrderBy(OrderByName)));
         }
 
         private static string OrderByName(DocumentViewModel x)
