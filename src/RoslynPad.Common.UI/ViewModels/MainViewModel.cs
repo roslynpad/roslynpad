@@ -312,6 +312,10 @@ namespace RoslynPad.UI
         {
             if (CurrentOpenDocument == null) return;
             await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
+            if (!OpenDocuments.Any())
+            {
+                CurrentOpenDocument = null;
+            }
         }
 
         public async Task CloseAllDocuments()

@@ -28,7 +28,7 @@ namespace RoslynPad.Editor.Windows
         public AvalonEditTextContainer([NotNull] TextDocument document)
         {
             Document = document ?? throw new ArgumentNullException(nameof(document));
-            _currentText = new AvalonEditSourceText(this, Document.Text);
+            _currentText = new AvalonEditSourceText(this, Document.Text + Environment.NewLine);
 
             Document.Changed += DocumentOnChanged;
         }

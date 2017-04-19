@@ -265,8 +265,8 @@ namespace RoslynPad.Editor.Windows
                 {
                     MinWidth = 300,
                     Background = CompletionBackground,
-                    CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion,
-                    UseHardSelection = results.UseHardSelection
+                    CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion || triggerMode == TriggerMode.Text,
+                    UseHardSelection = results.UseHardSelection,
                 };
 
                 if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
