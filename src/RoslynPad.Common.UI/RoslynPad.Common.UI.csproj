@@ -59,7 +59,6 @@
     <Compile Include="Dialogs\IDialog.cs" />
     <Compile Include="Dialogs\IFolderBrowserDialog.cs" />
     <Compile Include="Dialogs\IRenameSymbolDialog.cs" />
-    <Compile Include="Dialogs\IReportProblemDialog.cs" />
     <Compile Include="Dialogs\ISaveDocumentDialog.cs" />
     <Compile Include="Dialogs\ISaveFileDialog.cs" />
     <Compile Include="Services\ITelemetryProvider.cs" />

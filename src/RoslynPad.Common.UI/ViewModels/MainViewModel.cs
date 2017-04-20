@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -147,10 +148,9 @@ namespace RoslynPad.UI
             }
         }
 
-        private void ReportProblem()
+        private static void ReportProblem()
         {
-            var dialog = _serviceLocator.GetInstance<IReportProblemDialog>();
-            dialog.Show();
+            Task.Run(() => Process.Start("https://github.com/aelij/RoslynPad/issues"));
         }
 
         public bool HasUpdate
