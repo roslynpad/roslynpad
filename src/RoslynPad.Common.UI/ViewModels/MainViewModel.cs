@@ -135,7 +135,10 @@ namespace RoslynPad.UI
         {
             get
             {
-                var title = "RoslynPad " + _currentVersion;
+                var currentVersion = _currentVersion.Minor <= 0 && _currentVersion.Build <= 0
+                    ? _currentVersion.Major.ToString()
+                    : _currentVersion.ToString();
+                var title = "RoslynPad " + currentVersion;
                 if (!string.IsNullOrEmpty(_currentVersionVariant))
                 {
                     title += "-" + _currentVersionVariant;

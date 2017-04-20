@@ -65,6 +65,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -91,12 +92,9 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
-    <Compile Include="HockeyAppProvider.cs" />
+    <Compile Include="TelemetryProvider.cs" />
     <Compile Include="RenameSymbolDialog.xaml.cs">
       <DependentUpon>RenameSymbolDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="ReportProblemDialog.xaml.cs">
-      <DependentUpon>ReportProblemDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="RoslynDocumentTrackingServiceFactory.cs" />
     <Compile Include="SaveDocumentDialog.xaml.cs">
@@ -125,10 +123,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="RenameSymbolDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ReportProblemDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

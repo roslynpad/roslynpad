@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace RoslynPad.UI
 {
     public interface ITelemetryProvider
     {
-        void Initialize(string currentVersion, IApplicationSettings settings);
+        void Initialize(string version, IApplicationSettings settings);
         Exception LastError { get; }
         event Action LastErrorChanged;
         void ClearLastError();
-        Task SubmitFeedback(string feedbackText, string email);
         void ReportError(Exception exception);
     }
 }
