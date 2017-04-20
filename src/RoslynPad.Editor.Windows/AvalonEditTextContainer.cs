@@ -28,7 +28,7 @@ namespace RoslynPad.Editor.Windows
         public AvalonEditTextContainer([NotNull] TextDocument document)
         {
             Document = document ?? throw new ArgumentNullException(nameof(document));
-            _currentText = new AvalonEditSourceText(this, Document.Text + Environment.NewLine);
+            _currentText = new AvalonEditSourceText(this, Document.Text);
 
             Document.Changed += DocumentOnChanged;
         }
@@ -58,8 +58,7 @@ namespace RoslynPad.Editor.Windows
             _updatding = true;
             Document.BeginUpdate();
             var editor = Editor;
-            var caret = editor?.CaretOffset ?? 0;
-            var caretOffset = caret;
+            var caretOffset = editor?.CaretOffset ?? 0;
             var documentOffset = 0;
             try
             {
@@ -70,19 +69,20 @@ namespace RoslynPad.Editor.Windows
                     Document.Replace(change.Span.Start + documentOffset, change.Span.Length, new StringTextSource(change.NewText));
 
                     var changeOffset = change.NewText.Length - change.Span.Length;
-                    if (caret >= change.Span.Start + documentOffset + change.Span.Length)
+                    if (caretOffset >= change.Span.Start + documentOffset + change.Span.Length)
                     {
                         // If caret is after text, adjust it by text size difference
-                        caret += changeOffset;
+                        caretOffset += changeOffset;
                     }
-                    else if (caret >= change.Span.Start + documentOffset)
+                    else if (caretOffset >= change.Span.Start + documentOffset)
                     {
                         // If caret is inside changed text, but go out of bounds of the replacing text after the change, go back inside
-                        if (caret >= change.Span.Start + documentOffset + change.NewText.Length)
+                        if (caretOffset >= change.Span.Start + documentOffset + change.NewText.Length)
                         {
-                            caret = change.Span.Start + documentOffset;
+                            caretOffset = change.Span.Start + documentOffset;
                         }
                     }
+
                     documentOffset += changeOffset;
                 }
 
@@ -91,13 +91,13 @@ namespace RoslynPad.Editor.Windows
             finally
             {
                 _updatding = false;
+                Document.EndUpdate();
                 if (caretOffset < 0)
                     caretOffset = 0;
                 if (caretOffset > newText.Length)
                     caretOffset = newText.Length;
                 if (editor != null)
                     editor.CaretOffset = caretOffset;
-                Document.EndUpdate();
             }
         }
 
