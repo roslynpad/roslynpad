@@ -9,16 +9,15 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using NuGet;
+using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.PackageManagement;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
+using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
-using NuGet.Protocol.Core.v2;
-using NuGet.Protocol.Core.v3;
 using NuGet.Resolver;
 using NuGet.Versioning;
 using RoslynPad.Utilities;
@@ -29,7 +28,6 @@ using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
 using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
-using NullLogger = NuGet.Logging.NullLogger;
 
 namespace RoslynPad.UI
 {
@@ -44,10 +42,7 @@ namespace RoslynPad.UI
         private readonly PackageSourceProvider _sourceProvider;
         private readonly IEnumerable<PackageSource> _packageSources;
         private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
-        private readonly Lazy<Task> _initializationTask;
         private readonly ExceptionDispatchInfo _initializationException;
-
-        private AggregateRepository _repository;
 
         public string GlobalPackageFolder { get; }
 
@@ -72,29 +67,13 @@ namespace RoslynPad.UI
             {
                 _initializationException = ExceptionDispatchInfo.Capture(e);
             }
-
-            _initializationTask = new Lazy<Task>(Initialize);
         }
 
-        private async Task Initialize()
+        public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool exactMatch, CancellationToken cancellationToken)
         {
             _initializationException?.Throw();
 
-            var listEndpoints = await GetListEndpointsAsync(_sourceProvider).ConfigureAwait(false);
-
-            var repositoryFactory = new PackageRepositoryFactory();
-
-            var repositories = listEndpoints
-                .Select(s => repositoryFactory.CreateRepository(s))
-                .ToList();
-
-            _repository = new AggregateRepository(repositories);
-        }
-
-        public async Task<IReadOnlyList<PackageData>> GetPackagesAsync(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
-        {
-            await _initializationTask.Value.ConfigureAwait(false);
-            return await GetPackages(searchTerm, includePrerelease, allVersions, exactMatch, cancellationToken).ConfigureAwait(false);
+            return await GetPackages(searchTerm, includePrerelease, exactMatch, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<NuGetInstallResult> InstallPackage(
@@ -102,24 +81,25 @@ namespace RoslynPad.UI
             NuGetVersion version,
             bool prerelease)
         {
-            await _initializationTask.Value.ConfigureAwait(false);
+            _initializationException?.Throw();
 
-            var installPath = Path.Combine(Path.GetTempPath(), "testnuget");
+            var installPath = Path.Combine(Path.GetTempPath(), "dummynuget");
 
             var projectContext = new EmptyNuGetProjectContext
             {
-                PackageExtractionContext = new PackageExtractionContext()
+                PackageExtractionContext = new PackageExtractionContext(NullLogger.Instance)
             };
 
+            PackageIdentity currentIdentity = null;
             var references = new List<string>();
             var frameworkReferences = new List<string>();
-            var projectSystem = new DelegateNuGetProjectSystem(projectContext, (reference, isFrameworkReference) =>
-            {
-                if (isFrameworkReference) frameworkReferences.Add(reference);
-                else references.Add(reference);
-            });
+            var projectSystem = new DummyNuGetProjectSystem(projectContext,
+                path => references.Add(GetPackagePath(currentIdentity, path)),
+                path => frameworkReferences.Add(path));
 
             var project = new MSBuildNuGetProject(projectSystem, installPath, installPath);
+            // this is a hack to get the identity of the package added in DummyNuGetProjectSystem.AddReference
+            project.PackageInstalling += (sender, args) => currentIdentity = args.Identity;
             OverrideProject(project);
 
             var packageManager = new NuGetPackageManager(_sourceRepositoryProvider, _settings, installPath);
@@ -135,7 +115,7 @@ namespace RoslynPad.UI
             if (version == null)
             {
                 // Find the latest version using NuGetPackageManager
-                version = await NuGetPackageManager.GetLatestVersionAsync(
+                var resolvedPackage = await NuGetPackageManager.GetLatestVersionAsync(
                     packageId,
                     project,
                     resolutionContext,
@@ -143,16 +123,18 @@ namespace RoslynPad.UI
                     NullLogger.Instance,
                     CancellationToken.None).ConfigureAwait(false);
 
-                if (version == null)
+                if (resolvedPackage == null)
                 {
                     throw new Exception("Unable to find package");
                 }
+
+                version = resolvedPackage.LatestVersion;
             }
 
             var packageIdentity = new PackageIdentity(packageId, version);
 
             await packageManager.InstallPackageAsync(
-                project,
+                project, 
                 packageIdentity,
                 resolutionContext,
                 projectContext,
@@ -161,6 +143,11 @@ namespace RoslynPad.UI
                 CancellationToken.None).ConfigureAwait(false);
 
             return new NuGetInstallResult(references.AsReadOnly(), frameworkReferences.AsReadOnly());
+        }
+
+        private static string GetPackagePath(PackageIdentity identity, string path)
+        {
+            return $@"{identity.Id}\{identity.Version}\{path}";
         }
 
         private static void OverrideProject(MSBuildNuGetProject project)
@@ -174,53 +161,12 @@ namespace RoslynPad.UI
             packagesConfigNuGetProjectField.SetValue(project, new DummyPackagesConfigNuGetProject(project.Metadata));
         }
 
-        private static async Task<IList<string>> GetListEndpointsAsync(IPackageSourceProvider sourceProvider)
+        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool exactMatch, CancellationToken cancellationToken)
         {
-            var configurationSources = sourceProvider.LoadPackageSources()
-                .Where(p => p.IsEnabled)
-                .ToList();
-
-            var sourceRepositoryProvider = new CommandLineSourceRepositoryProvider(sourceProvider);
-            var listCommandResourceTasks = configurationSources.Select(source => sourceRepositoryProvider.CreateRepository(source)).Select(sourceRepository => sourceRepository.GetResourceAsync<ListCommandResource>()).ToList();
-            var listCommandResources = await Task.WhenAll(listCommandResourceTasks).ConfigureAwait(false);
-
-            var listEndpoints = new List<string>();
-            foreach (var listCommandResource in listCommandResources)
+            var filter = new SearchFilter(includePrerelease)
             {
-                string listEndpoint = null;
-                if (listCommandResource != null)
-                {
-                    listEndpoint = listCommandResource.GetListEndpoint();
-                }
-                if (listEndpoint != null)
-                {
-                    listEndpoints.Add(listEndpoint);
-                }
-            }
-
-            return listEndpoints;
-        }
-
-        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool allVersions, bool exactMatch, CancellationToken cancellationToken)
-        {
-            if (exactMatch)
-            {
-                var exactResult = _repository.FindPackagesById(searchTerm);
-                if (!allVersions)
-                {
-                    exactResult = includePrerelease
-                        ? exactResult.Where(x => x.IsAbsoluteLatestVersion)
-                        : exactResult.Where(p => p.IsLatestVersion);
-                }
-                var packages = exactResult.ToArray();
-                if (packages.Any())
-                {
-                    return new[] { new PackageData(packages) };
-                }
-                return Array.Empty<PackageData>();
-            }
-
-            var filter = new SearchFilter(new[] { TargetFrameworkFullName }, includePrerelease, includeDelisted: false);
+                SupportedFrameworks = new[] { TargetFrameworkFullName }
+            };
 
             foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
             {
@@ -233,7 +179,15 @@ namespace RoslynPad.UI
                 {
                     continue;
                 }
-                if (result.Length > 0)
+
+                if (exactMatch)
+                {
+                    var match = result.FirstOrDefault(c => string.Equals(c.Identity.Id, searchTerm,
+                        StringComparison.InvariantCultureIgnoreCase));
+                    result = match != null ? new[] { match } : null;
+                }
+
+                if (result?.Length > 0)
                 {
                     var packages = result.Select(x => new PackageData(x)).ToArray();
                     await Task.WhenAll(packages.Select(x => x.Initialize())).ConfigureAwait(false);
@@ -251,8 +205,7 @@ namespace RoslynPad.UI
 
             if (!string.IsNullOrEmpty(GlobalPackageFolder) && Directory.Exists(GlobalPackageFolder))
             {
-                packageSources.Add(new V2PackageSource(GlobalPackageFolder,
-                    () => new LocalPackageRepository(GlobalPackageFolder)));
+                packageSources.Add(new PackageSource("Global", GlobalPackageFolder));
             }
 
             packageSources.AddRange(availableSources);
@@ -261,22 +214,10 @@ namespace RoslynPad.UI
         }
 
         #region Inner Classes
-
-        private class DummyPackagePathResolver : PackagePathResolver
-        {
-            public DummyPackagePathResolver() : base(IOUtilities.CurrentDirectory)
-            {
-            }
-
-            public override string GetInstalledPackageFilePath(PackageIdentity packageIdentity)
-            {
-                return $"{packageIdentity.Id}\\{packageIdentity.Version.ToNormalizedString()}\\";
-            }
-        }
-
+        
         private class DummyFolderNuGetProject : FolderNuGetProject
         {
-            public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory, new DummyPackagePathResolver())
+            public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory)
             {
             }
 
@@ -342,28 +283,23 @@ namespace RoslynPad.UI
             }
         }
 
-        private class DelegateNuGetProjectSystem : IMSBuildNuGetProjectSystem
+        private class DummyNuGetProjectSystem : IMSBuildNuGetProjectSystem
         {
-            private readonly Action<string, bool> _addReference;
+            private readonly Action<string> _addReference;
+            private readonly Action<string> _addFrameworkReference;
 
-            public DelegateNuGetProjectSystem(INuGetProjectContext projectContext,
-                Action<string, bool> addReference)
+            public DummyNuGetProjectSystem(INuGetProjectContext projectContext, Action<string> addReference, Action<string> addFrameworkReference)
             {
-                NuGetProjectContext = projectContext;
                 _addReference = addReference;
+                _addFrameworkReference = addFrameworkReference;
+                NuGetProjectContext = projectContext;
             }
 
             public NuGetFramework TargetFramework { get; } = NuGetFramework.Parse(TargetFrameworkName);
 
-            public void AddReference(string referencePath)
-            {
-                _addReference(referencePath, false);
-            }
+            public void AddReference(string referencePath) => _addReference(referencePath);
 
-            public void AddFrameworkReference(string name)
-            {
-                _addReference(name, true);
-            }
+            public void AddFrameworkReference(string name, string packageId) => _addFrameworkReference(name);
 
             #region Not used
 
@@ -425,7 +361,7 @@ namespace RoslynPad.UI
             }
 
             public Task ExecuteScriptAsync(PackageIdentity identity, string packageInstallPath, string scriptRelativePath,
-                NuGetProject nuGetProject, bool throwOnFailure)
+                bool throwOnFailure)
             {
                 return Task.CompletedTask;
             }
@@ -464,8 +400,10 @@ namespace RoslynPad.UI
             public string ProjectName => "P";
             public string ProjectUniqueName => "P";
             public string ProjectFullPath => "P";
+            public string ProjectFileFullPath => "P";
 
             public INuGetProjectContext NuGetProjectContext { get; }
+            public dynamic VSProject4 => null;
 
             #endregion
         }
@@ -484,7 +422,6 @@ namespace RoslynPad.UI
                 PackageSourceProvider = packageSourceProvider;
 
                 _resourceProviders = new List<Lazy<INuGetResourceProvider>>();
-                _resourceProviders.AddRange(Repository.Provider.GetCoreV2());
                 _resourceProviders.AddRange(Repository.Provider.GetCoreV3());
 
                 // Create repositories
@@ -502,6 +439,11 @@ namespace RoslynPad.UI
             public SourceRepository CreateRepository(PackageSource source)
             {
                 return _cachedSources.GetOrAdd(source, new SourceRepository(source, _resourceProviders));
+            }
+
+            public SourceRepository CreateRepository(PackageSource source, FeedType type)
+            {
+                return _cachedSources.GetOrAdd(source, new SourceRepository(source, _resourceProviders, type));
             }
 
             public IPackageSourceProvider PackageSourceProvider { get; }
@@ -594,7 +536,7 @@ namespace RoslynPad.UI
         {
             get => _isEnabled; private set => SetProperty(ref _isEnabled, value);
         }
-        
+
         public string SearchTerm
         {
             get => _searchTerm; set
@@ -635,7 +577,7 @@ namespace RoslynPad.UI
                 try
                 {
                     var packages = await Task.Run(() =>
-                            _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true, allVersions: true,
+                            _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true,
                                 exactMatch: ExactMatch, cancellationToken: cancellationToken), cancellationToken)
                         .ConfigureAwait(true);
 
@@ -671,13 +613,13 @@ namespace RoslynPad.UI
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
 
-        public PackageData(IList<IPackage> packages)
-        {
-            var package = packages[0];
-            Id = package.Id;
-            Version = NuGetVersion.Parse(package.Version.ToString());
-            OtherVersions = packages.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
-        }
+        //public PackageData(IList<IPackage> packages)
+        //{
+        //    var package = packages[0];
+        //    Id = package.Id;
+        //    Version = NuGetVersion.Parse(package.Version.ToString());
+        //    OtherVersions = packages.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
+        //}
 
         public PackageData(IPackageSearchMetadata package)
         {

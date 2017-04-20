@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Practices.ServiceLocation;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
-using NuGet;
+using NuGet.Packaging;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
@@ -22,7 +22,7 @@ namespace RoslynPad.UI
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         public IApplicationSettings Settings { get; }
-        private static readonly Version _currentVersion = new Version(0, 12);
+        private static readonly Version _currentVersion = new Version(12, 0);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
