@@ -19,18 +19,26 @@ namespace RoslynPad.Roslyn.Scripting
     /// </summary>
     public sealed class ScriptRunner
     {
+        
         private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid();
         
         private readonly InteractiveAssemblyLoader _assemblyLoader;
         private Func<object[], Task<object>> _lazyExecutor;
         private Compilation _lazyCompilation;
+        private readonly OptimizationLevel _optimizationLevel;
+        private readonly bool _checkOverflow;
+        private readonly bool _allowUnsafe;
 
         public ScriptRunner(string code, CSharpParseOptions parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference> references = null,
             IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, 
             MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null,
-            InteractiveAssemblyLoader assemblyLoader = null)
+            InteractiveAssemblyLoader assemblyLoader = null, 
+            OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
         {
+            _optimizationLevel = optimizationLevel;
+            _checkOverflow = checkOverflow;
+            _allowUnsafe = allowUnsafe;
             Code = code;
             OutputKind = outputKind;
             Platform = platform;
@@ -250,9 +258,9 @@ namespace RoslynPad.Roslyn.Scripting
                 mainTypeName: null,
                 scriptClassName: "Program",
                 usings: Usings,
-                optimizationLevel: OptimizationLevel.Debug, // TODO
-                checkOverflow: false,                       // TODO
-                allowUnsafe: true,                          // TODO
+                optimizationLevel: _optimizationLevel,
+                checkOverflow: _checkOverflow,
+                allowUnsafe: _allowUnsafe,
                 platform: Platform,
                 warningLevel: 4,
                 xmlReferenceResolver: null,
