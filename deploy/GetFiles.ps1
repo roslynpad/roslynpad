@@ -12,5 +12,7 @@ $files +=
 	"RoslynPad.exe",
 	"RoslynPad.Host32.exe",
 	"RoslynPad.Host64.exe",
-	"RoslynPad.exe.config"
+	"RoslynPad.exe.config",
+	"RoslynPad.Host32.exe.config",
+	"RoslynPad.Host64.exe.config"
 )
