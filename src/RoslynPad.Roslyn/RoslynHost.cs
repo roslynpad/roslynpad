@@ -72,7 +72,9 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
-        public RoslynHost(NuGetConfiguration nuGetConfiguration = null, IEnumerable<Assembly> additionalAssemblies = null)
+        public RoslynHost(NuGetConfiguration nuGetConfiguration = null, 
+            IEnumerable<Assembly> additionalAssemblies = null, 
+            IEnumerable<string> additionalReferencedAssemblyLocations = null)
         {
             _nuGetConfiguration = nuGetConfiguration;
 
@@ -110,17 +112,19 @@ namespace RoslynPad.Roslyn
             (_referenceAssembliesPath, _documentationPath) = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderServiceFactory.DocumentationProviderService();
 
-            DefaultReferences = GetMetadataReferences();
+            DefaultReferences = GetMetadataReferences(additionalReferencedAssemblyLocations);
 
             DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
 
-        private ImmutableArray<MetadataReference> GetMetadataReferences()
+        private ImmutableArray<MetadataReference> GetMetadataReferences(IEnumerable<string> additionalReferencedAssemblyLocations = null)
         {
             // allow facade assemblies to take precedence
-            var dictionary = _defaultReferenceAssemblies.Select(x => x.Location)
+            var dictionary = _defaultReferenceAssemblies
+                .Select(x => x.Location)
+                .Concat(additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
                 .ToImmutableDictionary(Path.GetFileNameWithoutExtension)
                 .SetItems(TryGetFacadeAssemblies()
                     .ToImmutableDictionary(Path.GetFileNameWithoutExtension));
