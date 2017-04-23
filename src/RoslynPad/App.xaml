@@ -18,7 +18,8 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <formatting:BooleanToVisibilityConverter x:Key="BooleanToVisibilityHiddenConverter"
                                                      FalseValue="Hidden" />
-
+            <formatting:ResultsFlatteningConverter x:Key="ResultsFlatteningConverter" />
+            
             <ControlTemplate x:Key="ErrorTemplate">
                 <Border BorderBrush="Red"
                         ToolTip="{Binding AdornedElement.(Validation.Errors)[0].ErrorContent, ElementName=controlWithError}"

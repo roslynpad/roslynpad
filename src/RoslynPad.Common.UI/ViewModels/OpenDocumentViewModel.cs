@@ -22,6 +22,8 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
 {
+    using System.Diagnostics;
+    
     [Export]
     public class OpenDocumentViewModel : NotificationObject
     {
@@ -42,7 +44,6 @@ namespace RoslynPad.UI
         private Func<TextSpan> _getSelection;
 
         public IEnumerable<object> Results => _results;
-
         private ObservableCollection<ResultObject> ResultsInternal
         {
             // ReSharper disable once UnusedMember.Local
@@ -79,6 +80,7 @@ namespace RoslynPad.UI
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
+
         }
 
         public void SetDocument(DocumentViewModel document)
@@ -360,6 +362,7 @@ namespace RoslynPad.UI
             try
             {
                 await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName)).ConfigureAwait(true);
+                OnPropertyChanged(nameof(Results));
             }
             catch (CompilationErrorException ex)
             {
@@ -403,11 +406,15 @@ namespace RoslynPad.UI
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
                 var errorResult = await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
+
+                OnPropertyChanged(nameof(Results));
+
                 _onError?.Invoke(errorResult);
                 if (errorResult != null)
                 {
                     results.Add(errorResult);
                 }
+
             }
             catch (CompilationErrorException ex)
             {
