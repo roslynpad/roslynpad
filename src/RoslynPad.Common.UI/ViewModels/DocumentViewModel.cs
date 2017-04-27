@@ -39,6 +39,7 @@ namespace RoslynPad.UI
             {
                 Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
             }
+
             IsSearchMatch = true;
         }
 
@@ -98,6 +99,22 @@ namespace RoslynPad.UI
             return System.IO.Path.Combine(path, name);
         }
 
+        public void DeleteAutoSave()
+        {
+            if (IsAutoSave)
+            {
+                IOUtilities.PerformIO(() => File.Delete(Path));
+            }
+            else
+            {
+                var autoSavePath = GetAutoSavePath();
+                if (File.Exists(autoSavePath))
+                {
+                    IOUtilities.PerformIO(() => File.Delete(autoSavePath));
+                }
+            }
+        }
+
         public bool IsExpanded
         {
             get => _isExpanded;
@@ -118,6 +135,7 @@ namespace RoslynPad.UI
                                       // ReSharper disable once AssignNullToNotNullAttribute
                                       !File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), Name + DefaultFileExtension));
                 }
+
                 return _isAutoSaveOnly.Value;
             }
         }

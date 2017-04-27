@@ -291,13 +291,6 @@ namespace RoslynPad.UI
                 return;
             }
 
-            // ReSharper disable once PossibleNullReferenceException
-            var autoSavePath = document.Document?.GetAutoSavePath();
-            if (autoSavePath != null && File.Exists(autoSavePath))
-            {
-                File.Delete(autoSavePath);
-            }
-
             RoslynHost.CloseDocument(document.DocumentId);
             OpenDocuments.Remove(document);
             document.Close();

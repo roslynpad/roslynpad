@@ -244,10 +244,7 @@ namespace RoslynPad.UI
                     result = dialog.Result;
                     if (result == SaveResult.Save)
                     {
-                        if (Document?.IsAutoSave == true)
-                        {
-                            File.Delete(Document.Path);
-                        }
+                        Document?.DeleteAutoSave();
                         Document = MainViewModel.AddDocument(dialog.DocumentName);
                         OnPropertyChanged(nameof(Title));
                     }
@@ -260,12 +257,19 @@ namespace RoslynPad.UI
                     dialog.Show();
                     result = dialog.Result;
                 }
+
                 if (result == SaveResult.Save)
                 {
                     // ReSharper disable once PossibleNullReferenceException
                     await SaveDocument(Document.GetSavePath()).ConfigureAwait(true);
                     IsDirty = false;
                 }
+
+                if (result != SaveResult.Cancel)
+                {
+                    Document?.DeleteAutoSave();
+                }
+
                 return result;
             }
             finally
