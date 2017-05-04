@@ -89,6 +89,7 @@
     </Compile>
     <Compile Include="FolderBrowserDialogAdapter.cs" />
     <Compile Include="Formatting\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Formatting\ResultsFlatteningConverter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
