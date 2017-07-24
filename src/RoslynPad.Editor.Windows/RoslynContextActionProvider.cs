@@ -57,11 +57,11 @@ namespace RoslynPad.Editor.Windows
         {
             if (action is CodeAction codeAction)
             {
-                return (ICommand)_commandProvider.CreateAsync(() => ExecuteCodeAction(codeAction));
+                return _commandProvider.CreateAsync(() => ExecuteCodeAction(codeAction));
             }
             var codeFix = action as CodeFix;
             if (codeFix == null || codeFix.Action.HasCodeActions()) return null;
-            return (ICommand)_commandProvider.CreateAsync(() => ExecuteCodeAction(codeFix.Action));
+            return _commandProvider.CreateAsync(() => ExecuteCodeAction(codeFix.Action));
         }
 
         private async Task ExecuteCodeAction(CodeAction codeAction)

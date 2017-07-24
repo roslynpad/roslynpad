@@ -6,9 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Practices.ServiceLocation;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 using NuGet.Packaging;
@@ -19,7 +20,7 @@ namespace RoslynPad.UI
     [Export, Shared]
     public sealed class MainViewModel : NotificationObject
     {
-        private readonly IServiceLocator _serviceLocator;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         public IApplicationSettings Settings { get; }
@@ -27,6 +28,7 @@ namespace RoslynPad.UI
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
+        private const string ConfigFileName = "RoslynPad.json";
 
         private OpenDocumentViewModel _currentOpenDocument;
         private bool _hasUpdate;
@@ -38,12 +40,15 @@ namespace RoslynPad.UI
         public bool IsInitialized { get; set; }
 
         [ImportingConstructor]
-        public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
+        public MainViewModel(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
         {
-            _serviceLocator = serviceLocator;
+            _serviceProvider = serviceProvider;
             _telemetryProvider = telemetryProvider;
             _commands = commands;
+
+            settings.LoadFrom(Path.Combine(GetDefaultDocumentPath(), ConfigFileName));
             Settings = settings;
+
             _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
             {
@@ -89,8 +94,8 @@ namespace RoslynPad.UI
             RoslynHost = new RoslynHost(NuGetConfiguration, new[]
             {
                 // TODO: xplat
-                Assembly.Load("RoslynPad.Roslyn.Windows"),
-                Assembly.Load("RoslynPad.Editor.Windows")
+                Assembly.Load(new AssemblyName("RoslynPad.Roslyn.Windows")),
+                Assembly.Load(new AssemblyName("RoslynPad.Editor.Windows"))
             });
 
             OpenAutoSavedDocuments();
@@ -127,7 +132,7 @@ namespace RoslynPad.UI
 
         private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel documentViewModel)
         {
-            var d = _serviceLocator.GetInstance<OpenDocumentViewModel>();
+            var d = _serviceProvider.GetService<OpenDocumentViewModel>();
             d.SetDocument(documentViewModel);
             return d;
         }
@@ -193,37 +198,57 @@ namespace RoslynPad.UI
         {
             var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
 
-            // TODO: virtual samples
-            //if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
-            //{
-            //    // ReSharper disable once PossibleNullReferenceException
-            //    using (var stream = Application.GetResourceStream(
-            //        new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
-            //    using (var archive = new ZipArchive(stream))
-            //    {
-            //        archive.ExtractToDirectory(root.Path);
-            //    }
-            //}
-
             return root;
         }
 
-        internal string GetUserDocumentPath()
+        private string GetUserDocumentPath()
         {
-            var userDefinedPath = Settings.DocumentPath;
-            return !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
-                ? userDefinedPath
-                : GetDefaultDocumentPath();
+            if (_documentPath == null)
+            {
+                
+                var userDefinedPath = Settings.DocumentPath;
+                _documentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
+                    ? userDefinedPath
+                    : GetDefaultDocumentPath();
+            }
+
+            return _documentPath;
         }
 
-        private static string GetDefaultDocumentPath()
+        private string GetDefaultDocumentPath()
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RoslynPad");
+            string documentsPath = null;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                const int myDocuments = 5;
+                var stringBuilder = new StringBuilder(260);
+                var result = SHGetFolderPath(IntPtr.Zero, myDocuments, IntPtr.Zero, 0, stringBuilder);
+                if (result >= 0)
+                {
+                    documentsPath = stringBuilder.ToString();
+                }
+            }
+            else // Unix or Mac
+            {
+                documentsPath = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            if (string.IsNullOrEmpty(documentsPath))
+            {
+                documentsPath = "/";
+                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
+            }
+
+            return Path.Combine(documentsPath, "RoslynPad");
         }
+
+        [DllImport("shell32.dll", BestFitMapping = false, CharSet = CharSet.Unicode)]
+        private static extern int SHGetFolderPath(IntPtr hwndOwner, int nFolder, IntPtr hToken, int dwFlags, [Out] StringBuilder lpszPath);
 
         public void EditUserDocumentPath()
         {
-            var dialog = _serviceLocator.GetInstance<IFolderBrowserDialog>();
+            var dialog = _serviceProvider.GetService<IFolderBrowserDialog>();
             dialog.ShowEditBox = true;
             dialog.SelectedPath = GetUserDocumentPath();
 
@@ -251,12 +276,13 @@ namespace RoslynPad.UI
 
         private string _searchText;
         private bool _isWithinSearchResults;
+        private string _documentPath;
 
-        public IActionCommand NewDocumentCommand { get; }
+        public IDelegateCommand NewDocumentCommand { get; }
 
-        public IActionCommand EditUserDocumentPathCommand { get; }
+        public IDelegateCommand EditUserDocumentPathCommand { get; }
 
-        public IActionCommand CloseCurrentDocumentCommand { get; }
+        public IDelegateCommand CloseCurrentDocumentCommand { get; }
 
         public void OpenDocument(DocumentViewModel document)
         {
@@ -341,7 +367,7 @@ namespace RoslynPad.UI
 
         public bool HasError => LastError != null;
 
-        public IActionCommand ClearErrorCommand { get; }
+        public IDelegateCommand ClearErrorCommand { get; }
 
         public bool SendTelemetry
         {
@@ -354,7 +380,7 @@ namespace RoslynPad.UI
 
         public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
 
-        public IActionCommand ReportProblemCommand { get; }
+        public IDelegateCommand ReportProblemCommand { get; }
 
         public double MinimumEditorFontSize => 8;
         public double MaximumEditorFontSize => 72;
@@ -402,7 +428,7 @@ namespace RoslynPad.UI
 
         public bool CanClearSearch => IsWithinSearchResults || !string.IsNullOrEmpty(SearchText);
 
-        public IActionCommand SearchCommand => _commands.CreateAsync(Search);
+        public IDelegateCommand SearchCommand => _commands.CreateAsync(Search);
 
         #region Search
 
@@ -454,7 +480,7 @@ namespace RoslynPad.UI
 
         private bool SearchDocumentName(DocumentViewModel document)
         {
-            return document.Name.IndexOf(SearchText, StringComparison.InvariantCultureIgnoreCase) >= 0;
+            return document.Name.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private Regex CreateSearchRegex()
@@ -499,7 +525,7 @@ namespace RoslynPad.UI
                 {
                     var lines = IOUtilities.ReadLines(document.Path);
                     document.IsSearchMatch = lines.Any(line =>
-                        line.IndexOf(SearchText, StringComparison.InvariantCultureIgnoreCase) >= 0);
+                        line.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0);
                 }).ConfigureAwait(false);
             }
         }
@@ -553,7 +579,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public IActionCommand ClearSearchCommand => _commands.Create(ClearSearch);
+        public IDelegateCommand ClearSearchCommand => _commands.Create(ClearSearch);
 
         private void ClearSearch()
         {

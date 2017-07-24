@@ -1,14 +1,15 @@
 using System;
 using System.ComponentModel;
 using System.Composition;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using RoslynPad.Properties;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace RoslynPad.UI
 {
     public interface IApplicationSettings : INotifyPropertyChanged
     {
+        void LoadFrom(string path);
+
         bool SendErrors { get; set; }
         string LatestVersion { get; set; }
         string WindowBounds { get; set; }
@@ -24,6 +25,17 @@ namespace RoslynPad.UI
     internal class ApplicationSettings : NotificationObject, IApplicationSettings
     {
         private readonly ITelemetryProvider _telemetryProvider;
+        private string _path;
+
+        private bool _sendErrors;
+        private string _latestVersion;
+        private string _windowBounds;
+        private string _dockLayout;
+        private string _windowState;
+        private double _editorFontSize;
+        private string _documentPath;
+        private bool _searchFileContents;
+        private bool _searchUsingRegex;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -31,47 +43,120 @@ namespace RoslynPad.UI
             _telemetryProvider = telemetryProvider;
         }
 
-        [DefaultValue(true)]
-        public bool SendErrors { get => GetValue<bool>(); set => SetValue(value); }
-        public string LatestVersion { get => GetValue<string>(); set => SetValue(value); }
-        public string WindowBounds { get => GetValue<string>(); set => SetValue(value); }
-        public string DockLayout { get => GetValue<string>(); set => SetValue(value); }
-        public string WindowState { get => GetValue<string>(); set => SetValue(value); }
-        public double EditorFontSize { get => GetValue<double>(); set => SetValue(value); }
-        public string DocumentPath { get => GetValue<string>(); set => SetValue(value); }
-        public bool SearchFileContents { get => GetValue<bool>(); set => SetValue(value); }
-        public bool SearchUsingRegex { get => GetValue<bool>(); set => SetValue(value); }
-
-        private T GetValue<T>([CallerMemberName] string propertyName = null)
+        public void LoadFrom(string path)
         {
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
+
+            LoadSettings(path);
+
+            _path = path;
+        }
+
+        public bool SendErrors
+        {
+            get => _sendErrors;
+            set => SetProperty(ref _sendErrors, value);
+        }
+
+        public string LatestVersion
+        {
+            get => _latestVersion;
+            set => SetProperty(ref _latestVersion, value);
+        }
+
+        public string WindowBounds
+        {
+            get => _windowBounds;
+            set => SetProperty(ref _windowBounds, value);
+        }
+
+        public string DockLayout
+        {
+            get => _dockLayout;
+            set => SetProperty(ref _dockLayout, value);
+        }
+
+        public string WindowState
+        {
+            get => _windowState;
+            set => SetProperty(ref _windowState, value);
+        }
+
+        public double EditorFontSize
+        {
+            get => _editorFontSize;
+            set => SetProperty(ref _editorFontSize, value);
+        }
+
+        public string DocumentPath
+        {
+            get => _documentPath;
+            set => SetProperty(ref _documentPath, value);
+        }
+
+        public bool SearchFileContents
+        {
+            get => _searchFileContents;
+            set => SetProperty(ref _searchFileContents, value);
+        }
+
+        public bool SearchUsingRegex
+        {
+            get => _searchUsingRegex;
+            set => SetProperty(ref _searchUsingRegex, value);
+        }
+
+        protected override void OnPropertyChanged(string propertyName = null)
+        {
+            base.OnPropertyChanged(propertyName);
+
+            SaveSettings();
+        }
+
+        private void LoadSettings(string path)
+        {
+            if (!File.Exists(path))
+            {
+                LoadDefaultSettings();
+                return;
+            }
+
             try
             {
-                // ReSharper disable once AssignNullToNotNullAttribute
-                return (T)Settings.Default[propertyName];
+                var serializer = new JsonSerializer();
+                using (var reader = File.OpenText(path))
+                {
+                    serializer.Populate(reader, this);
+                }
+            }
+            catch (Exception e)
+            {
+                LoadDefaultSettings();
+                _telemetryProvider.ReportError(e);
+            }
+        }
+
+        private void LoadDefaultSettings()
+        {
+            SendErrors = true;
+            EditorFontSize = 12;
+        }
+
+        private void SaveSettings()
+        {
+            if (_path == null) return;
+            
+            try
+            {
+                var serializer = new JsonSerializer {Formatting = Formatting.Indented};
+                using (var writer = File.CreateText(_path))
+                {
+                    serializer.Serialize(writer, this);
+                }
             }
             catch (Exception e)
             {
                 _telemetryProvider.ReportError(e);
-            }
-
-            // ReSharper disable once AssignNullToNotNullAttribute
-            var defaultValueAttribute = typeof(ApplicationSettings).GetProperty(propertyName)
-                .GetCustomAttribute<DefaultValueAttribute>();
-            return defaultValueAttribute != null ? (T)defaultValueAttribute.Value : default(T);
-        }
-
-        private void SetValue<T>(T value, [CallerMemberName] string propertyName = null)
-        {
-            try
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute
-                Settings.Default[propertyName] = value;
-                Settings.Default.Save();
-                OnPropertyChanged(propertyName);
-            }
-            catch (Exception ex)
-            {
-                _telemetryProvider.ReportError(ex);
             }
         }
     }

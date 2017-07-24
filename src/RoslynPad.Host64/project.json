@@ -6,5 +6,6 @@
     "win": {}
   },
   "dependencies": {
+    "Newtonsoft.Json": "10.0.2"
   }
 }

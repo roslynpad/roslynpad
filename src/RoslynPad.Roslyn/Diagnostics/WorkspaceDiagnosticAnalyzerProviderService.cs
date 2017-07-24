@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn.Diagnostics
     {
         public IEnumerable<HostDiagnosticAnalyzerPackage> GetHostDiagnosticAnalyzerPackages()
         {
-            var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var path = Path.GetDirectoryName(typeof(WorkspaceDiagnosticAnalyzerProviderService).GetTypeInfo().Assembly.GetLocation());
             if (path == null) throw new ArgumentNullException(nameof(path));
             return new[]
             {

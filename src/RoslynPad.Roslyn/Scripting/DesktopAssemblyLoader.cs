@@ -10,6 +10,9 @@ namespace RoslynPad.Roslyn.Scripting
 {
     internal sealed class DesktopAssemblyLoader : AssemblyLoaderImpl
     {
+        // lightup
+        private static readonly Func<byte[], byte[], Assembly> Load_bytes = ReflectionUtilities.CreateDelegate<Func<byte[], byte[], Assembly>>(ReflectionUtilities.GetDeclaredMethod(typeof(Assembly).GetTypeInfo(), "Load", typeof(byte[]), typeof(byte[])));
+
         private readonly Func<string, Assembly, Assembly> _assemblyResolveHandlerOpt;
 
         public DesktopAssemblyLoader(InteractiveAssemblyLoader loader)
@@ -29,17 +32,31 @@ namespace RoslynPad.Roslyn.Scripting
 
         public override Assembly LoadFromStream(Stream peStream, Stream pdbStream)
         {
-            byte[] peImage = new byte[peStream.Length];
-            peStream.TryReadAll(peImage, 0, peImage.Length);
+            var peImage = new byte[peStream.Length];
+            TryReadAll(peStream, peImage, 0, peImage.Length);
             if (pdbStream == null)
             {
                 return CorLightup.Desktop.LoadAssembly(peImage);
             }
 
-            // TODO: lightup?
-            byte[] pdbImage = new byte[pdbStream.Length];
-            pdbStream.TryReadAll(pdbImage, 0, pdbImage.Length);
-            return Assembly.Load(peImage, pdbImage);
+            var pdbImage = new byte[pdbStream.Length];
+            TryReadAll(pdbStream, pdbImage, 0, pdbImage.Length);
+            return Load_bytes(peImage, pdbImage);
+        }
+
+        private static int TryReadAll(Stream stream, byte[] buffer, int offset, int count)
+        {
+            int i;
+            int num;
+            for (i = 0; i < count; i += num)
+            {
+                num = stream.Read(buffer, offset + i, count - i);
+                if (num == 0)
+                {
+                    break;
+                }
+            }
+            return i;
         }
 
         public override AssemblyAndLocation LoadFromPath(string path)

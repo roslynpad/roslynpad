@@ -1,8 +1,8 @@
-﻿using System;
+﻿using System.Runtime.Serialization;
 
 namespace RoslynPad.Roslyn
 {
-    [Serializable]
+    [DataContract]
     public class NuGetConfiguration
     {
         public NuGetConfiguration(string pathToRepository, string pathVariableName)
@@ -11,8 +11,10 @@ namespace RoslynPad.Roslyn
             PathVariableName = pathVariableName;
         }
 
-        public string PathToRepository { get; }
+        [DataMember]
+        public string PathToRepository { get; private set; }
 
-        public string PathVariableName { get; }
+        [DataMember]
+        public string PathVariableName { get; private set; }
     }
 }

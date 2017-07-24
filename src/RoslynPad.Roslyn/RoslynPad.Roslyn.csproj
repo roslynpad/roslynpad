@@ -1,129 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AC9F325F-A3FF-4561-941E-49CE4736CBD0}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <AssemblyName>Roslyn.Services.Editor.UnitTests</AssemblyName>
-    <DefaultLanguage>en-US</DefaultLanguage>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnalyzerAssemblyLoader.cs" />
-    <Compile Include="CodeActions\CodeActionExtensions.cs" />
-    <Compile Include="CodeFixes\CodeFix.cs" />
-    <Compile Include="CodeFixes\CodeFixCollection.cs" />
-    <Compile Include="CodeFixes\CodeFixService.cs" />
-    <Compile Include="CodeFixes\FirstDiagnosticResult.cs" />
-    <Compile Include="CodeFixes\ICodeFixService.cs" />
-    <Compile Include="CodeRefactorings\CodeRefactoring.cs" />
-    <Compile Include="CodeRefactorings\CodeRefactoringService.cs" />
-    <Compile Include="CodeRefactorings\ICodeRefactoringService.cs" />
-    <Compile Include="Completion\CompletionHelper.cs" />
-    <Compile Include="Completion\Glyph.cs" />
-    <Compile Include="Completion\CompletionItemExtensions.cs" />
-    <Compile Include="Completion\Providers\AbstractReferenceDirectiveCompletionProvider.cs" />
-    <Compile Include="Completion\Providers\FileSystemCompletionHelper.cs" />
-    <Compile Include="Completion\Providers\GlobalAssemblyCacheCompletionHelper.cs" />
-    <Compile Include="Completion\Providers\PathCompletionUtilities.cs" />
-    <Compile Include="Completion\Providers\ReferenceDirectiveCompletionProvider.cs" />
-    <Compile Include="DiagnosticOptions.cs" />
-    <Compile Include="Diagnostics\DiagnosticData.cs" />
-    <Compile Include="Diagnostics\DiagnosticDataLocation.cs" />
-    <Compile Include="Diagnostics\DiagnosticsService.cs" />
-    <Compile Include="Diagnostics\DiagnosticsUpdatedArgs.cs" />
-    <Compile Include="Diagnostics\DiagnosticsUpdatedKind.cs" />
-    <Compile Include="Diagnostics\IDiagnosticService.cs" />
-    <Compile Include="Diagnostics\UpdatedEventArgs.cs" />
-    <Compile Include="Diagnostics\WorkspaceDiagnosticAnalyzerProviderService.cs" />
-    <Compile Include="DocumentExtensions.cs" />
-    <Compile Include="DocumentTrackingService.cs" />
-    <Compile Include="HostWorkspaceServicesExtensions.cs" />
-    <Compile Include="IRoslynHost.cs" />
-    <Compile Include="ISymbolExtensions.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureDialogViewModel.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\ChangeSignatureOptionsService.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\IChangeSignatureDialog.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\ParameterConfiguration.cs" />
-    <Compile Include="LanguageServices\ChangeSignature\SignatureChange.cs" />
-    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceDialogViewModel.cs" />
-    <Compile Include="LanguageServices\ExtractInterface\ExtractInterfaceOptionsService.cs" />
-    <Compile Include="LanguageServices\ExtractInterface\IExtractInterfaceDialog.cs" />
-    <Compile Include="LanguageServices\IRoslynDialog.cs" />
-    <Compile Include="Navigation\DocumentNavigationService.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuickInfo\IQuickInfoProvider.cs" />
-    <Compile Include="QuickInfo\QuickInfoProvider.cs" />
-    <Compile Include="Rename\RenameHelper.cs" />
-    <Compile Include="RoslynHost.cs" />
-    <Compile Include="RoslynWorkspace.cs" />
-    <Compile Include="Scripting\DesktopAssemblyLoader.cs" />
-    <Compile Include="Scripting\InteractiveAssemblyLoader.cs" />
-    <Compile Include="Scripting\ScriptRunner.cs" />
-    <Compile Include="SignatureHelp\AggregateSignatureHelpProvider.cs" />
-    <Compile Include="SignatureHelp\ISignatureHelpProvider.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpItem.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpItems.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpParameter.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpProviderExtensions.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpTriggerInfo.cs" />
-    <Compile Include="SignatureHelp\SignatureHelpTriggerReason.cs" />
-    <Compile Include="Snippets\SnippetInfo.cs" />
-    <Compile Include="Snippets\SnippetInfoService.cs" />
-    <Compile Include="WorkspaceExtensions.cs" />
-    <Compile Include="WorkspaceServices\AddMetadataReferenceCodeActionOperationFactoryWorkspaceService.cs" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.1.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
-      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
-      <Name>RoslynPad.Common</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="project.json" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

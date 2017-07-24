@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
-using Microsoft.Practices.ServiceLocation;
 using RoslynPad.UI;
 using RoslynPad.Utilities;
 using Xceed.Wpf.AvalonDock;
@@ -33,9 +32,9 @@ namespace RoslynPad
             var container = new ContainerConfiguration()
                 .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
                 .WithAssembly(typeof(MainWindow).Assembly);     // RoslynPad
-            var locator = container.CreateContainer().GetExport<IServiceLocator>();
+            var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-            _viewModel = locator.GetInstance<MainViewModel>();
+            _viewModel = locator.GetService<MainViewModel>();
 
             DataContext = _viewModel;
             InitializeComponent();

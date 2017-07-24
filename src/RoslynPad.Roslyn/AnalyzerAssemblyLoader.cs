@@ -7,7 +7,7 @@ namespace RoslynPad.Roslyn
     {
         public Assembly LoadFromPath(string fullPath)
         {
-            return Assembly.Load(AssemblyName.GetAssemblyName(fullPath));
+            return AssemblyUtilities.Load(fullPath);
         }
 
         public void AddDependencyLocation(string fullPath)
