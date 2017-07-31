@@ -32,7 +32,10 @@ namespace RoslynPad.Roslyn.Completion
         EnumPrivate,
         EnumInternal,
 
-        EnumMember,
+        EnumMemberPublic,
+        EnumMemberProtected,
+        EnumMemberPrivate,
+        EnumMemberInternal,
 
         Error,
         StatusInformation,

@@ -41,7 +41,73 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMember}">
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMemberPublic}">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M5.5854,1.9996L3.9994,3.5866 3.9994,6.0006 0.000399999999999956,6.0006 0.000399999999999956,13.0006 7.9994,13.0006 7.9994,8.9996 10.4134,8.9996 11.9994,7.4136 11.9994,3.5866 10.4134,1.9996z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M10,5L6,5 6,4 10,4z M10,3L6,3 5,4 5,6 10,6 10,7 8,7 8,8 10,8 11,7 11,4z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M2,9L6,9 6,10 2,10z M1,12L7,12 7,7 1,7z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M2,10L6,10 6,9 2,9z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M5.999,5L10,5 10,4 5.999,4z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M7.999,7L10,7 10,6 7.999,6z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMemberInternal}">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M5.5854,1.9996L3.9994,3.5866 3.9994,6.0006 0.000399999999999956,6.0006 0.000399999999999956,13.0006 7.9994,13.0006 7.9994,8.9996 10.4134,8.9996 11.9994,7.4136 11.9994,3.5866 10.4134,1.9996z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M10,5L6,5 6,4 10,4z M10,3L6,3 5,4 5,6 10,6 10,7 8,7 8,8 10,8 11,7 11,4z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M2,9L6,9 6,10 2,10z M1,12L7,12 7,7 1,7z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M2,10L6,10 6,9 2,9z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M5.999,5L10,5 10,4 5.999,4z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M7.999,7L10,7 10,6 7.999,6z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMemberProtected}">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M5.5854,1.9996L3.9994,3.5866 3.9994,6.0006 0.000399999999999956,6.0006 0.000399999999999956,13.0006 7.9994,13.0006 7.9994,8.9996 10.4134,8.9996 11.9994,7.4136 11.9994,3.5866 10.4134,1.9996z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M10,5L6,5 6,4 10,4z M10,3L6,3 5,4 5,6 10,6 10,7 8,7 8,8 10,8 11,7 11,4z" />
+                    <GeometryDrawing Brush="#FF00529C"
+                                     Geometry="F1M2,9L6,9 6,10 2,10z M1,12L7,12 7,7 1,7z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M2,10L6,10 6,9 2,9z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M5.999,5L10,5 10,4 5.999,4z" />
+                    <GeometryDrawing Brush="#FFF0EFF1"
+                                     Geometry="F1M7.999,7L10,7 10,6 7.999,6z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="{x:Static completion:Glyph.EnumMemberPrivate}">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
