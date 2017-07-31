@@ -39,7 +39,7 @@ namespace RoslynPad.Hosting
 
         private static bool Is64BitProcess => IntPtr.Size == 8;
 
-        public static void RunServer(string serverPort, string clientPort, string semaphoreName, int clientProcessId)
+        public static void RunServer(string serverPort, string semaphoreName, int clientProcessId)
         {
             if (!AttachToClientProcess(clientProcessId))
             {
@@ -48,17 +48,13 @@ namespace RoslynPad.Hosting
 
             DisableWer();
 
-            PipeRpcServer server = null;
-            PipeRpcClient client = null;
+            ServerImpl server = null;
             try
             {
                 using (var semaphore = Semaphore.OpenExisting(semaphoreName))
                 {
-                    server = PipeRpcServer.Create(serverPort, MessageTypes);
-                    client = PipeRpcClient.CreateAsync(clientPort, MessageTypes).GetAwaiter().GetResult();
-
-                    // ReSharper disable once AccessToDisposedClosure
-                    Task.Run(() => RunServer(server, client));
+                    server = new ServerImpl(serverPort);
+                    server.Start();
 
                     _outWriter = CreateConsoleWriter();
                     Console.SetOut(_outWriter);
@@ -78,46 +74,11 @@ namespace RoslynPad.Hosting
             finally
             {
                 server?.Dispose();
-                client?.Dispose();
             }
 
             // force exit even if there are foreground threads running:
             // TODO
             //Environment.Exit(0);
-        }
-
-        private static async Task RunServer(PipeRpcServer server, PipeRpcClient client)
-        {
-            await server.Start().ConfigureAwait(false);
-
-            var callback = new ServiceCallbackClient(server);
-            var service = new Service(callback);
-
-            while (true)
-            {
-                var message = await client.ReadMessageAsync().ConfigureAwait(false);
-
-                try
-                {
-                    switch (message)
-                    {
-                        case InitializationMessage initialization:
-                            await service.Initialize(initialization).ConfigureAwait(false);
-                            break;
-                        case ExecuteMessage execute:
-                            await service.ExecuteAsync(execute).ConfigureAwait(false);
-                            break;
-                        case CompileAndSaveMessage compileAndSave:
-                            await service.CompileAndSave(compileAndSave).ConfigureAwait(false);
-                            break;
-                    }
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
-            // ReSharper disable once FunctionNeverReturns
         }
 
         /// <summary>
@@ -211,15 +172,11 @@ namespace RoslynPad.Hosting
 
                 var currentProcessId = Process.GetCurrentProcess().Id;
 
-                var remoteServerPort = "RoslynPad-Server-" + Guid.NewGuid();
-                var remoteClientPort = "RoslynPad-Client-" + Guid.NewGuid();
-
-                var server = PipeRpcServer.Create(remoteClientPort, MessageTypes);
-                await server.Start().ConfigureAwait(false);
-
+                var remotePort = "RoslynPad-" + Guid.NewGuid();
+                
                 var processInfo = new ProcessStartInfo(HostPath)
                 {
-                    Arguments = $"{remoteServerPort} {remoteClientPort} {semaphoreName} {currentProcessId}",
+                    Arguments = $"{remotePort} {semaphoreName} {currentProcessId}",
                     WorkingDirectory = _initializationParameters.WorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false
@@ -249,29 +206,22 @@ namespace RoslynPad.Hosting
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                PipeRpcClient client;
-
+                ClientImpl client;
                 // instantiate remote service
-                IService newService;
                 try
                 {
-                    newService = new ServiceClient(server);
-
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    await newService.Initialize(new InitializationMessage { Parameters = _initializationParameters }).ConfigureAwait(false);
-
-                    client = await PipeRpcClient.CreateAsync(remoteServerPort, MessageTypes).ConfigureAwait(false);
-
-                    // ReSharper disable once UnusedVariable
-                    var task = Task.Run(() => RunClient(client), cancellationToken);
+                    client = new ClientImpl(remotePort, this);
+                    await client.Connect().ConfigureAwait(false);
+                    await client.Initialize(new InitializationMessage { Parameters = _initializationParameters }).ConfigureAwait(false);
                 }
                 catch (Exception) when (!newProcess.IsAlive())
                 {
                     return null;
                 }
 
-                return new RemoteService(newProcess, newProcessId, newService, client);
+                return new RemoteService(newProcess, newProcessId, client);
             }
             catch (OperationCanceledException)
             {
@@ -286,25 +236,6 @@ namespace RoslynPad.Hosting
             {
                 semaphore?.Dispose();
             }
-        }
-
-        private async Task RunClient(PipeRpcClient client)
-        {
-            while (true)
-            {
-                var message = await client.ReadMessageAsync().ConfigureAwait(false);
-
-                switch (message)
-                {
-                    case DumpMessage dump:
-                        OnDumped(dump.Results);
-                        break;
-                    case ErrorMessage error:
-                        OnError(error.Error);
-                        break;
-                }
-            }
-            // ReSharper disable once FunctionNeverReturns
         }
 
         private void ThrowIfDisposed()
@@ -401,14 +332,6 @@ namespace RoslynPad.Hosting
             await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
         }
 
-        private static readonly ImmutableArray<Type> MessageTypes = ImmutableArray.Create(
-            typeof(DumpMessage),
-            typeof(ErrorMessage),
-            typeof(InitializationMessage),
-            typeof(ExecuteMessage),
-            typeof(CompileAndSaveMessage),
-            typeof(ResultObject));
-
         [DataContract]
         private class DumpMessage
         {
@@ -460,59 +383,8 @@ namespace RoslynPad.Hosting
             Task ExecuteAsync(ExecuteMessage message);
         }
 
-        private class ServiceCallbackClient : IServiceCallback
+        private class ServerImpl : RpcServer, IService, IServiceCallback
         {
-            private readonly PipeRpcServer _server;
-
-            public ServiceCallbackClient(PipeRpcServer server)
-            {
-                _server = server;
-            }
-
-            public Task Dump(DumpMessage message)
-            {
-                return _server.WriteMessageAsync(message);
-            }
-
-            public Task Error(ErrorMessage message)
-            {
-                return _server.WriteMessageAsync(message);
-            }
-        }
-
-        private class ServiceClient : IService, IDisposable
-        {
-            private readonly PipeRpcServer _server;
-
-            public ServiceClient(PipeRpcServer server)
-            {
-                _server = server;
-            }
-
-            public Task Initialize(InitializationMessage message)
-            {
-                return _server.WriteMessageAsync(message);
-            }
-
-            public Task CompileAndSave(CompileAndSaveMessage message)
-            {
-                return _server.WriteMessageAsync(message);
-            }
-
-            public Task ExecuteAsync(ExecuteMessage message)
-            {
-                return _server.WriteMessageAsync(message);
-            }
-
-            public void Dispose()
-            {
-                _server.Dispose();
-            }
-        }
-
-        private class Service : IDisposable, IService
-        {
-            private readonly IServiceCallback _callback;
             private const int WindowMillisecondsTimeout = 500;
             private const int WindowMaxCount = 10000;
 
@@ -551,14 +423,23 @@ namespace RoslynPad.Hosting
             private bool _checkOverflow;
             private bool _allowUnsafe;
 
-            public Service(IServiceCallback callback)
+            public ServerImpl(string pipeName) : base(pipeName)
             {
-                _callback = callback;
                 _dumpQueue = new ConcurrentQueue<ResultObject>();
                 _dumpLock = new SemaphoreSlim(0);
                 _scriptOptions = ScriptOptions.Default;
 
                 ObjectExtensions.Dumped += OnDumped;
+            }
+            
+            public Task Dump(DumpMessage message)
+            {
+                return InvokeAsync(nameof(Dump), message);
+            }
+
+            public Task Error(ErrorMessage message)
+            {
+                return InvokeAsync(nameof(Error), message);
             }
 
             public Task Initialize(InitializationMessage message)
@@ -632,11 +513,7 @@ namespace RoslynPad.Hosting
                     {
                         try
                         {
-                            var task = _callback?.Dump(new DumpMessage { Results = list });
-                            if (task != null)
-                            {
-                                await task.ConfigureAwait(false);
-                            }
+                            await Dump(new DumpMessage { Results = list }).ConfigureAwait(false);
                         }
                         catch
                         {
@@ -647,7 +524,7 @@ namespace RoslynPad.Hosting
                 // ReSharper disable once FunctionNeverReturns
             }
 
-            public void Dispose()
+            public override void Dispose()
             {
                 ObjectExtensions.Dumped -= OnDumped;
             }
@@ -719,7 +596,7 @@ namespace RoslynPad.Hosting
                         }
                         else
                         {
-                            await _callback.Error(new ErrorMessage { Error = errorResult }).ConfigureAwait(false);
+                            await Error(new ErrorMessage { Error = errorResult }).ConfigureAwait(false);
                         }
                     }
                 }
@@ -763,7 +640,7 @@ namespace RoslynPad.Hosting
                     optimizationLevel: _optimizationLevel,
                     checkOverflow: _checkOverflow,
                     allowUnsafe: _allowUnsafe
-                    );
+                );
 
                 return script;
             }
@@ -812,15 +689,51 @@ namespace RoslynPad.Hosting
             }
         }
 
+        private class ClientImpl : RpcClient, IService, IServiceCallback
+        {
+            private readonly ExecutionHost _host;
+
+            public ClientImpl(string pipeName, ExecutionHost host) : base(pipeName)
+            {
+                _host = host;
+            }
+
+            public Task Initialize(InitializationMessage message)
+            {
+                return InvokeAsync(nameof(Initialize), message);
+            }
+
+            public Task CompileAndSave(CompileAndSaveMessage message)
+            {
+                return InvokeAsync(nameof(CompileAndSave), message);
+            }
+
+            public Task ExecuteAsync(ExecuteMessage message)
+            {
+                return InvokeAsync(nameof(ExecuteAsync), message);
+            }
+
+            public Task Dump(DumpMessage message)
+            {
+                _host.OnDumped(message.Results);
+                return Task.CompletedTask;
+            }
+
+            public Task Error(ErrorMessage message)
+            {
+                _host.OnError(message.Error);
+                return Task.CompletedTask;
+            }
+        }
+
         private sealed class RemoteService : IDisposable
         {
             public readonly Process Process;
             // ReSharper disable once MemberHidesStaticFromOuterClass
             public readonly IService Service;
-            private readonly IDisposable _client;
             private readonly int _processId;
 
-            internal RemoteService(Process process, int processId, IService service, IDisposable client)
+            internal RemoteService(Process process, int processId, IService service)
             {
                 Debug.Assert(process != null);
                 Debug.Assert(service != null);
@@ -828,14 +741,12 @@ namespace RoslynPad.Hosting
                 Process = process;
                 _processId = processId;
                 Service = service;
-                _client = client;
             }
 
             public void Dispose()
             {
                 InitiateTermination(Process, _processId);
                 using (Service as IDisposable) { }
-                using (_client) { }
             }
 
             internal static void InitiateTermination(Process process, int processId)

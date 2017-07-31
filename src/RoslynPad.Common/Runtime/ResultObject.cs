@@ -39,6 +39,12 @@ namespace RoslynPad.Runtime
             return new ResultObject(o, 0, header);
         }
 
+        // for serialization
+        // ReSharper disable once UnusedMember.Local
+        private ResultObject()
+        {
+        }
+
         internal ResultObject(object o, int depth, string header = null, PropertyInfo property = null)
         {
             _depth = depth;
