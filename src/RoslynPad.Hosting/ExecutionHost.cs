@@ -76,10 +76,14 @@ namespace RoslynPad.Hosting
                 server?.Dispose();
             }
 
-            // force exit even if there are foreground threads running:
-            // TODO
-            //Environment.Exit(0);
+            // force exit even if there are foreground threads running
+            Exit?.Invoke(0);
         }
+
+        // Environment.Exit is not part of netstandard1.3...
+        private static readonly Action<int> Exit = (Action<int>)typeof(Environment)
+            .GetRuntimeMethod("Exit", new[] { typeof(int) })
+            ?.CreateDelegate(typeof(Action<int>));
 
         /// <summary>
         /// Disables Windows Error Reporting for the process, so that the process fails fast.
@@ -173,7 +177,7 @@ namespace RoslynPad.Hosting
                 var currentProcessId = Process.GetCurrentProcess().Id;
 
                 var remotePort = "RoslynPad-" + Guid.NewGuid();
-                
+
                 var processInfo = new ProcessStartInfo(HostPath)
                 {
                     Arguments = $"{remotePort} {semaphoreName} {currentProcessId}",
@@ -318,7 +322,7 @@ namespace RoslynPad.Hosting
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            await service.CompileAndSave(new CompileAndSaveMessage{ AssemblyPath = assemblyPath, Code = code }).ConfigureAwait(false);
+            await service.CompileAndSave(new CompileAndSaveMessage { AssemblyPath = assemblyPath, Code = code }).ConfigureAwait(false);
         }
 
         public async Task ResetAsync()
@@ -431,7 +435,7 @@ namespace RoslynPad.Hosting
 
                 ObjectExtensions.Dumped += OnDumped;
             }
-            
+
             public Task Dump(DumpMessage message)
             {
                 return InvokeAsync(nameof(Dump), message);

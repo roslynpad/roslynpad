@@ -7,6 +7,7 @@ using System.Composition.Hosting;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -203,29 +204,32 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
+        private static bool Is64BitOperatingSystem => RuntimeInformation.OSArchitecture == Architecture.X64 ||
+                                                      RuntimeInformation.OSArchitecture == Architecture.Arm64;
+
         private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
         {
             string assemblyPath = null;
             string docPath = null;
 
             // TODO: reference assemblies xplat
-            //var programFiles =
-            //    Environment.GetFolderPath(Environment.Is64BitOperatingSystem
-            //        ? Environment.SpecialFolder.ProgramFilesX86
-            //        : Environment.SpecialFolder.ProgramFiles);
-            //var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
-            //if (Directory.Exists(path))
-            //{
-            //    assemblyPath = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
-            //        .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
-            //        .OrderByDescending(x => x.version)
-            //        .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")))?.path;
+            var programFiles =
+                Environment.GetEnvironmentVariable(Is64BitOperatingSystem
+                    ? "ProgramFiles(x86)"
+                    : "ProgramFiles");
+            var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
+            if (Directory.Exists(path))
+            {
+                assemblyPath = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
+                    .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
+                    .OrderByDescending(x => x.version)
+                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")))?.path;
 
-            //    if (assemblyPath == null || !File.Exists(Path.Combine(assemblyPath, "System.xml")))
-            //    {
-            //        docPath = GetReferenceDocumentationPath(path);
-            //    }
-            //}
+                if (assemblyPath == null || !File.Exists(Path.Combine(assemblyPath, "System.xml")))
+                {
+                    docPath = GetReferenceDocumentationPath(path);
+                }
+            }
 
             return (assemblyPath, docPath);
         }
@@ -321,7 +325,7 @@ namespace RoslynPad.Roslyn
                 assemblyPath = Path.ChangeExtension(assemblyPath, "xml");
                 if (!_assemblyPathToDocumentationProviderMap.TryGetValue(assemblyPath, out var provider))
                 {
-                    provider = _assemblyPathToDocumentationProviderMap.GetOrAdd(assemblyPath, _path => XmlDocumentationProvider.CreateFromFile(_path));
+                    provider = _assemblyPathToDocumentationProviderMap.GetOrAdd(assemblyPath, XmlDocumentationProvider.CreateFromFile);
                 }
 
                 return provider;
