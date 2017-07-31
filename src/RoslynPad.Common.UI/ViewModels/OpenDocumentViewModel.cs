@@ -25,9 +25,9 @@ namespace RoslynPad.UI
     public class OpenDocumentViewModel : NotificationObject
     {
         private readonly IServiceProvider _serviceProvider;
-        private string _workingDirectory;
         private readonly IAppDispatcher _dispatcher;
 
+        private string _workingDirectory;
         private ExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
@@ -84,7 +84,7 @@ namespace RoslynPad.UI
 
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
         {
-            _onError?.Invoke(errorResult);
+            _dispatcher.InvokeAsync(() => _onError?.Invoke(errorResult));
             ResultsInternal?.Add(errorResult);
         }
 

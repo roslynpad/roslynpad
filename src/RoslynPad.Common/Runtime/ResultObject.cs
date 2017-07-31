@@ -40,8 +40,7 @@ namespace RoslynPad.Runtime
         }
 
         // for serialization
-        // ReSharper disable once UnusedMember.Local
-        private ResultObject()
+        protected ResultObject()
         {
         }
 
@@ -344,8 +343,7 @@ namespace RoslynPad.Runtime
             }
 
             var typeName = o?.GetType().Name;
-            string value;
-            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out value))
+            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out var value))
             {
                 return value;
             }
@@ -366,6 +364,10 @@ namespace RoslynPad.Runtime
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ExceptionResultObject : ResultObject
     {
+        // for serialization
+        // ReSharper disable once UnusedMember.Local
+        private ExceptionResultObject() { }
+
         private ExceptionResultObject(Exception exception) : base(exception, 0)
         {
             Message = exception.Message;

@@ -19,7 +19,6 @@ using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
-using InteractiveAssemblyLoader = RoslynPad.Roslyn.Scripting.InteractiveAssemblyLoader;
 
 namespace RoslynPad.Hosting
 {
@@ -689,7 +688,6 @@ namespace RoslynPad.Hosting
             private static void ReportUnhandledException(Exception e)
             {
                 e.Dump();
-                Debug.Fail("Unexpected error");
             }
         }
 
