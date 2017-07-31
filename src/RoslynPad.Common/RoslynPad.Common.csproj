@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
+    <Features>strict</Features>
     <RootNamespace>RoslynPad</RootNamespace>
     <AssemblyName>RoslynPad.Common</AssemblyName>
     <TargetFramework>netstandard1.3</TargetFramework>

@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
+    <Features>strict</Features>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <AssemblyName>Roslyn.Services.Editor.UnitTests</AssemblyName>
     <TargetFramework>netstandard1.3</TargetFramework>

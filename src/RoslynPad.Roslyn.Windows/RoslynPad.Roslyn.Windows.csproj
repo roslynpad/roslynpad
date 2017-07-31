@@ -6,6 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{075292F0-DBCD-4A01-9791-9637D396CCB8}</ProjectGuid>
     <OutputType>Library</OutputType>
+    <Features>strict</Features>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <AssemblyName>RoslynPad.Roslyn.Windows</AssemblyName>

@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <Features>strict</Features>
     <RootNamespace>RoslynPad.UI</RootNamespace>
     <AssemblyName>RoslynPad.Common.UI</AssemblyName>
     <TargetFramework>netstandard1.3</TargetFramework>
