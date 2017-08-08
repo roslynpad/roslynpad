@@ -6,5 +6,7 @@
     "win": {}
   },
   "dependencies": {
+    "Newtonsoft.Json": "10.0.2",
+    "System.Diagnostics.DiagnosticSource": "4.4.0"
   }
 }

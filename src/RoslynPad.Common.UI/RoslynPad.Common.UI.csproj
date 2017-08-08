@@ -1,96 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{47C8DFA4-E7E9-4E44-86C4-B906229A25E0}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <Features>strict</Features>
     <RootNamespace>RoslynPad.UI</RootNamespace>
     <AssemblyName>RoslynPad.Common.UI</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
+    <None Remove="RoslynPad.Common.UI.csproj.DotSettings" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Services\IApplicationSettings.cs" />
-    <Compile Include="Properties\Settings.Designer.cs">
-      <DependentUpon>Settings.settings</DependentUpon>
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-    <Compile Include="Services\SystemCompositionServiceLocator.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="ViewModels\DocumentViewModel.cs" />
-    <Compile Include="Dialogs\IDialog.cs" />
-    <Compile Include="Dialogs\IFolderBrowserDialog.cs" />
-    <Compile Include="Dialogs\IRenameSymbolDialog.cs" />
-    <Compile Include="Dialogs\ISaveDocumentDialog.cs" />
-    <Compile Include="Dialogs\ISaveFileDialog.cs" />
-    <Compile Include="Services\ITelemetryProvider.cs" />
-    <Compile Include="ViewModels\IActionCommand.cs" />
-    <Compile Include="ViewModels\MainViewModel.cs" />
-    <Compile Include="ViewModels\NotificationObject.cs" />
-    <Compile Include="ViewModels\NuGetViewModel.cs" />
-    <Compile Include="ViewModels\OpenDocumentViewModel.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
+    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
+    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="project.json" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>RoslynPad.Properties</CustomToolNamespace>
-    </None>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
+    <PackageReference Include="NuGet.Commands" Version="4.3.0-preview4" />
+    <PackageReference Include="NuGet.PackageManagement.NetStandard" Version="4.3.0-preview4a" />
+    <PackageReference Include="NuGet.ProjectModel" Version="4.3.0-preview4" />
+    <PackageReference Include="NuGet.Resolver" Version="4.3.0-preview4" />
+    <PackageReference Include="System.ComponentModel" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
-      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
-      <Name>RoslynPad.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj">
-      <Project>{bbac330f-94a5-4838-87c8-98055079626d}</Project>
-      <Name>RoslynPad.Hosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
-      <Project>{ac9f325f-a3ff-4561-941e-49ce4736cbd0}</Project>
-      <Name>RoslynPad.Roslyn</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

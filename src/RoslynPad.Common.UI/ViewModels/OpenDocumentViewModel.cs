@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.Practices.ServiceLocation;
 using NuGet.Versioning;
 using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
@@ -25,10 +24,10 @@ namespace RoslynPad.UI
     [Export]
     public class OpenDocumentViewModel : NotificationObject
     {
-        private readonly IServiceLocator _serviceLocator;
-        private string _workingDirectory;
-        private readonly Dispatcher _dispatcher;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IAppDispatcher _dispatcher;
 
+        private string _workingDirectory;
         private ExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
@@ -56,20 +55,22 @@ namespace RoslynPad.UI
         public DocumentViewModel Document { get; private set; }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceLocator serviceLocator, MainViewModel mainViewModel, ICommandProvider commands)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModel mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
         {
-            _serviceLocator = serviceLocator;
+            _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
             CommandProvider = commands;
-            NuGet = serviceLocator.GetInstance<NuGetDocumentViewModel>();
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
+            _dispatcher = appDispatcher;
 
             var roslynHost = mainViewModel.RoslynHost;
 
             Platform = Platform.X86;
-            _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
-                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration);
+            _executionHost = new ExecutionHost(GetHostExeName(), new InitializationParameters(
+                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray(),
+                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, _workingDirectory));
+
+            _executionHost.Error += ExecutionHostOnError;
 
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning);
@@ -79,6 +80,12 @@ namespace RoslynPad.UI
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
+        }
+
+        private void ExecutionHostOnError(ExceptionResultObject errorResult)
+        {
+            _dispatcher.InvokeAsync(() => _onError?.Invoke(errorResult));
+            ResultsInternal?.Add(errorResult);
         }
 
         public void SetDocument(DocumentViewModel document)
@@ -99,7 +106,7 @@ namespace RoslynPad.UI
             var symbol = await RenameHelper.GetRenameSymbol(document, _getSelection().Start).ConfigureAwait(true);
             if (symbol == null) return;
 
-            var dialog = _serviceLocator.GetInstance<IRenameSymbolDialog>();
+            var dialog = _serviceProvider.GetService<IRenameSymbolDialog>();
             dialog.Initialize(symbol.Name);
             dialog.Show();
             if (dialog.ShouldRename)
@@ -236,7 +243,7 @@ namespace RoslynPad.UI
                 var result = SaveResult.Save;
                 if (Document == null || Document.IsAutoSaveOnly)
                 {
-                    var dialog = _serviceLocator.GetInstance<ISaveDocumentDialog>();
+                    var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
                     dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(_workingDirectory, s);
@@ -251,7 +258,7 @@ namespace RoslynPad.UI
                 }
                 else if (promptSave)
                 {
-                    var dialog = _serviceLocator.GetInstance<ISaveDocumentDialog>();
+                    var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = true;
                     dialog.DocumentName = Document.Name;
                     dialog.Show();
@@ -283,7 +290,7 @@ namespace RoslynPad.UI
             if (DocumentId == null) return;
 
             var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
-            using (var writer = new StreamWriter(path, append: false))
+            using (var writer = File.CreateText(path))
             {
                 for (int lineIndex = 0; lineIndex < text.Lines.Count - 1; ++lineIndex)
                 {
@@ -318,21 +325,21 @@ namespace RoslynPad.UI
 
         public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : "New";
 
-        public IActionCommand SaveCommand { get; }
+        public IDelegateCommand SaveCommand { get; }
 
-        public IActionCommand RunCommand { get; }
+        public IDelegateCommand RunCommand { get; }
 
-        public IActionCommand CompileAndSaveCommand { get; }
+        public IDelegateCommand CompileAndSaveCommand { get; }
 
-        public IActionCommand RestartHostCommand { get; }
+        public IDelegateCommand RestartHostCommand { get; }
 
-        public IActionCommand FormatDocumentCommand { get; }
+        public IDelegateCommand FormatDocumentCommand { get; }
 
-        public IActionCommand CommentSelectionCommand { get; }
+        public IDelegateCommand CommentSelectionCommand { get; }
 
-        public IActionCommand UncommentSelectionCommand { get; }
+        public IDelegateCommand UncommentSelectionCommand { get; }
 
-        public IActionCommand RenameSymbolCommand { get; }
+        public IDelegateCommand RenameSymbolCommand { get; }
 
         public bool IsRunning
         {
@@ -347,7 +354,7 @@ namespace RoslynPad.UI
 
         private async Task CompileAndSave()
         {
-            var saveDialog = _serviceLocator.GetInstance<ISaveFileDialog>();
+            var saveDialog = _serviceProvider.GetService<ISaveFileDialog>();
             saveDialog.OverwritePrompt = true;
             saveDialog.AddExtension = true;
             saveDialog.Filter = "Libraries|*.dll|Executables|*.exe";
@@ -406,12 +413,7 @@ namespace RoslynPad.UI
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
-                var errorResult = await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
-                _onError?.Invoke(errorResult);
-                if (errorResult != null)
-                {
-                    results.Add(errorResult);
-                }
+                await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -493,7 +495,7 @@ namespace RoslynPad.UI
                 {
                     results.Add(ResultObject.Create(o));
                 }
-            }, DispatcherPriority.SystemIdle, cancellationToken);
+            }, AppDispatcherPriority.Low, cancellationToken);
         }
 
         public async Task<string> LoadText()
@@ -502,7 +504,7 @@ namespace RoslynPad.UI
             {
                 return string.Empty;
             }
-            using (var fileStream = new StreamReader(Document.Path))
+            using (var fileStream = File.OpenText(Document.Path))
             {
                 return await fileStream.ReadToEndAsync().ConfigureAwait(false);
             }

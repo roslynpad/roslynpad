@@ -22,7 +22,7 @@ namespace RoslynPad.Utilities
             ReflectionUtil.GenerateGetField<Exception, string>("_remoteStackTraceString");
 
         /// <summary>
-        /// Gets an async-friendly <see cref="Exception"/> string using <see cref="StackTraceExtensions.ToAsyncString"/>.
+        /// Gets an async-friendly <see cref="Exception"/> string using <see cref="StackTraceExtensions"/>.
         /// Includes special handling for <see cref="AggregateException"/>s.
         /// </summary>
         /// <param name="exception">The exception to format.</param>

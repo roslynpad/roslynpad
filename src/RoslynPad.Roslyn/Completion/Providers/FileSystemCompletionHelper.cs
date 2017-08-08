@@ -22,8 +22,9 @@ namespace RoslynPad.Roslyn.Completion.Providers
         private readonly ImmutableArray<string> _searchPaths;
 
         private readonly ISet<string> _allowableExtensions;
-
-        private readonly Lazy<string[]> _lazyGetDrives;
+       
+        // TODO: logical drives xplat?
+        //private readonly Lazy<string[]> _lazyGetDrives;
         private readonly CompletionItemRules _itemRules;
 
         public FileSystemCompletionHelper(Microsoft.CodeAnalysis.Glyph folderGlyph,
@@ -42,8 +43,8 @@ namespace RoslynPad.Roslyn.Completion.Providers
             _exclude = exclude;
             _itemRules = itemRules;
 
-            _lazyGetDrives = new Lazy<string[]>(() =>
-                    IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>()));
+            //_lazyGetDrives = new Lazy<string[]>(() =>
+            //        IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>()));
         }
 
         public ImmutableArray<CompletionItem> GetItems(string pathSoFar, string documentPath)
@@ -86,7 +87,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                     }
 
                     result.Add(CreateNetworkRoot());
-                    result.AddRange(GetLogicalDrives());
+                    //result.AddRange(GetLogicalDrives());
                     result.AddRange(GetFilesAndDirectoriesInSearchPaths());
                     break;
 
@@ -263,14 +264,14 @@ namespace RoslynPad.Roslyn.Completion.Providers
             return _searchPaths.SelectMany(GetFilesAndDirectoriesInDirectory);
         }
 
-        private IEnumerable<CompletionItem> GetLogicalDrives()
-        {
-            // First, we may have a filename, so let's include all drives
-            return from d in _lazyGetDrives.Value
-                where d.Length > 0 && (d.Last() == Path.DirectorySeparatorChar || d.Last() == Path.AltDirectorySeparatorChar)
-                let text = d.Substring(0, d.Length - 1)
-                select CommonCompletionItem.Create(text, glyph: _folderGlyph, rules: _itemRules);
-        }
+        //private IEnumerable<CompletionItem> GetLogicalDrives()
+        //{
+        //    // First, we may have a filename, so let's include all drives
+        //    return from d in _lazyGetDrives.Value
+        //        where d.Length > 0 && (d.Last() == Path.DirectorySeparatorChar || d.Last() == Path.AltDirectorySeparatorChar)
+        //        let text = d.Substring(0, d.Length - 1)
+        //        select CommonCompletionItem.Create(text, glyph: _folderGlyph, rules: _itemRules);
+        //}
 
         private static FileSystemInfo[] GetFileSystemInfos(DirectoryInfo directoryInfo)
         {

@@ -71,7 +71,7 @@ namespace RoslynPad.Utilities
 
         private static async Task<string> ReadAllTextInternalAsync(string path)
         {
-            using (var reader = new StreamReader(path))
+            using (var reader = File.OpenText(path))
             {
                 return await reader.ReadToEndAsync().ConfigureAwait(false);
             }

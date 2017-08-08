@@ -6,6 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{2F7723C1-297B-416F-9A78-153156D319B9}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <Features>strict</Features>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoslynPad</RootNamespace>
     <AssemblyName>RoslynPad</AssemblyName>
@@ -16,22 +17,6 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <HockeyAppResourceId>109aaf1a23174568a9cf856137c8503d</HockeyAppResourceId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -58,8 +43,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
@@ -83,12 +66,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CommandProvider.cs" />
+    <Compile Include="AppDispatcher.cs" />
     <Compile Include="DocumentTreeView.xaml.cs">
       <DependentUpon>DocumentTreeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="FolderBrowserDialogAdapter.cs" />
     <Compile Include="Formatting\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Formatting\DocumentCollectionViewConverter.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
@@ -146,7 +130,6 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <None Include="project.json" />
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
@@ -159,44 +142,44 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj">
-      <Project>{47c8dfa4-e7e9-4e44-86c4-b906229a25e0}</Project>
       <Name>RoslynPad.Common.UI</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
-      <Project>{fae8af1b-5004-42b6-8b42-eff1db5b677f}</Project>
       <Name>RoslynPad.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Host64\RoslynPad.Host64.csproj">
-      <Project>{4dab681a-d6ce-4b39-8ed1-6218bb6679fd}</Project>
       <Name>RoslynPad.Host64</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj">
-      <Project>{BBAC330F-94A5-4838-87C8-98055079626D}</Project>
       <Name>RoslynPad.Hosting</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj">
-      <Project>{ca953492-94c7-4f25-9cf2-eb70aa07a55f}</Project>
       <Name>RoslynPad.Host32</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj">
-      <Project>{5fc3a02c-33b5-4e32-8512-7053474d9c57}</Project>
       <Name>RoslynPad.Editor.Windows</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj">
-      <Project>{075292f0-dbcd-4a01-9791-9637d396ccb8}</Project>
       <Name>RoslynPad.Roslyn.Windows</Name>
     </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
-      <Project>{ac9f325f-a3ff-4561-941e-49ce4736cbd0}</Project>
       <Name>RoslynPad.Roslyn</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
+    <PackageReference Include="AvalonEdit" Version="5.0.2" />
+    <PackageReference Include="AvalonLibrary" Version="2.3.0" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>10.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

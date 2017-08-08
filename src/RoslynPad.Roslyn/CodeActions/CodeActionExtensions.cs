@@ -101,13 +101,13 @@ namespace RoslynPad.Roslyn.CodeActions
                         switch (GetAccessibility(tags))
                         {
                             case Accessibility.Protected:
-                                return Glyph.EnumMember;
+                                return Glyph.EnumMemberProtected;
                             case Accessibility.Private:
-                                return Glyph.EnumMember;
+                                return Glyph.EnumMemberPrivate;
                             case Accessibility.Internal:
-                                return Glyph.EnumMember;
+                                return Glyph.EnumMemberInternal;
                             default:
-                                return Glyph.EnumMember;
+                                return Glyph.EnumMemberPublic;
                         }
 
                     case WellKnownTags.Error:

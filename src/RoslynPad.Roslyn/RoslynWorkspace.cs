@@ -184,8 +184,8 @@ namespace RoslynPad.Roslyn
                 {
                     return null;
                 }
-                var assembly = Assembly.Load(assemblyName.ToString());
-                return RoslynHost.CreateMetadataReference(assembly.Location);
+                var assembly = Assembly.Load(new AssemblyName(assemblyName.ToString()));
+                return RoslynHost.CreateMetadataReference(assembly.GetLocation());
             }
             catch (Exception)
             {

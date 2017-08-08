@@ -27,7 +27,6 @@ using PackageReference = NuGet.Packaging.PackageReference;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
-using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
 
 namespace RoslynPad.UI
 {
@@ -53,7 +52,7 @@ namespace RoslynPad.UI
                 _settings = Settings.LoadDefaultSettings(
                     root: null,
                     configFileName: null,
-                    machineWideSettings: new CommandLineMachineWideSettings());
+                    machineWideSettings: new XPlatMachineWideSetting());
 
                 _sourceProvider = new PackageSourceProvider(_settings);
 
@@ -134,7 +133,7 @@ namespace RoslynPad.UI
             var packageIdentity = new PackageIdentity(packageId, version);
 
             await packageManager.InstallPackageAsync(
-                project, 
+                project,
                 packageIdentity,
                 resolutionContext,
                 projectContext,
@@ -147,7 +146,7 @@ namespace RoslynPad.UI
 
         private static string GetPackagePath(PackageIdentity identity, string path)
         {
-            return $@"{identity.Id}\{identity.Version}\{path}";
+            return $@"{identity.Id}\{identity.Version.ToFullString()}\{path}";
         }
 
         private static void OverrideProject(MSBuildNuGetProject project)
@@ -183,7 +182,7 @@ namespace RoslynPad.UI
                 if (exactMatch)
                 {
                     var match = result.FirstOrDefault(c => string.Equals(c.Identity.Id, searchTerm,
-                        StringComparison.InvariantCultureIgnoreCase));
+                        StringComparison.OrdinalIgnoreCase));
                     result = match != null ? new[] { match } : null;
                 }
 
@@ -214,7 +213,7 @@ namespace RoslynPad.UI
         }
 
         #region Inner Classes
-        
+
         private class DummyFolderNuGetProject : FolderNuGetProject
         {
             public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory)
@@ -283,7 +282,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private class DummyNuGetProjectSystem : IMSBuildNuGetProjectSystem
+        private class DummyNuGetProjectSystem : IMSBuildProjectSystem
         {
             private readonly Action<string> _addReference;
             private readonly Action<string> _addFrameworkReference;
@@ -297,15 +296,21 @@ namespace RoslynPad.UI
 
             public NuGetFramework TargetFramework { get; } = NuGetFramework.Parse(TargetFrameworkName);
 
-            public void AddReference(string referencePath) => _addReference(referencePath);
+            public Task AddReferenceAsync(string referencePath)
+            {
+                _addReference(referencePath);
+                return Task.CompletedTask;
+            }
 
-            public void AddFrameworkReference(string name, string packageId) => _addFrameworkReference(name);
+            public Task<bool> ReferenceExistsAsync(string name) => Task.FromResult(false);
+
+            public Task AddFrameworkReferenceAsync(string name, string packageId)
+            {
+                _addFrameworkReference(name);
+                return Task.CompletedTask;
+            }
 
             #region Not used
-
-            public void SetNuGetProjectContext(INuGetProjectContext nuGetProjectContext)
-            {
-            }
 
             public void AddFile(string path, Stream stream)
             {
@@ -324,14 +329,7 @@ namespace RoslynPad.UI
                 return false;
             }
 
-            public void RemoveReference(string name)
-            {
-            }
-
-            public bool ReferenceExists(string name)
-            {
-                return false;
-            }
+            public Task RemoveReferenceAsync(string name) => Task.CompletedTask;
 
             public void AddImport(string targetFullPath, ImportLocation location)
             {
@@ -360,23 +358,13 @@ namespace RoslynPad.UI
             {
             }
 
-            public Task ExecuteScriptAsync(PackageIdentity identity, string packageInstallPath, string scriptRelativePath,
-                bool throwOnFailure)
-            {
-                return Task.CompletedTask;
-            }
-
-            public void BeginProcessing()
-            {
-            }
+            public Task BeginProcessingAsync() => Task.CompletedTask;
 
             public void RegisterProcessedFiles(IEnumerable<string> files)
             {
             }
 
-            public void EndProcessing()
-            {
-            }
+            public Task EndProcessingAsync() => Task.CompletedTask;
 
             public void DeleteDirectory(string path, bool recursive)
             {
@@ -402,8 +390,7 @@ namespace RoslynPad.UI
             public string ProjectFullPath => "P";
             public string ProjectFileFullPath => "P";
 
-            public INuGetProjectContext NuGetProjectContext { get; }
-            public dynamic VSProject4 => null;
+            public INuGetProjectContext NuGetProjectContext { get; set; }
 
             #endregion
         }
@@ -447,23 +434,6 @@ namespace RoslynPad.UI
             }
 
             public IPackageSourceProvider PackageSourceProvider { get; }
-        }
-
-        private class CommandLineMachineWideSettings : IMachineWideSettings
-        {
-            private readonly Lazy<IEnumerable<Settings>> _settings;
-
-            public CommandLineMachineWideSettings()
-            {
-                var baseDirectory = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                        "nuget",
-                        "Config");
-                _settings = new Lazy<IEnumerable<Settings>>(
-                    () => NuGet.Configuration.Settings.LoadMachineWideSettings(baseDirectory));
-            }
-
-            public IEnumerable<Settings> Settings => _settings.Value;
         }
 
         #endregion
@@ -518,7 +488,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public IActionCommand<PackageData> InstallPackageCommand { get; }
+        public IDelegateCommand<PackageData> InstallPackageCommand { get; }
 
         private void OnPackageInstalled(NuGetInstallResult result)
         {

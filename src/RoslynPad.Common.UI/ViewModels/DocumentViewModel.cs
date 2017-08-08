@@ -1,10 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Windows.Data;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -18,7 +16,6 @@ namespace RoslynPad.UI
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
         private bool _isSearchMatch;
-        private ICollectionView _childrenView;
 
         private DocumentViewModel(string rootPath)
         {
@@ -137,23 +134,6 @@ namespace RoslynPad.UI
                 }
 
                 return _isAutoSaveOnly.Value;
-            }
-        }
-
-        public ICollectionView ChildrenView
-        {
-            get
-            {
-                if (_childrenView == null)
-                {
-                    var childrenView = new ListCollectionView(Children);
-                    childrenView.LiveFilteringProperties.Add(nameof(IsSearchMatch));
-                    childrenView.IsLiveFiltering = true;
-                    childrenView.Filter = o => ((DocumentViewModel)o).IsSearchMatch;
-                    _childrenView = childrenView;
-                }
-
-                return _childrenView;
             }
         }
 

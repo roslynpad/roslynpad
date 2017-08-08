@@ -106,7 +106,7 @@ namespace RoslynPad.Editor.Windows
         {
             return triggerChar != null
                 ? CompletionTrigger.CreateInsertionTrigger(triggerChar.Value)
-                : CompletionTrigger.Default;
+                : CompletionTrigger.Invoke;
         }
     }
 }

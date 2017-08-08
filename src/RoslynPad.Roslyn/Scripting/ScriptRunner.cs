@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Scripting;
+using Microsoft.CodeAnalysis.Scripting.Hosting;
 
 namespace RoslynPad.Roslyn.Scripting
 {
@@ -19,7 +20,6 @@ namespace RoslynPad.Roslyn.Scripting
     /// </summary>
     public sealed class ScriptRunner
     {
-        
         private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid();
         
         private readonly InteractiveAssemblyLoader _assemblyLoader;

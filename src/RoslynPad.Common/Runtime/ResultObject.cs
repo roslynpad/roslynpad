@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Reflection;
@@ -31,14 +32,19 @@ namespace RoslynPad.Runtime
             .Add("JObject", "{...}");
 
         private readonly int _depth;
-        private readonly PropertyDescriptor _property;
+        private readonly PropertyInfo _property;
 
         public static ResultObject Create(object o, string header = null)
         {
             return new ResultObject(o, 0, header);
         }
 
-        internal ResultObject(object o, int depth, string header = null, PropertyDescriptor property = null)
+        // for serialization
+        protected ResultObject()
+        {
+        }
+
+        internal ResultObject(object o, int depth, string header = null, PropertyInfo property = null)
         {
             _depth = depth;
             _property = property;
@@ -127,16 +133,17 @@ namespace RoslynPad.Runtime
                 Value = GetString(o);
                 return;
             }
-
-            var properties = GetProperties(o);
-
+            
             var type = o.GetType();
+            var properties = type.GetTypeInfo().DeclaredProperties;
 
             var e = GetEnumerable(o, type);
             if (e != null)
             {
+                // ReSharper disable once PossibleMultipleEnumeration
                 if (IsSpecialEnumerable(type, properties))
                 {
+                    // ReSharper disable once PossibleMultipleEnumeration
                     PopulateChildren(o, targetDepth, properties, headerPrefix);
                     var enumerable = new ResultObject(o, targetDepth, headerPrefix);
                     enumerable.InitializeEnumerable(headerPrefix, e, targetDepth);
@@ -220,7 +227,7 @@ namespace RoslynPad.Runtime
         private static string GetSimpleTypeName(Type type)
         {
             var typeName = type.Name;
-            if (type.IsGenericType)
+            if (type.IsConstructedGenericType)
             {
                 var separatorIndex = typeName.IndexOf('`');
                 if (separatorIndex > 0)
@@ -232,21 +239,16 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, int targetDepth, PropertyDescriptorCollection properties, string headerPrefix)
+        private void PopulateChildren(object o, int targetDepth, IEnumerable<PropertyInfo> properties, string headerPrefix)
         {
             Header = headerPrefix;
             Value = GetString(o);
 
             if (o == null) return;
 
-            var children = properties.Cast<PropertyDescriptor>()
+            var children = properties
                 .Select(p => new ResultObject(o, targetDepth, property: p));
             Children = children.ToArray();
-        }
-
-        private static PropertyDescriptorCollection GetProperties(object o)
-        {
-            return TypeDescriptor.GetProperties(o);
         }
 
         protected static string GetStackTrace(Exception exception)
@@ -256,7 +258,7 @@ namespace RoslynPad.Runtime
 
         protected static IEnumerable<StackFrame> GetStackFrames(Exception exception)
         {
-            var frames = new StackTrace(exception, fNeedFileInfo: true).GetFrames();
+            var frames = new StackTrace(exception, needFileInfo: true).GetFrames();
             if (frames == null || frames.Length == 0)
             {
                 return Array.Empty<StackFrame>();
@@ -274,7 +276,7 @@ namespace RoslynPad.Runtime
 
         protected static bool IsScriptMethod(StackFrame stackFrame)
         {
-            return stackFrame.GetMethod()?.DeclaringType?.
+            return stackFrame.GetMethod()?.DeclaringType?.GetTypeInfo().
                    Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
         }
 
@@ -286,10 +288,10 @@ namespace RoslynPad.Runtime
 
                 var items = new List<ResultObject>();
 
-                var type = e.GetType();
+                var type = e.GetType().GetTypeInfo();
 
-                var enumerableInterface = type.GetInterfaces()
-                        .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                var enumerableInterface = type.ImplementedInterfaces
+                        .FirstOrDefault(x => x.IsConstructedGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
                 var enumerableType = enumerableInterface?.GenericTypeArguments[0] ?? typeof(object);
                 var enumerableTypeName = GetTypeName(enumerableType);
 
@@ -307,10 +309,10 @@ namespace RoslynPad.Runtime
                 }
 
                 var hasMore = enumerator.MoveNext() ? "+" : "";
-                var groupingInterface = type.GetInterfaces()
-                        .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
+                var groupingInterface = type.ImplementedInterfaces
+                        .FirstOrDefault(x => x.IsConstructedGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
                 Value = groupingInterface != null
-                    ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetProperty("Key").GetValue(e)}>"
+                    ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetRuntimeProperty("Key").GetValue(e)}>"
                     : $"<enumerable Count: {items.Count}{hasMore}>";
                 Children = items;
             }
@@ -322,10 +324,10 @@ namespace RoslynPad.Runtime
             }
         }
         
-        private static bool IsSpecialEnumerable(Type t, PropertyDescriptorCollection properties)
+        private static bool IsSpecialEnumerable(Type t, IEnumerable<PropertyInfo> properties)
         {
-            return properties.OfType<PropertyDescriptor>().Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
-                   && !typeof(IEnumerator).IsAssignableFrom(t)
+            return properties.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
+                   && !typeof(IEnumerator).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
                    && t.Namespace?.StartsWith("System.Linq", StringComparison.Ordinal) != true
@@ -341,8 +343,7 @@ namespace RoslynPad.Runtime
             }
 
             var typeName = o?.GetType().Name;
-            string value;
-            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out value))
+            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out var value))
             {
                 return value;
             }
@@ -360,13 +361,18 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract(IsReference = true)]
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ExceptionResultObject : ResultObject
     {
+        // for serialization
+        // ReSharper disable once UnusedMember.Local
+        private ExceptionResultObject() { }
+
         private ExceptionResultObject(Exception exception) : base(exception, 0)
         {
             Message = exception.Message;
 
-            var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
+            var stackFrames = new StackTrace(exception, needFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
             foreach (var stackFrame in stackFrames)
             {
                 if (IsScriptMethod(stackFrame))
