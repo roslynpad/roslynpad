@@ -23,7 +23,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
-        internal override bool IsInsertionTrigger(SourceText text, int characterPosition, OptionSet options)
+        public override bool IsInsertionTrigger(SourceText text, int characterPosition, OptionSet options)
         {
             return PathCompletionUtilities.IsTriggerCharacter(text, characterPosition);
         }
