@@ -33,6 +33,8 @@ namespace RoslynPad.Editor.Windows
 {
     internal sealed class RoslynSemanticHighlighter : IHighlighter
     {
+        private const int CacheSize = 512;
+
         private readonly IDocument _document;
         private readonly DocumentId _documentId;
         private readonly IRoslynHost _roslynHost;
@@ -80,9 +82,16 @@ namespace RoslynPad.Editor.Windows
 
         public event HighlightingStateChangedEventHandler HighlightingStateChanged;
 
-        private void OnHighlightingStateChanged(int fromLineNumber, int toLineNumber)
+        private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
         {
-            _syncContext.Post(o => HighlightingStateChanged?.Invoke(fromLineNumber, toLineNumber), null);
+            var lineNumber = line.DocumentLine.LineNumber;
+            _syncContext.Post(o =>
+            {
+                line.Sections.Clear();
+                foreach (var section in sections)
+                    line.Sections.Add(section);
+                HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
+            }, null);
         }
 
         IDocument IHighlighter.Document => _document;
@@ -130,7 +139,7 @@ namespace RoslynPad.Editor.Windows
             }
             try
             {
-                return DoHighlightLine(documentLine);
+                return DoHighlightLine(documentLine, cachedLine);
             }
             finally
             {
@@ -139,9 +148,34 @@ namespace RoslynPad.Editor.Windows
             }
         }
 
-        private HighlightedLine DoHighlightLine(IDocumentLine documentLine)
+        private HighlightedLine DoHighlightLine(IDocumentLine documentLine, CachedLine previousCachedLine)
         {
             var line = new HighlightedLine(_document, documentLine);
+
+            // If we have previous cached data, use it in the meantime since our request is asynchronous
+            var previousHighlight = previousCachedLine?.HighlightedLine;
+            if (previousHighlight != null && previousHighlight.Sections.Count > 0)
+            {
+                var offsetShift = documentLine.Offset - previousCachedLine.Offset;
+
+                foreach (var section in previousHighlight.Sections)
+                {
+                    var offset = section.Offset + offsetShift;
+
+                    // stop if section starts after end of line
+                    if (offset >= documentLine.EndOffset)
+                        break;
+
+                    // clamp section to not be longer than line
+                    line.Sections.Add(new HighlightedSection
+                    {
+                        Color = section.Color,
+                        Offset = offset,
+                        Length = Math.Min(section.Length, documentLine.EndOffset - offset),
+                    });
+                }
+                //HighlightingStateChanged?.Invoke(documentLine.LineNumber, documentLine.LineNumber);
+            }
 
             // since we don't want to block the UI thread
             // we'll enqueue the request and process it asynchornously
@@ -183,13 +217,15 @@ namespace RoslynPad.Editor.Windows
                     continue;
                 }
 
+                // rebuild sections
+                var sections = new List<HighlightedSection>();
                 foreach (var classifiedSpan in spans)
                 {
                     if (IsOutsideLine(classifiedSpan, documentLine))
                     {
                         continue;
                     }
-                    line.Sections.Add(new HighlightedSection
+                    sections.Add(new HighlightedSection
                     {
                         Color = _highlightColors.GetBrush(classifiedSpan.ClassificationType),
                         Offset = classifiedSpan.TextSpan.Start,
@@ -197,7 +233,8 @@ namespace RoslynPad.Editor.Windows
                     });
                 }
 
-                OnHighlightingStateChanged(documentLine.LineNumber, documentLine.LineNumber);
+                // post update on UI thread
+                UpdateHighlightingSections(line, sections);
             }
             // ReSharper disable once FunctionNeverReturns
         }
@@ -214,6 +251,12 @@ namespace RoslynPad.Editor.Windows
             if (_cachedLines != null && _document.Version != null)
             {
                 _cachedLines.Add(new CachedLine(line, _document.Version));
+
+                // Clean cache once it gets too big
+                if (_cachedLines.Count > CacheSize)
+                {
+                    _cachedLines.RemoveRange(0, CacheSize / 2);
+                }
             }
         }
 
@@ -258,6 +301,7 @@ namespace RoslynPad.Editor.Windows
         {
             public readonly HighlightedLine HighlightedLine;
             public readonly ITextSourceVersion OldVersion;
+            public readonly int Offset;
 
             /// <summary>
             /// Gets whether the cache line is valid (no document changes since it was created).
@@ -272,6 +316,7 @@ namespace RoslynPad.Editor.Windows
                 HighlightedLine = highlightedLine ?? throw new ArgumentNullException(nameof(highlightedLine));
                 OldVersion = fileVersion ?? throw new ArgumentNullException(nameof(fileVersion));
                 IsValid = true;
+                Offset = HighlightedLine.DocumentLine.Offset;
             }
         }
 
