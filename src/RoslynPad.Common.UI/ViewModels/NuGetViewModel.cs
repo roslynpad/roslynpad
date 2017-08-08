@@ -146,7 +146,7 @@ namespace RoslynPad.UI
 
         private static string GetPackagePath(PackageIdentity identity, string path)
         {
-            return $@"{identity.Id}\{identity.Version}\{path}";
+            return $@"{identity.Id}\{identity.Version.ToFullString()}\{path}";
         }
 
         private static void OverrideProject(MSBuildNuGetProject project)
