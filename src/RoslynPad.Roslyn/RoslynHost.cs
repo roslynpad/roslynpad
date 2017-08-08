@@ -108,7 +108,7 @@ namespace RoslynPad.Roslyn
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: PreprocessorSymbols);
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
 
             (_referenceAssembliesPath, _documentationPath) = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderService();

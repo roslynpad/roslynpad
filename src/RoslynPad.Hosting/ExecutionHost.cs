@@ -447,7 +447,7 @@ namespace RoslynPad.Hosting
 
             public Task Initialize(InitializationMessage message)
             {
-                _parseOptions = new CSharpParseOptions().WithPreprocessorSymbols("__DEMO__", "__DEMO_EXPERIMENTAL__");
+                _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.Latest);
 
                 var initializationParameters = message.Parameters;
 
