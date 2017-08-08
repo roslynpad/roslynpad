@@ -10,11 +10,6 @@
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="Properties\**" />
-    <None Remove="Properties\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="RoslynPad.Common.UI.csproj.DotSettings" />
   </ItemGroup>
   <ItemGroup>
@@ -26,9 +21,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
-    <PackageReference Include="NuGet.Commands" Version="4.0.0" />
-    <PackageReference Include="NuGet.ProjectModel" Version="4.0.0" />
-    <PackageReference Include="NuGet.Resolver" Version="4.0.0" />
+    <PackageReference Include="NuGet.Commands" Version="4.3.0-preview4" />
+    <PackageReference Include="NuGet.PackageManagement.NetStandard" Version="4.3.0-preview4a" />
+    <PackageReference Include="NuGet.ProjectModel" Version="4.3.0-preview4" />
+    <PackageReference Include="NuGet.Resolver" Version="4.3.0-preview4" />
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>

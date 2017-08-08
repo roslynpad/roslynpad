@@ -5,30 +5,28 @@ using System.Collections.Immutable;
 using System.Composition;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Frameworks;
+using NuGet.PackageManagement;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
-using NuGet.ProjectModel;
+using NuGet.ProjectManagement;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
-using NuGet.Repositories;
 using NuGet.Resolver;
 using NuGet.Versioning;
-using RoslynPad.UI.NuGet;
 using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
 using ISettings = NuGet.Configuration.ISettings;
+using PackageReference = NuGet.Packaging.PackageReference;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
-using IMachineWideSettings = NuGet.Configuration.IMachineWideSettings;
-using Strings = NuGet.Packaging.Strings;
 
 namespace RoslynPad.UI
 {
@@ -54,7 +52,7 @@ namespace RoslynPad.UI
                 _settings = Settings.LoadDefaultSettings(
                     root: null,
                     configFileName: null,
-                    machineWideSettings: new CommandLineMachineWideSettings());
+                    machineWideSettings: new XPlatMachineWideSetting());
 
                 _sourceProvider = new PackageSourceProvider(_settings);
 
@@ -77,399 +75,6 @@ namespace RoslynPad.UI
             return await GetPackages(searchTerm, includePrerelease, exactMatch, cancellationToken).ConfigureAwait(false);
         }
 
-        internal static FrameworkSpecificGroup GetMostCompatibleGroup(NuGetFramework projectTargetFramework,
-            IEnumerable<FrameworkSpecificGroup> itemGroups)
-        {
-            var reducer = new FrameworkReducer();
-            var mostCompatibleFramework
-                = reducer.GetNearest(projectTargetFramework, itemGroups.Select(i => i.TargetFramework));
-            if (mostCompatibleFramework != null)
-            {
-                var mostCompatibleGroup
-                    = itemGroups.FirstOrDefault(i => i.TargetFramework.Equals(mostCompatibleFramework));
-
-                if (IsValid(mostCompatibleGroup))
-                {
-                    return mostCompatibleGroup;
-                }
-            }
-
-            return null;
-        }
-
-        internal static FrameworkSpecificGroup Normalize(FrameworkSpecificGroup group)
-        {
-            // Default to returning the same group
-            var result = group;
-
-            // If the group is null or it does not contain any items besides _._ then this is a no-op.
-            // If it does have items create a new normalized group to replace it with.
-            if (group?.Items.Any() == true)
-            {
-                // Filter out invalid files
-                var normalizedItems = GetValidPackageItems(group.Items)
-                    .Select(ReplaceAltDirSeparatorWithDirSeparator);
-
-                // Create a new group
-                result = new FrameworkSpecificGroup(
-                    targetFramework: group.TargetFramework,
-                    items: normalizedItems);
-            }
-
-            return result;
-        }
-
-        public static string ReplaceAltDirSeparatorWithDirSeparator(string path)
-        {
-            return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-        }
-
-        internal static IEnumerable<string> GetValidPackageItems(IEnumerable<string> items)
-        {
-            if (items == null
-                || !items.Any())
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            // Assume nupkg and nuspec as the save mode for identifying valid package files
-            return items.Where(i => PackageHelper.IsPackageFile(i, PackageSaveMode.Defaultv3));
-        }
-
-        internal static bool IsValid(FrameworkSpecificGroup frameworkSpecificGroup)
-        {
-            if (frameworkSpecificGroup != null)
-            {
-                return (frameworkSpecificGroup.HasEmptyFolder
-                        || frameworkSpecificGroup.Items.Any()
-                        || !frameworkSpecificGroup.TargetFramework.Equals(NuGetFramework.AnyFramework));
-            }
-
-            return false;
-        }
-
-        private const string ResourceAssemblyExtension = ".resources.dll";
-        private static readonly ImmutableArray<string> AssemblyReferencesExtensions
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            = ImmutableArray<string>.Empty.Add(".dll").Add(".exe").Add(".winmd");
-
-
-        private static bool IsAssemblyReference(string filePath)
-        {
-            // assembly reference must be under lib/
-            if (!filePath.StartsWith(PackagingConstants.Folders.Lib + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-                && !filePath.StartsWith(PackagingConstants.Folders.Lib + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            var fileName = Path.GetFileName(filePath);
-
-            // if it's an empty folder, yes
-            if (fileName == PackagingCoreConstants.EmptyFolder)
-            {
-                return true;
-            }
-
-            // Assembly reference must have a .dll|.exe|.winmd extension and is not a resource assembly;
-            return !filePath.EndsWith(ResourceAssemblyExtension, StringComparison.OrdinalIgnoreCase) &&
-                   AssemblyReferencesExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
-        }
-
-        private IEnumerable<SourceRepository> GetEffectiveSources(IEnumerable<SourceRepository> primarySources, IEnumerable<SourceRepository> secondarySources)
-        {
-            // Always have to add the packages folder as the primary repository so that
-            // dependency info for an installed package that is unlisted from the server is still available :(
-            var effectiveSources = new List<SourceRepository>(primarySources);
-            //effectiveSources.Add(PackagesFolderSourceRepository);
-            effectiveSources.AddRange(secondarySources);
-
-            return new HashSet<SourceRepository>(effectiveSources, new SourceRepositoryComparer());
-        }
-
-        private class SourceRepositoryComparer : IEqualityComparer<SourceRepository>
-        {
-            public bool Equals(SourceRepository x, SourceRepository y)
-            {
-                return x.PackageSource.Equals(y.PackageSource);
-            }
-
-            public int GetHashCode(SourceRepository obj)
-            {
-                return obj.PackageSource.GetHashCode();
-            }
-        }
-
-        private async Task<IEnumerable<string>> PreviewInstallPackageAsync(NuGetFramework targetFramework, PackageIdentity packageIdentity,
-            IEnumerable<SourceRepository> primarySources, IEnumerable<SourceRepository> secondarySources,
-            bool includePrerelease,
-            CancellationToken token)
-        {
-            if (packageIdentity == null)
-            {
-                throw new ArgumentNullException(nameof(packageIdentity));
-            }
-
-            if (primarySources == null)
-            {
-                throw new ArgumentNullException(nameof(primarySources));
-            }
-
-            if (secondarySources == null)
-            {
-                secondarySources = _sourceRepositoryProvider.GetRepositories().Where(e => e.PackageSource.IsEnabled);
-            }
-
-            if (!primarySources.Any())
-            {
-                throw new ArgumentException(nameof(primarySources));
-            }
-
-            if (packageIdentity.Version == null)
-            {
-                throw new ArgumentNullException("packageIdentity.Version");
-            }
-
-            var nuGetProjectActions = new List<string>();
-
-            var effectiveSources = GetEffectiveSources(primarySources, secondarySources);
-            var downgradeAllowed = false;
-            var packageTargetsForResolver = new HashSet<PackageIdentity>(PackageIdentity.Comparer);
-            // Note: resolver needs all the installed packages as targets too. And, metadata should be gathered for the installed packages as well
-            var installedPackageWithSameId =
-                packageTargetsForResolver.FirstOrDefault(
-                    p => p.Id.Equals(packageIdentity.Id, StringComparison.OrdinalIgnoreCase));
-            if (installedPackageWithSameId != null)
-            {
-                packageTargetsForResolver.Remove(installedPackageWithSameId);
-                if (installedPackageWithSameId.Version > packageIdentity.Version)
-                {
-                    // Looks like the installed package is of higher version than one being installed. So, we take it that downgrade is allowed
-                    downgradeAllowed = true;
-                }
-            }
-            packageTargetsForResolver.Add(packageIdentity);
-
-            // Step-1 : Get metadata resources using gatherer
-            var primaryPackages = new List<PackageIdentity> { packageIdentity };
-
-            var gatherContext = new GatherContext
-            {
-                PrimaryTargets = primaryPackages,
-                TargetFramework = targetFramework,
-                PrimarySources = primarySources.ToList(),
-                AllSources = effectiveSources.ToList(),
-                PackagesFolderSource = _sourceRepositoryProvider.GetRepositories().First(),
-                AllowDowngrades = downgradeAllowed,
-            };
-
-            var availablePackageDependencyInfoWithSourceSet = await ResolverGather.GatherAsync(gatherContext, token);
-
-            if (!availablePackageDependencyInfoWithSourceSet.Any())
-            {
-                throw new InvalidOperationException("UnableToGatherDependencyInfo");
-            }
-
-            // Prune the results down to only what we would allow to be installed
-
-            // Keep only the target package we are trying to install for that Id
-            var prunedAvailablePackages =
-                PrunePackageTree.RemoveAllVersionsForIdExcept(availablePackageDependencyInfoWithSourceSet,
-                    packageIdentity);
-
-            if (!downgradeAllowed)
-            {
-                prunedAvailablePackages =
-                    PrunePackageTree.PruneDowngrades(prunedAvailablePackages, Enumerable.Empty<PackageReference>());
-            }
-
-            if (!includePrerelease)
-            {
-                prunedAvailablePackages = PrunePackageTree.PrunePreleaseForStableTargets(
-                    prunedAvailablePackages,
-                    packageTargetsForResolver,
-                    new[] { packageIdentity });
-            }
-
-            // Remove versions that do not satisfy 'allowedVersions' attribute in packages.config, if any
-            prunedAvailablePackages =
-                PrunePackageTree.PruneDisallowedVersions(prunedAvailablePackages, Enumerable.Empty<PackageReference>());
-
-            // Step-2 : Call PackageResolver.Resolve to get new list of installed packages
-
-            // Note: resolver prefers installed package versions if the satisfy the dependency version constraints
-            // So, since we want an exact version of a package, create a new list of installed packages where the packageIdentity being installed
-            // is present after removing the one with the same id
-
-            var packageResolverContext = new PackageResolverContext(DependencyBehavior.Highest,
-                new[] { packageIdentity.Id },
-                Enumerable.Empty<string>(),
-                Enumerable.Empty<PackageReference>(),
-                new[] { packageIdentity },
-                prunedAvailablePackages,
-                _sourceRepositoryProvider.GetRepositories().Select(s => s.PackageSource),
-                NullLogger.Instance);
-
-            var packageResolver = new PackageResolver();
-
-            var newListOfInstalledPackages = packageResolver.Resolve(packageResolverContext, token);
-
-            if (newListOfInstalledPackages == null)
-            {
-                throw new InvalidOperationException("UnableToResolveDependencyInfo");
-            }
-
-            // Step-3 : Get the list of nuGetProjectActions to perform, install/uninstall on the nugetproject
-            // based on newPackages obtained in Step-2 and project.GetInstalledPackages
-
-            foreach (var newPackageToInstall in newListOfInstalledPackages)
-            {
-                // find the package match based on identity
-                var sourceDepInfo =
-                    prunedAvailablePackages.SingleOrDefault(
-                        p => PackageIdentity.Comparer.Equals(p, newPackageToInstall));
-
-                if (sourceDepInfo == null)
-                {
-                    // this really should never happen
-                    throw new InvalidOperationException("PackageNotFound:" + packageIdentity);
-                }
-
-                //nuGetProjectActions.Add(sourceDepInfo, sourceDepInfo.Source);
-            }
-
-            return nuGetProjectActions;
-        }
-
-        public async Task<bool> InstallPackageAsync(
-            PackageIdentity packageIdentity,
-            NuGetFramework targetFramework,
-            DownloadResourceResult downloadResourceResult,
-            CancellationToken token)
-        {
-            if (packageIdentity == null)
-            {
-                throw new ArgumentNullException(nameof(packageIdentity));
-            }
-
-            if (downloadResourceResult == null)
-            {
-                throw new ArgumentNullException(nameof(downloadResourceResult));
-            }
-
-            if (!downloadResourceResult.PackageStream.CanSeek)
-            {
-                throw new ArgumentException(Strings.PackageStreamShouldBeSeekable);
-            }
-
-            //// Step-1: Check if the package already exists after setting the nuGetProjectContext
-            //SetNuGetProjectContext(nuGetProjectContext);
-
-            //var packageReference = (await GetInstalledPackagesAsync(token))
-            //    .FirstOrDefault(p => p.PackageIdentity.Equals(packageIdentity));
-            //if (packageReference != null)
-            //{
-            //    return false;
-            //}
-
-            // Step-2: Create PackageArchiveReader using the PackageStream and obtain the various item groups
-            downloadResourceResult.PackageStream.Seek(0, SeekOrigin.Begin);
-            var packageReader = downloadResourceResult.PackageReader ?? new PackageArchiveReader(downloadResourceResult.PackageStream, leaveStreamOpen: true);
-
-            var libItemGroups = packageReader.GetLibItems();
-            var referenceItemGroups = packageReader.GetReferenceItems();
-            var frameworkReferenceGroups = packageReader.GetFrameworkItems();
-            var contentFileGroups = packageReader.GetContentItems();
-            var buildFileGroups = packageReader.GetBuildItems();
-            var toolItemGroups = packageReader.GetToolItems();
-
-            // Step-3: Get the most compatible items groups for all items groups
-            bool hasCompatibleProjectLevelContent;
-
-            var compatibleLibItemsGroup = GetMostCompatibleGroup(targetFramework, libItemGroups);
-            var compatibleReferenceItemsGroup = GetMostCompatibleGroup(targetFramework, referenceItemGroups);
-            var compatibleFrameworkReferencesGroup = GetMostCompatibleGroup(targetFramework, frameworkReferenceGroups);
-            var compatibleContentFilesGroup = GetMostCompatibleGroup(targetFramework, contentFileGroups);
-            var compatibleBuildFilesGroup = GetMostCompatibleGroup(targetFramework, buildFileGroups);
-            var compatibleToolItemsGroup = GetMostCompatibleGroup(targetFramework, toolItemGroups);
-
-            compatibleLibItemsGroup = Normalize(compatibleLibItemsGroup);
-            compatibleReferenceItemsGroup = Normalize(compatibleReferenceItemsGroup);
-            compatibleFrameworkReferencesGroup = Normalize(compatibleFrameworkReferencesGroup);
-            compatibleContentFilesGroup = Normalize(compatibleContentFilesGroup);
-            compatibleBuildFilesGroup = Normalize(compatibleBuildFilesGroup);
-            compatibleToolItemsGroup = Normalize(compatibleToolItemsGroup);
-
-            hasCompatibleProjectLevelContent = IsValid(compatibleLibItemsGroup) ||
-                                               IsValid(compatibleFrameworkReferencesGroup) ||
-                                               IsValid(compatibleContentFilesGroup) ||
-                                               IsValid(compatibleBuildFilesGroup);
-
-            // Check if package has any content for project
-            var hasProjectLevelContent = libItemGroups.Any() || frameworkReferenceGroups.Any()
-                                         || contentFileGroups.Any() || buildFileGroups.Any();
-            var onlyHasCompatibleTools = false;
-            var onlyHasDependencies = false;
-
-            if (!hasProjectLevelContent)
-            {
-                // Since it does not have project-level content, check if it has dependencies or compatible tools
-                // Note that we are not checking if it has compatible project level content, but, just that it has project level content
-                // If the package has project-level content, but nothing compatible, we still need to throw
-                // If a package does not have any project-level content, it can be a
-                // Legacy solution level packages which only has compatible tools group
-                onlyHasCompatibleTools = IsValid(compatibleToolItemsGroup) && compatibleToolItemsGroup.Items.Any();
-                if (!onlyHasCompatibleTools)
-                {
-                    // If it does not have compatible tool items either, check if it at least has dependencies
-                    onlyHasDependencies = packageReader.GetPackageDependencies().Any();
-                }
-            }
-            else
-            {
-                var shortFramework = targetFramework.GetShortFolderName();
-            }
-
-            // Step-6: Install package to FolderNuGetProject
-            //await FolderNuGetProject.InstallPackageAsync(packageIdentity, downloadResourceResult, targetFramework, token);
-
-            // Step-4: Check if there are any compatible items in the package or that this is not a package with only tools group. If not, throw
-            if (!hasCompatibleProjectLevelContent
-                && !onlyHasCompatibleTools
-                && !onlyHasDependencies)
-            {
-                throw new InvalidOperationException(
-                        $"UnableToFindCompatibleItems: {packageIdentity.Id} {packageIdentity.Version.ToNormalizedString()} {targetFramework}");
-            }
-
-            //var packageInstallPath = GetInstalledPath(packageIdentity);
-
-            //// Step-8: MSBuildNuGetProjectSystem operations
-            //// Step-8.1: Add references to project
-            //if (IsValid(compatibleReferenceItemsGroup))
-            //{
-            //    foreach (var referenceItem in compatibleReferenceItemsGroup.Items)
-            //    {
-            //        if (IsAssemblyReference(referenceItem))
-            //        {
-            //            var referenceItemFullPath = Path.Combine(packageInstallPath, referenceItem);
-            //            AddReference(referenceItemFullPath);
-            //        }
-            //    }
-            //}
-
-            //// Step-8.2: Add Frameworkreferences to project
-            //if (IsValid(compatibleFrameworkReferencesGroup))
-            //{
-            //    foreach (var frameworkReference in compatibleFrameworkReferencesGroup.Items)
-            //    {
-            //        AddFrameworkReference(frameworkReference, packageIdentity.Id);
-            //    }
-            //}
-
-            return true;
-        }
-
         public async Task<NuGetInstallResult> InstallPackage(
             string packageId,
             NuGetVersion version,
@@ -477,71 +82,82 @@ namespace RoslynPad.UI
         {
             _initializationException?.Throw();
 
-            //var installPath = Path.Combine(Path.GetTempPath(), "dummynuget");
+            var installPath = Path.Combine(Path.GetTempPath(), "dummynuget");
 
-            //var projectContext = new EmptyNuGetProjectContext
-            //{
-            //    PackageExtractionContext = new PackageExtractionContext(NullLogger.Instance)
-            //};
+            var projectContext = new EmptyNuGetProjectContext
+            {
+                PackageExtractionContext = new PackageExtractionContext(NullLogger.Instance)
+            };
 
             PackageIdentity currentIdentity = null;
             var references = new List<string>();
             var frameworkReferences = new List<string>();
-            //var projectSystem = new DummyNuGetProjectSystem(projectContext,
-            //    path => references.Add(GetPackagePath(currentIdentity, path)),
-            //    path => frameworkReferences.Add(path));
+            var projectSystem = new DummyNuGetProjectSystem(projectContext,
+                path => references.Add(GetPackagePath(currentIdentity, path)),
+                path => frameworkReferences.Add(path));
 
-            //var project = new MSBuildNuGetProject(projectSystem, installPath, installPath);
-            //// this is a hack to get the identity of the package added in DummyNuGetProjectSystem.AddReference
-            //project.PackageInstalling += (sender, args) => currentIdentity = args.Identity;
-            //OverrideProject(project);
+            var project = new MSBuildNuGetProject(projectSystem, installPath, installPath);
+            // this is a hack to get the identity of the package added in DummyNuGetProjectSystem.AddReference
+            project.PackageInstalling += (sender, args) => currentIdentity = args.Identity;
+            OverrideProject(project);
 
-            //var packageManager = new NuGetPackageManager(_sourceRepositoryProvider, _settings, installPath);
+            var packageManager = new NuGetPackageManager(_sourceRepositoryProvider, _settings, installPath);
 
-            //var primaryRepositories = _packageSources.Select(_sourceRepositoryProvider.CreateRepository).ToArray();
+            var primaryRepositories = _packageSources.Select(_sourceRepositoryProvider.CreateRepository).ToArray();
 
-            //var resolutionContext = new ResolutionContext(
-            //    DependencyBehavior.Lowest,
-            //    includePrelease: prerelease,
-            //    includeUnlisted: true,
-            //    versionConstraints: VersionConstraints.None);
+            var resolutionContext = new ResolutionContext(
+                DependencyBehavior.Lowest,
+                includePrelease: prerelease,
+                includeUnlisted: true,
+                versionConstraints: VersionConstraints.None);
 
-            //if (version == null)
-            //{
-            //    // Find the latest version using NuGetPackageManager
-            //    var resolvedPackage = await NuGetPackageManager.GetLatestVersionAsync(
-            //        packageId,
-            //        project,
-            //        resolutionContext,
-            //        primaryRepositories,
-            //        NullLogger.Instance,
-            //        CancellationToken.None).ConfigureAwait(false);
+            if (version == null)
+            {
+                // Find the latest version using NuGetPackageManager
+                var resolvedPackage = await NuGetPackageManager.GetLatestVersionAsync(
+                    packageId,
+                    project,
+                    resolutionContext,
+                    primaryRepositories,
+                    NullLogger.Instance,
+                    CancellationToken.None).ConfigureAwait(false);
 
-            //    if (resolvedPackage == null)
-            //    {
-            //        throw new Exception("Unable to find package");
-            //    }
+                if (resolvedPackage == null)
+                {
+                    throw new Exception("Unable to find package");
+                }
 
-            //    version = resolvedPackage.LatestVersion;
-            //}
+                version = resolvedPackage.LatestVersion;
+            }
 
-            //var packageIdentity = new PackageIdentity(packageId, version);
+            var packageIdentity = new PackageIdentity(packageId, version);
 
-            //await packageManager.InstallPackageAsync(
-            //    project, 
-            //    packageIdentity,
-            //    resolutionContext,
-            //    projectContext,
-            //    primaryRepositories,
-            //    Enumerable.Empty<SourceRepository>(),
-            //    CancellationToken.None).ConfigureAwait(false);
+            await packageManager.InstallPackageAsync(
+                project,
+                packageIdentity,
+                resolutionContext,
+                projectContext,
+                primaryRepositories,
+                Enumerable.Empty<SourceRepository>(),
+                CancellationToken.None).ConfigureAwait(false);
 
             return new NuGetInstallResult(references.AsReadOnly(), frameworkReferences.AsReadOnly());
         }
 
         private static string GetPackagePath(PackageIdentity identity, string path)
         {
-            return $@"{identity.Id}\{identity.Version.ToFullString()}\{path}";
+            return $@"{identity.Id}\{identity.Version}\{path}";
+        }
+
+        private static void OverrideProject(MSBuildNuGetProject project)
+        {
+            var folderNuGetProjectField = typeof(MSBuildNuGetProject).GetTypeInfo()
+                .DeclaredFields.First(x => x.FieldType == typeof(FolderNuGetProject));
+            folderNuGetProjectField.SetValue(project, new DummyFolderNuGetProject());
+
+            var packagesConfigNuGetProjectField = typeof(MSBuildNuGetProject).GetTypeInfo()
+                .DeclaredFields.First(x => x.FieldType == typeof(PackagesConfigNuGetProject));
+            packagesConfigNuGetProjectField.SetValue(project, new DummyPackagesConfigNuGetProject(project.Metadata));
         }
 
         private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool exactMatch, CancellationToken cancellationToken)
@@ -598,6 +214,187 @@ namespace RoslynPad.UI
 
         #region Inner Classes
 
+        private class DummyFolderNuGetProject : FolderNuGetProject
+        {
+            public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory)
+            {
+            }
+
+            public override Task<IEnumerable<PackageReference>> GetInstalledPackagesAsync(CancellationToken token)
+            {
+                return Task.FromResult(Enumerable.Empty<PackageReference>());
+            }
+
+            public override Task<bool> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult,
+                INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.FromResult(true);
+            }
+
+            public override Task PostProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override Task PreProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override Task<bool> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext,
+                CancellationToken token)
+            {
+                return Task.FromResult(true);
+            }
+        }
+
+        private class DummyPackagesConfigNuGetProject : PackagesConfigNuGetProject
+        {
+            public DummyPackagesConfigNuGetProject(IReadOnlyDictionary<string, object> metadata) : base(IOUtilities.CurrentDirectory, metadata.ToDictionary(x => x.Key, x => x.Value))
+            {
+            }
+
+            public override Task<IEnumerable<PackageReference>> GetInstalledPackagesAsync(CancellationToken token)
+            {
+                return Task.FromResult(Enumerable.Empty<PackageReference>());
+            }
+
+            public override Task<bool> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult,
+                INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.FromResult(true);
+            }
+
+            public override Task PostProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override Task PreProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override Task<bool> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext,
+                CancellationToken token)
+            {
+                return Task.FromResult(true);
+            }
+        }
+
+        private class DummyNuGetProjectSystem : IMSBuildProjectSystem
+        {
+            private readonly Action<string> _addReference;
+            private readonly Action<string> _addFrameworkReference;
+
+            public DummyNuGetProjectSystem(INuGetProjectContext projectContext, Action<string> addReference, Action<string> addFrameworkReference)
+            {
+                _addReference = addReference;
+                _addFrameworkReference = addFrameworkReference;
+                NuGetProjectContext = projectContext;
+            }
+
+            public NuGetFramework TargetFramework { get; } = NuGetFramework.Parse(TargetFrameworkName);
+
+            public Task AddReferenceAsync(string referencePath)
+            {
+                _addReference(referencePath);
+                return Task.CompletedTask;
+            }
+
+            public Task<bool> ReferenceExistsAsync(string name) => Task.FromResult(false);
+
+            public Task AddFrameworkReferenceAsync(string name, string packageId)
+            {
+                _addFrameworkReference(name);
+                return Task.CompletedTask;
+            }
+
+            #region Not used
+
+            public void AddFile(string path, Stream stream)
+            {
+            }
+
+            public void AddExistingFile(string path)
+            {
+            }
+
+            public void RemoveFile(string path)
+            {
+            }
+
+            public bool FileExistsInProject(string path)
+            {
+                return false;
+            }
+
+            public Task RemoveReferenceAsync(string name) => Task.CompletedTask;
+
+            public void AddImport(string targetFullPath, ImportLocation location)
+            {
+            }
+
+            public void RemoveImport(string targetFullPath)
+            {
+            }
+
+            public dynamic GetPropertyValue(string propertyName)
+            {
+                return null;
+            }
+
+            public string ResolvePath(string path)
+            {
+                return null;
+            }
+
+            public bool IsSupportedFile(string path)
+            {
+                return true;
+            }
+
+            public void AddBindingRedirects()
+            {
+            }
+
+            public Task BeginProcessingAsync() => Task.CompletedTask;
+
+            public void RegisterProcessedFiles(IEnumerable<string> files)
+            {
+            }
+
+            public Task EndProcessingAsync() => Task.CompletedTask;
+
+            public void DeleteDirectory(string path, bool recursive)
+            {
+            }
+
+            public IEnumerable<string> GetFiles(string path, string filter, bool recursive)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            public IEnumerable<string> GetFullPaths(string fileName)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            public IEnumerable<string> GetDirectories(string path)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            public string ProjectName => "P";
+            public string ProjectUniqueName => "P";
+            public string ProjectFullPath => "P";
+            public string ProjectFileFullPath => "P";
+
+            public INuGetProjectContext NuGetProjectContext { get; set; }
+
+            #endregion
+        }
+
         private class CommandLineSourceRepositoryProvider : ISourceRepositoryProvider
         {
             private readonly List<Lazy<INuGetResourceProvider>> _resourceProviders;
@@ -637,20 +434,6 @@ namespace RoslynPad.UI
             }
 
             public IPackageSourceProvider PackageSourceProvider { get; }
-        }
-
-        private class CommandLineMachineWideSettings : IMachineWideSettings
-        {
-            private readonly Lazy<IEnumerable<Settings>> _settings;
-
-            public CommandLineMachineWideSettings()
-            {
-                var baseDirectory = NuGetEnvironment.GetFolderPath(NuGetFolderPath.MachineWideConfigDirectory);
-                _settings = new Lazy<IEnumerable<Settings>>(
-                    () => global::NuGet.Configuration.Settings.LoadMachineWideSettings(baseDirectory));
-            }
-
-            public IEnumerable<Settings> Settings => _settings.Value;
         }
 
         #endregion
