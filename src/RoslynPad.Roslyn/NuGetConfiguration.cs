@@ -1,8 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace RoslynPad.Roslyn
 {
-    [DataContract]
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local", Justification = "Serialization")]
     public class NuGetConfiguration
     {
         public NuGetConfiguration(string pathToRepository, string pathVariableName)
@@ -11,10 +11,8 @@ namespace RoslynPad.Roslyn
             PathVariableName = pathVariableName;
         }
 
-        [DataMember]
         public string PathToRepository { get; private set; }
 
-        [DataMember]
         public string PathVariableName { get; private set; }
     }
 }

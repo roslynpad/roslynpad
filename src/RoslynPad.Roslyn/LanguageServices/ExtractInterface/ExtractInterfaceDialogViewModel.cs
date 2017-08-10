@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Utilities;
 using Glyph = RoslynPad.Roslyn.Completion.Glyph;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface

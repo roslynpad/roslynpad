@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
@@ -159,7 +158,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         internal string TEST_GetSignatureDisplayText()
         {
-            return GetSignatureDisplayParts().Select(p => p.ToString()).Join("");
+            return string.Concat(GetSignatureDisplayParts().Select(p => p.ToString()));
         }
 
         private List<SymbolDisplayPart> GetSignatureDisplayParts()

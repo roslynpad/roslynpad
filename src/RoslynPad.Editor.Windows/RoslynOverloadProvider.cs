@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
-using RoslynPad.Utilities;
+using NotificationObject = RoslynPad.Utilities.NotificationObject;
 
 namespace RoslynPad.Editor.Windows
 {
