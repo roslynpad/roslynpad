@@ -20,7 +20,8 @@ namespace RoslynPad.Roslyn.Scripting
     /// </summary>
     public sealed class ScriptRunner
     {
-        private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid();
+        private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid() + "-";
+        private static int _assemblyNumber;
         
         private readonly InteractiveAssemblyLoader _assemblyLoader;
         private Func<object[], Task<object>> _lazyExecutor;
@@ -275,18 +276,20 @@ namespace RoslynPad.Roslyn.Scripting
                 assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
-            
+
+            var assemblyNumber = Interlocked.Increment(ref _assemblyNumber);
+
             if (OutputKind == OutputKind.ConsoleApplication || OutputKind == OutputKind.WindowsApplication)
             {
                 return CSharpCompilation.Create(
-                 _globalAssemblyNamePrefix,
+                 _globalAssemblyNamePrefix + assemblyNumber,
                  new[] { tree },
                  references,
                  compilationOptions);
             }
 
             return CSharpCompilation.CreateScriptCompilation(
-                    _globalAssemblyNamePrefix,
+                    _globalAssemblyNamePrefix + assemblyNumber,
                     tree,
                     references,
                     compilationOptions,
