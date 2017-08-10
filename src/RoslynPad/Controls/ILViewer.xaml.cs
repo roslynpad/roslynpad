@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Xml;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
@@ -30,6 +32,13 @@ namespace RoslynPad.Controls
             TextEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("ILAsm");
             TextEditor.Document.FileName = "dasm.il";
             SearchPanel.Install(TextEditor);
+            TextEditor.ContextMenu = new ContextMenu
+            {
+                Items =
+                {
+                    new MenuItem { Command = ApplicationCommands.Copy }
+                }
+            };
         }
 
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register(

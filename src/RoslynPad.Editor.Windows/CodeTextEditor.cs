@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
@@ -47,6 +48,16 @@ namespace RoslynPad.Editor.Windows
             {
                 commandBindings.Remove(deleteLineCommand);
             }
+
+            ContextMenu = new ContextMenu
+            {
+                Items =
+                {
+                    new MenuItem { Command = ApplicationCommands.Cut },
+                    new MenuItem { Command = ApplicationCommands.Copy },
+                    new MenuItem { Command = ApplicationCommands.Paste }
+                }
+            };
         }
 
         public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(
