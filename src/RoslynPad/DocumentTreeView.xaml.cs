@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections;
+using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -73,9 +76,36 @@ namespace RoslynPad
             }
         }
 
-        private void DocumentsSource_OnFilter(object sender, FilterEventArgs e)
+        private bool FilterCollectionViewSourceConverter_OnFilter(object arg) => ((DocumentViewModel)arg).IsSearchMatch;
+    }
+
+    internal class FilterCollectionViewConverter : IValueConverter
+    {
+        public string FilterProperty { get; set; }
+
+        public event Predicate<object> Filter;
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            e.Accepted = ((DocumentViewModel)e.Item).IsSearchMatch;
+            if (value is IList list)
+            {
+                var collectionView = new ListCollectionView(list)
+                {
+                    IsLiveFiltering = true,
+                    LiveFilteringProperties = { FilterProperty }
+                };
+
+                collectionView.Filter += Filter;
+
+                return collectionView;
+            }
+
+            return Binding.DoNothing;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
         }
     }
 }

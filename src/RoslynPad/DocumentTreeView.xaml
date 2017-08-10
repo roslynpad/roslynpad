@@ -6,14 +6,21 @@
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:roslynPad="clr-namespace:RoslynPad"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:MainViewModel}"
              d:DesignHeight="300"
              d:DesignWidth="300">
     <FrameworkElement.Resources>
 
+        <roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
+                                                       FilterProperty="IsSearchMatch"
+                                                       Filter="FilterCollectionViewSourceConverter_OnFilter" />
+        
+
         <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
-                                  ItemsSource="{Binding ChildrenView, Mode=OneTime}">
+                                  ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
             <DockPanel Margin="0 0 0 3">
                 <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
 
@@ -32,7 +39,7 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </HierarchicalDataTemplate>
-        
+
         <ContextMenu x:Key="DocumentItemContextMenu"
                      x:Shared="False">
             <MenuItem Header="_Open in File Explorer"
@@ -59,7 +66,7 @@
             <Setter Property="Width"
                     Value="16" />
         </Style>
-        
+
     </FrameworkElement.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -100,8 +107,8 @@
 
         <controls:TreeListView Grid.Row="1"
                                ShowSeparator="False"
-                               ItemsSource="{Binding DocumentRoot.ChildrenView}"
-                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}" />
+                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"
+                               ItemsSource="{Binding DocumentRoot.Children, Converter={StaticResource FilterCollectionViewConverter}}" />
 
         <StackPanel Grid.Row="2"
                     Orientation="Horizontal"
