@@ -174,7 +174,6 @@ namespace RoslynPad.Editor.Windows
                         Length = Math.Min(section.Length, documentLine.EndOffset - offset),
                     });
                 }
-                //HighlightingStateChanged?.Invoke(documentLine.LineNumber, documentLine.LineNumber);
             }
 
             // since we don't want to block the UI thread
@@ -199,8 +198,7 @@ namespace RoslynPad.Editor.Windows
 
                 await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-                HighlightedLine line;
-                if (!_queue.TryDequeue(out line)) continue;
+                if (!_queue.TryDequeue(out var line)) continue;
 
                 var document = _roslynHost.GetDocument(_documentId);
                 if (document == null)
