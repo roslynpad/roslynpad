@@ -32,7 +32,7 @@ namespace RoslynPad.Runtime
             .Add("JObject", "{...}");
 
         private readonly int _depth;
-        private readonly PropertyInfo _property;
+        private readonly MemberInfo _member;
 
         public static ResultObject Create(object o, string header = null)
         {
@@ -44,10 +44,10 @@ namespace RoslynPad.Runtime
         {
         }
 
-        internal ResultObject(object o, int depth, string header = null, PropertyInfo property = null)
+        internal ResultObject(object o, int depth, string header = null, MemberInfo member = null)
         {
             _depth = depth;
-            _property = property;
+            _member = member;
             Initialize(o, header);
         }
 
@@ -98,9 +98,9 @@ namespace RoslynPad.Runtime
         {
             var targetDepth = _depth + 1;
 
-            if (_property != null)
+            if (_member != null)
             {
-                PopulateProperty(o, targetDepth);
+                PopulateMember(o, targetDepth);
                 return;
             }
 
@@ -133,9 +133,11 @@ namespace RoslynPad.Runtime
                 Value = GetString(o);
                 return;
             }
-            
+
             var type = o.GetType();
-            var properties = type.GetTypeInfo().DeclaredProperties;
+            var properties = ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
+                .Where(m => m.GetMethod?.IsPublic == true && m.GetMethod.IsStatic))
+                .Concat(type.GetRuntimeFields().Where(m => !m.IsStatic && m.IsPublic));
 
             var e = GetEnumerable(o, type);
             if (e != null)
@@ -169,19 +171,30 @@ namespace RoslynPad.Runtime
             return null;
         }
 
-        private void PopulateProperty(object o, int targetDepth)
+        private void PopulateMember(object o, int targetDepth)
         {
-            object value;
+            object value = null;
             try
             {
-                var exception = o as Exception;
-                value = exception != null && _property.Name == nameof(Exception.StackTrace)
-                    ? GetStackTrace(exception)
-                    : _property.GetValue(o);
+                if (o is Exception exception && _member.Name == nameof(Exception.StackTrace))
+                {
+                    value = GetStackTrace(exception);
+                }
+                else
+                {
+                    if (_member is PropertyInfo propertyInfo)
+                    {
+                        value = propertyInfo.GetValue(o);
+                    }
+                    else if (_member is FieldInfo fieldInfo)
+                    {
+                        value = fieldInfo.GetValue(o);
+                    }
+                }
             }
             catch (TargetInvocationException exception)
             {
-                Header = _property.Name;
+                Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
                 Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
@@ -190,10 +203,17 @@ namespace RoslynPad.Runtime
 
             if (value == null)
             {
-                SetType(_property.PropertyType);
+                if (_member is PropertyInfo propertyInfo)
+                {
+                    SetType(propertyInfo.PropertyType);
+                }
+                else if (_member is FieldInfo fieldInfo)
+                {
+                    SetType(fieldInfo.FieldType);
+                }
             }
 
-            PopulateObject(value, _property.Name, targetDepth);
+            PopulateObject(value, _member.Name, targetDepth);
         }
 
         private void SetType(object o)
@@ -239,7 +259,7 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, int targetDepth, IEnumerable<PropertyInfo> properties, string headerPrefix)
+        private void PopulateChildren(object o, int targetDepth, IEnumerable<MemberInfo> properties, string headerPrefix)
         {
             Header = headerPrefix;
             Value = GetString(o);
@@ -247,7 +267,7 @@ namespace RoslynPad.Runtime
             if (o == null) return;
 
             var children = properties
-                .Select(p => new ResultObject(o, targetDepth, property: p));
+                .Select(p => new ResultObject(o, targetDepth, member: p));
             Children = children.ToArray();
         }
 
@@ -318,15 +338,15 @@ namespace RoslynPad.Runtime
             }
             catch (Exception exception)
             {
-                Header = _property.Name;
+                Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
                 Children = new[] { new ResultObject(exception, targetDepth) };
             }
         }
-        
-        private static bool IsSpecialEnumerable(Type t, IEnumerable<PropertyInfo> properties)
+
+        private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members)
         {
-            return properties.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
+            return members.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
                    && !typeof(IEnumerator).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
@@ -334,7 +354,7 @@ namespace RoslynPad.Runtime
                    && t.Name.IndexOf("Collection", StringComparison.Ordinal) < 0
                    && !t.Name.Equals("JArray", StringComparison.Ordinal);
         }
-        
+
         private static string GetString(object o)
         {
             if (o is Exception exception)

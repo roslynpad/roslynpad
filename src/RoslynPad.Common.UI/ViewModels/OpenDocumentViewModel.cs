@@ -96,8 +96,11 @@ namespace RoslynPad.UI
 
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
         {
-            _dispatcher.InvokeAsync(() => _onError?.Invoke(errorResult));
-            ResultsInternal?.Add(errorResult);
+            _dispatcher.InvokeAsync(() =>
+            {
+                _onError?.Invoke(errorResult);
+                ResultsInternal?.Add(errorResult);
+            });
         }
 
         private void ExecutionHostOnDisassembled(string il)
