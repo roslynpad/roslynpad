@@ -10,6 +10,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Controls;
 using RoslynPad.Editor.Windows;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Diagnostics;
@@ -246,6 +247,16 @@ namespace RoslynPad
         private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             HeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
+        }
+
+        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ILViewerTab.IsSelected && ILViewerTab.Content == null)
+            {
+                var ilViewer = new ILViewer();
+                ilViewer.SetBinding(ILViewer.TextProperty, nameof(_viewModel.ILText));
+                ILViewerTab.Content = ilViewer;
+            }
         }
     }
 }

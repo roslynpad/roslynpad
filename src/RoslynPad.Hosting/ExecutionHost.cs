@@ -15,6 +15,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Scripting.Hosting;
+using Mono.Cecil;
+using RoslynPad.Hosting.ILDecompiler;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
@@ -139,17 +141,15 @@ namespace RoslynPad.Hosting
 
         public event Action<IList<ResultObject>> Dumped;
 
-        private void OnDumped(IList<ResultObject> results)
-        {
-            Dumped?.Invoke(results);
-        }
+        private void OnDumped(IList<ResultObject> results) => Dumped?.Invoke(results);
 
         public event Action<ExceptionResultObject> Error;
 
-        private void OnError(ExceptionResultObject error)
-        {
-            Error?.Invoke(error);
-        }
+        private void OnError(ExceptionResultObject error) => Error?.Invoke(error);
+
+        public event Action<string> Disassembled;
+
+        private void OnDisassembled(string il) => Disassembled?.Invoke(il);
 
         private async Task<RemoteService> TryStartProcess(CancellationToken cancellationToken)
         {
@@ -304,14 +304,14 @@ namespace RoslynPad.Hosting
             return null;
         }
 
-        public async Task ExecuteAsync(string code)
+        public async Task ExecuteAsync(string code, bool disassemble)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            await service.ExecuteAsync(new ExecuteMessage { Code = code }).ConfigureAwait(false);
+            await service.ExecuteAsync(new ExecuteMessage { Code = code, Disassemble = disassemble }).ConfigureAwait(false);
         }
 
         public async Task CompileAndSave(string code, string assemblyPath)
@@ -361,6 +361,9 @@ namespace RoslynPad.Hosting
         {
             [DataMember]
             public string Code { get; set; }
+
+            [DataMember]
+            public bool Disassemble { get; set; }
         }
 
         [DataContract]
@@ -373,10 +376,18 @@ namespace RoslynPad.Hosting
             public string AssemblyPath { get; set; }
         }
 
+        [DataContract]
+        private class DisassembledMesssage
+        {
+            [DataMember]
+            public string IL { get; set; }
+        }
+
         private interface IServiceCallback
         {
             Task Dump(DumpMessage message);
             Task Error(ErrorMessage message);
+            Task Disassembled(DisassembledMesssage message);
         }
 
         private interface IService
@@ -443,6 +454,11 @@ namespace RoslynPad.Hosting
             public Task Error(ErrorMessage message)
             {
                 return InvokeAsync(nameof(Error), message);
+            }
+
+            public Task Disassembled(DisassembledMesssage message)
+            {
+                return InvokeAsync(nameof(Disassembled), message);
             }
 
             public Task Initialize(InitializationMessage message)
@@ -585,7 +601,7 @@ namespace RoslynPad.Hosting
 
                 try
                 {
-                    var script = TryCompile(message.Code, _scriptOptions);
+                    var script = TryCompile(message.Code, message.Disassemble, _scriptOptions);
                     if (script != null)
                     {
                         var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
@@ -617,11 +633,11 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private ScriptRunner TryCompile(string code, ScriptOptions options)
+            private ScriptRunner TryCompile(string code, bool decompile, ScriptOptions options)
             {
                 var script = CreateScript(code, options);
 
-                var diagnostics = script.Compile();
+                var diagnostics = script.Compile(decompile ? (Action<Stream>)Disassemble : null);
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
                 {
                     DisplayErrors(diagnostics);
@@ -629,6 +645,17 @@ namespace RoslynPad.Hosting
                 }
 
                 return script;
+            }
+
+            private void Disassemble(Stream peStream)
+            {
+                using (var assembly = AssemblyDefinition.ReadAssembly(peStream))
+                {
+                    var output = new PlainTextOutput();
+                    var disassembler = new ReflectionDisassembler(output, false, CancellationToken.None);
+                    disassembler.WriteModuleContents(assembly.MainModule);
+                    Disassembled(new DisassembledMesssage { IL = output.ToString() });
+                }
             }
 
             private ScriptRunner CreateScript(string code, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
@@ -724,6 +751,12 @@ namespace RoslynPad.Hosting
             public Task Error(ErrorMessage message)
             {
                 _host.OnError(message.Error);
+                return Task.CompletedTask;
+            }
+
+            public Task Disassembled(DisassembledMesssage message)
+            {
+                _host.OnDisassembled(message.IL);
                 return Task.CompletedTask;
             }
         }

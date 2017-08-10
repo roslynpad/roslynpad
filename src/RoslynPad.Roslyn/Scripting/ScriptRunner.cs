@@ -73,11 +73,11 @@ namespace RoslynPad.Roslyn.Scripting
 
         public CSharpParseOptions ParseOptions { get; }
 
-        public ImmutableArray<Diagnostic> Compile(CancellationToken cancellationToken = default(CancellationToken))
+        public ImmutableArray<Diagnostic> Compile(Action<Stream> peStreamAction, CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
-                GetExecutor(cancellationToken);
+                GetExecutor(peStreamAction, cancellationToken);
 
                 return ImmutableArray.CreateRange(GetCompilation().GetDiagnostics(cancellationToken).Where(d => d.Severity == DiagnosticSeverity.Warning));
             }
@@ -89,7 +89,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         public async Task<object> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var entryPoint = GetExecutor(cancellationToken);
+            var entryPoint = GetExecutor(null, cancellationToken);
             if (entryPoint == null)
             {
                 return null;
@@ -115,24 +115,24 @@ namespace RoslynPad.Roslyn.Scripting
             return GetDiagnostics(diagnosticsBag);
         }
 
-        private Func<object[], Task<object>> GetExecutor(CancellationToken cancellationToken)
+        private Func<object[], Task<object>> GetExecutor(Action<Stream> peStreamAction, CancellationToken cancellationToken)
         {
             if (_lazyExecutor == null)
             {
-                Interlocked.CompareExchange(ref _lazyExecutor, CreateExecutor(cancellationToken), null);
+                Interlocked.CompareExchange(ref _lazyExecutor, CreateExecutor(peStreamAction, cancellationToken), null);
             }
 
             return _lazyExecutor;
         }
 
-        private Func<object[], Task<object>> CreateExecutor(CancellationToken cancellationToken)
+        private Func<object[], Task<object>> CreateExecutor(Action<Stream> peStreamAction, CancellationToken cancellationToken)
         {
             var compilation = GetCompilation();
 
             var diagnosticFormatter = CSharpDiagnosticFormatter.Instance;
             var diagnostics = DiagnoseCompilation(compilation, diagnosticFormatter);
 
-            var entryPoint = Build(compilation, diagnostics, cancellationToken);
+            var entryPoint = Build(peStreamAction, compilation, diagnostics, cancellationToken);
             ThrowIfAnyCompilationErrors(diagnostics, diagnosticFormatter);
             return entryPoint;
         }
@@ -177,7 +177,7 @@ namespace RoslynPad.Roslyn.Scripting
             }
         }
 
-        private Func<object[], Task<object>> Build(Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
+        private Func<object[], Task<object>> Build(Action<Stream> peStreamAction, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
         {
             var entryPoint = compilation.GetEntryPoint(cancellationToken);
 
@@ -212,6 +212,12 @@ namespace RoslynPad.Roslyn.Scripting
 
                 var assembly = _assemblyLoader.LoadAssemblyFromStream(peStream, pdbStream);
                 var runtimeEntryPoint = GetEntryPointRuntimeMethod(entryPoint, assembly);
+
+                if (peStreamAction != null)
+                {
+                    peStream.Position = 0;
+                    peStreamAction(peStream);
+                }
 
                 return (Func<object[], Task<object>>)runtimeEntryPoint.CreateDelegate(typeof(Func<object[], Task<object>>));
             }
@@ -269,7 +275,7 @@ namespace RoslynPad.Roslyn.Scripting
                 assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
-
+            
             if (OutputKind == OutputKind.ConsoleApplication || OutputKind == OutputKind.WindowsApplication)
             {
                 return CSharpCompilation.Create(

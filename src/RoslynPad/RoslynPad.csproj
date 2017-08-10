@@ -67,6 +67,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AppDispatcher.cs" />
+    <Compile Include="Controls\ILViewer.xaml.cs">
+      <DependentUpon>ILViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DocumentTreeView.xaml.cs">
       <DependentUpon>DocumentTreeView.xaml</DependentUpon>
     </Compile>
@@ -86,6 +89,10 @@
     </Compile>
     <Compile Include="Controls\TreeListView.cs" />
     <Compile Include="SaveFileDialogAdapter.cs" />
+    <Page Include="Controls\ILViewer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DocumentTreeView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -136,6 +143,7 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+    <EmbeddedResource Include="Controls\ILAsm-Mode.xshd" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\RoslynPad.ico" />
@@ -175,6 +183,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
+    <PackageReference Include="Mono.Cecil">
+      <Version>0.10.0-beta6</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>10.0.2</Version>
     </PackageReference>

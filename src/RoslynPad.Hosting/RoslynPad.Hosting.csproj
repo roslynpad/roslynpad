@@ -19,11 +19,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta6" />
     <PackageReference Include="StreamJsonRpc" Version="1.1.92" />
-    <PackageReference Include="System.Buffers" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
-    <PackageReference Include="System.Net.Websockets" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
   </ItemGroup>
 </Project>

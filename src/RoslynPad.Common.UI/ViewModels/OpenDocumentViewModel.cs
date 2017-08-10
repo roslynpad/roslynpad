@@ -24,6 +24,8 @@ namespace RoslynPad.UI
     [Export]
     public class OpenDocumentViewModel : NotificationObject
     {
+        private const string DefaultILText = "// Run to view IL";
+
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
 
@@ -39,6 +41,7 @@ namespace RoslynPad.UI
         private IDisposable _viewDisposable;
         private Action<ExceptionResultObject> _onError;
         private Func<TextSpan> _getSelection;
+        private string _ilText;
 
         public IEnumerable<object> Results => _results;
 
@@ -53,6 +56,12 @@ namespace RoslynPad.UI
         }
 
         public DocumentViewModel Document { get; private set; }
+
+        public string ILText
+        {
+            get => _ilText;
+            private set => SetProperty(ref _ilText, value);
+        }
 
         [ImportingConstructor]
         public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModel mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
@@ -71,6 +80,7 @@ namespace RoslynPad.UI
                 roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, _workingDirectory));
 
             _executionHost.Error += ExecutionHostOnError;
+            _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning);
@@ -80,12 +90,19 @@ namespace RoslynPad.UI
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
+
+            ILText = DefaultILText;
         }
 
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
         {
             _dispatcher.InvokeAsync(() => _onError?.Invoke(errorResult));
             ResultsInternal?.Add(errorResult);
+        }
+
+        private void ExecutionHostOnDisassembled(string il)
+        {
+            ILText = il;
         }
 
         public void SetDocument(DocumentViewModel document)
@@ -408,12 +425,17 @@ namespace RoslynPad.UI
             var results = new ObservableCollection<ResultObject>();
             ResultsInternal = results;
 
+            if (!ShowIL)
+            {
+                ILText = DefaultILText;
+            }
+
             var cancellationToken = _cts.Token;
             HookDumped(results, cancellationToken);
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
+                await _executionHost.ExecuteAsync(code, ShowIL).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -521,6 +543,8 @@ namespace RoslynPad.UI
         {
             get => _isDirty; private set => SetProperty(ref _isDirty, value);
         }
+
+        public bool ShowIL { get; set; }
 
         public event EventHandler EditorFocus;
 
