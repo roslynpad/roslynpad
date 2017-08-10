@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Controls;
 using RoslynPad.Editor.Windows;
 using RoslynPad.Roslyn;
+using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.QuickInfo;
 using RoslynPad.Runtime;
@@ -23,21 +24,26 @@ namespace RoslynPad
     public partial class DocumentView : IDisposable
     {
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly ClassificationHighlightColors _classificationHighlightColors;
         private readonly TextMarkerService _textMarkerService;
         private readonly SynchronizationContext _syncContext;
         private readonly ErrorMargin _errorMargin;
+        private readonly BraceMatcherHighlightRenderer _braceMarcherHighlighter;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private ContextActionsRenderer _contextActionsRenderer;
         private RoslynHost _roslynHost;
         private OpenDocumentViewModel _viewModel;
         private IQuickInfoProvider _quickInfoProvider;
+        private CancellationTokenSource _braceMatchingCts;
 
         public DocumentView()
         {
             InitializeComponent();
 
+            _classificationHighlightColors = new ClassificationHighlightColors();
             _textMarkerService = new TextMarkerService(Editor);
             _errorMargin = new ErrorMargin { Visibility = Visibility.Collapsed, MarkerBrush = TryFindResource("ExceptionMarker") as Brush, Width = 10 };
+            _braceMarcherHighlighter = new BraceMatcherHighlightRenderer(Editor.TextArea.TextView, _classificationHighlightColors);
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
             Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
@@ -49,10 +55,54 @@ namespace RoslynPad
             DataContextChanged += OnDataContextChanged;
         }
 
-        private void CaretOnPositionChanged(object sender, EventArgs eventArgs)
+        private async void CaretOnPositionChanged(object sender, EventArgs eventArgs)
         {
+            _braceMatchingCts?.Cancel();
+
             Ln.Text = Editor.TextArea.Caret.Line.ToString();
             Col.Text = Editor.TextArea.Caret.Column.ToString();
+
+            var braceMatchingService = _roslynHost?.GetService<IBraceMatchingService>();
+            if (braceMatchingService == null) return;
+
+            var cts = new CancellationTokenSource();
+            var token = cts.Token;
+            _braceMatchingCts = cts;
+
+            var document = _roslynHost.GetDocument(_viewModel.DocumentId);
+            var result = await braceMatchingService.GetAllMatchingBracesAsync(document, Editor.CaretOffset, token).ConfigureAwait(true);
+            _braceMarcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+        }
+
+        private void TryJumpToBrace()
+        {
+            var caret = Editor.CaretOffset;
+
+            if (TryJumpToPosition(_braceMarcherHighlighter.LeftOfPosition, caret) ||
+                TryJumpToPosition(_braceMarcherHighlighter.RightOfPosition, caret))
+            {
+                Editor.ScrollToLine(Editor.TextArea.Caret.Line);
+            }
+        }
+
+        private bool TryJumpToPosition(BraceMatchingResult? position, int caret)
+        {
+            if (position != null)
+            {
+                if (position.Value.LeftSpan.Contains(caret))
+                {
+                    Editor.CaretOffset = position.Value.RightSpan.End;
+                    return true;
+                }
+
+                if (position.Value.RightSpan.Contains(caret) || position.Value.RightSpan.End == caret)
+                {
+                    Editor.CaretOffset = position.Value.LeftSpan.Start;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void EditorOnPreviewMouseWheel(object sender, MouseWheelEventArgs args)
@@ -97,7 +147,7 @@ namespace RoslynPad
             Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty();
             Editor.AsyncToolTipRequest = AsyncToolTipRequest;
 
-            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost, new ClassificationHighlightColors()));
+            Editor.TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_viewModel.DocumentId, _roslynHost, _classificationHighlightColors));
 
             _contextActionsRenderer = new ContextActionsRenderer(Editor, _textMarkerService);
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_viewModel.CommandProvider,
@@ -187,10 +237,19 @@ namespace RoslynPad
         protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
             base.OnPreviewKeyDown(e);
-            if (e.Key == Key.T && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+
+            if (e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
             {
-                e.Handled = true;
-                NuGetSearch.Focus();
+                switch (e.Key)
+                {
+                    case Key.T:
+                        e.Handled = true;
+                        NuGetSearch.Focus();
+                        break;
+                    case Key.OemCloseBrackets:
+                        TryJumpToBrace();
+                        break;
+                }
             }
         }
         

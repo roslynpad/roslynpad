@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AvalonEditTextContainer.cs" />
+    <Compile Include="BraceMatcherHighlightRenderer.cs" />
     <Compile Include="ClassificationHighlightColors.cs" />
     <Compile Include="CodeSnippet.cs" />
     <Compile Include="CodeTextEditor.cs" />

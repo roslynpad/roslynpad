@@ -16,6 +16,9 @@ namespace RoslynPad.Editor.Windows
         public HighlightingColor KeywordBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Blue) };
         public HighlightingColor PreprocessorKeywordBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Gray) };
         public HighlightingColor StringBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Maroon) };
+        public HighlightingColor BraceMatchingBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Black), Background = new SimpleHighlightingBrush(Color.FromRgb(219, 224, 204))};
+
+        public const string BraceMatchingClassificationTypeName = "brace matching";
 
         private ImmutableDictionary<string, HighlightingColor> _map;
         protected virtual ImmutableDictionary<string, HighlightingColor> GetOrCreateMap()
@@ -43,14 +46,14 @@ namespace RoslynPad.Editor.Windows
                 [ClassificationTypeNames.Keyword] = AsFrozen(KeywordBrush),
                 [ClassificationTypeNames.PreprocessorKeyword] = AsFrozen(PreprocessorKeywordBrush),
                 [ClassificationTypeNames.StringLiteral] = AsFrozen(StringBrush),
-                [ClassificationTypeNames.VerbatimStringLiteral] = AsFrozen(StringBrush)
+                [ClassificationTypeNames.VerbatimStringLiteral] = AsFrozen(StringBrush),
+                [BraceMatchingClassificationTypeName] = AsFrozen(BraceMatchingBrush)
             }.ToImmutableDictionary());
         }
 
         public HighlightingColor GetBrush(string classificationTypeName)
         {
-            HighlightingColor brush;
-            GetOrCreateMap().TryGetValue(classificationTypeName, out brush);
+            GetOrCreateMap().TryGetValue(classificationTypeName, out var brush);
             return brush ?? AsFrozen(DefaultBrush);
         }
 
