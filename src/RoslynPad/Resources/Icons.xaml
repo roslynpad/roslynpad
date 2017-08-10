@@ -52,7 +52,7 @@
             </GeometryDrawing>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <!-- Source: Visual Studio Image Library -->
     <DrawingImage x:Key="Copy">
         <DrawingImage.Drawing>
@@ -70,7 +70,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="Run">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -85,7 +85,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="Folder">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -102,7 +102,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="CsFile">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -121,7 +121,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="Restart">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -156,17 +156,17 @@
 
     <DrawingImage x:Key="Update">
         <DrawingImage.Drawing>
-                    <DrawingGroup>
-                        <GeometryDrawing Brush="WhiteSmoke"
-                                         Geometry="F1M16,8C16,12.418 12.418,16 8,16 3.582,16 0,12.418 0,8 0,3.582 3.582,0 8,0 12.418,0 16,3.582 16,8z" />
-                        <GeometryDrawing Brush="#FF1AA0E1"
-                                         Geometry="F1M4,7L8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10 4,7z M8,15C11.865,15 15,11.866 15,8 15,4.135 11.865,1 8,1 4.135,1 1,4.135 1,8 1,11.866 4.135,15 8,15z" />
-                        <GeometryDrawing Brush="White"
-                                         Geometry="F1M4,10L4,7 8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10z" />
-                    </DrawingGroup>
+            <DrawingGroup>
+                <GeometryDrawing Brush="WhiteSmoke"
+                                 Geometry="F1M16,8C16,12.418 12.418,16 8,16 3.582,16 0,12.418 0,8 0,3.582 3.582,0 8,0 12.418,0 16,3.582 16,8z" />
+                <GeometryDrawing Brush="#FF1AA0E1"
+                                 Geometry="F1M4,7L8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10 4,7z M8,15C11.865,15 15,11.866 15,8 15,4.135 11.865,1 8,1 4.135,1 1,4.135 1,8 1,11.866 4.135,15 8,15z" />
+                <GeometryDrawing Brush="White"
+                                 Geometry="F1M4,10L4,7 8,3 12,7 12,10 9,7 9,13 7,13 7,7 4,10z" />
+            </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="FontSize">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -191,7 +191,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingBrush x:Key="ExceptionMarker">
         <DrawingBrush.Drawing>
             <DrawingGroup>
@@ -206,7 +206,7 @@
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>
-    
+
     <DrawingImage x:Key="FormatDocument">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -239,7 +239,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="CommentCode">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -256,7 +256,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="UncommentCode">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -281,7 +281,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="BuildSolution">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -327,7 +327,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="Rename">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -344,7 +344,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="RegularExpression">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -361,7 +361,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="Search">
         <DrawingImage.Drawing>
             <DrawingGroup>
@@ -414,5 +414,22 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
+    <DrawingImage x:Key="Time">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#00FFFFFF"
+                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M16,8C16,12.418 12.418,16 8,16 3.582,16 0,12.418 0,8 0,3.582 3.582,0 8,0 12.418,0 16,3.582 16,8" />
+                    <GeometryDrawing Brush="#FF424242"
+                                     Geometry="F1M8,8L11,8 11,9 7,9 7,4 8,4z M7.978,13.523C4.893,13.523 2.39,11.023 2.39,7.935 2.39,4.849 4.893,2.347 7.978,2.347 11.065,2.347 13.566,4.849 13.566,7.935 13.566,11.023 11.065,13.523 7.978,13.523 M8,1C4.134,1 1,4.134 1,8 1,11.866 4.134,15 8,15 11.866,15 15,11.866 15,8 15,4.134 11.866,1 8,1" />
+                    <GeometryDrawing Brush="#FFEFEFF0"
+                                     Geometry="F1M11,9L7,9 7,4 8,4 8,8 11,8z M7.978,2.347C4.893,2.347 2.39,4.849 2.39,7.935 2.39,11.023 4.893,13.523 7.978,13.523 11.065,13.523 13.566,11.023 13.566,7.935 13.566,4.849 11.065,2.347 7.978,2.347" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

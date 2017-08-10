@@ -21,9 +21,11 @@
                     Command="{Binding NewDocumentCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+W"
                     Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+Shift+O"
+                    Command="{Binding ToggleOptimizationCommand, Mode=OneTime}"/>
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
-     
+
         <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
             <roslynPad:DocumentView />
         </DataTemplate>
@@ -123,11 +125,35 @@
                             VerticalAlignment="Bottom"
                             Margin="5">
 
-                    <Button Margin="10 0 10 0"
+                    <ToggleButton Margin="20 0 0 0"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  IsChecked="{Binding Settings.OptimizeCompilation}"
+                                  ToolTipService.Placement="Top">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton">
+                                <Setter Property="ToolTip"
+                                        Value="Optimization: Off (Ctrl+Shift+O)" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked"
+                                             Value="True">
+                                        <Setter Property="ToolTip"
+                                                Value="Optimization: On (Ctrl+Shift+O)" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                        <Image Source="{StaticResource Time}"
+                               Width="16"
+                               Height="16" />
+                    </ToggleButton>
+
+                    <Button Margin="20 0 0 0"
                             BorderThickness="0"
                             Background="Gold"
                             Cursor="Hand"
                             ToolTip="Update Available"
+                            ToolTipService.Placement="Top"
                             Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Click="ViewUpdateClick">
                         <Button.Content>
@@ -142,11 +168,13 @@
                         </Button.Content>
                     </Button>
 
-                    <Image Source="{StaticResource FontSize}"
+                    <Image Margin="20 0 0 0"
+                           Source="{StaticResource FontSize}"
                            Height="16"
                            Width="16" />
                     <Slider Width="100"
                             ToolTip="Font Size"
+                            ToolTipService.Placement="Top"
                             Margin="5 0 0 0"
                             Minimum="{Binding MinimumEditorFontSize, Mode=OneTime}"
                             Maximum="{Binding MaximumEditorFontSize, Mode=OneTime}"
@@ -158,11 +186,12 @@
                     <TextBlock Text="{Binding EditorFontSize}"
                                Margin="5 0 0 0" />
 
-                    <Menu Background="Transparent"
-                          Margin="10,0,0,0">
+                    <Menu Margin="20 0 0 0"
+                          Background="Transparent">
                         <MenuItem Padding="0"
                                   BorderThickness="0"
-                                  ToolTip="Send Feedback">
+                                  ToolTip="Send Feedback"
+                                  ToolTipService.Placement="Top">
                             <MenuItem.Header>
                                 <Image Source="{StaticResource Feedback}"
                                        Width="16"

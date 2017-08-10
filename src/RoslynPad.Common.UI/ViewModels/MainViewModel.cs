@@ -64,6 +64,7 @@ namespace RoslynPad.UI
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
+            ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
 
@@ -283,6 +284,8 @@ namespace RoslynPad.UI
         public IDelegateCommand EditUserDocumentPathCommand { get; }
 
         public IDelegateCommand CloseCurrentDocumentCommand { get; }
+
+        public IDelegateCommand ToggleOptimizationCommand { get; }
 
         public void OpenDocument(DocumentViewModel document)
         {

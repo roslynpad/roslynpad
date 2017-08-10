@@ -19,6 +19,7 @@ namespace RoslynPad.UI
         string DocumentPath { get; set; }
         bool SearchFileContents { get; set; }
         bool SearchUsingRegex { get; set; }
+        bool OptimizeCompilation { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -36,6 +37,7 @@ namespace RoslynPad.UI
         private string _documentPath;
         private bool _searchFileContents;
         private bool _searchUsingRegex;
+        private bool _optimizeCompilation;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -104,6 +106,12 @@ namespace RoslynPad.UI
         {
             get => _searchUsingRegex;
             set => SetProperty(ref _searchUsingRegex, value);
+        }
+
+        public bool OptimizeCompilation
+        {
+            get => _optimizeCompilation;
+            set => SetProperty(ref _optimizeCompilation, value);
         }
 
         protected override void OnPropertyChanged(string propertyName = null)

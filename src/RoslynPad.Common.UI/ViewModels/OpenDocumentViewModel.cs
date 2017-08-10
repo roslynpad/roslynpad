@@ -387,7 +387,7 @@ namespace RoslynPad.UI
 
             try
             {
-                await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName)).ConfigureAwait(true);
+                await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName, OptimizationLevel)).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -435,7 +435,7 @@ namespace RoslynPad.UI
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code, ShowIL).ConfigureAwait(true);
+                await _executionHost.ExecuteAsync(code, ShowIL, OptimizationLevel).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -453,6 +453,8 @@ namespace RoslynPad.UI
                 SetIsRunning(false);
             }
         }
+
+        private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 
         private async Task EnsureNuGetPackages()
         {

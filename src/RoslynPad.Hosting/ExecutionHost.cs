@@ -304,24 +304,24 @@ namespace RoslynPad.Hosting
             return null;
         }
 
-        public async Task ExecuteAsync(string code, bool disassemble)
+        public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            await service.ExecuteAsync(new ExecuteMessage { Code = code, Disassemble = disassemble }).ConfigureAwait(false);
+            await service.ExecuteAsync(new ExecuteMessage { Code = code, Disassemble = disassemble, OptimizationLevel = optimizationLevel }).ConfigureAwait(false);
         }
 
-        public async Task CompileAndSave(string code, string assemblyPath)
+        public async Task CompileAndSave(string code, string assemblyPath, OptimizationLevel? optimizationLevel)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
             if (service == null)
             {
                 throw new InvalidOperationException("Unable to create host process");
             }
-            await service.CompileAndSave(new CompileAndSaveMessage { AssemblyPath = assemblyPath, Code = code }).ConfigureAwait(false);
+            await service.CompileAndSave(new CompileAndSaveMessage { AssemblyPath = assemblyPath, Code = code, OptimizationLevel = optimizationLevel }).ConfigureAwait(false);
         }
 
         public async Task ResetAsync()
@@ -364,6 +364,9 @@ namespace RoslynPad.Hosting
 
             [DataMember]
             public bool Disassemble { get; set; }
+
+            [DataMember]
+            public OptimizationLevel? OptimizationLevel { get; set; }
         }
 
         [DataContract]
@@ -374,6 +377,9 @@ namespace RoslynPad.Hosting
 
             [DataMember]
             public string AssemblyPath { get; set; }
+
+            [DataMember]
+            public OptimizationLevel? OptimizationLevel { get; set; }
         }
 
         [DataContract]
@@ -568,7 +574,7 @@ namespace RoslynPad.Hosting
 
                 try
                 {
-                    var script = CreateScript(message.Code, _scriptOptions, outputKind, platform);
+                    var script = CreateScript(message.Code, message.OptimizationLevel, _scriptOptions, outputKind, platform);
                     // ReSharper disable once MethodSupportsCancellation
                     if (script != null)
                     {
@@ -601,7 +607,7 @@ namespace RoslynPad.Hosting
 
                 try
                 {
-                    var script = TryCompile(message.Code, message.Disassemble, _scriptOptions);
+                    var script = TryCompile(message.Code, message.Disassemble, message.OptimizationLevel, _scriptOptions);
                     if (script != null)
                     {
                         var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
@@ -633,9 +639,9 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private ScriptRunner TryCompile(string code, bool decompile, ScriptOptions options)
+            private ScriptRunner TryCompile(string code, bool decompile, OptimizationLevel? optimizationLevel, ScriptOptions options)
             {
-                var script = CreateScript(code, options);
+                var script = CreateScript(code, optimizationLevel, options);
 
                 var diagnostics = script.Compile(decompile ? (Action<Stream>)Disassemble : null);
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -658,7 +664,7 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private ScriptRunner CreateScript(string code, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
+            private ScriptRunner CreateScript(string code, OptimizationLevel? optimizationLevel, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
             {
                 var script = new ScriptRunner(code, _parseOptions, outputKind, platform,
                     options.MetadataReferences, options.Imports,
@@ -667,7 +673,7 @@ namespace RoslynPad.Hosting
                         ? new InteractiveAssemblyLoader(
                             new MetadataShadowCopyProvider(Path.GetTempPath(), SystemNoShadowCopyDirectories))
                         : null,
-                    optimizationLevel: _optimizationLevel,
+                    optimizationLevel: optimizationLevel ?? _optimizationLevel,
                     checkOverflow: _checkOverflow,
                     allowUnsafe: _allowUnsafe
                 );
