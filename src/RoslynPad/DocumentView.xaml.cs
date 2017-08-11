@@ -28,7 +28,7 @@ namespace RoslynPad
         private readonly TextMarkerService _textMarkerService;
         private readonly SynchronizationContext _syncContext;
         private readonly ErrorMargin _errorMargin;
-        private readonly BraceMatcherHighlightRenderer _braceMarcherHighlighter;
+        private readonly BraceMatcherHighlightRenderer _braceMatcherHighlighter;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private ContextActionsRenderer _contextActionsRenderer;
         private RoslynHost _roslynHost;
@@ -43,7 +43,7 @@ namespace RoslynPad
             _classificationHighlightColors = new ClassificationHighlightColors();
             _textMarkerService = new TextMarkerService(Editor);
             _errorMargin = new ErrorMargin { Visibility = Visibility.Collapsed, MarkerBrush = TryFindResource("ExceptionMarker") as Brush, Width = 10 };
-            _braceMarcherHighlighter = new BraceMatcherHighlightRenderer(Editor.TextArea.TextView, _classificationHighlightColors);
+            _braceMatcherHighlighter = new BraceMatcherHighlightRenderer(Editor.TextArea.TextView, _classificationHighlightColors);
             Editor.TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             Editor.TextArea.TextView.LineTransformers.Add(_textMarkerService);
             Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
@@ -71,15 +71,15 @@ namespace RoslynPad
 
             var document = _roslynHost.GetDocument(_viewModel.DocumentId);
             var result = await braceMatchingService.GetAllMatchingBracesAsync(document, Editor.CaretOffset, token).ConfigureAwait(true);
-            _braceMarcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+            _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
         }
 
         private void TryJumpToBrace()
         {
             var caret = Editor.CaretOffset;
 
-            if (TryJumpToPosition(_braceMarcherHighlighter.LeftOfPosition, caret) ||
-                TryJumpToPosition(_braceMarcherHighlighter.RightOfPosition, caret))
+            if (TryJumpToPosition(_braceMatcherHighlighter.LeftOfPosition, caret) ||
+                TryJumpToPosition(_braceMatcherHighlighter.RightOfPosition, caret))
             {
                 Editor.ScrollToLine(Editor.TextArea.Caret.Line);
             }
