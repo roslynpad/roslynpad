@@ -208,125 +208,128 @@
                         Grid.Row="3"
                         TabStripPlacement="Bottom"
                         SelectionChanged="OnTabSelectionChanged">
-               <TabItem Header="Results">
-                   <DockPanel Grid.IsSharedSizeScope="True">
-                       <ScrollViewer DockPanel.Dock="Top"
-                                     Name="HeaderScroll"
-                                     HorizontalScrollBarVisibility="Hidden"
-                                     VerticalScrollBarVisibility="Disabled">
-                           <Grid>
-                               <Grid.ColumnDefinitions>
-                                   <ColumnDefinition Width="150"
-                                                     SharedSizeGroup="ResultNameGroup" />
-                                   <ColumnDefinition Width="1" />
-                                   <ColumnDefinition Width="450"
-                                                     SharedSizeGroup="ResultValueGroup" />
-                                   <ColumnDefinition Width="1" />
-                                   <ColumnDefinition Width="Auto"
-                                                     SharedSizeGroup="ResultTypeGroup" />
-                                   <ColumnDefinition Width="1" />
-                                   <ColumnDefinition Width="*" />
-                               </Grid.ColumnDefinitions>
-                               <TextBlock Text="Name"
-                                          Margin="20 0 20 0"
-                                          HorizontalAlignment="Center"
-                                          Grid.Column="0" />
-                               <GridSplitter Grid.Column="1"
-                                             ResizeBehavior="PreviousAndNext"
-                                             ResizeDirection="Columns"
-                                             HorizontalAlignment="Stretch"
-                                             VerticalAlignment="Stretch"
-                                             Background="DarkGray" />
-                               <TextBlock Text="Value"
-                                          Margin="20 0 20 0"
-                                          HorizontalAlignment="Center"
-                                          Grid.Column="2" />
-                               <GridSplitter Grid.Column="3"
-                                             ResizeBehavior="PreviousAndNext"
-                                             ResizeDirection="Columns"
-                                             HorizontalAlignment="Stretch"
-                                             VerticalAlignment="Stretch"
-                                             Background="DarkGray" />
-                               <TextBlock Text="Type"
-                                          Margin="20 0 20 0"
-                                          HorizontalAlignment="Center"
-                                          Grid.Column="4" />
-                               <GridSplitter Grid.Column="5"
-                                             ResizeBehavior="PreviousAndCurrent"
-                                             ResizeDirection="Columns"
-                                             HorizontalAlignment="Stretch"
-                                             VerticalAlignment="Stretch"
-                                             Background="DarkGray" />
-                           </Grid>
-                       </ScrollViewer>
-                       <controls:TreeListView ItemsSource="{Binding Results}"
-                                              ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                              VirtualizingPanel.IsVirtualizing="True"
-                                              VirtualizingPanel.VirtualizationMode="Recycling"
-                                              BorderBrush="#cccccc"
-                                              ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged">
-                           <ItemsControl.ItemTemplate>
-                               <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}"
-                                                         DataType="runtime:ResultObject">
-                                   <Grid>
-                                       <Grid.ColumnDefinitions>
-                                           <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
-                                           <ColumnDefinition Width="1" />
-                                           <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
-                                           <ColumnDefinition Width="1" />
-                                           <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
-                                       </Grid.ColumnDefinitions>
-                                       <Grid.ContextMenu>
-                                           <ContextMenu>
-                                               <MenuItem Header="Copy Value"
-                                                         Click="CopyClick">
-                                                   <MenuItem.Icon>
-                                                       <Image Source="{StaticResource Copy}"
-                                                              ToolTip="Copy Value"
-                                                              Height="12" />
-                                                   </MenuItem.Icon>
-                                               </MenuItem>
-                                               <MenuItem Header="Copy All"
-                                                         Tag="All"
-                                                         Click="CopyClick" />
-                                           </ContextMenu>
-                                       </Grid.ContextMenu>
-                                       <DockPanel Grid.Column="0">
-                                           <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
-                                           <Button Padding="0"
-                                                   Margin="2 0 5 0"
-                                                   VerticalAlignment="Top"
-                                                   KeyboardNavigation.IsTabStop="False"
-                                                   Background="Transparent"
-                                                   BorderBrush="Transparent"
-                                                   Click="CopyClick">
-                                               <Image Source="{StaticResource Copy}"
-                                                      ToolTip="Copy Value"
-                                                      Height="12" />
-                                           </Button>
-                                           <TextBlock Text="{Binding Header, Mode=OneTime}" />
-                                       </DockPanel>
-                                       <TextBlock Grid.Column="2"
-                                                  Text="{Binding Value, Mode=OneTime}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
-                                       <TextBlock Grid.Column="4"
-                                                  TextWrapping="Wrap"
-                                                  Text="{Binding Type, Mode=OneTime}"
-                                                  Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
-                                   </Grid>
-                               </HierarchicalDataTemplate>
-                           </ItemsControl.ItemTemplate>
-                           <ItemsControl.ItemContainerStyle>
-                               <Style TargetType="controls:TreeListViewItem"
-                                      BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-                                   <EventSetter Event="KeyDown"
-                                                Handler="OnTreeViewKeyDown" />
-                               </Style>
-                           </ItemsControl.ItemContainerStyle>
-                       </controls:TreeListView>
-                   </DockPanel>
-                </TabItem> 
+                <TabItem Header="Results">
+                    <DockPanel Grid.IsSharedSizeScope="True">
+                        <ScrollViewer DockPanel.Dock="Top"
+                                      Name="HeaderScroll"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"
+                                                      SharedSizeGroup="ResultNameGroup" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="450"
+                                                      SharedSizeGroup="ResultValueGroup" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="Auto"
+                                                      SharedSizeGroup="ResultTypeGroup" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Name"
+                                           Margin="20 0 20 0"
+                                           HorizontalAlignment="Center"
+                                           Grid.Column="0" />
+                                <GridSplitter Grid.Column="1"
+                                              ResizeBehavior="PreviousAndNext"
+                                              ResizeDirection="Columns"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch"
+                                              Background="DarkGray" />
+                                <TextBlock Text="Value"
+                                           Margin="20 0 20 0"
+                                           HorizontalAlignment="Center"
+                                           Grid.Column="2" />
+                                <GridSplitter Grid.Column="3"
+                                              ResizeBehavior="PreviousAndNext"
+                                              ResizeDirection="Columns"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch"
+                                              Background="DarkGray" />
+                                <TextBlock Text="Type"
+                                           Margin="20 0 20 0"
+                                           HorizontalAlignment="Center"
+                                           Grid.Column="4" />
+                                <GridSplitter Grid.Column="5"
+                                              ResizeBehavior="PreviousAndCurrent"
+                                              ResizeDirection="Columns"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch"
+                                              Background="DarkGray" />
+                            </Grid>
+                        </ScrollViewer>
+                        <controls:TreeListView ItemsSource="{Binding Results}"
+                                               ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                               VirtualizingPanel.IsVirtualizing="True"
+                                               VirtualizingPanel.VirtualizationMode="Recycling"
+                                               BorderBrush="#cccccc"
+                                               ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged">
+                            <ItemsControl.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}"
+                                                          DataType="runtime:ResultObject">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
+                                            <ColumnDefinition Width="1" />
+                                            <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+                                            <ColumnDefinition Width="1" />
+                                            <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Copy Value"
+                                                          Click="CopyClick">
+                                                    <MenuItem.Icon>
+                                                        <Image Source="{StaticResource Copy}"
+                                                               ToolTip="Copy Value"
+                                                               Height="12" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Copy All"
+                                                          Tag="All"
+                                                          Click="CopyClick" />
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+                                        <DockPanel Grid.Column="0">
+                                            <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+                                            <Button Padding="0"
+                                                    Margin="2 0 5 0"
+                                                    VerticalAlignment="Top"
+                                                    KeyboardNavigation.IsTabStop="False"
+                                                    Background="Transparent"
+                                                    BorderBrush="Transparent"
+                                                    Click="CopyClick">
+                                                <Image Source="{StaticResource Copy}"
+                                                       ToolTip="Copy Value"
+                                                       Height="12" />
+                                            </Button>
+                                            <TextBlock Text="{Binding Header, Mode=OneTime}" />
+                                        </DockPanel>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Value, Mode=OneTime}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                                        <TextBlock Grid.Column="4"
+                                                   TextWrapping="Wrap"
+                                                   Text="{Binding Type, Mode=OneTime}"
+                                                   Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
+                                    </Grid>
+                                </HierarchicalDataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="controls:TreeListViewItem"
+                                       BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+                                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                    <Setter Property="IsExpanded"
+                                            Value="{Binding IsExpanded, Mode=OneTime}" />
+                                    <EventSetter Event="KeyDown"
+                                                 Handler="OnTreeViewKeyDown" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                        </controls:TreeListView>
+                    </DockPanel>
+                </TabItem>
                 <TabItem Name="ILViewerTab"
                          Header="IL"
                          FontSize="{Binding MainViewModel.EditorFontSize}"

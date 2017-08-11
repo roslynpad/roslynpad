@@ -396,7 +396,7 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    results.Add(ResultObject.Create(diagnostic));
+                    results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
                 }
             }
             catch (Exception ex)
@@ -444,7 +444,7 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    results.Add(ResultObject.Create(diagnostic));
+                    results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
                 }
             }
             catch (Exception ex)
@@ -520,7 +520,7 @@ namespace RoslynPad.UI
                 }
                 else
                 {
-                    results.Add(ResultObject.Create(o));
+                    results.Add(ResultObject.Create(o, DumpQuotas.Default));
                 }
             }, AppDispatcherPriority.Low, cancellationToken);
         }

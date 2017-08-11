@@ -13,14 +13,11 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
-    [DataContract(IsReference = true)]
+    [DataContract]
     [KnownType(typeof(ExceptionResultObject))]
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ResultObject : INotifyPropertyChanged
     {
-        private const int MaxDepth = 5;
-        private const int MaxStringLength = 10000;
-        private const int MaxEnumerableLength = 10000;
-
         private static readonly ImmutableHashSet<string> _irrelevantEnumerableProperties = ImmutableHashSet<string>.Empty
             .Add("Count").Add("Length").Add("Key");
 
@@ -31,12 +28,12 @@ namespace RoslynPad.Runtime
             .Add("JArray", "[...]")
             .Add("JObject", "{...}");
 
-        private readonly int _depth;
+        private readonly DumpQuotas _quotas;
         private readonly MemberInfo _member;
 
-        public static ResultObject Create(object o, string header = null)
+        public static ResultObject Create(object o, DumpQuotas quotas, string header = null)
         {
-            return new ResultObject(o, 0, header);
+            return new ResultObject(o, quotas, header);
         }
 
         // for serialization
@@ -44,10 +41,11 @@ namespace RoslynPad.Runtime
         {
         }
 
-        internal ResultObject(object o, int depth, string header = null, MemberInfo member = null)
+        internal ResultObject(object o, DumpQuotas quotas, string header = null, MemberInfo member = null)
         {
-            _depth = depth;
+            _quotas = quotas;
             _member = member;
+            IsExpanded = quotas.MaxExpandedDepth > 0;
             Initialize(o, header);
         }
 
@@ -87,27 +85,30 @@ namespace RoslynPad.Runtime
         public string Value { get; private set; }
 
         [DataMember]
-        public string Type { get; set; }
+        public string Type { get; private set; }
 
         [DataMember]
         public IList<ResultObject> Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
+        [DataMember]
+        public bool IsExpanded { get; private set; }
+
         private void Initialize(object o, string headerPrefix)
         {
-            var targetDepth = _depth + 1;
+            var targetQuota = _quotas.Step();
 
             if (_member != null)
             {
-                PopulateMember(o, targetDepth);
+                PopulateMember(o, targetQuota);
                 return;
             }
 
-            PopulateObject(o, headerPrefix, targetDepth);
+            PopulateObject(o, headerPrefix, targetQuota);
         }
 
-        private void PopulateObject(object o, string headerPrefix, int targetDepth)
+        private void PopulateObject(object o, string headerPrefix, DumpQuotas targetQuotas)
         {
             if (o == null)
             {
@@ -116,7 +117,7 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            var isMaxDepth = targetDepth >= MaxDepth;
+            var isMaxDepth = _quotas.MaxDepth <= 0;
 
             SetType(o);
 
@@ -127,6 +128,36 @@ namespace RoslynPad.Runtime
                 return;
             }
 
+            var type = o.GetType();
+
+            var e = GetEnumerable(o, type);
+            if (e != null)
+            {
+                if (isMaxDepth)
+                {
+                    InitializeEnumerableHeaderOnly(headerPrefix, e);
+                }
+                else
+                {
+                    var members = GetMembers(type);
+
+                    // ReSharper disable once PossibleMultipleEnumeration
+                    if (IsSpecialEnumerable(type, members))
+                    {
+                        // ReSharper disable once PossibleMultipleEnumeration
+                        PopulateChildren(o, targetQuotas, members, headerPrefix);
+                        var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
+                        enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
+                        Children = Children.Concat(new[] { enumerable }).ToArray();
+                    }
+                    else
+                    {
+                        InitializeEnumerable(headerPrefix, e, targetQuotas);
+                    }
+                }
+                return;
+            }
+
             if (isMaxDepth)
             {
                 Header = headerPrefix;
@@ -134,31 +165,15 @@ namespace RoslynPad.Runtime
                 return;
             }
 
-            var type = o.GetType();
-            var properties = ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
-                .Where(m => m.GetMethod?.IsPublic == true && m.GetMethod.IsStatic))
-                .Concat(type.GetRuntimeFields().Where(m => !m.IsStatic && m.IsPublic));
+            PopulateChildren(o, targetQuotas, GetMembers(type), headerPrefix);
+        }
 
-            var e = GetEnumerable(o, type);
-            if (e != null)
-            {
-                // ReSharper disable once PossibleMultipleEnumeration
-                if (IsSpecialEnumerable(type, properties))
-                {
-                    // ReSharper disable once PossibleMultipleEnumeration
-                    PopulateChildren(o, targetDepth, properties, headerPrefix);
-                    var enumerable = new ResultObject(o, targetDepth, headerPrefix);
-                    enumerable.InitializeEnumerable(headerPrefix, e, targetDepth);
-                    Children = Children.Concat(new[] { enumerable }).ToArray();
-                }
-                else
-                {
-                    InitializeEnumerable(headerPrefix, e, targetDepth);
-                }
-                return;
-            }
-
-            PopulateChildren(o, targetDepth, properties, headerPrefix);
+        private static ImmutableArray<MemberInfo> GetMembers(Type type)
+        {
+            return ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
+                    .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
+                .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
+                .ToImmutableArray();
         }
 
         private IEnumerable GetEnumerable(object o, Type type)
@@ -171,7 +186,7 @@ namespace RoslynPad.Runtime
             return null;
         }
 
-        private void PopulateMember(object o, int targetDepth)
+        private void PopulateMember(object o, DumpQuotas targetQuotas)
         {
             object value = null;
             try
@@ -197,7 +212,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new[] { new ResultObject(exception.InnerException, targetDepth) };
+                Children = new[] { new ResultObject(exception.InnerException, DumpQuotas.Default) };
                 return;
             }
 
@@ -213,7 +228,7 @@ namespace RoslynPad.Runtime
                 }
             }
 
-            PopulateObject(value, _member.Name, targetDepth);
+            PopulateObject(value, _member.Name, targetQuotas);
         }
 
         private void SetType(object o)
@@ -259,7 +274,7 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, int targetDepth, IEnumerable<MemberInfo> properties, string headerPrefix)
+        private void PopulateChildren(object o, DumpQuotas targetQuotas, IEnumerable<MemberInfo> properties, string headerPrefix)
         {
             Header = headerPrefix;
             Value = GetString(o);
@@ -267,7 +282,7 @@ namespace RoslynPad.Runtime
             if (o == null) return;
 
             var children = properties
-                .Select(p => new ResultObject(o, targetDepth, member: p));
+                .Select(p => new ResultObject(o, targetQuotas, member: p));
             Children = children.ToArray();
         }
 
@@ -300,7 +315,31 @@ namespace RoslynPad.Runtime
                    Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
         }
 
-        private void InitializeEnumerable(string headerPrefix, IEnumerable e, int targetDepth)
+        private void InitializeEnumerableHeaderOnly(string headerPrefix, IEnumerable e)
+        {
+            Header = headerPrefix;
+
+            try
+            {
+                var count = 0;
+                var enumerator = e.GetEnumerator();
+                using (enumerator as IDisposable)
+                {
+                    while (count < _quotas.MaxEnumerableLength && enumerator.MoveNext()) ++count;
+                    var hasMore = enumerator.MoveNext() ? "+" : "";
+                    Value = $"<enumerable Count: {count}{hasMore}>";
+                }
+
+            }
+            catch (Exception exception)
+            {
+                Header = _member.Name;
+                Value = $"Threw {exception.GetType().Name}";
+                Children = new[] { new ResultObject(exception, DumpQuotas.Default) };
+            }
+        }
+
+        private void InitializeEnumerable(string headerPrefix, IEnumerable e, DumpQuotas targetQuotas)
         {
             try
             {
@@ -316,31 +355,35 @@ namespace RoslynPad.Runtime
                 var enumerableTypeName = GetTypeName(enumerableType);
 
                 var enumerator = e.GetEnumerator();
-                var index = 0;
-                while (index < MaxEnumerableLength && enumerator.MoveNext())
+                using (enumerator as IDisposable)
                 {
-                    var item = new ResultObject(enumerator.Current, targetDepth, $"[{index}]");
-                    if (item.Type == null)
+                    var index = 0;
+                    while (index < _quotas.MaxEnumerableLength && enumerator.MoveNext())
                     {
-                        item.Type = enumerableTypeName;
+                        var item = new ResultObject(enumerator.Current, targetQuotas, $"[{index}]");
+                        if (item.Type == null)
+                        {
+                            item.Type = enumerableTypeName;
+                        }
+                        items.Add(item);
+                        ++index;
                     }
-                    items.Add(item);
-                    ++index;
-                }
 
-                var hasMore = enumerator.MoveNext() ? "+" : "";
-                var groupingInterface = type.ImplementedInterfaces
-                        .FirstOrDefault(x => x.IsConstructedGenericType && x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
-                Value = groupingInterface != null
-                    ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetRuntimeProperty("Key").GetValue(e)}>"
-                    : $"<enumerable Count: {items.Count}{hasMore}>";
-                Children = items;
+                    var hasMore = enumerator.MoveNext() ? "+" : "";
+                    var groupingInterface = type.ImplementedInterfaces
+                        .FirstOrDefault(x => x.IsConstructedGenericType &&
+                                             x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
+                    Value = groupingInterface != null
+                        ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetRuntimeProperty("Key").GetValue(e)}>"
+                        : $"<enumerable Count: {items.Count}{hasMore}>";
+                    Children = items;
+                }
             }
             catch (Exception exception)
             {
                 Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { new ResultObject(exception, targetDepth) };
+                Children = new[] { new ResultObject(exception, DumpQuotas.Default) };
             }
         }
 
@@ -355,7 +398,7 @@ namespace RoslynPad.Runtime
                    && !t.Name.Equals("JArray", StringComparison.Ordinal);
         }
 
-        private static string GetString(object o)
+        private string GetString(object o)
         {
             if (o is Exception exception)
             {
@@ -369,7 +412,7 @@ namespace RoslynPad.Runtime
             }
 
             var s = o + string.Empty;
-            return s.Length > MaxStringLength ? s.Substring(0, MaxStringLength) : s;
+            return s.Length > _quotas.MaxStringLength ? s.Substring(0, _quotas.MaxStringLength) : s;
         }
 
         // avoids WPF PropertyDescriptor binding leaks
@@ -380,7 +423,7 @@ namespace RoslynPad.Runtime
         }
     }
 
-    [DataContract(IsReference = true)]
+    [DataContract]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ExceptionResultObject : ResultObject
     {
@@ -388,7 +431,7 @@ namespace RoslynPad.Runtime
         // ReSharper disable once UnusedMember.Local
         private ExceptionResultObject() { }
 
-        private ExceptionResultObject(Exception exception) : base(exception, 0)
+        private ExceptionResultObject(Exception exception) : base(exception, DumpQuotas.Default)
         {
             Message = exception.Message;
 

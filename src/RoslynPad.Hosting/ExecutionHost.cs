@@ -493,9 +493,9 @@ namespace RoslynPad.Hosting
                 return Task.CompletedTask;
             }
 
-            private void OnDumped(object o, string header)
+            private void OnDumped(DumpData data)
             {
-                EnqueueResult(ResultObject.Create(o, header));
+                EnqueueResult(ResultObject.Create(data.Object, data.Quotas, data.Header));
             }
 
             private void EnqueueResult(ResultObject resultObject)
@@ -521,10 +521,9 @@ namespace RoslynPad.Hosting
 
                     var list = new List<ResultObject>();
                     var timestamp = Environment.TickCount;
-                    ResultObject item;
                     while (Environment.TickCount - timestamp < WindowMillisecondsTimeout &&
                            list.Count < WindowMaxCount &&
-                           _dumpQueue.TryDequeue(out item))
+                           _dumpQueue.TryDequeue(out var item))
                     {
                         if (list.Count > 0)
                         {
