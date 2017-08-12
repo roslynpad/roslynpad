@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26014.0
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn", "RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{AC9F325F-A3FF-4561-941E-49CE4736CBD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{AC9F325F-A3FF-4561-941E-49CE4736CBD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Common", "RoslynPad.Common\RoslynPad.Common.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common", "RoslynPad.Common\RoslynPad.Common.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
 EndProject
@@ -15,11 +15,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host32", "RoslynP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host64", "RoslynPad.Host64\RoslynPad.Host64.csproj", "{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Hosting", "RoslynPad.Hosting\RoslynPad.Hosting.csproj", "{BBAC330F-94A5-4838-87C8-98055079626D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Hosting", "RoslynPad.Hosting\RoslynPad.Hosting.csproj", "{BBAC330F-94A5-4838-87C8-98055079626D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Common.UI", "RoslynPad.Common.UI\RoslynPad.Common.UI.csproj", "{47C8DFA4-E7E9-4E44-86C4-B906229A25E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common.UI", "RoslynPad.Common.UI\RoslynPad.Common.UI.csproj", "{47C8DFA4-E7E9-4E44-86C4-B906229A25E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn.Windows", "RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj", "{075292F0-DBCD-4A01-9791-9637D396CCB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Windows", "RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj", "{075292F0-DBCD-4A01-9791-9637D396CCB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn.Avalonia", "RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{075292F0-DBCD-4A01-9791-9637D396CCB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{075292F0-DBCD-4A01-9791-9637D396CCB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{075292F0-DBCD-4A01-9791-9637D396CCB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <RootNamespace>RoslynPad.Roslyn</RootNamespace>
+    <Version>$(RoslynAssemblyVersion)</Version>
+    <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
+    <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.5.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+  </ItemGroup>
+</Project>
