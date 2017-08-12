@@ -1,14 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Features>strict</Features>
     <RootNamespace>RoslynPad.UI</RootNamespace>
-    <AssemblyName>RoslynPad.Common.UI</AssemblyName>
     <TargetFramework>netstandard1.3</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="RoslynPad.Common.UI.csproj.DotSettings" />

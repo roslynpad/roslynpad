@@ -1,16 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.SDK">
+  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <Features>strict</Features>
     <RootNamespace>RoslynPad.Hosting</RootNamespace>
-    <AssemblyName>RoslynPad.Hosting</AssemblyName>
     <TargetFramework>netstandard1.3</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
