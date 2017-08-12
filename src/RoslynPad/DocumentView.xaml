@@ -259,12 +259,37 @@
                                               Background="DarkGray" />
                             </Grid>
                         </ScrollViewer>
-                        <controls:TreeListView ItemsSource="{Binding Results}"
+                        <controls:TreeListView x:Name="ResultTree"
+                                               ItemsSource="{Binding Results}"
                                                ScrollViewer.VerticalScrollBarVisibility="Auto"
                                                VirtualizingPanel.IsVirtualizing="True"
                                                VirtualizingPanel.VirtualizationMode="Recycling"
                                                BorderBrush="#cccccc"
-                                               ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged">
+                                               ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged"
+                                               ContextMenuOpening="ResultTree_OnContextMenuOpening">
+                            <FrameworkElement.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Name="CopyValue"
+                                              Header="Copy Value"
+                                              InputGestureText="Ctrl+C"
+                                              Click="CopyClick">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Copy}"
+                                                   Height="12" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Name="CopyValueWithChildren"
+                                              Header="Copy Value with Children"
+                                              Click="CopyClick" />
+                                    <MenuItem Name="CopyAllValues"
+                                              Header="Copy All Values"
+                                              Click="CopyAllClick" />
+                                    <MenuItem Name="CopyAllValuesWithChildren" 
+                                              Header="Copy All Values with Children"
+                                              InputGestureText="Ctrl+Shift+C"
+                                              Click="CopyAllClick" />
+                                </ContextMenu>
+                            </FrameworkElement.ContextMenu>
                             <ItemsControl.ItemTemplate>
                                 <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=OneTime}"
                                                           DataType="runtime:ResultObject">
@@ -276,21 +301,6 @@
                                             <ColumnDefinition Width="1" />
                                             <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
                                         </Grid.ColumnDefinitions>
-                                        <Grid.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="Copy Value"
-                                                          Click="CopyClick">
-                                                    <MenuItem.Icon>
-                                                        <Image Source="{StaticResource Copy}"
-                                                               ToolTip="Copy Value"
-                                                               Height="12" />
-                                                    </MenuItem.Icon>
-                                                </MenuItem>
-                                                <MenuItem Header="Copy All"
-                                                          Tag="All"
-                                                          Click="CopyClick" />
-                                            </ContextMenu>
-                                        </Grid.ContextMenu>
                                         <DockPanel Grid.Column="0">
                                             <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
                                             <Button Padding="0"

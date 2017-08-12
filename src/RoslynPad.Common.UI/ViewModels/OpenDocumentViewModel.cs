@@ -45,10 +45,11 @@ namespace RoslynPad.UI
 
         public IEnumerable<object> Results => _results;
 
-        private ObservableCollection<ResultObject> ResultsInternal
+        internal ObservableCollection<ResultObject> ResultsInternal
         {
             // ReSharper disable once UnusedMember.Local
-            get => _results; set
+            get => _results;
+            private set
             {
                 _results = value;
                 OnPropertyChanged(nameof(Results));

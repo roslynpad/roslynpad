@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,6 +36,7 @@ namespace RoslynPad
         private OpenDocumentViewModel _viewModel;
         private IQuickInfoProvider _quickInfoProvider;
         private CancellationTokenSource _braceMatchingCts;
+        private ResultObject _contextMenuResultObject;
 
         public DocumentView()
         {
@@ -270,7 +272,14 @@ namespace RoslynPad
         {
             if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
             {
-                CopyToClipboard(sender);
+                if (e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Shift))
+                {
+                    CopyAllResultsToClipboard(withChildren: true);
+                }
+                else
+                {
+                    CopyToClipboard(e.OriginalSource);
+                }
             }
         }
 
@@ -279,11 +288,60 @@ namespace RoslynPad
             CopyToClipboard(sender);
         }
 
-        private static void CopyToClipboard(object sender)
+        private void CopyToClipboard(object sender)
         {
-            var element = (FrameworkElement)sender;
-            var result = (ResultObject)element.DataContext;
-            Clipboard.SetText(element.Tag as string == "All" ? result.ToString() : result.Value);
+            var result = (sender as FrameworkElement)?.DataContext as ResultObject ??
+                        _contextMenuResultObject;
+
+            if (result != null)
+            {
+                Clipboard.SetText(ReferenceEquals(sender, CopyValueWithChildren) ? result.ToString() : result.Value);
+            }
+        }
+        private void CopyAllClick(object sender, RoutedEventArgs e)
+        {
+            var withChildren = ReferenceEquals(sender, CopyAllValuesWithChildren);
+
+            CopyAllResultsToClipboard(withChildren);
+        }
+
+        private void CopyAllResultsToClipboard(bool withChildren)
+        {
+            var builder = new StringBuilder();
+            foreach (var result in _viewModel.ResultsInternal)
+            {
+                if (withChildren)
+                {
+                    result.WriteTo(builder);
+                    builder.AppendLine();
+                }
+                else
+                {
+                    builder.AppendLine(result.Value);
+                }
+            }
+
+            if (builder.Length > 0)
+            {
+                Clipboard.SetText(builder.ToString());
+            }
+        }
+
+        private void ResultTree_OnContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            // keyboard-activated
+            if (e.CursorLeft < 0 || e.CursorTop < 0)
+            {
+                _contextMenuResultObject = ResultTree.SelectedItem as ResultObject;
+            }
+            else
+            {
+                _contextMenuResultObject = (e.OriginalSource as FrameworkElement)?.DataContext as ResultObject;
+            }
+
+            var isResult = _contextMenuResultObject != null;
+            CopyValue.IsEnabled = isResult;
+            CopyValueWithChildren.IsEnabled = isResult;
         }
 
         private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)

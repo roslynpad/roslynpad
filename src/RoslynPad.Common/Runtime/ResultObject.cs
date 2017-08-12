@@ -56,6 +56,11 @@ namespace RoslynPad.Runtime
             return builder.ToString();
         }
 
+        public void WriteTo(StringBuilder stringBuilder)
+        {
+            BuildStringRecursive(stringBuilder, 0);
+        }
+
         private void BuildStringRecursive(StringBuilder builder, int level)
         {
             for (var i = 0; i < level; i++)
