@@ -129,7 +129,7 @@ namespace RoslynPad.Editor
             SignatureHelp
         }
 
-        public static readonly RoutedEvent ToolTipRequestEvent = CommonEvent.Register<CodeTextEditor, RoutedEventArgs>(
+        public static readonly RoutedEvent ToolTipRequestEvent = CommonEvent.Register<CodeTextEditor, ToolTipRequestEventArgs>(
             nameof(ToolTipRequest), RoutingStrategy.Bubble);
 
         public Func<ToolTipRequestEventArgs, Task> AsyncToolTipRequest { get; set; }
