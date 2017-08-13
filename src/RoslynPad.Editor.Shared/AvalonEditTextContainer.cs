@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+#if AVALONIA
+using AvaloniaEdit;
+using AvaloniaEdit.Document;
+#else
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+#endif
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Annotations;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
     {

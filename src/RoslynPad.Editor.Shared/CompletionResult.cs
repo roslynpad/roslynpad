@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class CompletionResult
     {

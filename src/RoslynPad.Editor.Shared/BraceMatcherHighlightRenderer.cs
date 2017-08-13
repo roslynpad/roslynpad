@@ -17,17 +17,25 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if AVALONIA
+using Avalonia.Media;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Rendering;
+using CommonBrush = Avalonia.Media.IBrush;
+#else
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using CommonBrush = System.Windows.Media.Brush;
+#endif
 using RoslynPad.Roslyn.BraceMatching;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public class BraceMatcherHighlightRenderer : IBackgroundRenderer
     {
         private readonly TextView _textView;
-        private readonly Brush _backgroundBrush;
+        private readonly CommonBrush _backgroundBrush;
 
         public BraceMatchingResult? LeftOfPosition { get; private set; }
         public BraceMatchingResult? RightOfPosition { get; private set; }
@@ -40,9 +48,18 @@ namespace RoslynPad.Editor.Windows
 
             _textView.BackgroundRenderers.Add(this);
 
-            _backgroundBrush = classificationHighlightColors
-                                   .GetBrush(ClassificationHighlightColors.BraceMatchingClassificationTypeName)
-                                   ?.Background?.GetBrush(null) ?? Brushes.Transparent;
+            var brush = classificationHighlightColors
+                .GetBrush(ClassificationHighlightColors.BraceMatchingClassificationTypeName)
+                ?.Background?.GetBrush(null);
+
+            if (brush != null)
+            {
+                _backgroundBrush = brush;
+            }
+            else
+            {
+                _backgroundBrush = Brushes.Transparent;
+            }
         }
 
         public void SetHighlight(BraceMatchingResult? leftOfPosition, BraceMatchingResult? rightOfPosition)
@@ -65,7 +82,9 @@ namespace RoslynPad.Editor.Windows
             var builder = new BackgroundGeometryBuilder
             {
                 CornerRadius = 1,
+#if !AVALONIA
                 AlignToMiddleOfPixels = true
+#endif
             };
 
             if (RightOfPosition != null)

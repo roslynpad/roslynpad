@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "RoslynP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common", "RoslynPad.Common\RoslynPad.Common.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host32", "RoslynPad.Host\RoslynPad.Host32.csproj", "{CA953492-94C7-4F25-9CF2-EB70AA07A55F}"
 EndProject
@@ -21,9 +21,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common.UI", "Rosl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Windows", "RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj", "{075292F0-DBCD-4A01-9791-9637D396CCB8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn.Avalonia", "RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Avalonia", "RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RoslynPad.Editor.Shared", "RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.shproj", "{7FB0604B-44CD-4DB1-99C5-E89EA6C20AEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Avalonia", "RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems*{7fb0604b-44cd-4db1-99c5-e89ea6c20aec}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -69,6 +76,10 @@ Global
 		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

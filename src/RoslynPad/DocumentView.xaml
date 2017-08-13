@@ -6,7 +6,7 @@
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
-             xmlns:editor="clr-namespace:RoslynPad.Editor.Windows;assembly=RoslynPad.Editor.Windows"
+             xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
              xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:OpenDocumentViewModel}">

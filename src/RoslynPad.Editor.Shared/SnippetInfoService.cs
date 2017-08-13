@@ -3,7 +3,7 @@ using System.Composition;
 using System.Linq;
 using RoslynPad.Roslyn.Snippets;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     [Export(typeof(ISnippetInfoService)), Shared]
     internal sealed class SnippetInfoService : ISnippetInfoService

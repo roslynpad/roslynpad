@@ -1,14 +1,15 @@
 using System;
-using System.Windows;
-using System.Windows.Controls.Primitives;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 
 namespace RoslynPad.Editor
 {
     internal class ExtendedPopup : Popup
     {
-        private readonly UIElement _parent;
+        private readonly Control _parent;
 
-        public ExtendedPopup(UIElement parent)
+        public ExtendedPopup(Control parent)
         {
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
         }
@@ -26,30 +27,27 @@ namespace RoslynPad.Editor
                     _openIfFocused = value;
                     if (value)
                     {
-                        _parent.IsKeyboardFocusedChanged += Parent_IsKeyboardFocusedChanged;
+                        _parent.GotFocus += Parent_IsFocusedChanged;
+                        _parent.LostFocus += Parent_IsFocusedChanged;
                     }
-                    else {
-                        _parent.IsKeyboardFocusedChanged -= Parent_IsKeyboardFocusedChanged;
+                    else
+                    {
+                        _parent.GotFocus -= Parent_IsFocusedChanged;
+                        _parent.LostFocus -= Parent_IsFocusedChanged;
                     }
                     OpenOrClose();
                 }
             }
         }
 
-        private void Parent_IsKeyboardFocusedChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void Parent_IsFocusedChanged(object sender, RoutedEventArgs e)
         {
-            OpenOrClose();
-        }
-
-        protected override void OnIsKeyboardFocusWithinChanged(DependencyPropertyChangedEventArgs e)
-        {
-            base.OnIsKeyboardFocusWithinChanged(e);
             OpenOrClose();
         }
 
         private void OpenOrClose()
         {
-            var newIsOpen = _openIfFocused && (_parent.IsKeyboardFocused || IsKeyboardFocusWithin);
+            var newIsOpen = _openIfFocused && (_parent.IsFocused || IsFocused);
             base.IsOpen = newIsOpen;
         }
     }

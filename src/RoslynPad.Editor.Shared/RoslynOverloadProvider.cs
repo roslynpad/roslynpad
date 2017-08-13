@@ -1,13 +1,18 @@
 using System.Collections.Generic;
 using System.Threading;
+#if AVALONIA
+using Avalonia.Controls;
+using CommonFontWeights = Avalonia.Media.FontWeight;
+#else
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.CodeAnalysis;
+using CommonFontWeights = System.Windows.FontWeights;
+#endif
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
 using NotificationObject = RoslynPad.Utilities.NotificationObject;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProviderEx
     {
@@ -49,12 +54,12 @@ namespace RoslynPad.Editor.Windows
                 Orientation = Orientation.Horizontal,
                 Children =
                 {
-                    ToTextBlock(_item.PrefixDisplayParts),
+                    _item.PrefixDisplayParts.ToTextBlock(),
                 }
             };
             var contentPanel = new StackPanel();
             var docText = _item.DocumentationFactory(CancellationToken.None).ToTextBlock();
-            if (docText != null && docText.Inlines.Count > 0)
+            if (HasContent(docText))
             {
                 contentPanel.Children.Add(docText);
             }
@@ -66,46 +71,41 @@ namespace RoslynPad.Editor.Windows
                     AddParameterSignatureHelp(index, param, headerPanel, contentPanel);
                 }
             }
-            headerPanel.Children.Add(ToTextBlock(_item.SuffixDisplayParts));
+            headerPanel.Children.Add(_item.SuffixDisplayParts.ToTextBlock());
             CurrentHeader = headerPanel;
             CurrentContent = contentPanel;
         }
 
+#if AVALONIA
+        private bool HasContent(Panel textBlock) => textBlock?.Children.Count > 0;
+#else
+        private bool HasContent(TextBlock textBlock) => textBlock?.Inlines.Count > 0;
+#endif       
+
         private void AddParameterSignatureHelp(int index, SignatureHelpParameter param, Panel headerPanel, Panel contentPanel)
         {
             var isSelected = _signatureHelp.ArgumentIndex == index;
-            headerPanel.Children.Add(ToTextBlock(param.DisplayParts, bold: isSelected));
+            headerPanel.Children.Add(param.DisplayParts.ToTextBlock(isBold: isSelected));
             if (index != _item.Parameters.Length - 1)
             {
-                headerPanel.Children.Add(ToTextBlock(_item.SeparatorDisplayParts));
+                headerPanel.Children.Add(_item.SeparatorDisplayParts.ToTextBlock());
             }
             if (isSelected)
             {
                 var textBlock = param.DocumentationFactory(CancellationToken.None).ToTextBlock();
-                if (textBlock != null && textBlock.Inlines.Count > 0)
+                if (HasContent(textBlock))
                 {
                     contentPanel.Children.Add(new WrapPanel
                     {
                         Orientation = Orientation.Horizontal,
                         Children =
                         {
-                            new TextBlock { Text = param.Name + ": ", FontWeight = FontWeights.Bold },
+                            new TextBlock { Text = param.Name + ": ", FontWeight = CommonFontWeights.Bold },
                             textBlock
                         }
                     });
                 }
             }
-        }
-
-        private static TextBlock ToTextBlock(IEnumerable<TaggedText> parts, bool bold = false)
-        {
-            if (parts == null) return new TextBlock();
-            var textBlock = parts.ToTextBlock();
-            if (bold)
-            {
-                textBlock.FontWeight = FontWeights.Bold;
-            }
-            return textBlock;
         }
 
         public int Count => _items.Count;

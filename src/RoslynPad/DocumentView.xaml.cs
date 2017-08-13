@@ -12,7 +12,7 @@ using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Controls;
-using RoslynPad.Editor.Windows;
+using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;

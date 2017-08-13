@@ -1,10 +1,16 @@
+#if AVALONIA
+using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Rendering;
+using TextDocument = AvaloniaEdit.Document.TextDocument;
+#else
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Rendering;
+using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
+#endif
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn;
-using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class RoslynHighlightingColorizer : HighlightingColorizer
     {

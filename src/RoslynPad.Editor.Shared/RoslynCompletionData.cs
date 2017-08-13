@@ -2,17 +2,26 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+#if AVALONIA
+using Avalonia.Input;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Editing;
+using CommonTextEventArgs = Avalonia.Input.TextInputEventArgs;
+using CommonImage = Avalonia.Media.Imaging.IBitmap;
+#else
 using System.Windows.Input;
-using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
+using CommonTextEventArgs = System.Windows.Input.TextCompositionEventArgs;
+using CommonImage = System.Windows.Media.ImageSource;
+#endif
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using RoslynPad.Annotations;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyChanged
     {
@@ -71,7 +80,7 @@ namespace RoslynPad.Editor.Windows
         private bool CompleteSnippet(TextArea textArea, ISegment completionSegment, EventArgs e)
         {
             char? completionChar = null;
-            var txea = e as TextCompositionEventArgs;
+            var txea = e as CommonTextEventArgs;
             var kea = e as KeyEventArgs;
             if (txea != null && txea.Text.Length > 0)
                 completionChar = txea.Text[0];
@@ -97,7 +106,7 @@ namespace RoslynPad.Editor.Windows
             return false;
         }
 
-        public ImageSource Image { get; }
+        public CommonImage Image { get; }
 
         public string Text { get; }
 

@@ -23,11 +23,17 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
+#if AVALONIA
+using Avalonia;
+using Avalonia.Input;
+using Avalonia.Threading;
+#else
+using System.Windows;
 using System.Windows.Threading;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class ContextActionsRenderer : IDisposable
     {
@@ -58,38 +64,22 @@ namespace RoslynPad.Editor.Windows
             _delayMoveTimer.Stop();
             _delayMoveTimer.Tick += TimerMoveTick;
 
-            if (editor.IsLoaded)
-            {
-                HookupWindowMove(enable: true);
-            }
-
-            editor.Loaded += OnEditorLoaded;
-            editor.Unloaded += OnEditorUnloaded;
-        }
-
-        private void OnEditorLoaded(object sender, RoutedEventArgs e)
-        {
-            HookupWindowMove(enable: true);
-        }
-
-        private void OnEditorUnloaded(object sender, RoutedEventArgs e)
-        {
-            HookupWindowMove(enable: false);
+            editor.HookupLoadedUnloadedAction(HookupWindowMove);
         }
 
         private void HookupWindowMove(bool enable)
         {
-            var window = Window.GetWindow(_editor);
+            var window = _editor.GetWindow();
             if (window != null)
             {
-                window.LocationChanged -= WindowOnLocationChanged;
+                window.DetachLocationChanged(WindowOnLocationChanged);
                 if (enable)
                 {
-                    window.LocationChanged += WindowOnLocationChanged;
+                    window.AttachLocationChanged(WindowOnLocationChanged);
                 }
             }
         }
-
+        
         private void WindowOnLocationChanged(object sender, EventArgs eventArgs)
         {
             if (_popup?.IsOpen == true)
@@ -101,11 +91,10 @@ namespace RoslynPad.Editor.Windows
 
         public void Dispose()
         {
-            _editor.Loaded -= OnEditorLoaded;
-            var window = Window.GetWindow(_editor);
+            var window = _editor.GetWindow();
             if (window != null)
             {
-                window.LocationChanged -= WindowOnLocationChanged;
+                window.DetachLocationChanged(WindowOnLocationChanged);
             }
 
             ClosePopup();
@@ -120,7 +109,13 @@ namespace RoslynPad.Editor.Windows
 
         private async void ContextActionsRenderer_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key != Key.OemPeriod || Keyboard.Modifiers != ModifierKeys.Control) return;
+            if (e.Key != Key.OemPeriod ||
+#if AVALONIA
+                e.Modifiers != InputModifiers.Control
+#else
+                Keyboard.Modifiers != ModifierKeys.Control
+#endif
+                ) return;
 
             CreatePopup();
             if (_popup.IsOpen && _popup.ItemsSource != null)
@@ -157,7 +152,7 @@ namespace RoslynPad.Editor.Windows
                 };
                 _popup.MenuClosed += (sender, args) =>
                 {
-                    _editor.Dispatcher.InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
+                    _editor.GetDispatcher().InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
                 };
             }
         }
@@ -216,13 +211,15 @@ namespace RoslynPad.Editor.Windows
 
             // Don't show the context action popup when the caret is outside the editor boundaries
             var textView = _editor.TextArea.TextView;
-            var editorRect = new Rect((Point)textView.ScrollOffset, textView.RenderSize);
+            var editorRect = new Rect((Point)textView.ScrollOffset, textView.GetRenderSize());
             var caretRect = _editor.TextArea.Caret.CalculateCaretRectangle();
             if (!editorRect.Contains(caretRect))
                 return;
 
+#if !AVALONIA
             // Don't show the context action popup when the text editor is invisible, i.e., the Forms Designer is active.
             if (PresentationSource.FromVisual(textView) == null) return;
+#endif
 
             if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
 

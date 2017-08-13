@@ -11,7 +11,7 @@ using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Search;
 using Ex = System.Linq.Expressions.Expression;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
 #pragma warning disable 618
     public class SearchReplacePanel : SearchPanel

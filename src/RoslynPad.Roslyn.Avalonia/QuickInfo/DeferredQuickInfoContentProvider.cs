@@ -189,7 +189,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 {
                     Width = 16,
                     Height = 16,
-                    Source = Application.Current.FindStyleResource(Glyph.ToString()) as IBitmap
+                    Source = Glyph.ToImageSource()
                 };
                 return image;
             }
@@ -206,7 +206,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 _classifiableContent = content;
             }
 
-            public object Create() => _classifiableContent.ToTextControl();
+            public object Create() => _classifiableContent.ToTextBlock();
         }
 
         private class DocumentationCommentDeferredContent : IDeferredQuickInfoContent

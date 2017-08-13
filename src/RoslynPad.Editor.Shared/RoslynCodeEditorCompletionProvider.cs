@@ -10,7 +10,7 @@ using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Roslyn.Snippets;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
     {

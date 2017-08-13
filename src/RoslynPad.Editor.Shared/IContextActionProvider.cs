@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public interface IContextActionProvider
     {

@@ -18,11 +18,17 @@
 
 using System;
 using System.Linq;
+#if AVALONIA
+using Avalonia.Interactivity;
+using AvaloniaEdit;
+using AvaloniaEdit.Document;
+#else
 using System.Windows;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class TextMarkerToolTipProvider
     {

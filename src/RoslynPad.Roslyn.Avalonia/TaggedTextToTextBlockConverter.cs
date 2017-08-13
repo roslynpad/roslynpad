@@ -10,7 +10,7 @@ namespace RoslynPad.Roslyn
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (value as IEnumerable<TaggedText>)?.ToTextControl();
+            return (value as IEnumerable<TaggedText>)?.ToTextBlock();
         }
 
         object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

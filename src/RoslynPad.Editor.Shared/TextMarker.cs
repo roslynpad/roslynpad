@@ -1,9 +1,15 @@
 using System;
+using System.Collections.Generic;
+#if AVALONIA
+using Avalonia.Media;
+using AvaloniaEdit.Document;
+#else
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class TextMarker : TextSegment
     {
@@ -41,7 +47,7 @@ namespace RoslynPad.Editor.Windows
         {
             get => _backgroundColor; set
             {
-                if (_backgroundColor != value)
+                if (!EqualityComparer<Color?>.Default.Equals(_backgroundColor, value))
                 {
                     _backgroundColor = value;
                     Redraw();
@@ -55,7 +61,7 @@ namespace RoslynPad.Editor.Windows
         {
             get => _foregroundColor; set
             {
-                if (_foregroundColor != value)
+                if (!EqualityComparer<Color?>.Default.Equals(_foregroundColor, value))
                 {
                     _foregroundColor = value;
                     Redraw();
@@ -99,7 +105,7 @@ namespace RoslynPad.Editor.Windows
         {
             get => _markerColor; set
             {
-                if (_markerColor != value)
+                if (!EqualityComparer<Color>.Default.Equals(_markerColor, value))
                 {
                     _markerColor = value;
                     Redraw();

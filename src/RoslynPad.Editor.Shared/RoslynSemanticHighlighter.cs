@@ -21,15 +21,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+#if AVALONIA
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Highlighting;
+using TextDocument = AvaloniaEdit.Document.TextDocument;
+#else
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
+using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
+#endif
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn;
-using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class RoslynSemanticHighlighter : IHighlighter
     {
@@ -289,7 +295,7 @@ namespace RoslynPad.Editor.Windows
 
         public HighlightingColor GetNamedColor(string name) => null;
 
-        #region Caching
+#region Caching
 
         // If a line gets edited and we need to display it while no parse information is ready for the
         // changed file, the line would flicker (semantic highlightings disappear temporarily).
@@ -318,6 +324,6 @@ namespace RoslynPad.Editor.Windows
             }
         }
 
-        #endregion
+#endregion
     }
 }

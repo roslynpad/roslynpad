@@ -19,13 +19,16 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
-using ICSharpCode.AvalonEdit;
+using Avalonia.Controls;
+using AvaloniaEdit;
+using Avalonia.Media.Imaging;
+using Avalonia.Media;
+using Avalonia.Styling;
+using System.Linq;
+using Avalonia.Input;
+using Avalonia.Markup.Xaml.Data;
+using Avalonia.Markup;
 
 namespace RoslynPad.Editor
 {
@@ -34,31 +37,31 @@ namespace RoslynPad.Editor
         private readonly MenuItem _mainItem;
         private bool _isOpen;
 
-        public ContextActionsBulbPopup(UIElement parent) : base(parent)
+        public ContextActionsBulbPopup(Control parent) : base(parent)
         {
             UseLayoutRounding = true;
-            TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
 
             StaysOpen = true;
-            AllowsTransparency = true;
             _mainItem = new MenuItem
             {
-                ItemContainerStyle = CreateItemContainerStyle(),
+                Styles = { CreateItemContainerStyle() },
                 Header = new Image
                 {
-                    Source = TryFindResource("Bulb") as ImageSource,
+                    Source = this.FindStyleResource("Bulb") as IBitmap,
                     Width = 16,
                     Height = 16
                 }
             };
+            
             _mainItem.SubmenuOpened += (sender, args) =>
             {
-                if (ReferenceEquals(args.OriginalSource, _mainItem))
+                if (ReferenceEquals(sender, _mainItem))
                 {
                     _isOpen = true;
                     MenuOpened?.Invoke(this, EventArgs.Empty);
                 }
             };
+
             Closed += (sender, args) =>
             {
                 if (_isOpen)
@@ -67,13 +70,15 @@ namespace RoslynPad.Editor
                     MenuClosed?.Invoke(this, EventArgs.Empty);
                 }
             };
+
             var menu = new Menu
             {
                 Background = Brushes.Transparent,
                 BorderBrush = _mainItem.BorderBrush,
                 BorderThickness = _mainItem.BorderThickness,
-                Items = { _mainItem }
+                Items = new[] { _mainItem }
             };
+
             Child = menu;
         }
 
@@ -82,20 +87,25 @@ namespace RoslynPad.Editor
 
         private Style CreateItemContainerStyle()
         {
-            var style = new Style(typeof(MenuItem), TryFindResource(typeof(MenuItem)) as Style);
-            style.Setters.Add(new Setter(MenuItem.CommandProperty,
-                new Binding { Converter = new ActionCommandConverter(this) }));
-            style.Seal();
+            var style = new Style(c => c.OfType<MenuItem>())
+            {
+                Setters = new[]
+                {
+                    new Setter(MenuItem.CommandProperty, 
+                        new Binding { Converter = new ActionCommandConverter(this) })
+                }
+            };
+            ;
             return style;
         }
 
-        public IEnumerable<object> ItemsSource
+        public System.Collections.IEnumerable ItemsSource
         {
-            get => (IEnumerable<object>)_mainItem.ItemsSource;
-            set => _mainItem.ItemsSource = value;
+            get => _mainItem.Items;
+            set => _mainItem.Items = value;
         }
 
-        public bool HasItems => _mainItem.HasItems;
+        public bool HasItems => _mainItem.Items.Cast<object>().Any();
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
@@ -104,15 +114,15 @@ namespace RoslynPad.Editor
                 IsOpenIfFocused = false;
         }
 
-        public void Close()
+        public new void Close()
         {
             IsOpenIfFocused = false;
         }
 
         public bool IsMenuOpen
         {
-            get => _mainItem.IsSubmenuOpen;
-            set => _mainItem.IsSubmenuOpen = value;
+            get => _mainItem.IsSubMenuOpen;
+            set => _mainItem.IsSubMenuOpen = value;
         }
 
         public Func<object, ICommand> CommandProvider { get; set; }
@@ -129,7 +139,7 @@ namespace RoslynPad.Editor
             IsOpenIfFocused = true;
         }
 
-        private static void SetPosition(Popup popup, TextEditor editor, int line, int column, bool openAtWordStart = false)
+        private static void SetPosition(ExtendedPopup popup, TextEditor editor, int line, int column, bool openAtWordStart = false)
         {
             var document = editor.Document;
             var offset = document.GetOffset(line, column);
@@ -147,7 +157,8 @@ namespace RoslynPad.Editor
             popup.HorizontalOffset = caretScreenPos.X;
             popup.VerticalOffset = caretScreenPos.Y;
             popup.PlacementTarget = editor.TextArea.TextView;
-            popup.Placement = PlacementMode.Relative;
+            // TODO:
+            //popup.PlacementMode = PlacementMode.Relative;
         }
 
         private class ActionCommandConverter : IValueConverter
@@ -169,5 +180,6 @@ namespace RoslynPad.Editor
                 throw new NotSupportedException();
             }
         }
+
     }
 }

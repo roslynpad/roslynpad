@@ -26,11 +26,16 @@ namespace RoslynPad.Roslyn
             return text;
         }
 
-        public static TextBlock ToTextBlock(this TaggedText text)
+        public static TextBlock ToRun(this TaggedText text, bool isBold = false)
         {
             var s = text.ToVisibleDisplayString(includeLeftToRightMarker: true);
 
             var run = new TextBlock { Text = s };
+
+            if (isBold)
+            {
+                run.FontWeight = FontWeight.Bold;
+            }
 
             switch (text.Tag)
             {
@@ -50,13 +55,13 @@ namespace RoslynPad.Roslyn
             return run;
         }
 
-        public static Control ToTextControl(this IEnumerable<TaggedText> text)
+        public static Panel ToTextBlock(this IEnumerable<TaggedText> text, bool isBold = false)
         {
             var panel = new WrapPanel { Orientation = Orientation.Horizontal };
 
             foreach (var part in text)
             {
-                panel.Children.Add(part.ToTextBlock());
+                panel.Children.Add(part.ToRun(isBold));
             }
 
             return panel;

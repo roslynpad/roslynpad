@@ -2,6 +2,25 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+#if AVALONIA
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using AvaloniaEdit;
+using AvaloniaEdit.CodeCompletion;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Editing;
+using AvaloniaEdit.Highlighting;
+using Brush = Avalonia.Media.IBrush;
+using MouseEventArgs = Avalonia.Input.PointerEventArgs;
+using ModifierKeys = Avalonia.Input.InputModifiers;
+using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
+using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;
+using CommandBinding = AvaloniaEdit.RoutedCommandBinding;
+using AvalonEditCommands = AvaloniaEdit.AvaloniaEditCommands;
+#else
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -12,15 +31,15 @@ using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Highlighting;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
-    public delegate void ToolTipRequestEventHandler(object sender, ToolTipRequestEventArgs args);
-
     public class CodeTextEditor : TextEditor
     {
         private CustomCompletionWindow _completionWindow;
         private OverloadInsightWindow _insightWindow;
+        private ToolTip _toolTip;
 
         public CodeTextEditor()
         {
@@ -33,59 +52,61 @@ namespace RoslynPad.Editor.Windows
             };
             ShowLineNumbers = true;
 
-            MouseHover += OnMouseHover;
-            MouseHoverStopped += OnMouseHoverStopped;
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
             TextArea.TextEntered += OnTextEntered;
 
+#if AVALONIA
+            PointerHover += OnMouseHover;
+            PointerHoverStopped += OnMouseHoverStopped;
+#else
+            MouseHover += OnMouseHover;
+            MouseHoverStopped += OnMouseHoverStopped;
+            
             ToolTipService.SetInitialShowDelay(this, 0);
             SearchReplacePanel.Install(this);
+#endif
 
             var commandBindings = TextArea.CommandBindings;
-            var deleteLineCommand = commandBindings.OfType<CommandBinding>().FirstOrDefault(x => x.Command == AvalonEditCommands.DeleteLine);
+            var deleteLineCommand = commandBindings.OfType<CommandBinding>().FirstOrDefault(x =>
+                x.Command == AvalonEditCommands.DeleteLine);
             if (deleteLineCommand != null)
             {
                 commandBindings.Remove(deleteLineCommand);
             }
 
-            ContextMenu = new ContextMenu
+            var contextMenu = new ContextMenu();
+            contextMenu.SetItems(new[]
             {
-                Items =
-                {
-                    new MenuItem { Command = ApplicationCommands.Cut },
-                    new MenuItem { Command = ApplicationCommands.Copy },
-                    new MenuItem { Command = ApplicationCommands.Paste }
-                }
-            };
+                new MenuItem {Command = ApplicationCommands.Cut},
+                new MenuItem {Command = ApplicationCommands.Copy},
+                new MenuItem {Command = ApplicationCommands.Paste}
+            });
+            ContextMenu = contextMenu;
         }
 
-        public static readonly DependencyProperty CompletionBackgroundProperty = DependencyProperty.Register(
-            "CompletionBackground", typeof(Brush), typeof(CodeTextEditor), new FrameworkPropertyMetadata(CreateDefaultCompletionBackground()));
+        public static readonly StyledProperty<Brush> CompletionBackgroundProperty = CommonProperty.Register<CodeTextEditor, Brush>(
+            nameof(CompletionBackground), CreateDefaultCompletionBackground());
 
-        private ToolTip _toolTip;
-
-        private static SolidColorBrush CreateDefaultCompletionBackground()
+        private static Brush CreateDefaultCompletionBackground()
         {
-            var defaultCompletionBackground = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            defaultCompletionBackground.Freeze();
-            return defaultCompletionBackground;
+            return new SolidColorBrush(Color.FromRgb(240, 240, 240)).AsFrozen();
         }
 
         public Brush CompletionBackground
         {
-            get => (Brush)GetValue(CompletionBackgroundProperty);
-            set => SetValue(CompletionBackgroundProperty, value);
+            get => this.GetValue(CompletionBackgroundProperty);
+            set => this.SetValue(CompletionBackgroundProperty, value);
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
 
-            if (e.Key == Key.Space && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            if (e.Key == Key.Space && e.HasModifiers(ModifierKeys.Control))
             {
                 e.Handled = true;
-                var mode = e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Shift)
+                var mode = e.HasModifiers(ModifierKeys.Shift)
                     ? TriggerMode.SignatureHelp
                     : TriggerMode.Completion;
                 // ReSharper disable once UnusedVariable
@@ -100,12 +121,12 @@ namespace RoslynPad.Editor.Windows
             SignatureHelp
         }
 
-        public static readonly RoutedEvent ToolTipRequestEvent = EventManager.RegisterRoutedEvent("ToolTipRequest",
-            RoutingStrategy.Bubble, typeof(ToolTipRequestEventHandler), typeof(CodeTextEditor));
+        public static readonly RoutedEvent ToolTipRequestEvent = CommonEvent.Register<CodeTextEditor, RoutedEventArgs>(
+            nameof(ToolTipRequest), RoutingStrategy.Bubble);
 
         public Func<ToolTipRequestEventArgs, Task> AsyncToolTipRequest { get; set; }
 
-        public event ToolTipRequestEventHandler ToolTipRequest
+        public event EventHandler<ToolTipRequestEventArgs> ToolTipRequest
         {
             add => AddHandler(ToolTipRequestEvent, value);
             remove => RemoveHandler(ToolTipRequestEvent, value);
@@ -113,17 +134,14 @@ namespace RoslynPad.Editor.Windows
 
         private void OnVisualLinesChanged(object sender, EventArgs e)
         {
-            if (_toolTip != null)
-            {
-                _toolTip.IsOpen = false;
-            }
+            _toolTip?.Close();
         }
 
         private void OnMouseHoverStopped(object sender, MouseEventArgs e)
         {
             if (_toolTip != null)
             {
-                _toolTip.IsOpen = false;
+                _toolTip.Close();
                 e.Handled = true;
             }
         }
@@ -154,9 +172,10 @@ namespace RoslynPad.Editor.Windows
 
             if (args.ContentToShow == null)
             {
-                if (AsyncToolTipRequest != null)
+                var asyncRequest = AsyncToolTipRequest?.Invoke(args);
+                if (asyncRequest != null)
                 {
-                    await AsyncToolTipRequest.Invoke(args).ConfigureAwait(true);
+                    await asyncRequest.ConfigureAwait(true);
                 }
             }
 
@@ -165,10 +184,12 @@ namespace RoslynPad.Editor.Windows
             if (_toolTip == null)
             {
                 _toolTip = new ToolTip { MaxWidth = 400 };
-                _toolTip.Closed += ToolTipClosed;
+#if !AVALONIA
+                _toolTip.Closed += (o, a) => _toolTip = null;
                 ToolTipService.SetInitialShowDelay(_toolTip, 0);
+                _toolTip.PlacementTarget = this; // required for property inheritance
+#endif
             }
-            _toolTip.PlacementTarget = this; // required for property inheritance
 
             if (args.ContentToShow is string stringContent)
             {
@@ -184,12 +205,7 @@ namespace RoslynPad.Editor.Windows
             }
 
             e.Handled = true;
-            _toolTip.IsOpen = true;
-        }
-
-        private void ToolTipClosed(object sender, EventArgs e)
-        {
-            _toolTip = null;
+            _toolTip.Open();
         }
 
         #region Open & Save File
@@ -227,7 +243,7 @@ namespace RoslynPad.Editor.Windows
 
         public ICodeEditorCompletionProvider CompletionProvider { get; set; }
 
-        private void OnTextEntered(object sender, TextCompositionEventArgs textCompositionEventArgs)
+        private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
             // ReSharper disable once UnusedVariable
             var task = ShowCompletion(TriggerMode.Text);
@@ -259,7 +275,10 @@ namespace RoslynPad.Editor.Windows
                     {
                         Provider = results.OverloadProvider,
                         Background = CompletionBackground,
+                        // TODO: style
+#if !AVALONIA
                         Style = TryFindResource(typeof(InsightWindow)) as Style
+#endif
                     };
                     _insightWindow.Show();
                     _insightWindow.Closed += (o, args) => _insightWindow = null;
@@ -340,19 +359,19 @@ namespace RoslynPad.Editor.Windows
             {
                 _isSoftSelectionActive = true;
                 CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
-                CompletionList.ListBox.BorderThickness = new Thickness();
-                CompletionList.ListBox.PreviewMouseDown += OnListBoxOnPreviewMouseDown;
-            }
-
-            private void OnListBoxOnPreviewMouseDown(object sender, MouseButtonEventArgs args)
-            {
-                _isSoftSelectionActive = false;
+                CompletionList.ListBox.SetBorderThickness(0);
+#if AVALONIA
+                CompletionList.ListBox.PointerPressed +=
+#else
+                CompletionList.ListBox.PreviewMouseDown +=
+#endif
+                    (o, e) => _isSoftSelectionActive = false;
             }
 
             private void CompletionListOnSelectionChanged(object sender, SelectionChangedEventArgs args)
             {
-                if (!UseHardSelection && 
-                    _isSoftSelectionActive && _keyDownArgs?.Handled != true 
+                if (!UseHardSelection &&
+                    _isSoftSelectionActive && _keyDownArgs?.Handled != true
                     && args.AddedItems?.Count > 0)
                 {
                     CompletionList.SelectedItem = null;

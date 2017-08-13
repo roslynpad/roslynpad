@@ -14,7 +14,7 @@ using RoslynPad.Roslyn.CodeFixes;
 using RoslynPad.Roslyn.CodeRefactorings;
 using RoslynPad.UI;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class RoslynContextActionProvider : IContextActionProvider
     {

@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
+#if AVALONIA
+using Avalonia.Media;
+using AvaloniaEdit.Highlighting;
+#else
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Highlighting;
+#endif
 using Microsoft.CodeAnalysis.Classification;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public class ClassificationHighlightColors : IClassificationHighlightColors
     {

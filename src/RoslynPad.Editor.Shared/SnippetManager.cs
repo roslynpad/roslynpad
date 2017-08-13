@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class SnippetManager
     {

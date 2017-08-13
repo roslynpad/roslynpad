@@ -20,12 +20,21 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if AVALONIA
+using Avalonia;
+using Avalonia.Media;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Rendering;
+using CommonBrush = Avalonia.Media.IBrush;
+#else
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using CommonBrush = System.Windows.Media.Brush;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextViewConnect
     {
@@ -83,9 +92,9 @@ namespace RoslynPad.Editor.Windows
 
             var textLength = _document.TextLength;
             if (startOffset < 0 || startOffset > textLength) return null;
-                //throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
+            //throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
             if (length < 0 || startOffset + length > textLength) return null;
-                //throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
+            //throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
 
             var marker = new TextMarker(this, startOffset, length);
             _markers.Add(marker);
@@ -150,35 +159,39 @@ namespace RoslynPad.Editor.Windows
             var lineEnd = lineStart + line.Length;
             foreach (var marker in _markers.FindOverlappingSegments(lineStart, line.Length))
             {
-                Brush foregroundBrush = null;
+                CommonBrush foregroundBrush = null;
                 if (marker.ForegroundColor != null)
                 {
-                    foregroundBrush = new SolidColorBrush(marker.ForegroundColor.Value);
-                    foregroundBrush.Freeze();
+                    foregroundBrush = new SolidColorBrush(marker.ForegroundColor.Value).AsFrozen();
                 }
                 ChangeLinePart(
                     Math.Max(marker.StartOffset, lineStart),
                     Math.Min(marker.EndOffset, lineEnd),
-                    element => {
+                    element =>
+                    {
                         if (foregroundBrush != null)
                         {
                             element.TextRunProperties.SetForegroundBrush(foregroundBrush);
                         }
                         var tf = element.TextRunProperties.Typeface;
+#if AVALONIA
+                        element.TextRunProperties.Typeface = tf;
+#else
                         element.TextRunProperties.SetTypeface(new Typeface(
                             tf.FontFamily,
                             marker.FontStyle ?? tf.Style,
                             marker.FontWeight ?? tf.Weight,
                             tf.Stretch
                         ));
+#endif
                     }
                 );
             }
         }
-        
-        #endregion
 
-        #region IBackgroundRenderer
+#endregion
+
+#region IBackgroundRenderer
 
         public KnownLayer Layer => KnownLayer.Selection;
 
@@ -209,8 +222,7 @@ namespace RoslynPad.Editor.Windows
                     if (geometry != null)
                     {
                         var color = marker.BackgroundColor.Value;
-                        var brush = new SolidColorBrush(color);
-                        brush.Freeze();
+                        var brush = new SolidColorBrush(color).AsFrozen();
                         drawingContext.DrawGeometry(brush, null, geometry);
                     }
                 }
@@ -219,17 +231,16 @@ namespace RoslynPad.Editor.Windows
                     var startPoint = r.BottomLeft;
                     var endPoint = r.BottomRight;
 
-                    Brush usedBrush = new SolidColorBrush(marker.MarkerColor);
-                    usedBrush.Freeze();
+                    var usedBrush = new SolidColorBrush(marker.MarkerColor).AsFrozen();
                     var offset = 2.5;
 
-                    var count = Math.Max((int) ((endPoint.X - startPoint.X)/offset) + 1, 4);
+                    var count = Math.Max((int)((endPoint.X - startPoint.X) / offset) + 1, 4);
 
                     var geometry = new StreamGeometry();
 
                     using (var ctx = geometry.Open())
                     {
-                        ctx.BeginFigure(startPoint, false, false);
+                        ctx.BeginFigure(startPoint, false);
                         ctx.PolyLineTo(CreatePoints(startPoint, offset, count).ToArray(), true, false);
                     }
 
@@ -248,10 +259,10 @@ namespace RoslynPad.Editor.Windows
                 yield return new Point(start.X + i * offset, start.Y - ((i + 1) % 2 == 0 ? offset : 0));
         }
 
-        #endregion
+#endregion
 
-        #region ITextViewConnect
-        
+#region ITextViewConnect
+
         void ITextViewConnect.AddToTextView(TextView textView)
         {
             if (textView != null && !_textViews.Contains(textView))
@@ -270,6 +281,6 @@ namespace RoslynPad.Editor.Windows
             }
         }
 
-        #endregion
+#endregion
     }
 }

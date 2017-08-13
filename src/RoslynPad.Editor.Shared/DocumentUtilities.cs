@@ -1,7 +1,11 @@
+#if AVALONIA
+using AvaloniaEdit.Document;
+#else
 using System.Windows.Documents;
 using ICSharpCode.AvalonEdit.Document;
+#endif
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal static class DocumentUtilities
     {
