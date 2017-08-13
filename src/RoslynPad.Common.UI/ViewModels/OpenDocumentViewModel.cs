@@ -65,7 +65,7 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModel mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
@@ -334,12 +334,14 @@ namespace RoslynPad.UI
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
                 onTextUpdated);
-            await _executionHost.ResetAsync().ConfigureAwait(false);
+            // TODO: RESTORE!
+            //await _executionHost.ResetAsync().ConfigureAwait(false);
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         public DocumentId DocumentId { get; private set; }
 
-        public MainViewModel MainViewModel { get; }
+        public MainViewModelBase MainViewModel { get; }
         public ICommandProvider CommandProvider { get; }
 
         public NuGetDocumentViewModel NuGet { get; }

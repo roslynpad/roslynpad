@@ -211,8 +211,7 @@ namespace RoslynPad.Roslyn
             string docPath = null;
 
             // TODO: reference assemblies xplat
-            var programFiles =
-                Environment.GetEnvironmentVariable(Is64BitOperatingSystem
+            var programFiles = Environment.GetEnvironmentVariable(Is64BitOperatingSystem
                     ? "ProgramFiles(x86)"
                     : "ProgramFiles");
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");

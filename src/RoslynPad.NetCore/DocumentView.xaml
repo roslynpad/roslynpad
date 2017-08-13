@@ -1,0 +1,12 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia">
+    <Grid RowDefinitions="Auto,*,5,*">
+        <!--<ToolBar Grid.Row="0">
+
+        </ToolBar>-->
+        <Editor:CodeTextEditor Name="Editor"
+                               Grid.Row="1"
+                               FontFamily="Consolas" />
+        <TreeView Grid.Row="3" />
+    </Grid>
+</UserControl>

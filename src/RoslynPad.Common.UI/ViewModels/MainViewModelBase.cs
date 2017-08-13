@@ -17,8 +17,7 @@ using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
 {
-    [Export, Shared]
-    public sealed class MainViewModel : NotificationObject
+    public class MainViewModelBase : NotificationObject
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
@@ -39,8 +38,7 @@ namespace RoslynPad.UI
         public RoslynHost RoslynHost { get; private set; }
         public bool IsInitialized { get; set; }
 
-        [ImportingConstructor]
-        public MainViewModel(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
+        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
         {
             _serviceProvider = serviceProvider;
             _telemetryProvider = telemetryProvider;
@@ -90,14 +88,11 @@ namespace RoslynPad.UI
             }
         }
 
+        protected virtual IEnumerable<Assembly> CompositionAssemblies => Array.Empty<Assembly>();
+
         private void InitializeInternal()
         {
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[]
-            {
-                // TODO: xplat
-                Assembly.Load(new AssemblyName("RoslynPad.Roslyn.Windows")),
-                Assembly.Load(new AssemblyName("RoslynPad.Editor.Windows"))
-            });
+            RoslynHost = new RoslynHost(NuGetConfiguration, CompositionAssemblies);
 
             OpenAutoSavedDocuments();
 
@@ -272,7 +267,18 @@ namespace RoslynPad.UI
         public OpenDocumentViewModel CurrentOpenDocument
         {
             get => _currentOpenDocument;
-            set => SetProperty(ref _currentOpenDocument, value);
+            set
+            {
+                if (value == null) return; // prevent binding from clearing the value
+                SetProperty(ref _currentOpenDocument, value);
+            }
+        }
+
+        private void ClearCurrentOpenDocument()
+        {
+            if (_currentOpenDocument == null) return;
+            _currentOpenDocument = null;
+            OnPropertyChanged(nameof(CurrentOpenDocument));
         }
 
         private string _searchText;
@@ -339,7 +345,7 @@ namespace RoslynPad.UI
             await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
             if (!OpenDocuments.Any())
             {
-                CurrentOpenDocument = null;
+                ClearCurrentOpenDocument();
             }
         }
 

@@ -28,7 +28,7 @@ namespace RoslynPad.Roslyn
 
         public static TextBlock ToRun(this TaggedText text, bool isBold = false)
         {
-            var s = text.ToVisibleDisplayString(includeLeftToRightMarker: true);
+            var s = text.ToVisibleDisplayString(includeLeftToRightMarker: false);
 
             var run = new TextBlock { Text = s };
 

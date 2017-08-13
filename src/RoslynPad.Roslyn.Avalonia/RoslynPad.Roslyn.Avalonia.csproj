@@ -8,6 +8,8 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
+    <EmbeddedResource Remove="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml" />
+    <EmbeddedResource Remove="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
@@ -15,5 +17,15 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml.cs">
+      <SubType>Designer</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml.cs">
+      <SubType>Designer</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>

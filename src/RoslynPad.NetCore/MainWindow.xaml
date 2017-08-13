@@ -1,0 +1,39 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad.NetCore"
+        MinWidth="500"
+        MinHeight="300"
+        Title="RoslynPad">
+    <DockPanel>
+        <local:DocumentTreeView DockPanel.Dock="Left" />
+        <Border Padding="3"
+                Margin="1"
+                Background="#eebbbb"
+                DockPanel.Dock="Bottom"
+                IsVisible="{Binding HasError}">
+            <DockPanel LastChildFill="False">
+                <!--<Button Margin="3"
+                        Content="View details"
+                        DockPanel.Dock="Right"
+                        Background="Transparent"
+                        Click="ViewErrorDetails_OnClick" />
+                <Button Background="Transparent"
+                        Content=""
+                        FontFamily="Segoe UI Symbol"
+                        Command="{Binding ClearErrorCommand, Mode=OneTime}"
+                        Margin="3" />-->
+                <TextBlock VerticalAlignment="Center"
+                           Text="{Binding LastError.Message}" />
+            </DockPanel>
+        </Border>
+        <TabControl Items="{Binding OpenDocuments}"
+                    SelectedItem="{Binding CurrentOpenDocument}"
+                    MemberSelector="Title">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <local:DocumentView />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+    </DockPanel>
+</Window>

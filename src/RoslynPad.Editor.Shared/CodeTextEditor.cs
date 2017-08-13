@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.CodeCompletion;
 using AvaloniaEdit.Document;
@@ -36,10 +37,17 @@ using ICSharpCode.AvalonEdit.Highlighting;
 namespace RoslynPad.Editor
 {
     public class CodeTextEditor : TextEditor
+#if AVALONIA
+        , IStyleable
+#endif
     {
         private CustomCompletionWindow _completionWindow;
         private OverloadInsightWindow _insightWindow;
         private ToolTip _toolTip;
+
+#if AVALONIA
+        Type IStyleable.StyleKey => typeof(TextEditor);
+#endif
 
         public CodeTextEditor()
         {
@@ -50,7 +58,7 @@ namespace RoslynPad.Editor
                 IndentationSize = 4,
                 EnableEmailHyperlinks = false,
             };
-            ShowLineNumbers = true;
+            //ShowLineNumbers = true;
 
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
@@ -286,7 +294,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            if (_completionWindow == null && results.CompletionData?.Any() == true)
+            if (_completionWindow?.IsActive != true && results.CompletionData?.Any() == true)
             {
                 _insightWindow?.Close();
 

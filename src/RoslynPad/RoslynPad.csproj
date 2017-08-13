@@ -94,6 +94,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
+    <Compile Include="MainViewModel.cs" />
     <Compile Include="TelemetryProvider.cs" />
     <Compile Include="RenameSymbolDialog.xaml.cs">
       <DependentUpon>RenameSymbolDialog.xaml</DependentUpon>
@@ -193,7 +194,7 @@
     <PackageReference Include="AvalonEdit" Version="5.0.2" />
     <PackageReference Include="AvalonLibrary" Version="2.3.0" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.3.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />

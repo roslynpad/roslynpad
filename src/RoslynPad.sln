@@ -25,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Avalonia",
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RoslynPad.Editor.Shared", "RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.shproj", "{7FB0604B-44CD-4DB1-99C5-E89EA6C20AEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Avalonia", "RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Avalonia", "RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.NetCore", "RoslynPad.NetCore\RoslynPad.NetCore.csproj", "{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -80,6 +82,10 @@ Global
 		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A9BFF57-9025-4BBC-B77C-C85937528210}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
