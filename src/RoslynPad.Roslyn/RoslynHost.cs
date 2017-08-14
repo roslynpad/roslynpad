@@ -71,6 +71,22 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
+        static RoslynHost()
+        {
+            WorkaroundForDesktopShim(typeof(Compilation));
+            WorkaroundForDesktopShim(typeof(TaggedText));
+        }
+
+        private static void WorkaroundForDesktopShim(Type typeInAssembly)
+        {
+            // DesktopShim doesn't work on Linux, so we hack around it
+
+            typeInAssembly.GetTypeInfo().Assembly
+                .GetType("Roslyn.Utilities.DesktopShim+FileNotFoundException")
+                ?.GetRuntimeFields().FirstOrDefault(f => f.Name == "s_fusionLog")
+                ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.Data)));
+        }
+
         public RoslynHost(NuGetConfiguration nuGetConfiguration = null, 
             IEnumerable<Assembly> additionalAssemblies = null, 
             IEnumerable<string> additionalReferencedAssemblyLocations = null)
@@ -210,10 +226,21 @@ namespace RoslynPad.Roslyn
             string assemblyPath = null;
             string docPath = null;
 
-            // TODO: reference assemblies xplat
+            // TODO: reference assemblies xplat?
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return (assemblyPath, docPath);
+            }
+
             var programFiles = Environment.GetEnvironmentVariable(Is64BitOperatingSystem
                     ? "ProgramFiles(x86)"
                     : "ProgramFiles");
+
+            if (string.IsNullOrEmpty(programFiles))
+            {
+                return (assemblyPath, docPath);
+            }
+
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
             if (Directory.Exists(path))
             {
