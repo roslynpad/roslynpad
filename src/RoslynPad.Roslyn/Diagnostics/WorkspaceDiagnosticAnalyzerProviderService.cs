@@ -21,7 +21,9 @@ namespace RoslynPad.Roslyn.Diagnostics
                 new HostDiagnosticAnalyzerPackage(LanguageNames.CSharp,
                     ImmutableArray.Create(
                         Path.Combine(path, "Microsoft.CodeAnalysis.dll"),
-                        Path.Combine(path, "Microsoft.CodeAnalysis.CSharp.dll")))
+                        Path.Combine(path, "Microsoft.CodeAnalysis.CSharp.dll"),
+                        Path.Combine(path, "Microsoft.CodeAnalysis.Features.dll"),
+                        Path.Combine(path, "Microsoft.CodeAnalysis.CSharp.Features.dll")))
             };
         }
 

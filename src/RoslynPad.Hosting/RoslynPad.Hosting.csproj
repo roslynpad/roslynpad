@@ -6,8 +6,6 @@
     <RootNamespace>RoslynPad.Hosting</RootNamespace>
     <TargetFramework>netstandard1.3</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />

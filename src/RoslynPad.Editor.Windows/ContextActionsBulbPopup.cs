@@ -27,7 +27,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal sealed class ContextActionsBulbPopup : ExtendedPopup
     {
@@ -169,6 +169,5 @@ namespace RoslynPad.Editor.Windows
                 throw new NotSupportedException();
             }
         }
-
     }
 }

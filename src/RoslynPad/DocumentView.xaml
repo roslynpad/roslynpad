@@ -6,7 +6,7 @@
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
-             xmlns:editor="clr-namespace:RoslynPad.Editor.Windows;assembly=RoslynPad.Editor.Windows"
+             xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
              xmlns:runtime="clr-namespace:RoslynPad.Runtime;assembly=RoslynPad.Common"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:OpenDocumentViewModel}">
@@ -65,10 +65,8 @@
                 <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
                         ToolTip="Restart host process (Shift+F5)"
                         Content="{StaticResource Restart}" />
-                <ComboBox SelectedItem="{Binding Platform}">
-                    <codeAnalysis:Platform>X86</codeAnalysis:Platform>
-                    <codeAnalysis:Platform>X64</codeAnalysis:Platform>
-                </ComboBox>
+                <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
+                          SelectedItem="{Binding Platform}" />
                 <Button Content="{StaticResource BuildSolution}"
                         Command="{Binding CompileAndSaveCommand}"
                         ToolTip="Compile and save assembly" />

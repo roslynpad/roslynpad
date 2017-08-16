@@ -71,6 +71,22 @@ namespace RoslynPad.Roslyn
 
         #region Constructors
 
+        static RoslynHost()
+        {
+            WorkaroundForDesktopShim(typeof(Compilation));
+            WorkaroundForDesktopShim(typeof(TaggedText));
+        }
+
+        private static void WorkaroundForDesktopShim(Type typeInAssembly)
+        {
+            // DesktopShim doesn't work on Linux, so we hack around it
+
+            typeInAssembly.GetTypeInfo().Assembly
+                .GetType("Roslyn.Utilities.DesktopShim+FileNotFoundException")
+                ?.GetRuntimeFields().FirstOrDefault(f => f.Name == "s_fusionLog")
+                ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.Data)));
+        }
+
         public RoslynHost(NuGetConfiguration nuGetConfiguration = null, 
             IEnumerable<Assembly> additionalAssemblies = null, 
             IEnumerable<string> additionalReferencedAssemblyLocations = null)
@@ -122,11 +138,25 @@ namespace RoslynPad.Roslyn
         {
             // allow facade assemblies to take precedence
             var dictionary = _defaultReferenceAssemblies
-                .Select(x => x.GetLocation())
-                .Concat(additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
-                .ToImmutableDictionary(Path.GetFileNameWithoutExtension)
+                .ToImmutableDictionary(c => c.GetName().Name, c => c.GetLocation())
+                .SetItems((additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
+                    .ToImmutableDictionary(Path.GetFileNameWithoutExtension))
                 .SetItems(TryGetFacadeAssemblies()
                     .ToImmutableDictionary(Path.GetFileNameWithoutExtension));
+
+            // in .NET Core, System.Object is in System.Private.CoreLib,
+            // but mscorlib is still required by the compiler
+            const string mscorlib = "mscorlib";
+
+            if (!dictionary.ContainsKey(mscorlib) && 
+                dictionary.TryGetValue(typeof(object).GetTypeInfo().Assembly.GetName().Name, out var objectAssemblyPath))
+            {
+                var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), mscorlib + ".dll");
+                if (File.Exists(mscorlibPath))
+                {
+                    dictionary = dictionary.Add(mscorlib, mscorlibPath);
+                }
+            }
 
             var metadataReferences = dictionary.Values
                 .Select(CreateMetadataReference)
@@ -202,19 +232,30 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
-        private static bool Is64BitOperatingSystem => RuntimeInformation.OSArchitecture == Architecture.X64 ||
-                                                      RuntimeInformation.OSArchitecture == Architecture.Arm64;
-
         private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
         {
             string assemblyPath = null;
             string docPath = null;
 
-            // TODO: reference assemblies xplat
-            var programFiles =
-                Environment.GetEnvironmentVariable(Is64BitOperatingSystem
-                    ? "ProgramFiles(x86)"
-                    : "ProgramFiles");
+            // TODO: reference assemblies xplat?
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
+            {
+                return (assemblyPath, docPath);
+            }
+
+            var programFiles = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+
+            if (string.IsNullOrEmpty(programFiles))
+            {
+                programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
+            }
+
+            if (string.IsNullOrEmpty(programFiles))
+            {
+                return (assemblyPath, docPath);
+            }
+
             var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
             if (Directory.Exists(path))
             {

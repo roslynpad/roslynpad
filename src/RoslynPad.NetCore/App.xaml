@@ -1,0 +1,30 @@
+﻿<Application xmlns="https://github.com/avaloniaui">
+    <Application.Styles>
+        <StyleInclude Source="resm:Avalonia.Themes.Default.DefaultTheme.xaml?assembly=Avalonia.Themes.Default" />
+        <StyleInclude Source="resm:Avalonia.Themes.Default.Accents.BaseLight.xaml?assembly=Avalonia.Themes.Default" />
+        <StyleInclude Source="resm:AvaloniaEdit.AvaloniaEdit.xaml?assembly=AvaloniaEdit" />
+
+        <Style Selector="TabControl">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <DockPanel>
+                            <TabStrip Name="PART_TabStrip"
+                                      MemberSelector="{TemplateBinding MemberSelector}"
+                                      Items="{TemplateBinding Items}"
+                                      SelectedIndex="{TemplateBinding Path=SelectedIndex, Mode=TwoWay}" />
+                            <Carousel Name="PART_Content"
+                                      Items="{TemplateBinding Items}"
+                                      ItemTemplate="{TemplateBinding ItemTemplate}"
+                                      SelectedIndex="{TemplateBinding SelectedIndex}"
+                                      Transition="{TemplateBinding Transition}"
+                                      Grid.Row="1" />
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Application.Styles>
+</Application>

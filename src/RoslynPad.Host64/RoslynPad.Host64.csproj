@@ -15,7 +15,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -55,6 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="..\RoslynPad.Host\HostProgram.cs">
       <Link>HostProgram.cs</Link>
     </Compile>
@@ -69,7 +73,6 @@
     <None Include="..\RoslynPad.Host\App.config">
       <Link>App.config</Link>
     </None>
-    <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">

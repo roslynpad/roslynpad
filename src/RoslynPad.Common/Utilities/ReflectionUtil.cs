@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace RoslynPad.Utilities
 {
@@ -16,6 +18,13 @@ namespace RoslynPad.Utilities
         {
             var param = Expression.Parameter(typeof(TOwner));
             return Expression.Lambda<Func<TOwner, TField>>(Expression.Field(param, fieldName), param).Compile();
+        }
+
+        internal static T CreateDelegate<T>(Type type, string methodName)
+        {
+            var args = typeof(T).GetRuntimeMethods().First(c => c.Name == nameof(Action.Invoke)).GetParameters()
+                .Select(p => p.ParameterType).ToArray();
+            return (T)(object)type.GetRuntimeMethod(methodName, args).CreateDelegate(typeof(T));
         }
     }
 }

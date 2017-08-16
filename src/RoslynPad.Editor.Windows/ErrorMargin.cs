@@ -7,7 +7,7 @@ using System.Windows.Shapes;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     public class ErrorMargin : AbstractMargin
     {

@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
 using RoslynPad.UI;
@@ -21,7 +20,7 @@ namespace RoslynPad
     /// </summary>
     public partial class MainWindow
     {
-        private readonly MainViewModel _viewModel;
+        private readonly MainViewModelBase _viewModel;
         private bool _isClosing;
         private bool _isClosed;
 
@@ -30,11 +29,11 @@ namespace RoslynPad
             Loaded += OnLoaded;
 
             var container = new ContainerConfiguration()
-                .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
-                .WithAssembly(typeof(MainWindow).Assembly);     // RoslynPad
+                .WithAssembly(typeof(MainViewModelBase).Assembly)   // RoslynPad.Common.UI
+                .WithAssembly(typeof(MainWindow).Assembly);         // RoslynPad
             var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-            _viewModel = locator.GetService<MainViewModel>();
+            _viewModel = locator.GetService<MainViewModelBase>();
 
             DataContext = _viewModel;
             InitializeComponent();

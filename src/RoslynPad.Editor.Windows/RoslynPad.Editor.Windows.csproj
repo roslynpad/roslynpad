@@ -6,8 +6,7 @@
     <OutputType>Library</OutputType>
     <TargetFramework>net46</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
+    <RootNamespace>RoslynPad.Editor</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -31,5 +30,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.3.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.3.1" />
   </ItemGroup>
+  <Import Project="..\RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildSDKExtrasTargets)" Condition="Exists('$(MSBuildSDKExtrasTargets)')" />
 </Project>

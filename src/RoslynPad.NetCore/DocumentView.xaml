@@ -1,0 +1,25 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia">
+    <Grid RowDefinitions="Auto,*,5,*">
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal">
+            <Button Content="Run"
+                    Command="{Binding RunCommand}" />
+        </StackPanel>
+        <Editor:CodeTextEditor Name="Editor"
+                               Grid.Row="1"
+                               FontFamily="Consolas" />
+        <TreeView Grid.Row="3"
+                  Items="{Binding Results}">
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Header}"
+                                   Width="150" />
+                        <TextBlock Text="{Binding Value}" />
+                    </StackPanel>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</UserControl>

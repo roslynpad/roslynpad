@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 
-namespace RoslynPad.Editor.Windows
+namespace RoslynPad.Editor
 {
     internal class ExtendedPopup : Popup
     {
@@ -26,17 +26,17 @@ namespace RoslynPad.Editor.Windows
                     _openIfFocused = value;
                     if (value)
                     {
-                        _parent.IsKeyboardFocusedChanged += parent_IsKeyboardFocusedChanged;
+                        _parent.IsKeyboardFocusedChanged += Parent_IsKeyboardFocusedChanged;
                     }
                     else {
-                        _parent.IsKeyboardFocusedChanged -= parent_IsKeyboardFocusedChanged;
+                        _parent.IsKeyboardFocusedChanged -= Parent_IsKeyboardFocusedChanged;
                     }
                     OpenOrClose();
                 }
             }
         }
 
-        private void parent_IsKeyboardFocusedChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void Parent_IsKeyboardFocusedChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             OpenOrClose();
         }

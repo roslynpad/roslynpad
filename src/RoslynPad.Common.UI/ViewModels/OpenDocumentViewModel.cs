@@ -22,7 +22,7 @@ using RoslynPad.Utilities;
 namespace RoslynPad.UI
 {
     [Export]
-    public class OpenDocumentViewModel : NotificationObject
+    public partial class OpenDocumentViewModel : NotificationObject
     {
         private const string DefaultILText = "// Run to view IL";
 
@@ -36,7 +36,7 @@ namespace RoslynPad.UI
         private bool _isRunning;
         private Action<object> _executionHostOnDumped;
         private bool _isDirty;
-        private Platform _platform;
+        private ExecusionPlatform _platform;
         private bool _isSaving;
         private IDisposable _viewDisposable;
         private Action<ExceptionResultObject> _onError;
@@ -65,7 +65,7 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModel mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
@@ -75,18 +75,22 @@ namespace RoslynPad.UI
 
             var roslynHost = mainViewModel.RoslynHost;
 
-            Platform = Platform.X86;
-            _executionHost = new ExecutionHost(GetHostExeName(), new InitializationParameters(
+            _executionHost = new ExecutionHost(new InitializationParameters(
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray(),
                 roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, _workingDirectory));
+
+            AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
+                .GetExecutionPlatforms().ToImmutableArray();
+
+            Platform = AvailablePlatforms.FirstOrDefault();
 
             _executionHost.Error += ExecutionHostOnError;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
-            RunCommand = commands.CreateAsync(Run, () => !IsRunning);
-            CompileAndSaveCommand = commands.CreateAsync(CompileAndSave);
-            RestartHostCommand = commands.CreateAsync(RestartHost);
+            RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
+            CompileAndSaveCommand = commands.CreateAsync(CompileAndSave, () => Platform != null);
+            RestartHostCommand = commands.CreateAsync(RestartHost, () => Platform != null);
             FormatDocumentCommand = commands.CreateAsync(FormatDocument);
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
@@ -100,7 +104,10 @@ namespace RoslynPad.UI
             _dispatcher.InvokeAsync(() =>
             {
                 _onError?.Invoke(errorResult);
-                ResultsInternal?.Add(errorResult);
+                if (errorResult != null)
+                {
+                    ResultsInternal?.Add(errorResult);
+                }
             });
         }
 
@@ -196,29 +203,20 @@ namespace RoslynPad.UI
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
-        private string GetHostExeName()
-        {
-            switch (Platform)
-            {
-                case Platform.X86:
-                    return "RoslynPad.Host32.exe";
-                case Platform.X64:
-                    return "RoslynPad.Host64.exe";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(Platform));
-            }
-        }
+        public IReadOnlyList<ExecusionPlatform> AvailablePlatforms { get; }
 
-        public Platform Platform
+        public ExecusionPlatform Platform
         {
-            get => _platform; set
+            get => _platform;
+            set
             {
                 if (SetProperty(ref _platform, value))
                 {
-                    if (_executionHost != null)
+                    if (_executionHost != null && value != null)
                     {
-                        _executionHost.HostPath = GetHostExeName();
-                        RestartHostCommand.Execute();
+                        _executionHost.HostPath = value.HostPath;
+                        _executionHost.HostArguments = value.HostArguments;
+                        RestartHostCommand?.Execute();
                     }
                 }
             }
@@ -339,7 +337,7 @@ namespace RoslynPad.UI
 
         public DocumentId DocumentId { get; private set; }
 
-        public MainViewModel MainViewModel { get; }
+        public MainViewModelBase MainViewModel { get; }
         public ICommandProvider CommandProvider { get; }
 
         public NuGetDocumentViewModel NuGet { get; }
@@ -472,8 +470,7 @@ namespace RoslynPad.UI
                     if (!File.Exists(Path.Combine(pathToRepository, directiveWithoutRoot)))
                     {
                         var sections = directiveWithoutRoot.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                        NuGetVersion version;
-                        if (sections.Length > 2 && NuGetVersion.TryParse(sections[1], out version))
+                        if (sections.Length > 2 && NuGetVersion.TryParse(sections[1], out var version))
                         {
                             await NuGet.InstallPackage(sections[0], version, reportInstalled: false).ConfigureAwait(false);
                         }
@@ -484,6 +481,8 @@ namespace RoslynPad.UI
 
         private void HookDumped(ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
         {
+            _onError?.Invoke(null);
+
             if (_executionHostOnDumped != null)
             {
                 _executionHost.Dumped -= _executionHostOnDumped;

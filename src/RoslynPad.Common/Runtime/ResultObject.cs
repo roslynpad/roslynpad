@@ -102,7 +102,7 @@ namespace RoslynPad.Runtime
 
         private void Initialize(object o, string headerPrefix)
         {
-            var targetQuota = _quotas.Step();
+            var targetQuota = _quotas.StepDown();
 
             if (_member != null)
             {
@@ -217,7 +217,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new[] { new ResultObject(exception.InnerException, DumpQuotas.Default) };
+                Children = new[] {new ResultObject(exception.InnerException, _quotas)};
                 return;
             }
 
@@ -340,7 +340,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { new ResultObject(exception, DumpQuotas.Default) };
+                Children = new[] { new ResultObject(exception, _quotas) };
             }
         }
 
@@ -388,7 +388,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { new ResultObject(exception, DumpQuotas.Default) };
+                Children = new[] { new ResultObject(exception, _quotas) };
             }
         }
 
@@ -421,7 +421,7 @@ namespace RoslynPad.Runtime
         }
 
         // avoids WPF PropertyDescriptor binding leaks
-        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged
         {
             add { }
             remove { }
