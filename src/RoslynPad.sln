@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
@@ -27,7 +27,9 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RoslynPad.Editor.Shared", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Avalonia", "RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.NetCore", "RoslynPad.NetCore\RoslynPad.NetCore.csproj", "{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.NetCore", "RoslynPad.NetCore\RoslynPad.NetCore.csproj", "{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.HostNetCore", "RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj", "{DF39838A-357C-44C7-9B14-4A99EA2A8210}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -86,8 +88,15 @@ Global
 		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BE4635C-EAE9-4FB9-9C8D-2B3ECF74FC51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF39838A-357C-44C7-9B14-4A99EA2A8210}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF39838A-357C-44C7-9B14-4A99EA2A8210}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF39838A-357C-44C7-9B14-4A99EA2A8210}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF39838A-357C-44C7-9B14-4A99EA2A8210}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6E595517-397C-4164-83BB-D80FC9B19D36}
 	EndGlobalSection
 EndGlobal

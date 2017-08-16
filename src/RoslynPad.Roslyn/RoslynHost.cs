@@ -138,11 +138,25 @@ namespace RoslynPad.Roslyn
         {
             // allow facade assemblies to take precedence
             var dictionary = _defaultReferenceAssemblies
-                .Select(x => x.GetLocation())
-                .Concat(additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
-                .ToImmutableDictionary(Path.GetFileNameWithoutExtension)
+                .ToImmutableDictionary(c => c.GetName().Name, c => c.GetLocation())
+                .SetItems((additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
+                    .ToImmutableDictionary(Path.GetFileNameWithoutExtension))
                 .SetItems(TryGetFacadeAssemblies()
                     .ToImmutableDictionary(Path.GetFileNameWithoutExtension));
+
+            // in .NET Core, System.Object is in System.Private.CoreLib,
+            // but mscorlib is still required by the compiler
+            const string mscorlib = "mscorlib";
+
+            if (!dictionary.ContainsKey(mscorlib) && 
+                dictionary.TryGetValue(typeof(object).GetTypeInfo().Assembly.GetName().Name, out var objectAssemblyPath))
+            {
+                var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), mscorlib + ".dll");
+                if (File.Exists(mscorlibPath))
+                {
+                    dictionary = dictionary.Add(mscorlib, mscorlibPath);
+                }
+            }
 
             var metadataReferences = dictionary.Values
                 .Select(CreateMetadataReference)
@@ -224,7 +238,8 @@ namespace RoslynPad.Roslyn
             string docPath = null;
 
             // TODO: reference assemblies xplat?
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
             {
                 return (assemblyPath, docPath);
             }

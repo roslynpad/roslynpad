@@ -5,9 +5,11 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <RuntimeIdentifiers>win7-x64;ubuntu.14.04-x64;osx.10.12-x64</RuntimeIdentifiers>
     <RootNamespace>RoslynPad</RootNamespace>
+    <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
+    <EmbeddedResource Include="..\RoslynPad\Resources\RoslynPad.ico" Link="RoslynPad.ico" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
@@ -18,6 +20,7 @@
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
     <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
+    <ProjectReference Include="..\RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>

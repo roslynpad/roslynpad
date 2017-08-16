@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "RoslynPad.HostNetCore": {
+      "commandName": "Project"
+    }
+  }
+}

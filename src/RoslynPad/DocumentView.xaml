@@ -65,10 +65,8 @@
                 <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
                         ToolTip="Restart host process (Shift+F5)"
                         Content="{StaticResource Restart}" />
-                <ComboBox SelectedItem="{Binding Platform}">
-                    <codeAnalysis:Platform>X86</codeAnalysis:Platform>
-                    <codeAnalysis:Platform>X64</codeAnalysis:Platform>
-                </ComboBox>
+                <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
+                          SelectedItem="{Binding Platform}" />
                 <Button Content="{StaticResource BuildSolution}"
                         Command="{Binding CompileAndSaveCommand}"
                         ToolTip="Compile and save assembly" />

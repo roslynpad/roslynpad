@@ -131,13 +131,15 @@ namespace RoslynPad.Hosting
             return new DelegatingTextWriter(line => line.Dump());
         }
 
-        public ExecutionHost(string hostPath, InitializationParameters initializationParameters)
+        public ExecutionHost(InitializationParameters initializationParameters)
         {
-            HostPath = hostPath;
             _initializationParameters = initializationParameters;
         }
 
         public string HostPath { get; set; }
+
+        public string HostArguments { get; set; }
+
 
         public event Action<IList<ResultObject>> Dumped;
 
@@ -179,7 +181,7 @@ namespace RoslynPad.Hosting
 
                 var processInfo = new ProcessStartInfo(HostPath)
                 {
-                    Arguments = $"{remotePort} {semaphoreName} {currentProcessId}",
+                    Arguments = $"{HostArguments} {remotePort} {semaphoreName} {currentProcessId}",
                     WorkingDirectory = _initializationParameters.WorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false
@@ -206,6 +208,7 @@ namespace RoslynPad.Hosting
                     {
                         return null;
                     }
+
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
