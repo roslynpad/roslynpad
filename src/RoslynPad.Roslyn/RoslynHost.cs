@@ -218,9 +218,6 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
-        private static bool Is64BitOperatingSystem => RuntimeInformation.OSArchitecture == Architecture.X64 ||
-                                                      RuntimeInformation.OSArchitecture == Architecture.Arm64;
-
         private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
         {
             string assemblyPath = null;
@@ -232,9 +229,12 @@ namespace RoslynPad.Roslyn
                 return (assemblyPath, docPath);
             }
 
-            var programFiles = Environment.GetEnvironmentVariable(Is64BitOperatingSystem
-                    ? "ProgramFiles(x86)"
-                    : "ProgramFiles");
+            var programFiles = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+
+            if (string.IsNullOrEmpty(programFiles))
+            {
+                programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
+            }
 
             if (string.IsNullOrEmpty(programFiles))
             {
