@@ -17,12 +17,12 @@ namespace RoslynPad.Hosting
             _pipeName = pipeName;
         }
 
-        public async Task Connect()
+        public async Task Connect(TimeSpan timeout)
         {
             var stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try
             {
-                await stream.ConnectAsync().ConfigureAwait(false);
+                await stream.ConnectAsync((int)timeout.TotalMilliseconds).ConfigureAwait(false);
             }
             catch
             {

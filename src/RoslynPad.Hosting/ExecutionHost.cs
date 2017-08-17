@@ -52,23 +52,18 @@ namespace RoslynPad.Hosting
             ServerImpl server = null;
             try
             {
-                using (var semaphore = Semaphore.OpenExisting(semaphoreName))
-                {
-                    server = new ServerImpl(serverPort);
-                    server.Start();
+                server = new ServerImpl(serverPort);
+                server.Start();
 
-                    _outWriter = CreateConsoleWriter();
-                    Console.SetOut(_outWriter);
-                    _errorWriter = CreateConsoleWriter();
-                    Console.SetError(_errorWriter);
+                _outWriter = CreateConsoleWriter();
+                Console.SetOut(_outWriter);
+                _errorWriter = CreateConsoleWriter();
+                Console.SetError(_errorWriter);
 
-                    // TODO: fix debug capturing
-                    //Debug.Listeners.Clear();
-                    //Debug.Listeners.Add(new ConsoleTraceListener());
-                    //Debug.AutoFlush = true;
-
-                    semaphore.Release();
-                }
+                // TODO: fix debug capturing
+                //Debug.Listeners.Clear();
+                //Debug.Listeners.Add(new ConsoleTraceListener());
+                //Debug.AutoFlush = true;
 
                 _clientExited.Wait();
             }
@@ -157,31 +152,15 @@ namespace RoslynPad.Hosting
         {
             Process newProcess = null;
             int newProcessId = -1;
-            Semaphore semaphore = null;
             try
             {
-                string semaphoreName;
-                while (true)
-                {
-                    semaphoreName = "HostSemaphore-" + Guid.NewGuid();
-                    semaphore = new Semaphore(0, 1, semaphoreName, out var semaphoreCreated);
-
-                    if (semaphoreCreated)
-                    {
-                        break;
-                    }
-
-                    semaphore.Dispose();
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
                 var currentProcessId = Process.GetCurrentProcess().Id;
 
                 var remotePort = "RoslynPad-" + Guid.NewGuid();
 
                 var processInfo = new ProcessStartInfo(HostPath)
                 {
-                    Arguments = $"{HostArguments} {remotePort} {semaphoreName} {currentProcessId}",
+                    Arguments = $"{HostArguments} {remotePort} 0 {currentProcessId}",
                     WorkingDirectory = _initializationParameters.WorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false
@@ -201,29 +180,27 @@ namespace RoslynPad.Hosting
                     newProcessId = 0;
                 }
 
-                // sync:
-                while (!semaphore.WaitOne(MillisecondsTimeout))
+                if (!newProcess.IsAlive())
                 {
-                    if (!newProcess.IsAlive())
-                    {
-                        return null;
-                    }
-
-                    cancellationToken.ThrowIfCancellationRequested();
+                    return null;
                 }
 
-                ClientImpl client;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ClientImpl client = null;
                 // instantiate remote service
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
                     client = new ClientImpl(remotePort, this);
-                    await client.Connect().ConfigureAwait(false);
-                    await client.Initialize(new InitializationMessage { Parameters = _initializationParameters }).ConfigureAwait(false);
+                    await client.Connect(TimeSpan.FromSeconds(4)).ConfigureAwait(false);
+                    await client.Initialize(new InitializationMessage { Parameters = _initializationParameters })
+                        .ConfigureAwait(false);
                 }
-                catch (Exception) when (!newProcess.IsAlive())
+                catch (Exception)
                 {
+                    client?.Dispose();
                     return null;
                 }
 
@@ -237,10 +214,6 @@ namespace RoslynPad.Hosting
                 }
 
                 return null;
-            }
-            finally
-            {
-                semaphore?.Dispose();
             }
         }
 
