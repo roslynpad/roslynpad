@@ -20,7 +20,7 @@ namespace RoslynPad.Roslyn.Scripting
     /// </summary>
     public sealed class ScriptRunner
     {
-        private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118*" + Guid.NewGuid() + "-";
+        private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118-" + Guid.NewGuid() + "-";
         private static int _assemblyNumber;
         
         private readonly InteractiveAssemblyLoader _assemblyLoader;
