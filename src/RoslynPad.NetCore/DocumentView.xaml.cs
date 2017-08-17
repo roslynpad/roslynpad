@@ -50,13 +50,13 @@ namespace RoslynPad
 
             var avalonEditTextContainer = new AvalonEditTextContainer(_editor.Document) { Editor = _editor };
 
-            await _viewModel.Initialize(
+            _viewModel.Initialize(
                 avalonEditTextContainer,
                 a => Dispatcher.UIThread.InvokeAsync(() => ProcessDiagnostics(a)),
                 text => avalonEditTextContainer.UpdateText(text),
                 OnError,
                 () => new TextSpan(_editor.SelectionStart, _editor.SelectionLength),
-                this).ConfigureAwait(true);
+                this);
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
             _editor.AppendText(documentText);

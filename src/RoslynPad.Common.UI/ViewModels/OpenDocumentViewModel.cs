@@ -28,7 +28,7 @@ namespace RoslynPad.UI
 
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
-
+        private readonly ITelemetryProvider _telemetryProvider;
         private string _workingDirectory;
         private ExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
@@ -42,6 +42,7 @@ namespace RoslynPad.UI
         private Action<ExceptionResultObject> _onError;
         private Func<TextSpan> _getSelection;
         private string _ilText;
+        private bool _isInitialized;
 
         public IEnumerable<object> Results => _results;
 
@@ -65,28 +66,17 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
             CommandProvider = commands;
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
             _dispatcher = appDispatcher;
-
-            var roslynHost = mainViewModel.RoslynHost;
-
-            _executionHost = new ExecutionHost(new InitializationParameters(
-                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray(),
-                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration, _workingDirectory));
-
+            _telemetryProvider = telemetryProvider;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
-
-            Platform = AvailablePlatforms.FirstOrDefault();
-
-            _executionHost.Error += ExecutionHostOnError;
-            _executionHost.Disassembled += ExecutionHostOnDisassembled;
-
+            
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
             CompileAndSaveCommand = commands.CreateAsync(CompileAndSave, () => Platform != null);
@@ -125,6 +115,17 @@ namespace RoslynPad.UI
             _workingDirectory = Document != null
                 ? Path.GetDirectoryName(Document.Path)
                 : MainViewModel.DocumentRoot.Path;
+
+            var roslynHost = MainViewModel.RoslynHost;
+
+            _executionHost = new ExecutionHost(new InitializationParameters(
+                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray(),
+                roslynHost.DefaultImports, MainViewModel.NuGetConfiguration, _workingDirectory));
+
+            _executionHost.Error += ExecutionHostOnError;
+            _executionHost.Disassembled += ExecutionHostOnDisassembled;
+
+            Platform = AvailablePlatforms.FirstOrDefault();
         }
 
         private async Task RenameSymbol()
@@ -210,12 +211,15 @@ namespace RoslynPad.UI
             get => _platform;
             set
             {
+                if (_executionHost == null || value == null) throw new InvalidOperationException();
+
                 if (SetProperty(ref _platform, value))
                 {
-                    if (_executionHost != null && value != null)
+                    _executionHost.HostPath = value.HostPath;
+                    _executionHost.HostArguments = value.HostArguments;
+
+                    if (_isInitialized)
                     {
-                        _executionHost.HostPath = value.HostPath;
-                        _executionHost.HostArguments = value.HostArguments;
                         RestartHostCommand?.Execute();
                     }
                 }
@@ -225,8 +229,19 @@ namespace RoslynPad.UI
         private async Task RestartHost()
         {
             Reset();
-            await _executionHost.ResetAsync().ConfigureAwait(false);
-            SetIsRunning(false);
+            try
+            {
+                await Task.Run(() => _executionHost.ResetAsync()).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _telemetryProvider.ReportError(e);
+                throw;
+            }
+            finally
+            {
+                SetIsRunning(false);
+            }
         }
 
         private void SetIsRunning(bool value)
@@ -320,7 +335,7 @@ namespace RoslynPad.UI
             }
         }
 
-        internal async Task Initialize(SourceTextContainer sourceTextContainer,
+        internal void Initialize(SourceTextContainer sourceTextContainer,
             Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
             Action<ExceptionResultObject> onError,
             Func<TextSpan> getSelection, IDisposable viewDisposable)
@@ -332,7 +347,9 @@ namespace RoslynPad.UI
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
                 onTextUpdated);
-            await _executionHost.ResetAsync().ConfigureAwait(false);
+            _isInitialized = true;
+
+            RestartHostCommand?.Execute();
         }
 
         public DocumentId DocumentId { get; private set; }
