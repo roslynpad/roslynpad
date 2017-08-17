@@ -35,4 +35,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <ItemGroup>
+      <CopyJsonHostFiles Include="../RoslynPad.HostNetCore/bin/$(Configuration)/**/RoslynPad.HostNetCore.*.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CopyJsonHostFiles)" DestinationFolder="$(OutDir)" />
+  </Target>
 </Project>
