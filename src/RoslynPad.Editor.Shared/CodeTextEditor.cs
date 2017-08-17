@@ -70,7 +70,7 @@ namespace RoslynPad.Editor
 #else
             MouseHover += OnMouseHover;
             MouseHoverStopped += OnMouseHoverStopped;
-            
+
             ToolTipService.SetInitialShowDelay(this, 0);
             SearchReplacePanel.Install(this);
 #endif
@@ -273,7 +273,7 @@ namespace RoslynPad.Editor
             {
                 results.OverloadProvider.Refresh();
 
-                if (_insightWindow != null && _insightWindow.IsVisible)
+                if (_insightWindow.IsOpen())
                 {
                     _insightWindow.Provider = results.OverloadProvider;
                 }
@@ -294,7 +294,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            if (_completionWindow?.IsActive != true && results.CompletionData?.Any() == true)
+            if (!_completionWindow.IsOpen() && results.CompletionData?.Any() == true)
             {
                 _insightWindow?.Close();
 

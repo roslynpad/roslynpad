@@ -2,9 +2,9 @@
 
 ![RoslynPad](src/RoslynPad/Resources/RoslynPad.png)
 
-A simple C# editor based on Roslyn and AvalonEdit
+A cross-platform C# editor based on Roslyn and AvalonEdit
 
-![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)
+[![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases)
 
 Also available to download in the Microsoft Store:
 
@@ -13,6 +13,20 @@ Also available to download in the Microsoft Store:
 ## Building
 
 Open `src\RoslynPad.sln` in Visual Studio 2017.
+
+## Try out RoslynPad for Mac/Linux (alpha)
+
+* Install .NET Core SDK 1.1
+* Review the Avalonia [platform prerequisites](https://github.com/AvaloniaUI/Avalonia/wiki/Platform-support) (mainly requires GTK3)
+  * On a Mac, just use [brew](https://brew.sh/): `brew install gtk+3`
+* Run these commands:
+
+  ```
+  git clone https://github.com/aelij/roslynpad
+  cd roslynpad/src/RoslynPad.NetCore
+  dotnet restore
+  dotnet run
+  ```
 
 ## Features
 
