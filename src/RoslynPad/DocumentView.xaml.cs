@@ -76,6 +76,7 @@ namespace RoslynPad
                 () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
                 this);
 
+            Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty();
         }
 
         private void OnError(ExceptionResultObject e)
