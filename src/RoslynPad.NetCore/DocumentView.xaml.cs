@@ -46,8 +46,8 @@ namespace RoslynPad
 
             _viewModel.EditorFocus += (o, e) => _editor.Focus();
 
-            //_viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
-            //Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
+            _viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
+            _editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
 
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
 

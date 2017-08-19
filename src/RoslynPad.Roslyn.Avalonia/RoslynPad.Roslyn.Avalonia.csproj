@@ -7,6 +7,7 @@
     <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="**\*.png" Exclude="obj\**" />
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
     <EmbeddedResource Remove="LanguageServices\ChangeSignature\ChangeSignatureDialog.xaml" />
     <EmbeddedResource Remove="LanguageServices\ExtractInterface\ExtractInterfaceDialog.xaml" />

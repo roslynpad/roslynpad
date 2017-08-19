@@ -1,14 +1,26 @@
 using System.Windows;
 using System.Windows.Media;
 using RoslynPad.Roslyn.Completion;
+using RoslynPad.Roslyn.Resources;
 
 namespace RoslynPad.Roslyn
 {
     public static class GlyphExtensions
     {
-        public static ImageSource ToImageSource(this Glyph glyph)
+        private static readonly GlyphService _service = new GlyphService();
+
+        public static ImageSource ToImageSource(this Glyph glyph) => _service.GetGlyphImage(glyph) as ImageSource;
+
+        private class GlyphService
         {
-            return Application.Current.TryFindResource(glyph) as ImageSource;
+            private readonly Glyphs _glyphs;
+
+            public GlyphService()
+            {
+                _glyphs = new Glyphs();
+            }
+
+            public object GetGlyphImage(Glyph glyph) => _glyphs[glyph] as ImageSource;
         }
     }
 }

@@ -269,7 +269,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 {
                     Width = 16,
                     Height = 16,
-                    Source = Application.Current?.TryFindResource(Glyph) as ImageSource
+                    Source = Glyph.ToImageSource()
                 };
                 return image;
             }
