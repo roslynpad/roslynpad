@@ -22,9 +22,11 @@ namespace RoslynPad.Utilities
 
         internal static T CreateDelegate<T>(Type type, string methodName)
         {
-            var args = typeof(T).GetRuntimeMethods().First(c => c.Name == nameof(Action.Invoke)).GetParameters()
-                .Select(p => p.ParameterType).ToArray();
-            return (T)(object)type.GetRuntimeMethod(methodName, args).CreateDelegate(typeof(T));
+            var args = typeof(T).GetRuntimeMethods().First(c => c.Name == nameof(Action.Invoke))
+                .GetParameters().Select(p => p.ParameterType).ToArray();
+            var methodInfo = type.GetRuntimeMethods().First(m => m.Name == methodName && m.GetParameters()
+                .Select(p => p.ParameterType).SequenceEqual(args));
+            return (T)(object)methodInfo.CreateDelegate(typeof(T));
         }
     }
 }

@@ -17,7 +17,6 @@ using CommonImage = System.Windows.Media.ImageSource;
 #endif
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
-using RoslynPad.Annotations;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
 
@@ -140,7 +139,6 @@ namespace RoslynPad.Editor
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

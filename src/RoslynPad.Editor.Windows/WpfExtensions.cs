@@ -56,8 +56,9 @@ namespace RoslynPad.Editor
         public static bool HasModifiers(this KeyEventArgs args, ModifierKeys modifier) =>
             (args.KeyboardDevice.Modifiers & modifier) == modifier;
 
-        public static void Open(this ToolTip toolTip) => toolTip.IsOpen = true;
-        public static void Close(this ToolTip toolTip) => toolTip.IsOpen = false;
+        public static void Open(this ToolTip toolTip, FrameworkElement control) => toolTip.IsOpen = true;
+        public static void Close(this ToolTip toolTip, FrameworkElement control) => toolTip.IsOpen = false;
+        public static void SetContent(this ToolTip toolTip, Control control, object content) => toolTip.Content = content;
 
         public static void SetItems(this ItemsControl itemsControl, System.Collections.IEnumerable enumerable) => 
             itemsControl.ItemsSource = enumerable;

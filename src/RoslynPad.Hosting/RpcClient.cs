@@ -42,8 +42,8 @@ namespace RoslynPad.Hosting
 
         public virtual void Dispose()
         {
-            _stream.Dispose();
-            _rpc.Dispose();
+            _stream?.Dispose();
+            _rpc?.Dispose();
         }
     }
 }

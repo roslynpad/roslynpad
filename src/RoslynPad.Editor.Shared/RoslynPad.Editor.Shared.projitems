@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ICompletionDataEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IContextActionProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyOptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RoslynCodeEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RoslynCodeEditorCompletionProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RoslynCompletionData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RoslynContextActionProvider.cs" />

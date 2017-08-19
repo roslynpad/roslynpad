@@ -58,7 +58,15 @@ namespace RoslynPad.Editor
                 IndentationSize = 4,
                 EnableEmailHyperlinks = false,
             };
-            //ShowLineNumbers = true;
+
+            // TODO: remove this after bug fix
+#if AVALONIA
+            var lineMargin = new LineNumberMargin { Margin = new Thickness(0, 0, 10, 0) };
+            lineMargin[~TextBlock.ForegroundProperty] = this[~LineNumbersForegroundProperty];
+            TextArea.LeftMargins.Insert(0, lineMargin);
+#else
+            ShowLineNumbers = true;
+#endif
 
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
@@ -142,14 +150,14 @@ namespace RoslynPad.Editor
 
         private void OnVisualLinesChanged(object sender, EventArgs e)
         {
-            _toolTip?.Close();
+            _toolTip?.Close(this);
         }
 
         private void OnMouseHoverStopped(object sender, MouseEventArgs e)
         {
             if (_toolTip != null)
             {
-                _toolTip.Close();
+                _toolTip.Close(this);
                 e.Handled = true;
             }
         }
@@ -201,19 +209,22 @@ namespace RoslynPad.Editor
 
             if (args.ContentToShow is string stringContent)
             {
-                _toolTip.Content = new TextBlock
+                _toolTip.SetContent(this, new TextBlock
                 {
                     Text = stringContent,
                     TextWrapping = TextWrapping.Wrap
-                };
+                });
             }
             else
             {
-                _toolTip.Content = args.ContentToShow;
+                _toolTip.SetContent(this, args.ContentToShow);
             }
 
             e.Handled = true;
-            _toolTip.Open();
+            _toolTip.Open(this);
+#if AVALONIA
+            _toolTip.InvalidateVisual();
+#endif
         }
 
         #region Open & Save File
@@ -288,8 +299,9 @@ namespace RoslynPad.Editor
                         Style = TryFindResource(typeof(InsightWindow)) as Style
 #endif
                     };
-                    _insightWindow.Show();
+
                     _insightWindow.Closed += (o, args) => _insightWindow = null;
+                    _insightWindow.Show();
                 }
                 return;
             }
@@ -302,7 +314,9 @@ namespace RoslynPad.Editor
                 _completionWindow = new CustomCompletionWindow(TextArea)
                 {
                     MinWidth = 300,
+#if !AVALONIA
                     Background = CompletionBackground,
+#endif
                     CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion || triggerMode == TriggerMode.Text,
                     UseHardSelection = results.UseHardSelection,
                 };
@@ -325,8 +339,8 @@ namespace RoslynPad.Editor
 
                 _completionWindow.CompletionList.SelectedItem = selected;
 
-                _completionWindow.Show();
                 _completionWindow.Closed += (o, args) => { _completionWindow = null; };
+                _completionWindow.Show();
             }
         }
 
@@ -367,7 +381,15 @@ namespace RoslynPad.Editor
             {
                 _isSoftSelectionActive = true;
                 CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
-                CompletionList.ListBox.SetBorderThickness(0);
+                CompletionList.ListBox.SetBorderThickness(
+// TODO: find a better way
+#if AVALONIA
+                    1
+#else
+                    0
+#endif
+                    );
+
 #if AVALONIA
                 CompletionList.ListBox.PointerPressed +=
 #else
@@ -375,6 +397,16 @@ namespace RoslynPad.Editor
 #endif
                     (o, e) => _isSoftSelectionActive = false;
             }
+
+#if AVALONIA
+            protected override void DetachEvents()
+            {
+                // TODO: temporary workaround until SetParent(null) is removed
+                var selected = CompletionList.SelectedItem;
+                base.DetachEvents();
+                CompletionList.SelectedItem = selected;
+            }
+#endif
 
             private void CompletionListOnSelectionChanged(object sender, SelectionChangedEventArgs args)
             {

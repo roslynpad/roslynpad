@@ -79,11 +79,19 @@ namespace RoslynPad.Editor
         public static bool HasModifiers(this KeyEventArgs args, InputModifiers modifier) =>
             (args.Modifiers & modifier) == modifier;
 
-        private static Action<object, PointerEventArgs> ToolTipOpen => ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerEnter");
-        private static Action<object, PointerEventArgs> ToolTipClose => ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerLeave");
+        // workaround for Avalonia missing a settable ToolTip.IsOpen property
+        private static Action<object, PointerEventArgs> ToolTipOpen = ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerEnter");
+        private static Action<object, PointerEventArgs> ToolTipClose = ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerLeave");
 
-        public static void Open(this ToolTip toolTip) => ToolTipOpen(toolTip, null);
-        public static void Close(this ToolTip toolTip) => ToolTipClose(toolTip, null);
+        public static void Open(this ToolTip toolTip, IControl control)
+        {
+            ToolTipClose(control, null);
+            ToolTipOpen(control, null);
+        }
+
+        public static void Close(this ToolTip toolTip, IControl control) => ToolTipClose(control, null);
+
+        public static void SetContent(this ToolTip toolTip, Control control, object content) => ToolTip.SetTip(control, content);
 
         public static void SetItems(this ItemsControl itemsControl, System.Collections.IEnumerable enumerable) =>
             itemsControl.Items = enumerable;

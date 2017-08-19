@@ -12,7 +12,6 @@ using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.CodeActions;
 using RoslynPad.Roslyn.CodeFixes;
 using RoslynPad.Roslyn.CodeRefactorings;
-using RoslynPad.UI;
 
 namespace RoslynPad.Editor
 {
@@ -21,14 +20,12 @@ namespace RoslynPad.Editor
         private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
             ImmutableArray.Create("ExtractInterface");
 
-        private readonly ICommandProvider _commandProvider;
         private readonly DocumentId _documentId;
         private readonly IRoslynHost _roslynHost;
         private readonly ICodeFixService _codeFixService;
 
-        public RoslynContextActionProvider(ICommandProvider commandProvider, DocumentId documentId, IRoslynHost roslynHost)
+        public RoslynContextActionProvider(DocumentId documentId, IRoslynHost roslynHost)
         {
-            _commandProvider = commandProvider;
             _documentId = documentId;
             _roslynHost = roslynHost;
             _codeFixService = _roslynHost.GetService<ICodeFixService>();
@@ -44,10 +41,11 @@ namespace RoslynPad.Editor
             var codeFixes = await _codeFixService.GetFixesAsync(document,
                 textSpan, false, cancellationToken).ConfigureAwait(false);
 
-            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(document,
+            var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(
+                document,
                 textSpan, cancellationToken).ConfigureAwait(false);
 
-            return ((IEnumerable<object>)codeFixes.SelectMany(x => x.Fixes))
+            return ((IEnumerable<object>) codeFixes.SelectMany(x => x.Fixes))
                 .Concat(codeRefactorings
                     .Where(x => ExcludedRefactoringProviders.All(p => !x.Provider.GetType().Name.Contains(p)))
                     .SelectMany(x => x.Actions));
@@ -57,11 +55,11 @@ namespace RoslynPad.Editor
         {
             if (action is CodeAction codeAction)
             {
-                return _commandProvider.CreateAsync(() => ExecuteCodeAction(codeAction));
+                return new CodeActionCommand(this, codeAction);
             }
             var codeFix = action as CodeFix;
             if (codeFix == null || codeFix.Action.HasCodeActions()) return null;
-            return _commandProvider.CreateAsync(() => ExecuteCodeAction(codeFix.Action));
+            return new CodeActionCommand(this, codeFix.Action);
         }
 
         private async Task ExecuteCodeAction(CodeAction codeAction)
@@ -69,7 +67,33 @@ namespace RoslynPad.Editor
             var operations = await codeAction.GetOperationsAsync(CancellationToken.None).ConfigureAwait(true);
             foreach (var operation in operations)
             {
-                operation.Apply(_roslynHost.GetDocument(_documentId).Project.Solution.Workspace, CancellationToken.None);
+                operation.Apply(_roslynHost.GetDocument(_documentId).Project.Solution.Workspace,
+                    CancellationToken.None);
+            }
+        }
+
+        private class CodeActionCommand : ICommand
+        {
+            private readonly RoslynContextActionProvider _provider;
+            private readonly CodeAction _codeAction;
+
+            public CodeActionCommand(RoslynContextActionProvider provider, CodeAction codeAction)
+            {
+                _provider = provider;
+                _codeAction = codeAction;
+            }
+
+            public event EventHandler CanExecuteChanged
+            {
+                add { }
+                remove { }
+            }
+
+            public bool CanExecute(object parameter) => true;
+
+            public async void Execute(object parameter)
+            {
+                await _provider.ExecuteCodeAction(_codeAction).ConfigureAwait(true);
             }
         }
     }

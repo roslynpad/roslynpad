@@ -11,7 +11,6 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 #endif
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Annotations;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
 
 namespace RoslynPad.Editor
@@ -30,7 +29,7 @@ namespace RoslynPad.Editor
 
         public override SourceText CurrentText => _currentText;
 
-        public AvalonEditTextContainer([NotNull] TextDocument document)
+        public AvalonEditTextContainer(TextDocument document)
         {
             Document = document ?? throw new ArgumentNullException(nameof(document));
             _currentText = new AvalonEditSourceText(this, Document.Text);

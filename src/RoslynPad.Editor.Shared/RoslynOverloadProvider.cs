@@ -10,7 +10,6 @@ using CommonFontWeights = System.Windows.FontWeights;
 #endif
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
-using NotificationObject = RoslynPad.Utilities.NotificationObject;
 
 namespace RoslynPad.Editor
 {

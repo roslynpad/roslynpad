@@ -6,9 +6,8 @@
             <Button Content="Run"
                     Command="{Binding RunCommand}" />
         </StackPanel>
-        <Editor:CodeTextEditor Name="Editor"
-                               Grid.Row="1"
-                               FontFamily="Consolas" />
+        <Editor:RoslynCodeEditor Name="Editor"
+                                 Grid.Row="1" />
         <TreeView Grid.Row="3"
                   Items="{Binding Results}">
             <TreeView.ItemTemplate>

@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
@@ -188,7 +187,7 @@
                         ToolTip="Rename Symbol (F2)"
                         Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
             </ToolBar>
-            <editor:CodeTextEditor x:Name="Editor"
+            <editor:RoslynCodeEditor x:Name="Editor"
                                    x:FieldModifier="private"
                                    FontFamily="Consolas"
                                    Grid.Row="1"

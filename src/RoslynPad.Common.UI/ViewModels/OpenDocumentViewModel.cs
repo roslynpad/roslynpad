@@ -29,7 +29,6 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
-        private string _workingDirectory;
         private ExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
@@ -43,6 +42,8 @@ namespace RoslynPad.UI
         private Func<TextSpan> _getSelection;
         private string _ilText;
         private bool _isInitialized;
+
+        public string WorkingDirectory { get; private set; }
 
         public IEnumerable<object> Results => _results;
 
@@ -112,7 +113,7 @@ namespace RoslynPad.UI
 
             IsDirty = document?.IsAutoSave == true;
 
-            _workingDirectory = Document != null
+            WorkingDirectory = Document != null
                 ? Path.GetDirectoryName(Document.Path)
                 : MainViewModel.DocumentRoot.Path;
 
@@ -120,7 +121,7 @@ namespace RoslynPad.UI
 
             _executionHost = new ExecutionHost(new InitializationParameters(
                 roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray(),
-                roslynHost.DefaultImports, MainViewModel.NuGetConfiguration, _workingDirectory));
+                roslynHost.DefaultImports, MainViewModel.NuGetConfiguration, WorkingDirectory));
 
             _executionHost.Error += ExecutionHostOnError;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
@@ -258,7 +259,7 @@ namespace RoslynPad.UI
                 string path;
                 do
                 {
-                    path = Path.Combine(_workingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
+                    path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
                 } while (File.Exists(path));
                 Document = DocumentViewModel.CreateAutoSave(path);
             }
@@ -280,7 +281,7 @@ namespace RoslynPad.UI
                     var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
-                    dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(_workingDirectory, s);
+                    dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, s);
                     dialog.Show();
                     result = dialog.Result;
                     if (result == SaveResult.Save)
@@ -335,18 +336,14 @@ namespace RoslynPad.UI
             }
         }
 
-        internal void Initialize(SourceTextContainer sourceTextContainer,
-            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
+        internal void Initialize(DocumentId documentId,
             Action<ExceptionResultObject> onError,
             Func<TextSpan> getSelection, IDisposable viewDisposable)
         {
             _viewDisposable = viewDisposable;
             _onError = onError;
             _getSelection = getSelection;
-            var roslynHost = MainViewModel.RoslynHost;
-            // ReSharper disable once AssignNullToNotNullAttribute
-            DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
-                onTextUpdated);
+            DocumentId = documentId;
             _isInitialized = true;
 
             RestartHostCommand?.Execute();

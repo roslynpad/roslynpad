@@ -19,8 +19,6 @@
     <Compile Update="**\*.xaml.cs" SubType="Designer" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" /> 
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
