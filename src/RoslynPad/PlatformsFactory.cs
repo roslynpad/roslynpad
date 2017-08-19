@@ -7,10 +7,10 @@ namespace RoslynPad
     [Export(typeof(IPlatformsFactory))]
     internal class PlatformsFactory : IPlatformsFactory
     {
-        public IEnumerable<ExecusionPlatform> GetExecutionPlatforms()
+        public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
-            yield return new ExecusionPlatform("Desktop x86", "RoslynPad.Host32.exe", string.Empty);
-            yield return new ExecusionPlatform("Desktop x64", "RoslynPad.Host64.exe", string.Empty);
+            yield return new ExecutionPlatform("Desktop x86", "RoslynPad.Host32.exe", string.Empty);
+            yield return new ExecutionPlatform("Desktop x64", "RoslynPad.Host64.exe", string.Empty);
         }
     }
 }

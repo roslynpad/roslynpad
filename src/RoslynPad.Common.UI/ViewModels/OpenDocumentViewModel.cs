@@ -22,7 +22,7 @@ using RoslynPad.Utilities;
 namespace RoslynPad.UI
 {
     [Export]
-    public partial class OpenDocumentViewModel : NotificationObject
+    public class OpenDocumentViewModel : NotificationObject
     {
         private const string DefaultILText = "// Run to view IL";
 
@@ -35,7 +35,7 @@ namespace RoslynPad.UI
         private bool _isRunning;
         private Action<object> _executionHostOnDumped;
         private bool _isDirty;
-        private ExecusionPlatform _platform;
+        private ExecutionPlatform _platform;
         private bool _isSaving;
         private IDisposable _viewDisposable;
         private Action<ExceptionResultObject> _onError;
@@ -205,9 +205,9 @@ namespace RoslynPad.UI
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
-        public IReadOnlyList<ExecusionPlatform> AvailablePlatforms { get; }
+        public IReadOnlyList<ExecutionPlatform> AvailablePlatforms { get; }
 
-        public ExecusionPlatform Platform
+        public ExecutionPlatform Platform
         {
             get => _platform;
             set

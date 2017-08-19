@@ -1,12 +1,12 @@
 ﻿namespace RoslynPad.UI
 {
-    public class ExecusionPlatform
+    public class ExecutionPlatform
     {
         public string Name { get; }
         public string HostPath { get; }
         public string HostArguments { get; }
 
-        public ExecusionPlatform(string name, string hostPath, string hostArguments)
+        public ExecutionPlatform(string name, string hostPath, string hostArguments)
         {
             Name = name;
             HostPath = hostPath;
