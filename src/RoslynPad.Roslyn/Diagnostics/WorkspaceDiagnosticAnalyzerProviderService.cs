@@ -6,6 +6,9 @@ using System.IO;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {
@@ -14,22 +17,43 @@ namespace RoslynPad.Roslyn.Diagnostics
     {
         public IEnumerable<HostDiagnosticAnalyzerPackage> GetHostDiagnosticAnalyzerPackages()
         {
-            var path = Path.GetDirectoryName(typeof(WorkspaceDiagnosticAnalyzerProviderService).GetTypeInfo().Assembly.GetLocation());
-            if (path == null) throw new ArgumentNullException(nameof(path));
             return new[]
             {
                 new HostDiagnosticAnalyzerPackage(LanguageNames.CSharp,
                     ImmutableArray.Create(
-                        Path.Combine(path, "Microsoft.CodeAnalysis.dll"),
-                        Path.Combine(path, "Microsoft.CodeAnalysis.CSharp.dll"),
-                        Path.Combine(path, "Microsoft.CodeAnalysis.Features.dll"),
-                        Path.Combine(path, "Microsoft.CodeAnalysis.CSharp.Features.dll")))
+                        // Microsoft.CodeAnalysis
+                        typeof(Compilation).GetTypeInfo().Assembly.GetLocation(),
+                        // Microsoft.CodeAnalysis.CSharp
+                        typeof(CSharpCompilation).GetTypeInfo().Assembly.GetLocation(),
+                        // Microsoft.CodeAnalysis.Features
+                        typeof(FeaturesResources).GetTypeInfo().Assembly.GetLocation(),
+                        // Microsoft.CodeAnalysis.CSharp.Features
+                        typeof(CSharpFeaturesResources).GetTypeInfo().Assembly.GetLocation()))  
             };
         }
 
         public IAnalyzerAssemblyLoader GetAnalyzerAssemblyLoader()
         {
-            return new AnalyzerAssemblyLoader();
+            return SimpleAnalyzerAssemblyLoader.Instance;
+        }
+    }
+
+    [ExportWorkspaceService(typeof(IAnalyzerService), ServiceLayer.Host), Shared]
+    internal sealed class AnalyzerAssemblyLoaderService : IAnalyzerService, IWorkspaceService
+    {
+        public IAnalyzerAssemblyLoader GetLoader()
+        {
+            return SimpleAnalyzerAssemblyLoader.Instance;
+        }
+    }
+
+    internal class SimpleAnalyzerAssemblyLoader : AnalyzerAssemblyLoader
+    {
+        public static readonly IAnalyzerAssemblyLoader Instance = new SimpleAnalyzerAssemblyLoader();
+
+        protected override Assembly LoadFromPathImpl(string fullPath)
+        {
+            return Assembly.Load(new AssemblyName(Path.GetFileNameWithoutExtension(fullPath)));
         }
     }
 }

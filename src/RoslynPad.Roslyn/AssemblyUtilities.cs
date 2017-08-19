@@ -10,10 +10,5 @@ namespace RoslynPad.Roslyn
         {
             return CorLightup.Desktop.GetAssemblyLocation(assembly);
         }
-
-        public static Assembly Load(string path)
-        {
-            return CorLightup.Desktop.LoadAssembly(path);
-        }
     }
 }
