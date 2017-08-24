@@ -1,53 +1,23 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition.Hosting;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Diagnostics;
+using System.Collections.Generic;
 
 namespace RoslynPad.Roslyn
 {
-    public sealed class RoslynHost : IRoslynHost
+    public class RoslynHost : IRoslynHost
     {
         #region Fields
-
-        private static readonly ImmutableArray<Type> _defaultReferenceAssemblyTypes = new[] {
-            typeof(object),
-            typeof(Thread),
-            typeof(Task),
-            typeof(List<>),
-            typeof(Regex),
-            typeof(StringBuilder),
-            typeof(Uri),
-            typeof(Enumerable),
-            typeof(IEnumerable),
-            typeof(Path),
-            typeof(Assembly),
-            Type.GetType("RoslynPad.Runtime.ObjectExtensions, RoslynPad.Common")
-        }.ToImmutableArray();
-
-        private static readonly ImmutableArray<Assembly> _defaultReferenceAssemblies =
-            _defaultReferenceAssemblyTypes.Select(x => x.GetTypeInfo().Assembly).Distinct().Concat(new[]
-            {
-                Assembly.Load(new AssemblyName("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")),
-                typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetTypeInfo().Assembly,
-            })
-            .ToImmutableArray();
 
         internal static readonly ImmutableArray<string> PreprocessorSymbols = ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
 
@@ -56,16 +26,14 @@ namespace RoslynPad.Roslyn
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly CSharpParseOptions _parseOptions;
         private readonly IDocumentationProviderService _documentationProviderService;
-        private readonly string _referenceAssembliesPath;
-        private readonly string _documentationPath;
         private readonly CompositionHost _compositionContext;
         private readonly MefHostServices _host;
 
         private int _documentNumber;
 
-        internal ImmutableArray<MetadataReference> DefaultReferences { get; }
+        public ImmutableArray<MetadataReference> DefaultReferences { get; }
 
-        internal ImmutableArray<string> DefaultImports { get; }
+        public ImmutableArray<string> DefaultImports { get; }
 
         #endregion
 
@@ -84,19 +52,20 @@ namespace RoslynPad.Roslyn
             typeInAssembly.GetTypeInfo().Assembly
                 .GetType("Roslyn.Utilities.DesktopShim+FileNotFoundException")
                 ?.GetRuntimeFields().FirstOrDefault(f => f.Name == "s_fusionLog")
-                ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.Data)));
+                ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.InnerException)));
         }
 
-        public RoslynHost(NuGetConfiguration nuGetConfiguration = null, 
-            IEnumerable<Assembly> additionalAssemblies = null, 
-            IEnumerable<string> additionalReferencedAssemblyLocations = null)
+        public RoslynHost(NuGetConfiguration nuGetConfiguration = null,
+            IEnumerable<Assembly> additionalAssemblies = null,
+            RoslynHostReferences references = null)
         {
             _nuGetConfiguration = nuGetConfiguration;
+            if (references == null) references = RoslynHostReferences.Default;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
 
-            var assemblies = new[]
+            IEnumerable<Assembly> assemblies = new[]
             {
                 Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis")),
                 Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis.CSharp")),
@@ -107,14 +76,14 @@ namespace RoslynPad.Roslyn
 
             if (additionalAssemblies != null)
             {
-                assemblies = assemblies.Concat(additionalAssemblies).ToArray();
+                assemblies = assemblies.Concat(additionalAssemblies);
             }
 
             var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
-                    .Distinct()
-                    .SelectMany(x => x.DefinedTypes)
-                    .Select(x => x.AsType())
-                    .ToArray();
+                        .Distinct()
+                        .SelectMany(x => x.DefinedTypes)
+                        .Select(x => x.AsType())
+                        .ToArray();
 
             _compositionContext = new ContainerConfiguration()
                 .WithParts(partTypes)
@@ -124,45 +93,12 @@ namespace RoslynPad.Roslyn
 
             _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
 
-            (_referenceAssembliesPath, _documentationPath) = GetReferenceAssembliesPath();
             _documentationProviderService = new DocumentationProviderService();
 
-            DefaultReferences = GetMetadataReferences(additionalReferencedAssemblyLocations);
-
-            DefaultImports = _defaultReferenceAssemblyTypes.Select(x => x.Namespace).Distinct().ToImmutableArray();
+            DefaultReferences = references.GetReferences(_documentationProviderService.GetDocumentationProvider);
+            DefaultImports = references.Imports;
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
-        }
-
-        private ImmutableArray<MetadataReference> GetMetadataReferences(IEnumerable<string> additionalReferencedAssemblyLocations = null)
-        {
-            // allow facade assemblies to take precedence
-            var dictionary = _defaultReferenceAssemblies
-                .ToImmutableDictionary(c => c.GetName().Name, c => c.GetLocation())
-                .SetItems((additionalReferencedAssemblyLocations ?? Enumerable.Empty<string>())
-                    .ToImmutableDictionary(Path.GetFileNameWithoutExtension))
-                .SetItems(TryGetFacadeAssemblies()
-                    .ToImmutableDictionary(Path.GetFileNameWithoutExtension));
-
-            // in .NET Core, System.Object is in System.Private.CoreLib,
-            // but mscorlib is still required by the compiler
-            const string mscorlib = "mscorlib";
-
-            if (!dictionary.ContainsKey(mscorlib) && 
-                dictionary.TryGetValue(typeof(object).GetTypeInfo().Assembly.GetName().Name, out var objectAssemblyPath))
-            {
-                var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), mscorlib + ".dll");
-                if (File.Exists(mscorlibPath))
-                {
-                    dictionary = dictionary.Add(mscorlib, mscorlibPath);
-                }
-            }
-
-            var metadataReferences = dictionary.Values
-                .Select(CreateMetadataReference)
-                .ToImmutableArray();
-
-            return metadataReferences;
         }
 
         internal MetadataReference CreateMetadataReference(string location)
@@ -211,7 +147,13 @@ namespace RoslynPad.Roslyn
             {
                 return true;
             }
-            return _defaultReferenceAssemblies.Any(x => x.GetName().Name == text);
+
+            if (workspace.CurrentSolution.GetDocument(documentId).Project.TryGetCompilation(out var compilation))
+            {
+                return compilation.ReferencedAssemblyNames.Any(a => a.Name == text);
+            }
+
+            return false;
         }
 
         private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace, string workingDirectory)
@@ -232,97 +174,6 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
-        private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
-        {
-            string assemblyPath = null;
-            string docPath = null;
-
-            // TODO: reference assemblies xplat?
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-                RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
-            {
-                return (assemblyPath, docPath);
-            }
-
-            var programFiles = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-
-            if (string.IsNullOrEmpty(programFiles))
-            {
-                programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
-            }
-
-            if (string.IsNullOrEmpty(programFiles))
-            {
-                return (assemblyPath, docPath);
-            }
-
-            var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
-            if (Directory.Exists(path))
-            {
-                assemblyPath = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
-                    .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
-                    .OrderByDescending(x => x.version)
-                    .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")))?.path;
-
-                if (assemblyPath == null || !File.Exists(Path.Combine(assemblyPath, "System.xml")))
-                {
-                    docPath = GetReferenceDocumentationPath(path);
-                }
-            }
-
-            return (assemblyPath, docPath);
-        }
-
-        private static string GetReferenceDocumentationPath(string path)
-        {
-            string docPath = null;
-
-            var docPathTemp = Path.Combine(path, "V4.X");
-            if (File.Exists(Path.Combine(docPathTemp, "System.xml")))
-            {
-                docPath = docPathTemp;
-            }
-            else
-            {
-                var localeDirectory = IOUtilities.PerformIO(() => Directory.GetDirectories(docPathTemp),
-                        Array.Empty<string>()).FirstOrDefault();
-                if (localeDirectory != null && File.Exists(Path.Combine(localeDirectory, "System.xml")))
-                {
-                    docPath = localeDirectory;
-                }
-            }
-
-            return docPath;
-        }
-
-        private static Version GetFxVersionFromPath(string path)
-        {
-            var name = Path.GetFileName(path);
-            if (name?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                if (Version.TryParse(name.Substring(1), out var version))
-                {
-                    return version;
-                }
-            }
-            
-            return new Version(0, 0);
-        }
-
-        private IEnumerable<string> TryGetFacadeAssemblies()
-        {
-            if (_referenceAssembliesPath != null)
-            {
-                var facadesPath = Path.Combine(_referenceAssembliesPath, "Facades");
-                if (Directory.Exists(facadesPath))
-                {
-                    return Directory.EnumerateFiles(facadesPath, "*.dll");
-                }
-            }
-
-            return Array.Empty<string>();
-        }
-
         private DocumentationProvider GetDocumentationProvider(string location)
         {
             if (File.Exists(Path.ChangeExtension(location, "xml")))
@@ -330,8 +181,8 @@ namespace RoslynPad.Roslyn
                 return _documentationProviderService.GetDocumentationProvider(location);
             }
 
-            return GetDocumentationProviderFromPath(_documentationPath, location) ??
-                   GetDocumentationProviderFromPath(_referenceAssembliesPath, location);
+            return GetDocumentationProviderFromPath(RoslynHostReferences.ReferenceAssembliesPath.docPath, location) ??
+                   GetDocumentationProviderFromPath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, location);
         }
 
         private DocumentationProvider GetDocumentationProviderFromPath(string path, string location)
@@ -388,8 +239,8 @@ namespace RoslynPad.Roslyn
 
         public Document GetDocument(DocumentId documentId)
         {
-            return _workspaces.TryGetValue(documentId, out var workspace) 
-                ? workspace.CurrentSolution.GetDocument(documentId) 
+            return _workspaces.TryGetValue(documentId, out var workspace)
+                ? workspace.CurrentSolution.GetDocument(documentId)
                 : null;
         }
 

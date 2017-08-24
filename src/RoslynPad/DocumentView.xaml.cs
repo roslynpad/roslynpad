@@ -102,13 +102,21 @@ namespace RoslynPad
         {
             if (installResult.References.Count == 0) return;
 
-            var text = string.Join(Environment.NewLine,
-                installResult.References.Distinct().Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
-                .Concat(installResult.FrameworkReferences.Distinct())
-                .Where(r => !_viewModel.MainViewModel.RoslynHost.HasReference(_viewModel.DocumentId, r))
-                .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
+            Dispatcher.InvokeAsync(() =>
+            {
+                var text = string.Join(Environment.NewLine,
+                    installResult.References.Distinct().OrderBy(c => c)
+                    .Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
+                    .Concat(installResult.FrameworkReferences.Distinct())
+                    .Where(r => !_viewModel.MainViewModel.RoslynHost.HasReference(_viewModel.DocumentId, r))
+                    .Select(r => "#r \"" + r + "\"")
+                    .Where(r => Editor.Text.IndexOf(r, StringComparison.OrdinalIgnoreCase) < 0));
 
-            Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
+                if (text.Length > 0)
+                {
+                    Editor.Document.Insert(0, text + Environment.NewLine, AnchorMovementType.Default);
+                }
+            });
         }
 
         protected override void OnPreviewKeyDown(KeyEventArgs e)

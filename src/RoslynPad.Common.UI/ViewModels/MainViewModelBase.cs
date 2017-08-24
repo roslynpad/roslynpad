@@ -92,7 +92,8 @@ namespace RoslynPad.UI
 
         private void InitializeInternal()
         {
-            RoslynHost = new RoslynHost(NuGetConfiguration, CompositionAssemblies);
+            RoslynHost = new RoslynHost(NuGetConfiguration, CompositionAssemblies, 
+                RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }));
 
             OpenAutoSavedDocuments();
 

@@ -34,8 +34,8 @@ namespace RoslynPad.Editor
         {
             _syncContext = SynchronizationContext.Current;
             _textMarkerService = new TextMarkerService(this);
-            TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
+            TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.Caret.PositionChanged += CaretOnPositionChanged;
         }
 
@@ -144,8 +144,7 @@ namespace RoslynPad.Editor
                     continue;
                 }
 
-                var marker =
-                    _textMarkerService.TryCreate(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
+                var marker = _textMarkerService.TryCreate(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
                 if (marker != null)
                 {
                     marker.MarkerColor = GetDiagnosticsColor(diagnosticData);

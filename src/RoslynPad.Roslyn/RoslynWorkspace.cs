@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis.Scripting.Hosting;
 
 namespace RoslynPad.Roslyn
 {
@@ -19,6 +20,7 @@ namespace RoslynPad.Roslyn
     {
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
+        private readonly GacFileResolver _gacResolver;
 
         public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
@@ -28,6 +30,7 @@ namespace RoslynPad.Roslyn
         {
             _nuGetConfiguration = nuGetConfiguration;
             _referencesDirectives = new ConcurrentDictionary<string, DirectiveInfo>();
+            _gacResolver = GacFileResolver.IsAvailable ? new GacFileResolver() : null;
 
             RoslynHost = roslynHost;
         }
@@ -133,8 +136,7 @@ namespace RoslynPad.Roslyn
 
             foreach (var directive in directives)
             {
-                DirectiveInfo referenceDirective;
-                if (_referencesDirectives.TryGetValue(directive, out referenceDirective))
+                if (_referencesDirectives.TryGetValue(directive, out var referenceDirective))
                 {
                     if (!referenceDirective.IsActive)
                     {
@@ -173,30 +175,29 @@ namespace RoslynPad.Roslyn
             {
                 name = _nuGetConfiguration.ResolveReference(name);
             }
+
             if (File.Exists(name))
             {
                 return RoslynHost.CreateMetadataReference(name);
             }
             try
             {
-                var assemblyName = GlobalAssemblyCache.Instance.ResolvePartialName(name);
-                if (assemblyName == null)
+                var location = _gacResolver?.Resolve(name);
+                if (location != null)
                 {
-                    return null;
+                    return RoslynHost.CreateMetadataReference(location);
                 }
-                var assembly = Assembly.Load(new AssemblyName(assemblyName.ToString()));
-                return RoslynHost.CreateMetadataReference(assembly.GetLocation());
             }
             catch (Exception)
             {
-                return null;
             }
+
+            return null;
         }
 
         public bool HasReference(string text)
         {
-            DirectiveInfo info;
-            if (_referencesDirectives.TryGetValue(text, out info))
+            if (_referencesDirectives.TryGetValue(text, out var info))
             {
                 return info.IsActive;
             }
