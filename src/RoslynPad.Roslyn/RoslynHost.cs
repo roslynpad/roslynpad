@@ -103,7 +103,7 @@ namespace RoslynPad.Roslyn
 
         internal MetadataReference CreateMetadataReference(string location)
         {
-            return MetadataReference.CreateFromFile(location, documentation: GetDocumentationProvider(location));
+            return MetadataReference.CreateFromFile(location, documentation: _documentationProviderService.GetDocumentationProvider(location));
         }
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
@@ -174,51 +174,37 @@ namespace RoslynPad.Roslyn
 
         #region Documentation
 
-        private DocumentationProvider GetDocumentationProvider(string location)
-        {
-            if (File.Exists(Path.ChangeExtension(location, "xml")))
-            {
-                return _documentationProviderService.GetDocumentationProvider(location);
-            }
-
-            return GetDocumentationProviderFromPath(RoslynHostReferences.ReferenceAssembliesPath.docPath, location) ??
-                   GetDocumentationProviderFromPath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, location);
-        }
-
-        private DocumentationProvider GetDocumentationProviderFromPath(string path, string location)
-        {
-            if (path != null)
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute
-                var referenceLocation = Path.Combine(path, Path.GetFileName(location));
-                if (File.Exists(Path.ChangeExtension(referenceLocation, "xml")))
-                {
-                    return _documentationProviderService.GetDocumentationProvider(referenceLocation);
-                }
-            }
-
-            return null;
-        }
-
         private sealed class DocumentationProviderService : IDocumentationProviderService
         {
             private readonly ConcurrentDictionary<string, DocumentationProvider> _assemblyPathToDocumentationProviderMap =
                 new ConcurrentDictionary<string, DocumentationProvider>();
 
-            public DocumentationProvider GetDocumentationProvider(string assemblyPath)
+            public DocumentationProvider GetDocumentationProvider(string location)
             {
-                if (assemblyPath == null)
+                var finalPath = Path.ChangeExtension(location, "xml");
+                if (!File.Exists(finalPath))
                 {
-                    throw new ArgumentNullException(nameof(assemblyPath));
+                    finalPath = GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.docPath, finalPath) ??
+                                GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, finalPath);
                 }
 
-                assemblyPath = Path.ChangeExtension(assemblyPath, "xml");
-                if (!_assemblyPathToDocumentationProviderMap.TryGetValue(assemblyPath, out var provider))
+                return _assemblyPathToDocumentationProviderMap.GetOrAdd(location, 
+                    _ => finalPath == null ? null : XmlDocumentationProvider.CreateFromFile(finalPath));
+            }
+
+            private static string GetFilePath(string path, string location)
+            {
+                if (path != null)
                 {
-                    provider = _assemblyPathToDocumentationProviderMap.GetOrAdd(assemblyPath, XmlDocumentationProvider.CreateFromFile);
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    var referenceLocation = Path.Combine(path, Path.GetFileName(location));
+                    if (File.Exists(referenceLocation))
+                    {
+                        return referenceLocation;
+                    }
                 }
 
-                return provider;
+                return null;
             }
         }
 
