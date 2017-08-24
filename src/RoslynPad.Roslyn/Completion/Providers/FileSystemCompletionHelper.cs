@@ -1,281 +1,253 @@
+// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
 
-namespace RoslynPad.Roslyn.Completion.Providers
+namespace RoslynPad.Roslyn
 {
-    internal sealed class FileSystemCompletionHelper
+    internal class FileSystemCompletionHelper
     {
-        private readonly Func<string, bool> _exclude;
-        private readonly Microsoft.CodeAnalysis.Glyph _folderGlyph;
-        private readonly Microsoft.CodeAnalysis.Glyph _fileGlyph;
+        private static readonly char[] s_windowsDirectorySeparator = { '\\' };
+
+        private readonly Glyph _folderGlyph;
+        private readonly Glyph _fileGlyph;
 
         // absolute paths
         private readonly ImmutableArray<string> _searchPaths;
+        private readonly string _baseDirectoryOpt;
 
-        private readonly ISet<string> _allowableExtensions;
-       
-        // TODO: logical drives xplat?
-        //private readonly Lazy<string[]> _lazyGetDrives;
+        private readonly ImmutableArray<string> _allowableExtensions;
         private readonly CompletionItemRules _itemRules;
 
-        public FileSystemCompletionHelper(Microsoft.CodeAnalysis.Glyph folderGlyph,
-            Microsoft.CodeAnalysis.Glyph fileGlyph,
+        public FileSystemCompletionHelper(
+            Glyph folderGlyph,
+            Glyph fileGlyph,
             ImmutableArray<string> searchPaths,
-            IEnumerable<string> allowableExtensions,
-            Func<string, bool> exclude = null,
-            CompletionItemRules itemRules = null)
+            string baseDirectoryOpt,
+            ImmutableArray<string> allowableExtensions,
+            CompletionItemRules itemRules)
         {
             Debug.Assert(searchPaths.All(path => PathUtilities.IsAbsolute(path)));
+            Debug.Assert(baseDirectoryOpt == null || PathUtilities.IsAbsolute(baseDirectoryOpt));
 
             _searchPaths = searchPaths;
-            _allowableExtensions = allowableExtensions.Select(e => e.ToLowerInvariant()).ToSet();
+            _baseDirectoryOpt = baseDirectoryOpt;
+            _allowableExtensions = allowableExtensions;
             _folderGlyph = folderGlyph;
             _fileGlyph = fileGlyph;
-            _exclude = exclude;
             _itemRules = itemRules;
-
-            //_lazyGetDrives = new Lazy<string[]>(() =>
-            //        IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>()));
         }
 
-        public ImmutableArray<CompletionItem> GetItems(string pathSoFar, string documentPath)
-        {
-            if (_exclude != null && _exclude(pathSoFar))
-            {
-                return ImmutableArray<CompletionItem>.Empty;
-            }
+        // virtual for testing
+        protected virtual string[] GetLogicalDrives()
+            => IOUtilities.PerformIO(CorLightup.Desktop.GetLogicalDrives, Array.Empty<string>());
 
-            return GetFilesAndDirectories(pathSoFar, documentPath);
+        // virtual for testing
+        protected virtual bool DirectoryExists(string fullPath)
+        {
+            Debug.Assert(PathUtilities.IsAbsolute(fullPath));
+            return Directory.Exists(fullPath);
         }
 
-        private CompletionItem CreateCurrentDirectoryItem()
+        // virtual for testing
+        protected virtual IEnumerable<string> EnumerateDirectories(string fullDirectoryPath)
         {
-            return CommonCompletionItem.Create(".", rules: _itemRules);
+            Debug.Assert(PathUtilities.IsAbsolute(fullDirectoryPath));
+            return IOUtilities.PerformIO(() => Directory.EnumerateDirectories(fullDirectoryPath), Array.Empty<string>());
         }
 
-        private CompletionItem CreateParentDirectoryItem()
+        // virtual for testing
+        protected virtual IEnumerable<string> EnumerateFiles(string fullDirectoryPath)
         {
-            return CommonCompletionItem.Create("..", rules: _itemRules);
+            Debug.Assert(PathUtilities.IsAbsolute(fullDirectoryPath));
+            return IOUtilities.PerformIO(() => Directory.EnumerateFiles(fullDirectoryPath), Array.Empty<string>());
+        }
+
+        // virtual for testing
+        protected virtual bool IsVisibleFileSystemEntry(string fullPath)
+        {
+            Debug.Assert(PathUtilities.IsAbsolute(fullPath));
+            return IOUtilities.PerformIO(() => (File.GetAttributes(fullPath) & (FileAttributes.Hidden | FileAttributes.System)) == 0, false);
         }
 
         private CompletionItem CreateNetworkRoot()
+            => CommonCompletionItem.Create(
+                "\\\\",
+                glyph: null,
+                description: "\\\\".ToSymbolDisplayParts(),
+                rules: _itemRules);
+
+        private CompletionItem CreateUnixRoot()
+            => CommonCompletionItem.Create(
+                "/",
+                glyph: _folderGlyph,
+                description: "/".ToSymbolDisplayParts(),
+                rules: _itemRules);
+
+        private CompletionItem CreateFileSystemEntryItem(string fullPath, bool isDirectory)
+            => CommonCompletionItem.Create(
+                PathUtilities.GetFileName(fullPath),
+                glyph: isDirectory ? _folderGlyph : _fileGlyph,
+                description: fullPath.ToSymbolDisplayParts(),
+                rules: _itemRules);
+
+        private CompletionItem CreateLogicalDriveItem(string drive)
+            => CommonCompletionItem.Create(
+                drive,
+                glyph: _folderGlyph,
+                description: drive.ToSymbolDisplayParts(),
+                rules: _itemRules);
+
+        public Task<ImmutableArray<CompletionItem>> GetItemsAsync(string directoryPath, CancellationToken cancellationToken)
         {
-            return CommonCompletionItem.Create("\\\\", rules: _itemRules);
+            return Task.Run(() => GetItems(directoryPath, cancellationToken), cancellationToken);
         }
 
-        private ImmutableArray<CompletionItem> GetFilesAndDirectories(string path, string basePath)
+        // internal for testing
+        internal ImmutableArray<CompletionItem> GetItems(string directoryPath, CancellationToken cancellationToken)
         {
+            if (!PathUtilities.IsUnixLikePlatform && directoryPath.Length == 1 && directoryPath[0] == '\\')
+            {
+                // The user has typed only "\".  In this case, we want to add "\\" to the list.  
+                return ImmutableArray.Create(CreateNetworkRoot());
+            }
+
             var result = ArrayBuilder<CompletionItem>.GetInstance();
-            var pathKind = PathUtilities.GetPathKind(path);
+
+            var pathKind = PathUtilities.GetPathKind(directoryPath);
             switch (pathKind)
             {
                 case PathKind.Empty:
-                    result.Add(CreateCurrentDirectoryItem());
-
-                    if (!IsDriveRoot(Directory.GetCurrentDirectory()))
+                    // base directory
+                    if (_baseDirectoryOpt != null)
                     {
-                        result.Add(CreateParentDirectoryItem());
+                        result.AddRange(GetItemsInDirectory(_baseDirectoryOpt, cancellationToken));
                     }
 
-                    result.Add(CreateNetworkRoot());
-                    //result.AddRange(GetLogicalDrives());
-                    result.AddRange(GetFilesAndDirectoriesInSearchPaths());
+                    // roots
+                    if (PathUtilities.IsUnixLikePlatform)
+                    {
+                        result.AddRange(CreateUnixRoot());
+                    }
+                    else
+                    {
+                        foreach (var drive in GetLogicalDrives())
+                        {
+                            result.Add(CreateLogicalDriveItem(drive.TrimEnd(s_windowsDirectorySeparator)));
+                        }
+
+                        result.Add(CreateNetworkRoot());
+                    }
+
+                    // entries on search paths
+                    foreach (var searchPath in _searchPaths)
+                    {
+                        result.AddRange(GetItemsInDirectory(searchPath, cancellationToken));
+                    }
+
                     break;
 
                 case PathKind.Absolute:
                 case PathKind.RelativeToCurrentDirectory:
                 case PathKind.RelativeToCurrentParent:
                 case PathKind.RelativeToCurrentRoot:
-                {
-                    var fullPath = FileUtilities.ResolveRelativePath(
-                        path,
-                        basePath,
-                        Directory.GetCurrentDirectory());
-
-                    if (fullPath != null)
+                    var fullDirectoryPath = FileUtilities.ResolveRelativePath(directoryPath, basePath: null, baseDirectory: _baseDirectoryOpt);
+                    if (fullDirectoryPath != null)
                     {
-                        result.AddRange(GetFilesAndDirectoriesInDirectory(fullPath));
-
-                        // although it is possible to type "." here, it doesn't make any sense to do so:
-                        if (!IsDriveRoot(fullPath) && pathKind != PathKind.Absolute)
-                        {
-                            result.Add(CreateParentDirectoryItem());
-                        }
-
-                        if (path == "\\" && pathKind == PathKind.RelativeToCurrentRoot)
-                        {
-                            // The user has typed only "\".  In this case, we want to add "\\" to
-                            // the list.  Also, the textChangeSpan needs to be backed up by one
-                            // so that it will consume the "\" when "\\" is inserted.
-                            result.Add(CreateNetworkRoot());
-                        }
+                        result.AddRange(GetItemsInDirectory(fullDirectoryPath, cancellationToken));
                     }
                     else
                     {
                         // invalid path
                         result.Clear();
                     }
-                }
 
                     break;
 
                 case PathKind.Relative:
 
-                    // although it is possible to type "." here, it doesn't make any sense to do so:
-                    result.Add(CreateParentDirectoryItem());
+                    // base directory:
+                    if (_baseDirectoryOpt != null)
+                    {
+                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(_baseDirectoryOpt, directoryPath), cancellationToken));
+                    }
 
+                    // search paths:
                     foreach (var searchPath in _searchPaths)
                     {
-                        var fullPath = PathUtilities.CombineAbsoluteAndRelativePaths(searchPath, path);
-
-                        // search paths are always absolute:
-                        Debug.Assert(PathUtilities.IsAbsolute(fullPath));
-                        result.AddRange(GetFilesAndDirectoriesInDirectory(fullPath));
+                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(searchPath, directoryPath), cancellationToken));
                     }
 
                     break;
 
                 case PathKind.RelativeToDriveDirectory:
-                    // these paths are not supported
+                    // Paths "C:dir" are not supported, but when the path doesn't include any directory, i.e. "C:",
+                    // we return the drive itself.
+                    if (directoryPath.Length == 2)
+                    {
+                        result.Add(CreateLogicalDriveItem(directoryPath));
+                    }
+
                     break;
 
                 default:
-                    throw ExceptionUtilities.Unreachable;
+                    throw ExceptionUtilities.UnexpectedValue(pathKind);
             }
 
             return result.ToImmutableAndFree();
         }
 
-        private static bool IsDriveRoot(string fullPath)
-        {
-            return IOUtilities.PerformIO(() => new DirectoryInfo(fullPath).Parent == null);
-        }
-
-        private IEnumerable<CompletionItem> GetFilesAndDirectoriesInDirectory(string fullDirectoryPath)
+        private IEnumerable<CompletionItem> GetItemsInDirectory(string fullDirectoryPath, CancellationToken cancellationToken)
         {
             Debug.Assert(PathUtilities.IsAbsolute(fullDirectoryPath));
-            if (IOUtilities.PerformIO(() => Directory.Exists(fullDirectoryPath)))
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!DirectoryExists(fullDirectoryPath))
             {
-                var directoryInfo = IOUtilities.PerformIO(() => new DirectoryInfo(fullDirectoryPath));
-                if (directoryInfo != null)
+                yield break;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            foreach (var directory in EnumerateDirectories(fullDirectoryPath))
+            {
+                if (IsVisibleFileSystemEntry(directory))
                 {
-                    return from child in GetFileSystemInfos(directoryInfo)
-                        where ShouldShow(child)
-                        where CanAccess(child)
-                        select CreateCompletion(child);
+                    yield return CreateFileSystemEntryItem(directory, isDirectory: true);
                 }
             }
 
-            return SpecializedCollections.EmptyEnumerable<CompletionItem>();
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        private CompletionItem CreateCompletion(FileSystemInfo child)
-        {
-            return CommonCompletionItem.Create(
-                child.Name,
-                glyph: child is DirectoryInfo ? _folderGlyph : _fileGlyph,
-                description: child.FullName.ToSymbolDisplayParts(),
-                rules: _itemRules);
-        }
-
-        private bool ShouldShow(FileSystemInfo child)
-        {
-            // Get the attributes.  If we can't, assume it's hidden.
-            var attributes = IOUtilities.PerformIO(() => child.Attributes, FileAttributes.Hidden);
-
-            // Don't show hidden/system files.
-            if ((attributes & FileAttributes.Hidden) != 0 ||
-                (attributes & FileAttributes.System) != 0)
+            foreach (var file in EnumerateFiles(fullDirectoryPath))
             {
-                return false;
+                if (_allowableExtensions.Length != 0 &&
+                    !_allowableExtensions.Contains(
+                        PathUtilities.GetExtension(file),
+                        PathUtilities.IsUnixLikePlatform ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (IsVisibleFileSystemEntry(file))
+                {
+                    yield return CreateFileSystemEntryItem(file, isDirectory: false);
+                }
             }
-
-            if (child is DirectoryInfo)
-            {
-                return true;
-            }
-
-            if (child is FileInfo)
-            {
-                return
-                    _allowableExtensions.Count == 0 ||
-                    _allowableExtensions.Contains(Path.GetExtension(child.Name).ToLowerInvariant());
-            }
-
-            return false;
-        }
-
-        private bool CanAccess(FileSystemInfo info)
-        {
-            if (info is DirectoryInfo d)
-            {
-                return CanAccessDirectory(d);
-            }
-
-            if (info is FileInfo f)
-            {
-                return CanAccessFile(f);
-            }
-
-            return false;
-        }
-
-        private bool CanAccessFile(FileInfo file)
-        {
-            var accessControl = IOUtilities.PerformIO(file.GetAccessControl);
-
-            // Quick and dirty check.  If we can't even get the access control object, then we
-            // can't access the file.
-            if (accessControl == null)
-            {
-                return false;
-            }
-
-            // TODO(cyrusn): Actually add checks here.
-            return true;
-        }
-
-        private bool CanAccessDirectory(DirectoryInfo directory)
-        {
-            var accessControl = IOUtilities.PerformIO(directory.GetAccessControl);
-
-            // Quick and dirty check.  If we can't even get the access control object, then we
-            // can't access the file.
-            if (accessControl == null)
-            {
-                return false;
-            }
-
-            // TODO(cyrusn): Do more checks here.
-            return true;
-        }
-
-        private IEnumerable<CompletionItem> GetFilesAndDirectoriesInSearchPaths()
-        {
-            return _searchPaths.SelectMany(GetFilesAndDirectoriesInDirectory);
-        }
-
-        //private IEnumerable<CompletionItem> GetLogicalDrives()
-        //{
-        //    // First, we may have a filename, so let's include all drives
-        //    return from d in _lazyGetDrives.Value
-        //        where d.Length > 0 && (d.Last() == Path.DirectorySeparatorChar || d.Last() == Path.AltDirectorySeparatorChar)
-        //        let text = d.Substring(0, d.Length - 1)
-        //        select CommonCompletionItem.Create(text, glyph: _folderGlyph, rules: _itemRules);
-        //}
-
-        private static FileSystemInfo[] GetFileSystemInfos(DirectoryInfo directoryInfo)
-        {
-            return IOUtilities.PerformIO(directoryInfo.GetFileSystemInfos, Array.Empty<FileSystemInfo>());
         }
     }
 }
