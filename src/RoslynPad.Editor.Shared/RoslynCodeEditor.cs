@@ -80,8 +80,13 @@ namespace RoslynPad.Editor
             _braceMatchingCts = cts;
 
             var document = _roslynHost.GetDocument(_documentId);
-            var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, CaretOffset, token).ConfigureAwait(true);
-            _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+            var text = await document.GetTextAsync().ConfigureAwait(false);
+            var caretOffset = CaretOffset;
+            if (caretOffset <= text.Length)
+            {
+                var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, caretOffset, token).ConfigureAwait(true);
+                _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+            }
         }
 
         private void TryJumpToBrace()
