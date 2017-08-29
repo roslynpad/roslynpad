@@ -106,6 +106,7 @@
     </Compile>
     <Compile Include="Controls\TreeListView.cs" />
     <Compile Include="SaveFileDialogAdapter.cs" />
+    <Compile Include="XamlTypes.cs" />
     <Page Include="Controls\ILViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

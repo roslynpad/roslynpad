@@ -144,6 +144,10 @@ namespace RoslynPad.Hosting
 
         private void OnError(ExceptionResultObject error) => Error?.Invoke(error);
 
+        public event Action<List<CompilationErrorResultObject>> CompilationErrors;
+
+        private void OnCompilationErrors(List<CompilationErrorResultObject> errors) => CompilationErrors?.Invoke(errors);
+
         public event Action<string> Disassembled;
 
         private void OnDisassembled(string il) => Disassembled?.Invoke(il);
@@ -370,6 +374,7 @@ namespace RoslynPad.Hosting
             Task Dump(DumpMessage message);
             Task Error(ErrorMessage message);
             Task Disassembled(DisassembledMesssage message);
+            Task CompilationErrors(List<CompilationErrorResultObject> errors);
         }
 
         private interface IService
@@ -441,6 +446,11 @@ namespace RoslynPad.Hosting
             public Task Disassembled(DisassembledMesssage message)
             {
                 return InvokeAsync(nameof(Disassembled), message);
+            }
+
+            public Task CompilationErrors(List<CompilationErrorResultObject> errors)
+            {
+                return InvokeAsync(nameof(CompilationErrors), errors);
             }
 
             public Task Initialize(InitializationMessage message)
@@ -554,7 +564,7 @@ namespace RoslynPad.Hosting
                     if (script != null)
                     {
                         var diagnostics = await script.SaveAssembly(message.AssemblyPath).ConfigureAwait(false);
-                        DisplayErrors(diagnostics);
+                        await DisplayErrors(diagnostics).ConfigureAwait(false);
                     }
                 }
                 catch (Exception e)
@@ -582,7 +592,7 @@ namespace RoslynPad.Hosting
 
                 try
                 {
-                    var script = TryCompile(message.Code, message.Disassemble, message.OptimizationLevel, _scriptOptions);
+                    var script = await TryCompile(message.Code, message.Disassemble, message.OptimizationLevel, _scriptOptions).ConfigureAwait(false);
                     if (script != null)
                     {
                         var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
@@ -614,14 +624,14 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private ScriptRunner TryCompile(string code, bool decompile, OptimizationLevel? optimizationLevel, ScriptOptions options)
+            private async Task<ScriptRunner> TryCompile(string code, bool decompile, OptimizationLevel? optimizationLevel, ScriptOptions options)
             {
                 var script = CreateScript(code, optimizationLevel, options);
 
                 var diagnostics = script.Compile(decompile ? (Action<Stream>)Disassemble : null);
                 if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
                 {
-                    DisplayErrors(diagnostics);
+                    await DisplayErrors(diagnostics).ConfigureAwait(false);
                     return null;
                 }
 
@@ -656,12 +666,22 @@ namespace RoslynPad.Hosting
                 return script;
             }
 
-            private static void DisplayErrors(ImmutableArray<Diagnostic> diagnostics)
+            private async Task DisplayErrors(ImmutableArray<Diagnostic> diagnostics)
             {
+                var errors = new List<CompilationErrorResultObject>();
+
                 foreach (var diagnostic in diagnostics)
                 {
-                    diagnostic.Dump();
+                    var lineSpan = diagnostic.Location.GetLineSpan();
+
+                    var error = CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), 
+                        diagnostic.Id, diagnostic.GetMessage(), 
+                        lineSpan.StartLinePosition.Line, lineSpan.StartLinePosition.Character);
+
+                    errors.Add(error);
                 }
+
+                await CompilationErrors(errors).ConfigureAwait(false);
             }
 
             private static void DisplaySubmissionResult(object state)
@@ -740,8 +760,14 @@ namespace RoslynPad.Hosting
                 _host.OnDisassembled(message.IL);
                 return Task.CompletedTask;
             }
-        }
 
+            public Task CompilationErrors(List<CompilationErrorResultObject> errors)
+            {
+                _host.OnCompilationErrors(errors);
+                return Task.CompletedTask;
+            }
+        }
+        
         private sealed class RemoteService : IDisposable
         {
             public readonly Process Process;

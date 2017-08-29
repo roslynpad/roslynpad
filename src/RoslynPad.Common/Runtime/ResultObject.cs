@@ -13,10 +13,16 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
+    internal interface IResultObject
+    {
+        string Value { get; }
+
+        void WriteTo(StringBuilder builder);
+    }
+
     [DataContract]
-    [KnownType(typeof(ExceptionResultObject))]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
-    internal class ResultObject : INotifyPropertyChanged
+    internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
         private static readonly ImmutableHashSet<string> _irrelevantEnumerableProperties = ImmutableHashSet<string>.Empty
             .Add("Count").Add("Length").Add("Key");
@@ -87,7 +93,7 @@ namespace RoslynPad.Runtime
         public string Header { get; private set; }
 
         [DataMember]
-        public string Value { get; private set; }
+        public string Value { get; protected set; }
 
         [DataMember]
         public string Type { get; private set; }
@@ -204,7 +210,10 @@ namespace RoslynPad.Runtime
                 {
                     if (_member is PropertyInfo propertyInfo)
                     {
-                        value = propertyInfo.GetValue(o);
+                        if (propertyInfo.GetIndexParameters().Length == 0)
+                        {
+                            value = propertyInfo.GetValue(o);
+                        }
                     }
                     else if (_member is FieldInfo fieldInfo)
                     {
@@ -217,7 +226,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new[] {new ResultObject(exception.InnerException, _quotas)};
+                Children = new[] { new ResultObject(exception.InnerException, _quotas) };
                 return;
             }
 
@@ -458,5 +467,44 @@ namespace RoslynPad.Runtime
 
         [DataMember]
         public string Message { get; private set; }
+    }
+
+    [DataContract]
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
+    internal class CompilationErrorResultObject : IResultObject
+    {
+        // for serialization
+        // ReSharper disable once UnusedMember.Local
+        private CompilationErrorResultObject() { }
+
+        [DataMember]
+        public string ErrorCode { get; private set; }
+        [DataMember]
+        public string Severity { get; private set; }
+        [DataMember]
+        public int Line { get; private set; }
+        [DataMember]
+        public int Column { get; private set; }
+        [DataMember]
+        public string Message { get; private set; }
+
+        public static CompilationErrorResultObject Create(string severity, string errorCode, string message, int line, int column)
+        {
+            return new CompilationErrorResultObject
+            {
+                ErrorCode = errorCode,
+                Severity = severity,
+                Message = message,
+                // 0 to 1-based
+                Line = line + 1,
+                Column = column + 1,
+            };
+        }
+
+        public override string ToString() => $"{ErrorCode}: {Message}";
+
+        string IResultObject.Value => ToString();
+
+        public void WriteTo(StringBuilder builder) => builder.Append(ToString());
     }
 }

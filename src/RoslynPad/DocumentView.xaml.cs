@@ -22,7 +22,7 @@ namespace RoslynPad
         private readonly SynchronizationContext _syncContext;
         private readonly ErrorMargin _errorMargin;
         private OpenDocumentViewModel _viewModel;
-        private ResultObject _contextMenuResultObject;
+        private IResultObject _contextMenuResultObject;
 
         public DocumentView()
         {
@@ -161,6 +161,32 @@ namespace RoslynPad
                     CopyToClipboard(e.OriginalSource);
                 }
             }
+            else if (e.Key == Key.Enter)
+            {
+                TryJumpToLine(e.OriginalSource);
+            }
+        }
+
+        private void OnTreeViewDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            TryJumpToLine(e.OriginalSource);
+        }
+
+        private void TryJumpToLine(object source)
+        {
+            var result = (source as FrameworkElement)?.DataContext as CompilationErrorResultObject;
+            if (result == null) return;
+
+            Editor.TextArea.Caret.Line = result.Line;
+            Editor.TextArea.Caret.Column = result.Column;
+            Editor.ScrollToLine(result.Line);
+
+            Dispatcher.InvokeAsync(() => Editor.Focus());
+        }
+
+        private void CopyCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+            CopyToClipboard(e.OriginalSource);
         }
 
         private void CopyClick(object sender, RoutedEventArgs e)
@@ -170,7 +196,7 @@ namespace RoslynPad
 
         private void CopyToClipboard(object sender)
         {
-            var result = (sender as FrameworkElement)?.DataContext as ResultObject ??
+            var result = (sender as FrameworkElement)?.DataContext as IResultObject ??
                         _contextMenuResultObject;
 
             if (result != null)
@@ -178,6 +204,7 @@ namespace RoslynPad
                 Clipboard.SetText(ReferenceEquals(sender, CopyValueWithChildren) ? result.ToString() : result.Value);
             }
         }
+
         private void CopyAllClick(object sender, RoutedEventArgs e)
         {
             var withChildren = ReferenceEquals(sender, CopyAllValuesWithChildren);
@@ -212,11 +239,11 @@ namespace RoslynPad
             // keyboard-activated
             if (e.CursorLeft < 0 || e.CursorTop < 0)
             {
-                _contextMenuResultObject = ResultTree.SelectedItem as ResultObject;
+                _contextMenuResultObject = ResultTree.SelectedItem as IResultObject;
             }
             else
             {
-                _contextMenuResultObject = (e.OriginalSource as FrameworkElement)?.DataContext as ResultObject;
+                _contextMenuResultObject = (e.OriginalSource as FrameworkElement)?.DataContext as IResultObject;
             }
 
             var isResult = _contextMenuResultObject != null;

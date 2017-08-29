@@ -30,7 +30,7 @@ namespace RoslynPad.UI
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
         private ExecutionHost _executionHost;
-        private ObservableCollection<ResultObject> _results;
+        private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
         private Action<object> _executionHostOnDumped;
@@ -47,7 +47,7 @@ namespace RoslynPad.UI
 
         public IEnumerable<object> Results => _results;
 
-        internal ObservableCollection<ResultObject> ResultsInternal
+        internal ObservableCollection<IResultObject> ResultsInternal
         {
             // ReSharper disable once UnusedMember.Local
             get => _results;
@@ -102,6 +102,17 @@ namespace RoslynPad.UI
             });
         }
 
+        private void ExecutionHostOnCompilationErrors(List<CompilationErrorResultObject> errors)
+        {
+            _dispatcher.InvokeAsync(() =>
+            {
+                foreach (var error in errors)
+                {
+                    ResultsInternal?.Add(error);
+                }
+            });
+        }
+        
         private void ExecutionHostOnDisassembled(string il)
         {
             ILText = il;
@@ -124,6 +135,7 @@ namespace RoslynPad.UI
                 roslynHost.DefaultImports, MainViewModel.NuGetConfiguration, WorkingDirectory));
 
             _executionHost.Error += ExecutionHostOnError;
+            _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
             Platform = AvailablePlatforms.FirstOrDefault();
@@ -396,7 +408,7 @@ namespace RoslynPad.UI
 
             var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
 
-            var results = new ObservableCollection<ResultObject>();
+            var results = new ObservableCollection<IResultObject>();
             ResultsInternal = results;
 
             HookDumped(results, CancellationToken.None);
@@ -438,7 +450,7 @@ namespace RoslynPad.UI
 
             SetIsRunning(true);
 
-            var results = new ObservableCollection<ResultObject>();
+            var results = new ObservableCollection<IResultObject>();
             ResultsInternal = results;
 
             if (!ShowIL)
@@ -493,7 +505,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void HookDumped(ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
+        private void HookDumped(ObservableCollection<IResultObject> results, CancellationToken cancellationToken)
         {
             _onError?.Invoke(null);
 
@@ -521,11 +533,11 @@ namespace RoslynPad.UI
             _cts = new CancellationTokenSource();
         }
 
-        private void AddResult(object o, ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
+        private void AddResult(object o, ObservableCollection<IResultObject> results, CancellationToken cancellationToken)
         {
             _dispatcher.InvokeAsync(() =>
             {
-                if (o is IList<ResultObject> list)
+                if (o is IEnumerable<ResultObject> list)
                 {
                     foreach (var resultObject in list)
                     {
