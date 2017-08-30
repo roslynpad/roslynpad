@@ -77,7 +77,7 @@ namespace RoslynPad.UI
             _telemetryProvider = telemetryProvider;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
-            
+
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
             CompileAndSaveCommand = commands.CreateAsync(CompileAndSave, () => Platform != null);
@@ -90,6 +90,8 @@ namespace RoslynPad.UI
             ILText = DefaultILText;
         }
 
+        public event Action ResultsAvailable;
+
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
         {
             _dispatcher.InvokeAsync(() =>
@@ -98,6 +100,8 @@ namespace RoslynPad.UI
                 if (errorResult != null)
                 {
                     ResultsInternal?.Add(errorResult);
+
+                    ResultsAvailable?.Invoke();
                 }
             });
         }
@@ -110,9 +114,11 @@ namespace RoslynPad.UI
                 {
                     ResultsInternal?.Add(error);
                 }
+
+                ResultsAvailable?.Invoke();
             });
         }
-        
+
         private void ExecutionHostOnDisassembled(string il)
         {
             ILText = il;
@@ -513,7 +519,13 @@ namespace RoslynPad.UI
             {
                 _executionHost.Dumped -= _executionHostOnDumped;
             }
-            _executionHostOnDumped = o => AddResult(o, results, cancellationToken);
+
+            _executionHostOnDumped = o =>
+            {
+                AddResult(o, results, cancellationToken);
+                ResultsAvailable?.Invoke();
+            };
+
             _executionHost.Dumped += _executionHostOnDumped;
         }
 

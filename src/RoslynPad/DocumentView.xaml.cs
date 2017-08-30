@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -60,6 +61,7 @@ namespace RoslynPad
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
+            _viewModel.ResultsAvailable += ResultsAvailable;
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
             _viewModel.EditorFocus += (o, e) => Editor.Focus();
@@ -77,6 +79,13 @@ namespace RoslynPad
                 this);
 
             Editor.Document.TextChanged += (o, e) => _viewModel.SetDirty();
+        }
+
+        private void ResultsAvailable()
+        {
+            _viewModel.ResultsAvailable -= ResultsAvailable;
+
+            _syncContext.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
         }
 
         private void OnError(ExceptionResultObject e)
