@@ -317,7 +317,9 @@
                                    ToolTip="Copy"
                                    Height="12" />
                         </Button>
-                        <Rectangle Fill="{StaticResource ExceptionMarker}"
+                        <Rectangle Name="Icon"
+                                   Fill="{StaticResource ExceptionMarker}"
+                                   VerticalAlignment="Top"
                                    Width="12" Height="12"
                                    Margin="0 0 5 0"/>
                         <TextBlock Text="{Binding Severity, Mode=OneTime}"
@@ -328,12 +330,20 @@
                                Text="{Binding Message, Mode=OneTime}"
                                TextWrapping="Wrap" />
                     <TextBlock Grid.Column="4"
+                               VerticalAlignment="Top"
                                TextWrapping="Wrap">
                         <Run Text="{Binding Line, Mode=OneTime}" />,
                         <Run Text="{Binding Column, Mode=OneTime}" />
                     </TextBlock>
-
                 </Grid>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Severity}"
+                                 Value="Warning">
+                        <Setter TargetName="Icon"
+                                Property="Fill"
+                                Value="{StaticResource WarningMarker}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
             </DataTemplate>
             
             <HierarchicalDataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.ResultObject}}"

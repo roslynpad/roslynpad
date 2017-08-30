@@ -629,13 +629,12 @@ namespace RoslynPad.Hosting
                 var script = CreateScript(code, optimizationLevel, options);
 
                 var diagnostics = script.Compile(decompile ? (Action<Stream>)Disassemble : null);
-                if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+                if (diagnostics.Any())
                 {
                     await DisplayErrors(diagnostics).ConfigureAwait(false);
-                    return null;
                 }
 
-                return script;
+                return diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error) ? null : script;
             }
 
             private void Disassemble(Stream peStream)

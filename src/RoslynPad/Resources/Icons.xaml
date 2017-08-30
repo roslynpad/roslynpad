@@ -207,6 +207,23 @@
         </DrawingBrush.Drawing>
     </DrawingBrush>
 
+    <DrawingBrush x:Key="WarningMarker">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#FFF6F6F6"
+                                     Geometry="F1M4.9572,0.000299999999999301L0.9172,9.1753 2.5572,10.9843 10.4642,10.9843 11.9992,9.1683 11.9992,9.0843 8.0462,0.000299999999999301z" />
+                    <GeometryDrawing Brush="#FFFFCC00"
+                                     Geometry="F1M7,7L6,7 6,4 7,4z M7,9L6,9 6,8 7,8z M7.391,1L5.609,1 2.094,8.984 3,9.984 10,9.984 10.859,8.969z" />
+                    <GeometryDrawing Brush="#FF000000"
+                                     Geometry="F1M6,9L7,9 7,8 6,8z" />
+                    <GeometryDrawing Brush="#FF000000"
+                                     Geometry="F1M6,7L7,7 7,4 6,4z" />
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
     <DrawingImage x:Key="FormatDocument">
         <DrawingImage.Drawing>
             <DrawingGroup>
