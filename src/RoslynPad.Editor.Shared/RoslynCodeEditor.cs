@@ -135,7 +135,12 @@ namespace RoslynPad.Editor
 
         private void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
         {
-            _textMarkerService.RemoveAll(x => true);
+            _textMarkerService.RemoveAll(marker => Equals(args.Id, marker.Tag));
+
+            if (args.Kind != DiagnosticsUpdatedKind.DiagnosticsCreated)
+            {
+                return;
+            }
 
             foreach (var diagnosticData in args.Diagnostics)
             {
@@ -147,6 +152,7 @@ namespace RoslynPad.Editor
                 var marker = _textMarkerService.TryCreate(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
                 if (marker != null)
                 {
+                    marker.Tag = args.Id;
                     marker.MarkerColor = GetDiagnosticsColor(diagnosticData);
                     marker.ToolTip = diagnosticData.Message;
                 }
