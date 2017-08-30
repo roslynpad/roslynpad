@@ -99,6 +99,8 @@ namespace RoslynPad.Roslyn
             DefaultImports = references.Imports;
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
+
+            GetService<ISyntaxChangeNotificationService>().OpenedDocumentSyntaxChanged += OnSyntaxChanged;
         }
 
         internal MetadataReference CreateMetadataReference(string location)
@@ -111,19 +113,17 @@ namespace RoslynPad.Roslyn
             var documentId = diagnosticsUpdatedArgs?.DocumentId;
             if (documentId == null) return;
 
-            OnOpenedDocumentSyntaxChanged(GetDocument(documentId));
-
             if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out var notifier))
             {
                 notifier(diagnosticsUpdatedArgs);
             }
         }
 
-        private async void OnOpenedDocumentSyntaxChanged(Document document)
+        private void OnSyntaxChanged(object sender, Document document)
         {
             if (_workspaces.TryGetValue(document.Id, out var workspace))
             {
-                await workspace.ProcessReferenceDirectives(document).ConfigureAwait(false);
+                workspace.ProcessReferenceDirectives(document);
             }
         }
 

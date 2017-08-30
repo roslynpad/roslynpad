@@ -118,11 +118,16 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        internal async Task ProcessReferenceDirectives(Document document)
+        internal void ProcessReferenceDirectives(Document document)
         {
+            if (!document.TryGetSyntaxRoot(out var syntaxRoot) ||
+                !(syntaxRoot is CompilationUnitSyntax compilationUnit))
+            {
+                return;
+            }
+
+            var directives = compilationUnit.GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
             var project = document.Project;
-            var directives = ((CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false))
-                .GetReferenceDirectives().Select(x => x.File.ValueText).ToImmutableHashSet();
 
             var changed = false;
             foreach (var referenceDirective in _referencesDirectives)
