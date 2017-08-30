@@ -16,3 +16,9 @@ $files +=
 	"RoslynPad.Host32.exe.config",
 	"RoslynPad.Host64.exe.config"
 )
+
+$configFile = "$location\$binPath\RoslynPad.exe.config"
+$config = get-content $configFile
+$telemetryKey = ${env:RoslynPadTelemetryKey};
+$config  = $config -replace 'key="InstrumentationKey" value="[^"]*', ('key="InstrumentationKey" value="' + $telemetryKey)
+set-content $configFile $config

@@ -23,7 +23,7 @@ namespace RoslynPad.UI
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         public IApplicationSettings Settings { get; }
-        private static readonly Version _currentVersion = new Version(12, 0);
+        private static readonly Version _currentVersion = new Version(13, 0);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
