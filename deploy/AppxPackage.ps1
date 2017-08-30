@@ -1,4 +1,4 @@
-$env:Path += ";C:\Program Files (x86)\Windows Kits\10\bin\x64"
+$env:Path += ";${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.15063.0\x64"
 
 $mapping = "RoslynPad.mapping"
 Remove-Item $mapping -ErrorAction Ignore
@@ -22,7 +22,7 @@ foreach ($file in $files)
 	$file
 }
 
-& "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\makepri.exe" new /pr PackageRoot /cf priconfig.xml
+& makepri.exe new /pr PackageRoot /cf priconfig.xml
 
 foreach ($file in Get-ChildItem *.pri)
 {
