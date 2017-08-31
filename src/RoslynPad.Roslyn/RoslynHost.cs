@@ -19,7 +19,8 @@ namespace RoslynPad.Roslyn
     {
         #region Fields
 
-        internal static readonly ImmutableArray<string> PreprocessorSymbols = ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
+        internal static readonly ImmutableArray<string> PreprocessorSymbols =
+            ImmutableArray.CreateRange(new[] {"__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG"});
 
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
@@ -80,10 +81,10 @@ namespace RoslynPad.Roslyn
             }
 
             var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
-                        .Distinct()
-                        .SelectMany(x => x.DefinedTypes)
-                        .Select(x => x.AsType())
-                        .ToArray();
+                .Distinct()
+                .SelectMany(x => x.DefinedTypes)
+                .Select(x => x.AsType())
+                .ToArray();
 
             _compositionContext = new ContainerConfiguration()
                 .WithParts(partTypes)
@@ -91,9 +92,10 @@ namespace RoslynPad.Roslyn
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script, preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
+            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script,
+                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
 
-            _documentationProviderService = new DocumentationProviderService();
+            _documentationProviderService = GetService<IDocumentationProviderService>();
 
             DefaultReferences = references.GetReferences(_documentationProviderService.GetDocumentationProvider);
             DefaultImports = references.Imports;
@@ -105,7 +107,8 @@ namespace RoslynPad.Roslyn
 
         internal MetadataReference CreateMetadataReference(string location)
         {
-            return MetadataReference.CreateFromFile(location, documentation: _documentationProviderService.GetDocumentationProvider(location));
+            return MetadataReference.CreateFromFile(location,
+                documentation: _documentationProviderService.GetDocumentationProvider(location));
         }
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
@@ -156,7 +159,8 @@ namespace RoslynPad.Roslyn
             return false;
         }
 
-        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace, string workingDirectory)
+        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace,
+            string workingDirectory)
         {
             var resolver = Activator.CreateInstance(
                 // can't access this type due to a name collision with Scripting assembly
@@ -165,51 +169,13 @@ namespace RoslynPad.Roslyn
                 Type.GetType("Microsoft.CodeAnalysis.RelativePathResolver, Microsoft.CodeAnalysis.Workspaces"),
                 ImmutableArray<string>.Empty,
                 workingDirectory);
-            return (MetadataReferenceResolver)Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
+            return (MetadataReferenceResolver) Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
                 workspace.Services.GetService<IMetadataService>(),
                 resolver);
         }
 
         #endregion
-
-        #region Documentation
-
-        private sealed class DocumentationProviderService : IDocumentationProviderService
-        {
-            private readonly ConcurrentDictionary<string, DocumentationProvider> _assemblyPathToDocumentationProviderMap =
-                new ConcurrentDictionary<string, DocumentationProvider>();
-
-            public DocumentationProvider GetDocumentationProvider(string location)
-            {
-                var finalPath = Path.ChangeExtension(location, "xml");
-                if (!File.Exists(finalPath))
-                {
-                    finalPath = GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.docPath, finalPath) ??
-                                GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, finalPath);
-                }
-
-                return _assemblyPathToDocumentationProviderMap.GetOrAdd(location, 
-                    _ => finalPath == null ? null : XmlDocumentationProvider.CreateFromFile(finalPath));
-            }
-
-            private static string GetFilePath(string path, string location)
-            {
-                if (path != null)
-                {
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    var referenceLocation = Path.Combine(path, Path.GetFileName(location));
-                    if (File.Exists(referenceLocation))
-                    {
-                        return referenceLocation;
-                    }
-                }
-
-                return null;
-            }
-        }
-
-        #endregion
-
+        
         #region Documents
 
         public void CloseDocument(DocumentId documentId)
@@ -230,7 +196,8 @@ namespace RoslynPad.Roslyn
                 : null;
         }
 
-        public DocumentId AddDocument(SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public DocumentId AddDocument(SourceTextContainer sourceTextContainer, string workingDirectory,
+            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
@@ -243,7 +210,8 @@ namespace RoslynPad.Roslyn
             DiagnosticProvider.Enable(workspace, DiagnosticProvider.Options.Semantic);
 
             var currentSolution = workspace.CurrentSolution;
-            var project = CreateSubmissionProject(currentSolution, CreateCompilationOptions(workspace, workingDirectory));
+            var project = CreateSubmissionProject(currentSolution,
+                CreateCompilationOptions(workspace, workingDirectory));
             var currentDocument = SetSubmissionDocument(workspace, sourceTextContainer, project);
 
             _workspaces.TryAdd(currentDocument.Id, workspace);
@@ -287,7 +255,8 @@ namespace RoslynPad.Roslyn
             return compilationOptions;
         }
 
-        private static Document SetSubmissionDocument(RoslynWorkspace workspace, SourceTextContainer textContainer, Project project)
+        private static Document SetSubmissionDocument(RoslynWorkspace workspace, SourceTextContainer textContainer,
+            Project project)
         {
             var id = DocumentId.CreateNewId(project.Id);
             var solution = project.Solution.AddDocument(id, project.Name, textContainer.CurrentText);
@@ -300,7 +269,8 @@ namespace RoslynPad.Roslyn
         {
             var name = "Program" + _documentNumber++;
             var id = ProjectId.CreateNewId(name);
-            solution = solution.AddProject(ProjectInfo.Create(id, VersionStamp.Create(), name, name, LanguageNames.CSharp,
+            solution = solution.AddProject(ProjectInfo.Create(id, VersionStamp.Create(), name, name,
+                LanguageNames.CSharp,
                 parseOptions: _parseOptions,
                 compilationOptions: compilationOptions.WithScriptClassName(name),
                 metadataReferences: DefaultReferences));
