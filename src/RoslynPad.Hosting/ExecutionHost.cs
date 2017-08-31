@@ -52,7 +52,9 @@ namespace RoslynPad.Hosting
             ServerImpl server = null;
             try
             {
-                server = new ServerImpl(serverPort);
+                var executionThread = CreateExecutionThread();
+
+                server = new ServerImpl(serverPort, executionThread.syncContext);
                 server.Start();
 
                 _outWriter = CreateConsoleWriter();
@@ -66,6 +68,7 @@ namespace RoslynPad.Hosting
                 //Debug.AutoFlush = true;
 
                 _clientExited.Wait();
+                executionThread.complete();
             }
             finally
             {
@@ -74,6 +77,45 @@ namespace RoslynPad.Hosting
 
             // force exit even if there are foreground threads running
             Exit?.Invoke(0);
+        }
+
+        private static (SynchronizationContext syncContext, Action complete) CreateExecutionThread()
+        {
+#if NET46
+            var tcs = new TaskCompletionSource<SynchronizationContext>();
+            var executionThread = new Thread(() =>
+            {
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeAsync(() =>
+                    tcs.TrySetResult(SynchronizationContext.Current));
+                System.Windows.Threading.Dispatcher.Run();
+            });
+
+            executionThread.SetApartmentState(ApartmentState.STA);
+            executionThread.IsBackground = true;
+            executionThread.Start();
+
+            var syncContext = tcs.Task.Result;
+            return (syncContext, () => syncContext.Post(o => 
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown(), null));
+#else
+            var syncContext = new AsyncPump.SingleThreadSynchronizationContext(false);
+            var executionThread = new Thread(() =>
+            {
+                SynchronizationContext.SetSynchronizationContext(syncContext);
+                syncContext.RunOnCurrentThread();
+            });
+
+            var setApartmentState = typeof(Thread).GetRuntimeMethods()
+                .FirstOrDefault(m => m.Name == "SetApartmentState");
+            if (setApartmentState != null)
+            {
+                setApartmentState.Invoke(executionThread, new object[] {0});
+            }
+            
+            executionThread.IsBackground = true;
+            executionThread.Start();
+            return (syncContext, syncContext.Complete);
+#endif
         }
 
         // Environment.Exit is not part of netstandard1.3...
@@ -414,6 +456,7 @@ namespace RoslynPad.Hosting
             }
 
             private readonly ConcurrentQueue<ResultObject> _dumpQueue;
+            private readonly SynchronizationContext _syncContext;
             private readonly SemaphoreSlim _dumpLock;
 
             private ScriptOptions _scriptOptions;
@@ -424,13 +467,14 @@ namespace RoslynPad.Hosting
             private bool _checkOverflow;
             private bool _allowUnsafe;
 
-            public ServerImpl(string pipeName) : base(pipeName)
+            public ServerImpl(string pipeName, SynchronizationContext syncContext) : base(pipeName)
             {
                 _dumpQueue = new ConcurrentQueue<ResultObject>();
                 _dumpLock = new SemaphoreSlim(0);
                 _scriptOptions = ScriptOptions.Default;
 
                 ObjectExtensions.Dumped += OnDumped;
+                this._syncContext = syncContext;
             }
 
             public Task Dump(DumpMessage message)
@@ -595,7 +639,7 @@ namespace RoslynPad.Hosting
                     var script = await TryCompile(message.Code, message.Disassemble, message.OptimizationLevel, _scriptOptions).ConfigureAwait(false);
                     if (script != null)
                     {
-                        var result = await ExecuteOnUIThread(script).ConfigureAwait(false);
+                        var result = await PostToExecutionThread(script).ConfigureAwait(false);
                         var errorResult = result as ExceptionResultObject;
                         if (errorResult == null)
                         {
@@ -673,8 +717,8 @@ namespace RoslynPad.Hosting
                 {
                     var lineSpan = diagnostic.Location.GetLineSpan();
 
-                    var error = CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), 
-                        diagnostic.Id, diagnostic.GetMessage(), 
+                    var error = CompilationErrorResultObject.Create(diagnostic.Severity.ToString(),
+                        diagnostic.Id, diagnostic.GetMessage(),
                         lineSpan.StartLinePosition.Line, lineSpan.StartLinePosition.Character);
 
                     errors.Add(error);
@@ -690,26 +734,29 @@ namespace RoslynPad.Hosting
                 state?.Dump();
             }
 
-            private static async Task<object> ExecuteOnUIThread(ScriptRunner script)
+            private Task<object> PostToExecutionThread(ScriptRunner script)
             {
-                SynchronizationContext.SetSynchronizationContext(new AsyncPump.SingleThreadSynchronizationContext(trackOperations: false));
-                try
+                var tcs = new TaskCompletionSource<object>();
+
+                _syncContext.Post(async o =>
                 {
-                    return await script.RunAsync().ConfigureAwait(false);
-                }
-                catch (FileLoadException e) when (e.InnerException is NotSupportedException)
-                {
-                    Console.Error.WriteLine(e.InnerException.Message);
-                    return null;
-                }
-                catch (Exception e)
-                {
-                    return ExceptionResultObject.Create(e);
-                }
-                finally
-                {
-                    SynchronizationContext.SetSynchronizationContext(null);
-                }
+                    var innerTcs = (TaskCompletionSource<object>)o;
+                    try
+                    {
+                        innerTcs.TrySetResult(await script.RunAsync().ConfigureAwait(false));
+                    }
+                    catch (FileLoadException e) when (e.InnerException is NotSupportedException)
+                    {
+                        Console.Error.WriteLine(e.InnerException.Message);
+                        innerTcs.TrySetResult(null);
+                    }
+                    catch (Exception e)
+                    {
+                        innerTcs.TrySetResult(ExceptionResultObject.Create(e));
+                    }
+                }, tcs);
+
+                return tcs.Task;
             }
 
             private static void ReportUnhandledException(Exception e)
@@ -766,7 +813,7 @@ namespace RoslynPad.Hosting
                 return Task.CompletedTask;
             }
         }
-        
+
         private sealed class RemoteService : IDisposable
         {
             public readonly Process Process;
@@ -839,7 +886,7 @@ namespace RoslynPad.Hosting
             }
         }
 
-        #region Win32 API
+#region Win32 API
 
         [DllImport("kernel32", PreserveSig = true)]
         internal static extern ErrorMode SetErrorMode(ErrorMode mode);
@@ -860,6 +907,6 @@ namespace RoslynPad.Hosting
             SEM_NOOPENFILEERRORBOX = 0x8000,
         }
 
-        #endregion
+#endregion
     }
 }

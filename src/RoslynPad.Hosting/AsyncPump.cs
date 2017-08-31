@@ -96,8 +96,8 @@ namespace RoslynPad.Hosting
         public sealed class SingleThreadSynchronizationContext : SynchronizationContext
         {
             /// <summary>The queue of work items.</summary>
-            private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> _queue =
-                new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
+            private readonly BlockingCollection<(SendOrPostCallback callback, object state)> _queue =
+                new BlockingCollection<(SendOrPostCallback, object)>();
             /// <summary>The number of outstanding operations.</summary>
             private int _operationCount;
             /// <summary>Whether to track operations m_operationCount.</summary>
@@ -116,7 +116,7 @@ namespace RoslynPad.Hosting
             public override void Post(SendOrPostCallback d, object state)
             {
                 if (d == null) throw new ArgumentNullException(nameof(d));
-                _queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
+                _queue.Add((d, state));
             }
 
             /// <summary>Not supported.</summary>
@@ -130,7 +130,7 @@ namespace RoslynPad.Hosting
             {
                 foreach (var workItem in _queue.GetConsumingEnumerable())
                 {
-                    workItem.Key(workItem.Value);
+                    workItem.callback(workItem.state);
                 }
             }
 
