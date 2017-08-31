@@ -83,9 +83,11 @@ namespace RoslynPad.Runtime
         public static DumpQuotas Default { get; } = new DumpQuotas(DefaultMaxDepth, DefaultMaxExpandedDepth, DefaultMaxEnumerableLength, DefaultMaxStringLength);
 
         [Pure]
-        internal DumpQuotas StepDown()
-        {
-            return new DumpQuotas(MaxDepth - 1, MaxExpandedDepth - 1, MaxEnumerableLength, MaxStringLength);
-        }
+        internal DumpQuotas StepDown() => 
+            new DumpQuotas(MaxDepth - 1, MaxExpandedDepth - 1, MaxEnumerableLength, MaxStringLength);
+
+        [Pure]
+        internal DumpQuotas WithMaxDepth(int maxDepth) => 
+            new DumpQuotas(maxDepth, MaxExpandedDepth, MaxEnumerableLength, MaxStringLength);
     }
 }

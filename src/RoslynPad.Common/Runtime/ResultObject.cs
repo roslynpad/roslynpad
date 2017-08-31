@@ -202,23 +202,25 @@ namespace RoslynPad.Runtime
             object value = null;
             try
             {
-                if (o is Exception exception && _member.Name == nameof(Exception.StackTrace))
+                if (o is Exception exception)
                 {
-                    value = GetStackTrace(exception);
+                    if (_member.Name == nameof(Exception.StackTrace))
+                    {
+                        value = GetStackTrace(exception);
+                    }
+                    else
+                    {
+                        value = GetMemberValue(o);
+
+                        if (_member.Name == "TargetSite")
+                        {
+                            targetQuotas = targetQuotas.WithMaxDepth(0);
+                        }
+                    }
                 }
                 else
                 {
-                    if (_member is PropertyInfo propertyInfo)
-                    {
-                        if (propertyInfo.GetIndexParameters().Length == 0)
-                        {
-                            value = propertyInfo.GetValue(o);
-                        }
-                    }
-                    else if (_member is FieldInfo fieldInfo)
-                    {
-                        value = fieldInfo.GetValue(o);
-                    }
+                    value = GetMemberValue(o);
                 }
             }
             catch (TargetInvocationException exception)
@@ -243,6 +245,25 @@ namespace RoslynPad.Runtime
             }
 
             PopulateObject(value, _member.Name, targetQuotas);
+        }
+
+        private object GetMemberValue(object o)
+        {
+            object value = null;
+
+            if (_member is PropertyInfo propertyInfo)
+            {
+                if (propertyInfo.GetIndexParameters().Length == 0)
+                {
+                    value = propertyInfo.GetValue(o);
+                }
+            }
+            else if (_member is FieldInfo fieldInfo)
+            {
+                value = fieldInfo.GetValue(o);
+            }
+
+            return value;
         }
 
         private void SetType(object o)
