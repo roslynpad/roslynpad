@@ -6,10 +6,12 @@ using RoslynPad.Roslyn.QuickInfo;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using RoslynPad.Roslyn.AutomaticCompletion;
 #if AVALONIA
 using Avalonia.Media;
 using Avalonia.Input;
 using ModifierKeys = Avalonia.Input.InputModifiers;
+using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
 #else
 using System.Windows.Media;
 using System.Windows.Input;
@@ -28,6 +30,7 @@ namespace RoslynPad.Editor
         private DocumentId _documentId;
         private IQuickInfoProvider _quickInfoProvider;
         private IBraceMatchingService _braceMatchingService;
+        private IBraceCompletionProvider _braceCompletionProvider;
         private CancellationTokenSource _braceMatchingCts;
 
         public RoslynCodeEditor()
@@ -37,6 +40,15 @@ namespace RoslynPad.Editor
             TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.Caret.PositionChanged += CaretOnPositionChanged;
+            TextArea.TextEntered += OnTextEntered;
+        }
+
+        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text.Length == 1)
+            {
+                _braceCompletionProvider.TryComplete(_roslynHost.GetDocument(_documentId), CaretOffset);
+            }
         }
 
         public DocumentId Initialize(IRoslynHost roslynHost, IClassificationHighlightColors highlightColors, string workingDirectory, string documentText)
@@ -48,6 +60,7 @@ namespace RoslynPad.Editor
 
             _quickInfoProvider = _roslynHost.GetService<IQuickInfoProvider>();
             _braceMatchingService = _roslynHost.GetService<IBraceMatchingService>();
+            _braceCompletionProvider = _roslynHost.GetService<IBraceCompletionProvider>();
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Document) { Editor = this };
 
@@ -65,7 +78,7 @@ namespace RoslynPad.Editor
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
             CompletionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
-
+            
             return _documentId;
         }
 

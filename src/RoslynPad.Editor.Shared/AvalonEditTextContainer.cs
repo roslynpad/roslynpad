@@ -12,10 +12,11 @@ using ICSharpCode.AvalonEdit.Document;
 #endif
 using Microsoft.CodeAnalysis.Text;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
+using RoslynPad.Roslyn;
 
 namespace RoslynPad.Editor
 {
-    public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
+    public sealed class AvalonEditTextContainer : SourceTextContainer, IEditorCaretProvider, IDisposable
     {
         private SourceText _currentText;
         private bool _updatding;
@@ -28,7 +29,7 @@ namespace RoslynPad.Editor
         public TextEditor Editor { get; set; }
 
         public override SourceText CurrentText => _currentText;
-
+        
         public AvalonEditTextContainer(TextDocument document)
         {
             Document = document ?? throw new ArgumentNullException(nameof(document));
@@ -103,6 +104,14 @@ namespace RoslynPad.Editor
                 if (editor != null)
                     editor.CaretOffset = caretOffset;
             }
+        }
+
+        int IEditorCaretProvider.CaretPosition => Editor.CaretOffset;
+
+        bool IEditorCaretProvider.TryMoveCaret(int position)
+        {
+            Editor.CaretOffset = position;
+            return true;
         }
 
         private class AvalonEditSourceText : SourceText
