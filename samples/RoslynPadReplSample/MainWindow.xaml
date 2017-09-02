@@ -1,0 +1,29 @@
+﻿<Window x:Class="RoslynPadReplSample.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
+        mc:Ignorable="d"
+        Title="RoslynPad REPL Sample"
+        Height="350"
+        Width="525">
+    <ScrollViewer Background="#eee">
+        <ItemsControl Name="Items">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <editor:RoslynCodeEditor Loaded="OnItemLoaded"
+                                                 Margin="5"
+                                                 PreviewKeyDown="OnEditorKeyDown"
+                                                 IsReadOnly="{Binding IsReadOnly}"
+                                                 HorizontalScrollBarVisibility="Disabled"
+                                                 VerticalScrollBarVisibility="Disabled"
+                                                 ShowLineNumbers="False" />
+                        <TextBlock Text="{Binding Result}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</Window>
