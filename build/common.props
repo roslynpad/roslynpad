@@ -5,5 +5,6 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 		<RoslynPackageVersion>2.3.1</RoslynPackageVersion>
 		<RoslynAssemblyVersion>2.3.0.0</RoslynAssemblyVersion>
+		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 </Project>
