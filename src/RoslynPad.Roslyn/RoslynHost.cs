@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Composition.Hosting;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
@@ -12,6 +11,7 @@ using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RoslynPad.Roslyn
 {
@@ -20,7 +20,7 @@ namespace RoslynPad.Roslyn
         #region Fields
 
         internal static readonly ImmutableArray<string> PreprocessorSymbols =
-            ImmutableArray.CreateRange(new[] {"__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG"});
+            ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
 
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
@@ -169,28 +169,63 @@ namespace RoslynPad.Roslyn
                 Type.GetType("Microsoft.CodeAnalysis.RelativePathResolver, Microsoft.CodeAnalysis.Workspaces"),
                 ImmutableArray<string>.Empty,
                 workingDirectory);
-            return (MetadataReferenceResolver) Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
+            return (MetadataReferenceResolver)Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
                 workspace.Services.GetService<IMetadataService>(),
                 resolver);
         }
 
         #endregion
-        
+
         #region Documents
+
+        public void CloseWorkspace(RoslynWorkspace workspace)
+        {
+            if (workspace == null) throw new ArgumentNullException(nameof(workspace));
+
+            foreach (var documentId in workspace.CurrentSolution.Projects.SelectMany(p => p.DocumentIds))
+            {
+                _workspaces.TryRemove(documentId, out _);
+                _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
+            }
+
+            using (workspace) { }
+        }
+
+        public RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(_host, _nuGetConfiguration, this);
 
         public void CloseDocument(DocumentId documentId)
         {
+            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+
             if (_workspaces.TryGetValue(documentId, out var workspace))
             {
-                DiagnosticProvider.Disable(workspace);
-                workspace.Dispose();
-                _workspaces.TryRemove(documentId, out workspace);
+                workspace.CloseDocument(documentId);
+
+                var document = workspace.CurrentSolution.GetDocument(documentId);
+                Debug.Assert(document != null, "document != null");
+
+                var solution = document.Project.RemoveDocument(documentId).Solution;
+
+                if (!solution.Projects.SelectMany(d => d.DocumentIds).Any())
+                {
+                    _workspaces.TryRemove(documentId, out workspace);
+
+                    using (workspace) { }
+                }
+                else
+                {
+                    workspace.SetCurrentSolution(solution);
+                }
             }
+
+
             _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
         }
 
         public Document GetDocument(DocumentId documentId)
         {
+            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+
             return _workspaces.TryGetValue(documentId, out var workspace)
                 ? workspace.CurrentSolution.GetDocument(documentId)
                 : null;
@@ -201,31 +236,56 @@ namespace RoslynPad.Roslyn
         {
             if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
-            var workspace = new RoslynWorkspace(_host, _nuGetConfiguration, this);
-            if (onTextUpdated != null)
+            return AddDocument(CreateWorkspace(), sourceTextContainer, workingDirectory, onDiagnosticsUpdated, onTextUpdated);
+        }
+
+        public DocumentId AddRelatedDocument(DocumentId relatedDocumentId, SourceTextContainer sourceTextContainer,
+            string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
+            bool addProjectReference = true)
+        {
+            if (!_workspaces.TryGetValue(relatedDocumentId, out var workspace))
             {
-                workspace.ApplyingTextChange += (d, s) => onTextUpdated(s);
+                throw new ArgumentException("Unable to locate the document's workspace", nameof(relatedDocumentId));
             }
 
-            DiagnosticProvider.Enable(workspace, DiagnosticProvider.Options.Semantic);
+            if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
 
+            var documentId = AddDocument(workspace, sourceTextContainer, workingDirectory, onDiagnosticsUpdated, onTextUpdated,
+                addProjectReference ? workspace.CurrentSolution.GetDocument(relatedDocumentId) : null);
+
+            return documentId;
+        }
+
+        private DocumentId AddDocument(RoslynWorkspace workspace, SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, Document previousDocument = null)
+        {
             var currentSolution = workspace.CurrentSolution;
             var project = CreateSubmissionProject(currentSolution,
-                CreateCompilationOptions(workspace, workingDirectory));
+                CreateCompilationOptions(workspace, workingDirectory, previousDocument == null), previousDocument?.Project);
             var currentDocument = SetSubmissionDocument(workspace, sourceTextContainer, project);
 
-            _workspaces.TryAdd(currentDocument.Id, workspace);
+            var documentId = currentDocument.Id;
+            _workspaces.TryAdd(documentId, workspace);
 
             if (onDiagnosticsUpdated != null)
             {
-                _diagnosticsUpdatedNotifiers.TryAdd(currentDocument.Id, onDiagnosticsUpdated);
+                _diagnosticsUpdatedNotifiers.TryAdd(documentId, onDiagnosticsUpdated);
             }
 
-            return currentDocument.Id;
+            if (onTextUpdated != null)
+            {
+                workspace.ApplyingTextChange += (d, s) =>
+                {
+                    if (documentId == d) onTextUpdated(s);
+                };
+            }
+
+            return documentId;
         }
 
         public void UpdateDocument(Document document)
         {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+
             if (!_workspaces.TryGetValue(document.Id, out var workspace))
             {
                 return;
@@ -236,6 +296,8 @@ namespace RoslynPad.Roslyn
 
         public ImmutableArray<string> GetReferencesDirectives(DocumentId documentId)
         {
+            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+
             if (_workspaces.TryGetValue(documentId, out var workspace))
             {
                 return workspace.ReferencesDirectives;
@@ -244,11 +306,11 @@ namespace RoslynPad.Roslyn
             return ImmutableArray<string>.Empty;
         }
 
-        private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory)
+        private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory, bool addImports)
         {
             var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory);
-            var compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
-                usings: DefaultImports,
+            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+                usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
                 metadataReferenceResolver: metadataReferenceResolver);
@@ -265,16 +327,29 @@ namespace RoslynPad.Roslyn
             return solution.GetDocument(id);
         }
 
-        private Project CreateSubmissionProject(Solution solution, CSharpCompilationOptions compilationOptions)
+        private Project CreateSubmissionProject(Solution solution, CSharpCompilationOptions compilationOptions, Project previousProject)
         {
             var name = "Program" + _documentNumber++;
             var id = ProjectId.CreateNewId(name);
-            solution = solution.AddProject(ProjectInfo.Create(id, VersionStamp.Create(), name, name,
+            solution = solution.AddProject(ProjectInfo.Create(
+                id, 
+                VersionStamp.Create(),
+                name, 
+                name,
                 LanguageNames.CSharp,
+                isSubmission: true,
                 parseOptions: _parseOptions,
                 compilationOptions: compilationOptions.WithScriptClassName(name),
-                metadataReferences: DefaultReferences));
-            return solution.GetProject(id);
+                metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences));
+
+            var project = solution.GetProject(id);
+
+            if (previousProject != null)
+            {
+                project = project.AddProjectReference(new ProjectReference(previousProject.Id));
+            }
+
+            return project;
         }
 
         #endregion

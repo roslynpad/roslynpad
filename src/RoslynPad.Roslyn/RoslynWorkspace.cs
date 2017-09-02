@@ -5,8 +5,6 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
@@ -16,7 +14,7 @@ using Microsoft.CodeAnalysis.Scripting.Hosting;
 
 namespace RoslynPad.Roslyn
 {
-    public sealed class RoslynWorkspace : Workspace
+    public class RoslynWorkspace : Workspace
     {
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<string, DirectiveInfo> _referencesDirectives;
@@ -25,7 +23,7 @@ namespace RoslynPad.Roslyn
         public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
 
-        internal RoslynWorkspace(HostServices host, NuGetConfiguration nuGetConfiguration, RoslynHost roslynHost)
+        protected internal RoslynWorkspace(HostServices host, NuGetConfiguration nuGetConfiguration, RoslynHost roslynHost)
             : base(host, WorkspaceKind.Host)
         {
             _nuGetConfiguration = nuGetConfiguration;
@@ -33,6 +31,8 @@ namespace RoslynPad.Roslyn
             _gacResolver = GacFileResolver.IsAvailable ? new GacFileResolver() : null;
 
             RoslynHost = roslynHost;
+
+            DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
         }
 
         public new void SetCurrentSolution(Solution solution)
@@ -69,6 +69,8 @@ namespace RoslynPad.Roslyn
             base.Dispose(finalize);
 
             ApplyingTextChange = null;
+
+            DiagnosticProvider.Disable(this);
         }
 
         protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)

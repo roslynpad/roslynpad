@@ -8,11 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using RoslynPad.Roslyn.AutomaticCompletion;
 #if AVALONIA
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Input;
 using ModifierKeys = Avalonia.Input.InputModifiers;
 using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
+using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;
 #else
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Input;
 #endif
@@ -21,7 +24,6 @@ namespace RoslynPad.Editor
 {
     public class RoslynCodeEditor : CodeTextEditor
     {
-        private readonly SynchronizationContext _syncContext;
         private readonly TextMarkerService _textMarkerService;
         private BraceMatcherHighlightRenderer _braceMatcherHighlighter;
         private ContextActionsRenderer _contextActionsRenderer;
@@ -35,12 +37,24 @@ namespace RoslynPad.Editor
 
         public RoslynCodeEditor()
         {
-            _syncContext = SynchronizationContext.Current;
             _textMarkerService = new TextMarkerService(this);
             TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.Caret.PositionChanged += CaretOnPositionChanged;
             TextArea.TextEntered += OnTextEntered;
+        }
+
+        public static readonly RoutedEvent CreatingDocumentEvent = CommonEvent.Register<RoslynCodeEditor, CreatingDocumentEventArgs>(nameof(CreatingDocument), RoutingStrategy.Bubble);
+
+        public event EventHandler<CreatingDocumentEventArgs> CreatingDocument
+        {
+            add => AddHandler(CreatingDocumentEvent, value);
+            remove => RemoveHandler(CreatingDocumentEvent, value);
+        }
+
+        protected virtual void OnCreatingDocument(CreatingDocumentEventArgs e)
+        {
+            RaiseEvent(e);
         }
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
@@ -64,9 +78,13 @@ namespace RoslynPad.Editor
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Document) { Editor = this };
 
-            _documentId = roslynHost.AddDocument(avalonEditTextContainer, workingDirectory,
-                args => _syncContext.Post(o => ProcessDiagnostics(args), null),
-                text => avalonEditTextContainer.UpdateText(text));
+            var creatingDocumentArgs = new CreatingDocumentEventArgs(avalonEditTextContainer, ProcessDiagnostics);
+            OnCreatingDocument(creatingDocumentArgs);
+
+            _documentId = creatingDocumentArgs.DocumentId ??
+                roslynHost.AddDocument(avalonEditTextContainer, workingDirectory,
+                    args => ProcessDiagnostics(args),
+                    text => avalonEditTextContainer.UpdateText(text));
 
             AppendText(documentText);
             Document.UndoStack.ClearAll();
@@ -78,7 +96,7 @@ namespace RoslynPad.Editor
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
             CompletionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
-            
+
             return _documentId;
         }
 
@@ -146,7 +164,18 @@ namespace RoslynPad.Editor
             }
         }
 
-        private void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
+        protected void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
+        {
+            if (this.GetDispatcher().CheckAccess())
+            {
+                ProcessDiagnosticsOnUiThread(args);
+                return;
+            }
+
+            this.GetDispatcher().InvokeAsync(() => ProcessDiagnosticsOnUiThread(args));
+        }
+
+        private void ProcessDiagnosticsOnUiThread(DiagnosticsUpdatedArgs args)
         {
             _textMarkerService.RemoveAll(marker => Equals(args.Id, marker.Tag));
 
@@ -201,5 +230,21 @@ namespace RoslynPad.Editor
                 }
             }
         }
+    }
+
+    public class CreatingDocumentEventArgs : RoutedEventArgs
+    {
+        public CreatingDocumentEventArgs(AvalonEditTextContainer textContainer, Action<DiagnosticsUpdatedArgs> processDiagnostics)
+        {
+            TextContainer = textContainer;
+            ProcessDiagnostics = processDiagnostics;
+            RoutedEvent = RoslynCodeEditor.CreatingDocumentEvent;
+        }
+
+        public AvalonEditTextContainer TextContainer { get; }
+
+        public Action<DiagnosticsUpdatedArgs> ProcessDiagnostics { get; }
+
+        public DocumentId DocumentId { get; set; }
     }
 }
