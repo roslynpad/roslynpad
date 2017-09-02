@@ -5,6 +5,7 @@
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <Version>$(RoslynAssemblyVersion)</Version>
     <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
+    <Description>Provides platform-specific (Avalonia) implementations for UI elements required by the RoslynPad.Roslyn package.</Description>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.png" Exclude="obj\**" />
