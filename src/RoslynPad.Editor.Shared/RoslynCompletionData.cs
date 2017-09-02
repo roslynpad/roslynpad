@@ -3,12 +3,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 #if AVALONIA
+using Avalonia.Controls;
 using Avalonia.Input;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using CommonTextEventArgs = Avalonia.Input.TextInputEventArgs;
 using CommonImage = Avalonia.Media.Imaging.IBitmap;
 #else
+using System.Windows.Controls;
 using System.Windows.Input;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -19,6 +21,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
+using System.Threading.Tasks;
 
 namespace RoslynPad.Editor
 {
@@ -29,7 +32,8 @@ namespace RoslynPad.Editor
         private readonly char? _completionChar;
         private readonly SnippetManager _snippetManager;
         private readonly Glyph _glyph;
-        private object _description;
+        private readonly Decorator _description;
+        private readonly Lazy<Task> _descriptionTask;
 
         public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
         {
@@ -40,6 +44,13 @@ namespace RoslynPad.Editor
             Text = item.DisplayText;
             Content = item.DisplayText;
             _glyph = item.GetGlyph();
+            _description = new Decorator();
+            _descriptionTask = new Lazy<Task>(RetrieveDescription);
+#if AVALONIA
+            _description.Initialized += (o, e) => { var task = _descriptionTask.Value; };
+#else
+            _description.Loaded += (o, e) => { var task = _descriptionTask.Value; };
+#endif
             Image = _glyph.ToImageSource();
         }
 
@@ -62,7 +73,7 @@ namespace RoslynPad.Editor
                 if (completionSegment.EndOffset > textChange.Span.End)
                 {
                     document.Replace(
-                        new TextSegment {StartOffset = textChange.Span.End, EndOffset = completionSegment.EndOffset},
+                        new TextSegment { StartOffset = textChange.Span.End, EndOffset = completionSegment.EndOffset },
                         string.Empty);
                 }
 
@@ -111,23 +122,12 @@ namespace RoslynPad.Editor
 
         public object Content { get; }
 
-        public object Description
-        {
-            get
-            {
-                if (_description == null)
-                {
-                    RetrieveDescription();
-                }
-                return _description;
-            }
-        }
+        public object Description => _description;
 
-        private async void RetrieveDescription()
+        private async Task RetrieveDescription()
         {
-            var description = await CompletionService.GetService(_document).GetDescriptionAsync(_document, _item).ConfigureAwait(true);
-            _description = description.TaggedParts.ToTextBlock();
-            OnPropertyChanged(nameof(Description));
+            var description = await Task.Run(() => CompletionService.GetService(_document).GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
+            _description.Child = description.TaggedParts.ToTextBlock();
         }
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
