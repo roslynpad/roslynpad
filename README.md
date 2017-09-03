@@ -10,7 +10,7 @@ Also available to download in the Microsoft Store:
 
 <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://assets.windowsphone.com/f2f77ec7-9ba9-4850-9ebe-77e366d08adc/English_Get_it_Win_10_InvariantCulture_Default.png" width="200" alt="Get it on Windows 10" /></a>
 
-# Packages
+## Packages
 
 RoslynPad is also available as NuGet packages which allow you to use Roslyn services and the editor in your own apps.
 
