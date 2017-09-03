@@ -20,7 +20,8 @@
                                                  HorizontalScrollBarVisibility="Disabled"
                                                  VerticalScrollBarVisibility="Disabled"
                                                  ShowLineNumbers="False" />
-                        <TextBlock Text="{Binding Result}" />
+                        <TextBlock Text="{Binding Result}"
+                                   TextWrapping="Wrap" />
                     </StackPanel>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
