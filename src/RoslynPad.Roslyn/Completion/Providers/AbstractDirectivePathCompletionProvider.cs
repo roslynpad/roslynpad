@@ -1,11 +1,13 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Scripting;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis;
 
@@ -117,8 +119,8 @@ namespace RoslynPad.Roslyn.Completion.Providers
         }
 
         protected abstract Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash);
-
-        internal static string GetBaseDirectory(SourceText text, Document document)
+        
+        protected static string GetBaseDirectory(Document document)
         {
             var result = PathUtilities.GetDirectoryName(document.FilePath);
             return PathUtilities.IsAbsolute(result) ? result : null;
