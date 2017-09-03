@@ -32,8 +32,8 @@ namespace RoslynPad.Editor
         private readonly char? _completionChar;
         private readonly SnippetManager _snippetManager;
         private readonly Glyph _glyph;
-        private readonly Decorator _description;
         private readonly Lazy<Task> _descriptionTask;
+        private Decorator _description;
 
         public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
         {
@@ -44,13 +44,7 @@ namespace RoslynPad.Editor
             Text = item.DisplayText;
             Content = item.DisplayText;
             _glyph = item.GetGlyph();
-            _description = new Decorator();
             _descriptionTask = new Lazy<Task>(RetrieveDescription);
-#if AVALONIA
-            _description.Initialized += (o, e) => { var task = _descriptionTask.Value; };
-#else
-            _description.Loaded += (o, e) => { var task = _descriptionTask.Value; };
-#endif
             Image = _glyph.ToImageSource();
         }
 
@@ -122,7 +116,23 @@ namespace RoslynPad.Editor
 
         public object Content { get; }
 
-        public object Description => _description;
+        public object Description
+        {
+            get
+            {
+                if (_description == null)
+                {
+                    _description = new Decorator();
+#if AVALONIA
+                    _description.Initialized += (o, e) => { var task = _descriptionTask.Value; };
+#else
+                    _description.Loaded += (o, e) => { var task = _descriptionTask.Value; };
+#endif
+                }
+
+                return _description;
+            }
+        }
 
         private async Task RetrieveDescription()
         {

@@ -104,6 +104,34 @@ namespace RoslynPad.Editor
         public static readonly StyledProperty<Brush> CompletionBackgroundProperty = CommonProperty.Register<CodeTextEditor, Brush>(
             nameof(CompletionBackground), CreateDefaultCompletionBackground());
 
+        public bool IsCompletionWindowOpen
+        {
+            get => _completionWindow?.IsVisible == true;
+        }
+
+        public void CloseCompletionWindow()
+        {
+            if (_completionWindow != null)
+            {
+                _completionWindow.Close();
+                _completionWindow = null;
+            }
+        }
+
+        public bool IsInsightWindowOpen
+        {
+            get => _insightWindow?.IsVisible == true;
+        }
+
+        public void CloseInsightWindow()
+        {
+            if (_insightWindow != null)
+            {
+                _insightWindow.Close();
+                _insightWindow = null;
+            }
+        }
+
         private static Brush CreateDefaultCompletionBackground()
         {
             return new SolidColorBrush(Color.FromRgb(240, 240, 240)).AsFrozen();
