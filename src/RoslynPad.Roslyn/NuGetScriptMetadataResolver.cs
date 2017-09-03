@@ -1,11 +1,10 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using RoslynPad.Roslyn;
 
-namespace RoslynPad.Hosting
+namespace RoslynPad.Roslyn
 {
-    internal sealed class NuGetScriptMetadataResolver : MetadataReferenceResolver
+    public class NuGetScriptMetadataResolver : MetadataReferenceResolver
     {
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ScriptMetadataResolver _inner;
@@ -28,7 +27,7 @@ namespace RoslynPad.Hosting
 
         public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
         {
-            reference = _nuGetConfiguration.ResolveReference(reference);
+            reference = NuGetConfigurationExtensions.ResolveReference(_nuGetConfiguration, reference);
             return _inner.ResolveReference(reference, baseFilePath, properties);
         }
     }

@@ -32,7 +32,8 @@
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
-    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
+    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}"
+                             IsEnabled="{Binding IsInitialized}">
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
@@ -105,6 +106,7 @@
                         </dock:LayoutPanel>
                     </dock:LayoutRoot>
                 </dock:DockingManager>
+                
                 <Button HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Padding="5"

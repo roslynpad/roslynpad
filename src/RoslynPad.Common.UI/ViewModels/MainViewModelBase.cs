@@ -32,11 +32,24 @@ namespace RoslynPad.UI
         private OpenDocumentViewModel _currentOpenDocument;
         private bool _hasUpdate;
         private double _editorFontSize;
+        private string _searchText;
+        private bool _isWithinSearchResults;
+        private string _documentPath;
+        private bool _isInitialized;
 
         public DocumentViewModel DocumentRoot { get; private set; }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
-        public bool IsInitialized { get; set; }
+
+        public bool IsInitialized
+        {
+            get { return _isInitialized; }
+            private set
+            {
+                SetProperty(ref _isInitialized, value);
+                OnPropertyChanged(nameof(HasNoOpenDocuments));
+            }
+        }
 
         public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
         {
@@ -72,13 +85,13 @@ namespace RoslynPad.UI
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        public void Initialize()
+        public async Task Initialize()
         {
             if (IsInitialized) return;
 
             try
             {
-                InitializeInternal();
+                await InitializeInternal().ConfigureAwait(true);
 
                 IsInitialized = true;
             }
@@ -90,12 +103,13 @@ namespace RoslynPad.UI
 
         protected virtual IEnumerable<Assembly> CompositionAssemblies => Array.Empty<Assembly>();
 
-        private void InitializeInternal()
+        private async Task InitializeInternal()
         {
-            RoslynHost = new RoslynHost(NuGetConfiguration, CompositionAssemblies, 
-                RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }));
+            RoslynHost = await Task.Run(() => new RoslynHost(NuGetConfiguration, CompositionAssemblies, 
+                RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
+                .ConfigureAwait(true);
 
-            OpenAutoSavedDocuments();
+            await OpenAutoSavedDocuments().ConfigureAwait(true);
 
             if (HasCachedUpdate())
             {
@@ -103,15 +117,17 @@ namespace RoslynPad.UI
             }
             else
             {
-                Task.Run(CheckForUpdates);
+                var task = Task.Run(CheckForUpdates);
             }
         }
 
-        private void OpenAutoSavedDocuments()
+        private async Task OpenAutoSavedDocuments()
         {
-            OpenDocuments.AddRange(LoadAutoSavedDocuments(DocumentRoot.Path));
+            var documents = await Task.Run(() => LoadAutoSavedDocuments(DocumentRoot.Path)).ConfigureAwait(true);
 
-            if (HasNoOpenDocuments)
+            OpenDocuments.AddRange(documents);
+
+            if (OpenDocuments.Count == 0)
             {
                 CreateNewDocument();
             }
@@ -282,10 +298,6 @@ namespace RoslynPad.UI
             OnPropertyChanged(nameof(CurrentOpenDocument));
         }
 
-        private string _searchText;
-        private bool _isWithinSearchResults;
-        private string _documentPath;
-
         public IDelegateCommand NewDocumentCommand { get; }
 
         public IDelegateCommand EditUserDocumentPathCommand { get; }
@@ -388,7 +400,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public bool HasNoOpenDocuments => OpenDocuments.Count == 0;
+        public bool HasNoOpenDocuments => IsInitialized && OpenDocuments.Count == 0;
 
         public IDelegateCommand ReportProblemCommand { get; }
 

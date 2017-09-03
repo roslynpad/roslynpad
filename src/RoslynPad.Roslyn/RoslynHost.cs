@@ -1,17 +1,19 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Composition.Hosting;
-using System.Linq;
-using System.Reflection;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Diagnostics;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Composition.Hosting;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace RoslynPad.Roslyn
 {
@@ -83,8 +85,7 @@ namespace RoslynPad.Roslyn
             var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
                 .Distinct()
                 .SelectMany(x => x.DefinedTypes)
-                .Select(x => x.AsType())
-                .ToArray();
+                .Select(x => x.AsType());
 
             _compositionContext = new ContainerConfiguration()
                 .WithParts(partTypes)
@@ -101,8 +102,6 @@ namespace RoslynPad.Roslyn
             DefaultImports = references.Imports;
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
-
-            GetService<ISyntaxChangeNotificationService>().OpenedDocumentSyntaxChanged += OnSyntaxChanged;
         }
 
         internal MetadataReference CreateMetadataReference(string location)
@@ -122,14 +121,6 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        private void OnSyntaxChanged(object sender, Document document)
-        {
-            if (_workspaces.TryGetValue(document.Id, out var workspace))
-            {
-                workspace.ProcessReferenceDirectives(document);
-            }
-        }
-
         public TService GetService<TService>()
         {
             return _compositionContext.GetExport<TService>();
@@ -146,9 +137,11 @@ namespace RoslynPad.Roslyn
 
         public bool HasReference(DocumentId documentId, string text)
         {
-            if (_workspaces.TryGetValue(documentId, out var workspace) && workspace.HasReference(text))
+            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+
+            if (!_workspaces.TryGetValue(documentId, out var workspace))
             {
-                return true;
+                return false;
             }
 
             if (workspace.CurrentSolution.GetDocument(documentId).Project.TryGetCompilation(out var compilation))
@@ -158,22 +151,7 @@ namespace RoslynPad.Roslyn
 
             return false;
         }
-
-        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace,
-            string workingDirectory)
-        {
-            var resolver = Activator.CreateInstance(
-                // can't access this type due to a name collision with Scripting assembly
-                // can't use extern alias because of project.json
-                // ReSharper disable once AssignNullToNotNullAttribute
-                Type.GetType("Microsoft.CodeAnalysis.RelativePathResolver, Microsoft.CodeAnalysis.Workspaces"),
-                ImmutableArray<string>.Empty,
-                workingDirectory);
-            return (MetadataReferenceResolver)Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
-                workspace.Services.GetService<IMetadataService>(),
-                resolver);
-        }
-
+        
         #endregion
 
         #region Documents
@@ -191,7 +169,7 @@ namespace RoslynPad.Roslyn
             using (workspace) { }
         }
 
-        public RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(_host, _nuGetConfiguration, this);
+        public RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(_host, this);
 
         public void CloseDocument(DocumentId documentId)
         {
@@ -294,26 +272,13 @@ namespace RoslynPad.Roslyn
             workspace.TryApplyChanges(document.Project.Solution);
         }
 
-        public ImmutableArray<string> GetReferencesDirectives(DocumentId documentId)
-        {
-            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
-
-            if (_workspaces.TryGetValue(documentId, out var workspace))
-            {
-                return workspace.ReferencesDirectives;
-            }
-
-            return ImmutableArray<string>.Empty;
-        }
-
         private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory, bool addImports)
         {
-            var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory);
             var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
-                metadataReferenceResolver: metadataReferenceResolver);
+                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory));
             return compilationOptions;
         }
 

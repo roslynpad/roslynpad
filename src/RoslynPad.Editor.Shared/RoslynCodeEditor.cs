@@ -95,7 +95,10 @@ namespace RoslynPad.Editor
             _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService);
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
-            CompletionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
+            var completionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
+            completionProvider.Warmup();
+
+            CompletionProvider = completionProvider;
 
             return _documentId;
         }

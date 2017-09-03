@@ -26,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.2" />
+    <PackageReference Include="System.Reactive.Linq" Version="3.1.1" />
   </ItemGroup>
   <Import Project="..\RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildSDKExtrasTargets)" Condition="Exists('$(MSBuildSDKExtrasTargets)')" />

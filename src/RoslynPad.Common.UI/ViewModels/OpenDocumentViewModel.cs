@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using NuGet.Versioning;
 using RoslynPad.Hosting;
-using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Rename;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
@@ -494,7 +494,8 @@ namespace RoslynPad.UI
         {
             var nugetVariable = MainViewModel.NuGetConfiguration.PathVariableName;
             var pathToRepository = MainViewModel.NuGetConfiguration.PathToRepository;
-            foreach (var directive in MainViewModel.RoslynHost.GetReferencesDirectives(DocumentId))
+            var directives = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetReferencesDirectivesAsync().ConfigureAwait(false);
+            foreach (var directive in directives)
             {
                 if (directive.StartsWith(nugetVariable, StringComparison.OrdinalIgnoreCase))
                 {

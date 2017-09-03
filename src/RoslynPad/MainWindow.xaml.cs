@@ -43,11 +43,11 @@ namespace RoslynPad
             LoadDockLayout();
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;
 
-            _viewModel.Initialize();
+            await _viewModel.Initialize().ConfigureAwait(false);
         }
 
         protected override async void OnClosing(CancelEventArgs e)

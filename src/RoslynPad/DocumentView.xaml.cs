@@ -146,7 +146,7 @@ namespace RoslynPad
         
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
-            Editor.Focus();
+            Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
         }
 
         public void Dispose()

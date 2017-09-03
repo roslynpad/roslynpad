@@ -14,6 +14,8 @@ namespace RoslynPad.Editor
 {
     public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
     {
+        private static bool _initialized;
+
         private readonly DocumentId _documentId;
         private readonly IRoslynHost _roslynHost;
         private readonly SnippetInfoService _snippetService;
@@ -23,6 +25,26 @@ namespace RoslynPad.Editor
             _documentId = documentId;
             _roslynHost = roslynHost;
             _snippetService = (SnippetInfoService)_roslynHost.GetService<ISnippetInfoService>();
+        }
+
+        // initialize the providers once in the app domain so typing would start faster
+        internal void Warmup()
+        {
+            if (_initialized) return;
+
+            _initialized = true;
+
+            Task.Run(() =>
+            {
+                var document = _roslynHost.GetDocument(_documentId);
+
+                var completionService = CompletionService.GetService(document);
+                completionService.GetCompletionsAsync(document, 0);
+
+                var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
+                signatureHelpProvider.GetItemsAsync(document, 0,
+                    new SignatureHelpTriggerInfo(SignatureHelpTriggerReason.InvokeSignatureHelpCommand));
+            });
         }
 
         public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
