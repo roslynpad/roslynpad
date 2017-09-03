@@ -7,6 +7,7 @@
     <TargetFramework>net46</TargetFramework>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
+    <Version>$(EditorPackageVersion)</Version>
     <Description>Provides a Roslyn-based code editor using AvaloniaEdit (Avalonia platform) with completion, diagnostics, and quick actions</Description>
   </PropertyGroup>
   <ItemGroup>

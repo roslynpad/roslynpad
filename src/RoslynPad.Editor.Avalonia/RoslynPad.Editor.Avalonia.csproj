@@ -4,6 +4,7 @@
     <RootNamespace>RoslynPad.Editor</RootNamespace>
     <TargetFramework>netstandard1.6</TargetFramework>
     <DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
+    <Version>$(EditorPackageVersion)</Version>
     <Description>Provides a Roslyn-based code editor using AvalonEdit (WPF platform) with completion, diagnostics, and quick actions</Description>
   </PropertyGroup>
   <ItemGroup>
