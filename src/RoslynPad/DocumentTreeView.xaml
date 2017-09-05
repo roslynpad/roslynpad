@@ -15,9 +15,8 @@
     <FrameworkElement.Resources>
 
         <roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
-                                                       FilterProperty="IsSearchMatch"
-                                                       Filter="FilterCollectionViewSourceConverter_OnFilter" />
-        
+                                                 FilterProperty="IsSearchMatch"
+                                                 Filter="FilterCollectionViewSourceConverter_OnFilter" />
 
         <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
                                   ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
@@ -110,14 +109,34 @@
                                ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"
                                ItemsSource="{Binding DocumentRoot.Children, Converter={StaticResource FilterCollectionViewConverter}}" />
 
-        <StackPanel Grid.Row="2"
-                    Orientation="Horizontal"
-                    DockPanel.Dock="Bottom"
-                    Margin="5">
-            <Button Content="Change documents location..."
-                    Style="{StaticResource LinkButton}"
-                    Command="{Binding EditUserDocumentPathCommand}" />
-        </StackPanel>
+        <ToolBar Grid.Row="2"
+                 Background="Transparent"
+                 BorderBrush="DarkGray"
+                 BorderThickness="0 0 0 1"
+                 DockPanel.Dock="Bottom"
+                 Margin="0,5,0,0">
+            <Button ToolTip="New Document (Ctrl+N)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}">
+                <Image Source="{StaticResource CsFile}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="Open File (Ctrl+O)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding OpenFileCommand, Mode=OneTime}">
+                <Image Source="{StaticResource OpenFolder}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="Change Documents Location"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
+                <Image Source="{StaticResource MoveFolder}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+        </ToolBar>
 
     </Grid>
 </UserControl>

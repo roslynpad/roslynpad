@@ -279,7 +279,7 @@ namespace RoslynPad.UI
                 {
                     path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
                 } while (File.Exists(path));
-                Document = DocumentViewModel.CreateAutoSave(path);
+                Document = DocumentViewModel.FromPath(path);
             }
 
             await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);

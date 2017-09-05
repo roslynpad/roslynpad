@@ -95,6 +95,7 @@
     <Compile Include="Formatting\CodeActionsConverter.cs" />
     <Compile Include="Formatting\CodeActionToGlyphConverter.cs" />
     <Compile Include="MainViewModel.cs" />
+    <Compile Include="OpenFileDialogAdapter.cs" />
     <Compile Include="PlatformsFactory.cs" />
     <Compile Include="TelemetryProvider.cs" />
     <Compile Include="RenameSymbolDialog.xaml.cs">

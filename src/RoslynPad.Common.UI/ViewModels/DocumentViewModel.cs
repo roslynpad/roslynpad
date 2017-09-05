@@ -70,7 +70,7 @@ namespace RoslynPad.UI
             return new DocumentViewModel(rootPath);
         }
 
-        public static DocumentViewModel CreateAutoSave(string path)
+        public static DocumentViewModel FromPath(string path)
         {
             return new DocumentViewModel(path, isFolder: false);
         }

@@ -22,7 +22,6 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
-        public IApplicationSettings Settings { get; }
         private static readonly Version _currentVersion = new Version(13, 0);
         private static readonly string _currentVersionVariant = "";
 
@@ -37,6 +36,7 @@ namespace RoslynPad.UI
         private string _documentPath;
         private bool _isInitialized;
 
+        public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot { get; private set; }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
@@ -71,6 +71,7 @@ namespace RoslynPad.UI
             NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
 
             NewDocumentCommand = commands.Create(CreateNewDocument);
+            OpenFileCommand = commands.CreateAsync(OpenFile);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
@@ -140,7 +141,7 @@ namespace RoslynPad.UI
         private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
         {
             return IOUtilities.EnumerateFilesRecursive(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
-                GetOpenDocumentViewModel(DocumentViewModel.CreateAutoSave(x)));
+                GetOpenDocumentViewModel(DocumentViewModel.FromPath(x)));
         }
 
         private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel documentViewModel)
@@ -300,6 +301,8 @@ namespace RoslynPad.UI
 
         public IDelegateCommand NewDocumentCommand { get; }
 
+        public IDelegateCommand OpenFileCommand { get; }
+
         public IDelegateCommand EditUserDocumentPathCommand { get; }
 
         public IDelegateCommand CloseCurrentDocumentCommand { get; }
@@ -317,6 +320,30 @@ namespace RoslynPad.UI
                 OpenDocuments.Add(openDocument);
             }
             CurrentOpenDocument = openDocument;
+        }
+
+        public async Task OpenFile()
+        {
+            if (!IsInitialized) return;
+
+            var dialog = _serviceProvider.GetService<IOpenFileDialog>();
+            dialog.Filter = new FileDialogFilter("C# Scripts", "csx");
+            if (!await dialog.ShowAsync().ConfigureAwait(true))
+            {
+                return;
+            }
+
+            var document = DocumentViewModel.FromPath(dialog.FileName);
+            if (!document.IsAutoSave)
+            {
+                var autoSavePath = document.GetAutoSavePath();
+                if (File.Exists(autoSavePath))
+                {
+                    document = DocumentViewModel.FromPath(autoSavePath);
+                }
+            }
+
+            OpenDocument(document);
         }
 
         public void CreateNewDocument()
