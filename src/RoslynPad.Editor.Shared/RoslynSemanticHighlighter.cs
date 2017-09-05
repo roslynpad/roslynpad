@@ -24,10 +24,12 @@ using System.Threading.Tasks;
 #if AVALONIA
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Rendering;
 using TextDocument = AvaloniaEdit.Document.TextDocument;
 #else
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Rendering;
 using TextDocument = ICSharpCode.AvalonEdit.Document.TextDocument;
 #endif
 using Microsoft.CodeAnalysis;
@@ -43,26 +45,29 @@ namespace RoslynPad.Editor
     {
         private const int CacheSize = 512;
         private const int DelayInMs = 250;
-
+        private readonly TextView _textView;
         private readonly IDocument _document;
         private readonly DocumentId _documentId;
         private readonly IRoslynHost _roslynHost;
         private readonly IClassificationHighlightColors _highlightColors;
         private readonly List<CachedLine> _cachedLines;
         private readonly Subject<HighlightedLine> _subject;
+        private List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
         private readonly SynchronizationContext _syncContext;
 
-        private bool _inHighlightingGroup;
+        private volatile bool _inHighlightingGroup;
+        private int? _updatedLine;
 
-        public RoslynSemanticHighlighter(IDocument document, DocumentId documentId, IRoslynHost roslynHost, IClassificationHighlightColors highlightColors)
+        public RoslynSemanticHighlighter(TextView textView, IDocument document, DocumentId documentId, IRoslynHost roslynHost, IClassificationHighlightColors highlightColors)
         {
+            _textView = textView ?? throw new ArgumentNullException(nameof(textView));
             _document = document ?? throw new ArgumentNullException(nameof(document));
             _documentId = documentId;
             _roslynHost = roslynHost;
             _highlightColors = highlightColors;
             _subject = new Subject<HighlightedLine>();
             _subject.GroupBy(c => c.DocumentLine.LineNumber).Subscribe(SubscribeToLineGroup);
-
+            
             if (document is TextDocument)
             {
                 // Use the cache only for the live AvalonEdit document
@@ -71,9 +76,10 @@ namespace RoslynPad.Editor
                 _cachedLines = new List<CachedLine>();
             }
 
+            _changes = new List<(HighlightedLine line, List<HighlightedSection> sections)>();
             _syncContext = SynchronizationContext.Current;
         }
-        
+
         public void Dispose()
         {
             _subject.Dispose();
@@ -83,22 +89,42 @@ namespace RoslynPad.Editor
 
         private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
         {
-            var lineNumber = line.DocumentLine.LineNumber;
-            _syncContext.Post(o =>
+            if (_inHighlightingGroup && line.DocumentLine.LineNumber == _updatedLine)
             {
-                line.Sections.Clear();
-                foreach (var section in sections)
-                    line.Sections.Add(section);
+                lock (_changes)
+                {
+                    _changes.Add((line, sections));
+                }
+
+                return;
+            }
+
+            _syncContext.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
+        }
+
+        private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
+        {
+            var lineNumber = line.DocumentLine.LineNumber;
+            line.Sections.Clear();
+            foreach (var section in sections)
+                line.Sections.Add(section);
+
+            if (_textView.GetVisualLine(line.DocumentLine.LineNumber) != null)
+            {
                 HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
-            }, null);
+            }
         }
 
         IDocument IHighlighter.Document => _document;
 
         IEnumerable<HighlightingColor> IHighlighter.GetColorStack(int lineNumber) => null;
 
-        void IHighlighter.UpdateHighlightingState(int lineNumber)
+        public void UpdateHighlightingState(int lineNumber)
         {
+            if (_inHighlightingGroup && _updatedLine == null)
+            {
+                _updatedLine = lineNumber;
+            }
         }
 
         public HighlightedLine HighlightLine(int lineNumber)
@@ -201,7 +227,7 @@ namespace RoslynPad.Editor
             IEnumerable<ClassifiedSpan> spans;
             try
             {
-                spans = await GetClassifiedSpansAsync(document, documentLine).ConfigureAwait(false);
+                spans = await GetClassifiedSpansAsync(document, documentLine).ConfigureAwait(true);
             }
             catch (Exception)
             {
@@ -216,6 +242,7 @@ namespace RoslynPad.Editor
                 {
                     continue;
                 }
+
                 sections.Add(new HighlightedSection
                 {
                     Color = _highlightColors.GetBrush(classifiedSpan.ClassificationType),
@@ -274,9 +301,17 @@ namespace RoslynPad.Editor
         public void EndHighlighting()
         {
             _inHighlightingGroup = false;
-            // TODO use this to remove cached lines which are no longer visible
-            // var visibleDocumentLines = new HashSet<IDocumentLine>(syntaxHighlighter.GetVisibleDocumentLines());
-            // cachedLines.RemoveAll(c => !visibleDocumentLines.Contains(c.DocumentLine));
+            _updatedLine = null;
+
+            lock (_changes)
+            {
+                foreach (var change in _changes)
+                {
+                    UpdateHighlightingSectionsNoCheck(change.line, change.sections);
+                }
+
+                _changes.Clear();
+            }
         }
 
         public HighlightingColor GetNamedColor(string name) => null;
