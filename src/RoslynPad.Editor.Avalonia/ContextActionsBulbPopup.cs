@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Windows.Input;
 using Avalonia.Controls;
@@ -35,6 +34,7 @@ namespace RoslynPad.Editor
     internal sealed class ContextActionsBulbPopup : ExtendedPopup
     {
         private readonly MenuItem _mainItem;
+        private readonly Image _headerImage;
         private bool _isOpen;
 
         public ContextActionsBulbPopup(Control parent) : base(parent)
@@ -42,15 +42,13 @@ namespace RoslynPad.Editor
             UseLayoutRounding = true;
 
             StaysOpen = true;
+
+            _headerImage = new Image();
+
             _mainItem = new MenuItem
             {
                 Styles = { CreateItemContainerStyle() },
-                Header = new Image
-                {
-                    Source = this.FindStyleResource("Bulb") as IBitmap,
-                    Width = 16,
-                    Height = 16
-                }
+                Header = _headerImage
             };
             
             _mainItem.SubmenuOpened += (sender, args) =>
@@ -80,6 +78,12 @@ namespace RoslynPad.Editor
             };
 
             Child = menu;
+        }
+
+        public IBitmap Icon
+        {
+            get => _headerImage.Source;
+            set => _headerImage.Source = value;
         }
 
         public event EventHandler MenuOpened;
@@ -134,17 +138,17 @@ namespace RoslynPad.Editor
 
         public void OpenAtLineStart(CodeTextEditor editor)
         {
-            SetPosition(this, editor, editor.TextArea.Caret.Line, 1);
-            VerticalOffset -= 16;
+            SetPosition(editor, editor.TextArea.Caret.Line, 1);
             IsOpenIfFocused = true;
         }
 
-        private static void SetPosition(ExtendedPopup popup, TextEditor editor, int line, int column, bool openAtWordStart = false)
+        private void SetPosition(TextEditor editor, int line, int column, bool openAtWordStart = false)
         {
             var document = editor.Document;
-            var offset = document.GetOffset(line, column);
+
             if (openAtWordStart)
             {
+                var offset = document.GetOffset(line, column);
                 var wordStart = document.FindPreviousWordStart(offset);
                 if (wordStart != -1)
                 {
@@ -153,14 +157,18 @@ namespace RoslynPad.Editor
                     column = wordStartLocation.Column;
                 }
             }
-            var caretScreenPos = editor.TextArea.TextView.GetPosition(line, column);
-            popup.HorizontalOffset = caretScreenPos.X;
-            popup.VerticalOffset = caretScreenPos.Y;
-            popup.PlacementTarget = editor.TextArea.TextView;
-            // TODO:
-            //popup.PlacementMode = PlacementMode.Relative;
-        }
 
+            var caretScreenPos = editor.TextArea.TextView.GetPosition(line, column);
+            var visualLine = editor.TextArea.TextView.GetVisualLine(line);
+            var height = visualLine.Height - 1;
+            _headerImage.Width = _headerImage.Height = height;
+            HorizontalOffset = 0;
+            VerticalOffset = caretScreenPos.Y - height - 1;
+            PlacementTarget = editor.TextArea.TextView;
+            // TODO:
+            //Placement = PlacementMode.Relative;
+        }
+        
         private class ActionCommandConverter : IValueConverter
         {
             private readonly ContextActionsBulbPopup _owner;

@@ -28,8 +28,10 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Threading;
+using ImageSource = Avalonia.Media.Imaging.IBitmap;
 #else
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 #endif
 
@@ -66,6 +68,8 @@ namespace RoslynPad.Editor
 
             editor.HookupLoadedUnloadedAction(HookupWindowMove);
         }
+
+        public ImageSource IconImage { get; set; }
 
         private void HookupWindowMove(bool enable)
         {
@@ -141,7 +145,12 @@ namespace RoslynPad.Editor
         {
             if (_popup == null)
             {
-                _popup = new ContextActionsBulbPopup(_editor.TextArea) { CommandProvider = GetActionCommand };
+                _popup = new ContextActionsBulbPopup(_editor.TextArea)
+                {
+                    CommandProvider = GetActionCommand,
+                    Icon = IconImage,
+                };
+
                 // TODO: workaround to refresh menu with latest document
                 _popup.MenuOpened += async (sender, args) =>
                 {
@@ -150,6 +159,7 @@ namespace RoslynPad.Editor
                         _popup.ItemsSource = _actions;
                     }
                 };
+
                 _popup.MenuClosed += (sender, args) =>
                 {
                     _editor.GetDispatcher().InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);

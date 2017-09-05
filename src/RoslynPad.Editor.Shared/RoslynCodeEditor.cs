@@ -8,9 +8,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using RoslynPad.Roslyn.AutomaticCompletion;
 #if AVALONIA
+using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Input;
+using ImageSource = Avalonia.Media.Imaging.IBitmap;
 using ModifierKeys = Avalonia.Input.InputModifiers;
 using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
 using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;
@@ -42,6 +44,23 @@ namespace RoslynPad.Editor
             TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.Caret.PositionChanged += CaretOnPositionChanged;
             TextArea.TextEntered += OnTextEntered;
+        }
+
+        public static readonly StyledProperty<ImageSource> ContextActionsIconProperty = CommonProperty.Register<RoslynCodeEditor, ImageSource>(
+            nameof(ContextActionsIcon), onChanged: OnContextActionsIconChanged);
+
+        private static void OnContextActionsIconChanged(RoslynCodeEditor editor, CommonPropertyChangedArgs<ImageSource> args)
+        {
+            if (editor._contextActionsRenderer != null)
+            {
+                editor._contextActionsRenderer.IconImage = args.NewValue;
+            }
+        }
+
+        public ImageSource ContextActionsIcon
+        {
+            get => this.GetValue(ContextActionsIconProperty);
+            set => this.SetValue(ContextActionsIconProperty, value);
         }
 
         public static readonly RoutedEvent CreatingDocumentEvent = CommonEvent.Register<RoslynCodeEditor, CreatingDocumentEventArgs>(nameof(CreatingDocument), RoutingStrategy.Bubble);
@@ -92,7 +111,7 @@ namespace RoslynPad.Editor
 
             TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors));
 
-            _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService);
+            _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
             var completionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);

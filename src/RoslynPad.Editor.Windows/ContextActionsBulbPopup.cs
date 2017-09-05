@@ -32,6 +32,7 @@ namespace RoslynPad.Editor
     internal sealed class ContextActionsBulbPopup : ExtendedPopup
     {
         private readonly MenuItem _mainItem;
+        private readonly Image _headerImage;
         private bool _isOpen;
 
         public ContextActionsBulbPopup(UIElement parent) : base(parent)
@@ -41,16 +42,16 @@ namespace RoslynPad.Editor
 
             StaysOpen = true;
             AllowsTransparency = true;
+
+            _headerImage = new Image();
+
             _mainItem = new MenuItem
             {
                 ItemContainerStyle = CreateItemContainerStyle(),
-                Header = new Image
-                {
-                    Source = TryFindResource("Bulb") as ImageSource,
-                    Width = 16,
-                    Height = 16
-                }
+                Header = _headerImage,
+                Padding = new Thickness(0),
             };
+
             _mainItem.SubmenuOpened += (sender, args) =>
             {
                 if (ReferenceEquals(args.OriginalSource, _mainItem))
@@ -59,6 +60,7 @@ namespace RoslynPad.Editor
                     MenuOpened?.Invoke(this, EventArgs.Empty);
                 }
             };
+
             Closed += (sender, args) =>
             {
                 if (_isOpen)
@@ -67,6 +69,7 @@ namespace RoslynPad.Editor
                     MenuClosed?.Invoke(this, EventArgs.Empty);
                 }
             };
+
             var menu = new Menu
             {
                 Background = Brushes.Transparent,
@@ -74,7 +77,14 @@ namespace RoslynPad.Editor
                 BorderThickness = _mainItem.BorderThickness,
                 Items = { _mainItem }
             };
+
             Child = menu;
+        }
+
+        public ImageSource Icon
+        {
+            get => _headerImage.Source;
+            set => _headerImage.Source = value;
         }
 
         public event EventHandler MenuOpened;
@@ -97,11 +107,14 @@ namespace RoslynPad.Editor
 
         public bool HasItems => _mainItem.HasItems;
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
-            base.OnKeyDown(e);
+            base.OnPreviewKeyDown(e);
+
             if (e.Key == Key.Escape)
-                IsOpenIfFocused = false;
+            {
+                Close();
+            }
         }
 
         public void Close()
@@ -124,17 +137,17 @@ namespace RoslynPad.Editor
 
         public void OpenAtLineStart(CodeTextEditor editor)
         {
-            SetPosition(this, editor, editor.TextArea.Caret.Line, 1);
-            VerticalOffset -= 16;
+            SetPosition(editor, editor.TextArea.Caret.Line, 1);
             IsOpenIfFocused = true;
         }
 
-        private static void SetPosition(Popup popup, TextEditor editor, int line, int column, bool openAtWordStart = false)
+        private void SetPosition(TextEditor editor, int line, int column, bool openAtWordStart = false)
         {
             var document = editor.Document;
-            var offset = document.GetOffset(line, column);
+
             if (openAtWordStart)
             {
+                var offset = document.GetOffset(line, column);
                 var wordStart = document.FindPreviousWordStart(offset);
                 if (wordStart != -1)
                 {
@@ -143,11 +156,15 @@ namespace RoslynPad.Editor
                     column = wordStartLocation.Column;
                 }
             }
+
             var caretScreenPos = editor.TextArea.TextView.GetPosition(line, column);
-            popup.HorizontalOffset = caretScreenPos.X;
-            popup.VerticalOffset = caretScreenPos.Y;
-            popup.PlacementTarget = editor.TextArea.TextView;
-            popup.Placement = PlacementMode.Relative;
+            var visualLine = editor.TextArea.TextView.GetVisualLine(line);
+            var height = visualLine.Height - 1;
+            _headerImage.Width = _headerImage.Height = height;
+            HorizontalOffset = 0;
+            VerticalOffset = caretScreenPos.Y - height - 1;
+            PlacementTarget = editor.TextArea.TextView;
+            Placement = PlacementMode.Relative;
         }
 
         private class ActionCommandConverter : IValueConverter

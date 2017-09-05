@@ -40,7 +40,7 @@ namespace RoslynPad.Editor
             var changedCallback = onChanged != null
                 ? new PropertyChangedCallback((o, e) => onChanged((TOwner)o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue, (TValue)e.NewValue)))
                 : null;
-            var metadata = new FrameworkPropertyMetadata(defaultValue, metadataOptions);
+            var metadata = new FrameworkPropertyMetadata(defaultValue, metadataOptions, changedCallback);
             var property = DependencyProperty.Register(name, typeof(TValue), typeof(TOwner), metadata);
 
             return new StyledProperty<TValue>(property);

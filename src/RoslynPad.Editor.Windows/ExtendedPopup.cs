@@ -28,7 +28,8 @@ namespace RoslynPad.Editor
                     {
                         _parent.IsKeyboardFocusedChanged += Parent_IsKeyboardFocusedChanged;
                     }
-                    else {
+                    else
+                    {
                         _parent.IsKeyboardFocusedChanged -= Parent_IsKeyboardFocusedChanged;
                     }
                     OpenOrClose();

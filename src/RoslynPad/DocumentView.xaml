@@ -189,6 +189,7 @@
             </ToolBar>
             <editor:RoslynCodeEditor x:Name="Editor"
                                      x:FieldModifier="private"
+                                     ContextActionsIcon="{StaticResource Bulb}"
                                      FontFamily="Consolas"
                                      Grid.Row="1"
                                      Grid.Column="0"
