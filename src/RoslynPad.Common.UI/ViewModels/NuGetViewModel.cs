@@ -451,6 +451,7 @@ namespace RoslynPad.UI
         private CancellationTokenSource _cts;
         private IReadOnlyList<PackageData> _packages;
         private bool _isPackagesMenuOpen;
+        private bool _prerelease;
 
         [ImportingConstructor]
         public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands, ITelemetryProvider telemetryProvider)
@@ -504,25 +505,26 @@ namespace RoslynPad.UI
 
         public bool IsEnabled
         {
-            get => _isEnabled; private set => SetProperty(ref _isEnabled, value);
+            get => _isEnabled;
+            private set => SetProperty(ref _isEnabled, value);
         }
 
         public string SearchTerm
         {
-            get => _searchTerm; set
+            get => _searchTerm;
+            set
             {
                 if (SetProperty(ref _searchTerm, value))
                 {
-                    _cts?.Cancel();
-                    _cts = new CancellationTokenSource();
-                    PerformSearch(value, _cts.Token);
+                    PerformSearch();
                 }
             }
         }
 
         public IReadOnlyList<PackageData> Packages
         {
-            get => _packages; private set => SetProperty(ref _packages, value);
+            get => _packages;
+            private set => SetProperty(ref _packages, value);
         }
 
         public bool IsPackagesMenuOpen
@@ -532,6 +534,25 @@ namespace RoslynPad.UI
         }
 
         public bool ExactMatch { get; set; }
+
+        public bool Prerelease
+        {
+            get { return _prerelease; }
+            set
+            {
+                if (SetProperty(ref _prerelease, value))
+                {
+                    PerformSearch();
+                }
+            }
+        }
+
+        private void PerformSearch()
+        {
+            _cts?.Cancel();
+            _cts = new CancellationTokenSource();
+            PerformSearch(SearchTerm, _cts.Token);
+        }
 
         private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
         {
@@ -547,7 +568,7 @@ namespace RoslynPad.UI
                 try
                 {
                     var packages = await Task.Run(() =>
-                            _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: true,
+                            _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: Prerelease,
                                 exactMatch: ExactMatch, cancellationToken: cancellationToken), cancellationToken)
                         .ConfigureAwait(true);
 

@@ -169,9 +169,9 @@
                     </TextBlock>
                 </Grid>
                 <Decorator VerticalAlignment="Center">
-                    <CheckBox IsChecked="{Binding NuGet.ExactMatch}"
-                              ToolTip="Match exact package name"
-                              Content="Exact" />
+                    <CheckBox IsChecked="{Binding NuGet.Prerelease}"
+                              ToolTip="Include prerelease packages"
+                              Content="Prerelease" />
                 </Decorator>
                 <Separator />
                 <Button Content="{StaticResource FormatDocument}"

@@ -22,7 +22,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
-        private static readonly Version _currentVersion = new Version(13, 0);
+        private static readonly Version _currentVersion = new Version(13, 1);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
