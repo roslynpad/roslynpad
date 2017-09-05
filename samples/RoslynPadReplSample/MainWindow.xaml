@@ -15,6 +15,7 @@
                     <StackPanel>
                         <editor:RoslynCodeEditor Loaded="OnItemLoaded"
                                                  Margin="5"
+                                                 ContextActionsIcon="{StaticResource Bulb}"
                                                  PreviewKeyDown="OnEditorKeyDown"
                                                  IsReadOnly="{Binding IsReadOnly}"
                                                  HorizontalScrollBarVisibility="Disabled"

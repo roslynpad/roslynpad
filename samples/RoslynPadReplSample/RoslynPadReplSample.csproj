@@ -79,7 +79,7 @@
       <Version>2.3.2</Version>
     </PackageReference>
     <PackageReference Include="RoslynPad.Editor.Windows">
-      <Version>1.0.1</Version>
+      <Version>1.0.2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
