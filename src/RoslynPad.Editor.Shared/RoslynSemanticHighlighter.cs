@@ -104,6 +104,8 @@ namespace RoslynPad.Editor
 
         private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
         {
+            if (line.DocumentLine.IsDeleted) return;
+
             var lineNumber = line.DocumentLine.LineNumber;
             line.Sections.Clear();
             foreach (var section in sections)
@@ -279,13 +281,17 @@ namespace RoslynPad.Editor
 
         private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(Document document, IDocumentLine documentLine)
         {
-            var text = await document.GetTextAsync().ConfigureAwait(false);
-            if (text.Length >= documentLine.Offset + documentLine.TotalLength)
+            if (!documentLine.IsDeleted)
             {
-                return await Classifier.GetClassifiedSpansAsync(document,
-                    new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
-                    .ConfigureAwait(false);
+                var text = await document.GetTextAsync().ConfigureAwait(false);
+                if (text.Length >= documentLine.Offset + documentLine.TotalLength)
+                {
+                    return await Classifier.GetClassifiedSpansAsync(document,
+                            new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
             }
+
             return Array.Empty<ClassifiedSpan>();
         }
 

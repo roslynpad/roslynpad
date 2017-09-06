@@ -431,7 +431,7 @@ namespace RoslynPad.Hosting
             private const int WindowMillisecondsTimeout = 500;
             private const int WindowMaxCount = 10000;
 
-            private static readonly ImmutableArray<string> SystemNoShadowCopyDirectories = GetSystemNoShadowCopyDirectories();
+            private static readonly Lazy<ImmutableArray<string>> SystemNoShadowCopyDirectories = new Lazy<ImmutableArray<string>>(() => GetSystemNoShadowCopyDirectories());
 
             private static ImmutableArray<string> GetSystemNoShadowCopyDirectories()
             {
@@ -445,10 +445,10 @@ namespace RoslynPad.Hosting
                     paths.Add(Environment.GetEnvironmentVariable("windir"));
                     paths.Add(Environment.GetEnvironmentVariable("ProgramFiles"));
 
-                    if (RuntimeInformation.OSArchitecture == Architecture.X64 ||
-                        RuntimeInformation.OSArchitecture == Architecture.Arm64)
+                    var path = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+                    if (!string.IsNullOrEmpty(path))
                     {
-                        paths.Add(Environment.GetEnvironmentVariable("ProgramFiles(x86)"));
+                        paths.Add(path);
                     }
                 }
 
@@ -699,7 +699,7 @@ namespace RoslynPad.Hosting
                     options.FilePath, _workingDirectory, options.MetadataResolver,
                     assemblyLoader: _shadowCopyAssemblies
                         ? new InteractiveAssemblyLoader(
-                            new MetadataShadowCopyProvider(Path.GetTempPath(), SystemNoShadowCopyDirectories))
+                            new MetadataShadowCopyProvider(Path.GetTempPath(), SystemNoShadowCopyDirectories.Value))
                         : null,
                     optimizationLevel: optimizationLevel ?? _optimizationLevel,
                     checkOverflow: _checkOverflow,

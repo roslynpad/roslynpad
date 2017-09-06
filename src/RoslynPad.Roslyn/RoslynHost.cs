@@ -278,7 +278,7 @@ namespace RoslynPad.Roslyn
                 usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
-                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory));
+                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory, useCache: true));
             return compilationOptions;
         }
 

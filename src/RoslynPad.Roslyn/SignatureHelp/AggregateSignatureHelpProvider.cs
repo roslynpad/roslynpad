@@ -87,7 +87,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
             while (true)
             {
                 // If the current item is still applicable, then just keep it.
-                if (filteredItems.Contains(currentItem) && IsApplicable(currentItem, argumentCount, name, isCaseSensitive))
+                if (currentItem != null && filteredItems.Contains(currentItem) && IsApplicable(currentItem, argumentCount, name, isCaseSensitive))
                 {
                     return currentItem;
                 }
@@ -113,7 +113,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
                 // If we don't have an item that can take that number of parameters, then just pick
                 // the last item.  Or stick with the current item if the last item isn't any better.
                 var lastItem = filteredItems.Last();
-                if (currentItem.IsVariadic || currentItem.Parameters.Length == lastItem.Parameters.Length)
+                if (currentItem != null && (currentItem.IsVariadic || currentItem.Parameters.Length == lastItem.Parameters.Length))
                 {
                     return currentItem;
                 }
