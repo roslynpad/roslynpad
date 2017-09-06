@@ -3,8 +3,8 @@
 		<Features>strict</Features>
 		<Deterministic>True</Deterministic>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-		<EditorPackageVersion>1.0.2</EditorPackageVersion>
-		<RoslynPackageVersion>2.3.2.1</RoslynPackageVersion>
+		<EditorPackageVersion>1.0.3</EditorPackageVersion>
+		<RoslynPackageVersion>2.3.2.2</RoslynPackageVersion>
 		<RoslynAssemblyVersion>2.3.0.0</RoslynAssemblyVersion>
 		<LangVersion>latest</LangVersion>
 		<Authors>Eli Arbel</Authors>
