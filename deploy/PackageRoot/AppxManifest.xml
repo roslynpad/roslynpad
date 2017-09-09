@@ -10,7 +10,7 @@
   <Properties>
     <DisplayName>RoslynPad</DisplayName>
     <PublisherDisplayName>Eli Arbel</PublisherDisplayName>
-    <Description>A cross-platform C# script editor &amp; runner and based on Roslyn and AvalonEdit</Description>
+    <Description>A cross-platform C# script editor &amp; runner based on Roslyn and AvalonEdit</Description>
     <Logo>Assets\storelogo.png</Logo>
   </Properties>
   <Resources>

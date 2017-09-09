@@ -11,6 +11,10 @@ body {
     color: #606c71;
 }
 
+article {
+    margin: 10px;
+}
+
 a {
     color: #1e6bb8;
     text-decoration: none;
