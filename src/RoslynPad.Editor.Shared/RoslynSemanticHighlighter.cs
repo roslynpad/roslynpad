@@ -67,7 +67,7 @@ namespace RoslynPad.Editor
             _highlightColors = highlightColors;
             _subject = new Subject<HighlightedLine>();
             _subject.GroupBy(c => c.DocumentLine.LineNumber).Subscribe(SubscribeToLineGroup);
-            
+
             if (document is TextDocument)
             {
                 // Use the cache only for the live AvalonEdit document
@@ -104,9 +104,13 @@ namespace RoslynPad.Editor
 
         private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
         {
-            if (line.DocumentLine.IsDeleted) return;
+            if (!IsCurrentLine(line))
+            {
+                return;
+            }
 
             var lineNumber = line.DocumentLine.LineNumber;
+
             line.Sections.Clear();
             foreach (var section in sections)
                 line.Sections.Add(section);
@@ -115,6 +119,14 @@ namespace RoslynPad.Editor
             {
                 HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
             }
+        }
+
+        private bool IsCurrentLine(HighlightedLine line)
+        {
+            return !line.DocumentLine.IsDeleted &&
+                   line.Document.Version.CompareAge(_document.Version) == 0 &&
+                   _document.GetLineByNumber(line.DocumentLine.LineNumber) is var currentLine &&
+                   currentLine?.Length == line.DocumentLine.Length;
         }
 
         IDocument IHighlighter.Document => _document;
@@ -188,9 +200,13 @@ namespace RoslynPad.Editor
                 foreach (var section in previousHighlight.Sections)
                 {
                     var offset = section.Offset + offsetShift;
+                    int length = Math.Min(section.Length, documentLine.EndOffset - offset);
 
-                    // stop if section starts after end of line
-                    if (offset >= documentLine.EndOffset)
+                    // stop if section is outside the line
+                    if (offset < documentLine.Offset)
+                        continue;
+
+                    if (offset + length >= documentLine.EndOffset)
                         break;
 
                     // clamp section to not be longer than line
@@ -198,7 +214,7 @@ namespace RoslynPad.Editor
                     {
                         Color = section.Color,
                         Offset = offset,
-                        Length = Math.Min(section.Length, documentLine.EndOffset - offset),
+                        Length = length,
                     });
                 }
             }
