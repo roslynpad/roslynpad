@@ -200,16 +200,16 @@ namespace RoslynPad.Editor
                 foreach (var section in previousHighlight.Sections)
                 {
                     var offset = section.Offset + offsetShift;
-                    int length = Math.Min(section.Length, documentLine.EndOffset - offset);
 
                     // stop if section is outside the line
                     if (offset < documentLine.Offset)
                         continue;
 
-                    if (offset + length >= documentLine.EndOffset)
+                    if (offset >= documentLine.EndOffset)
                         break;
 
                     // clamp section to not be longer than line
+                    int length = Math.Min(section.Length, documentLine.EndOffset - offset);
                     line.Sections.Add(new HighlightedSection
                     {
                         Color = section.Color,
