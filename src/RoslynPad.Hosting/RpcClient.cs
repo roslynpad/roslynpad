@@ -32,6 +32,7 @@ namespace RoslynPad.Hosting
 
             _stream = stream;
             _rpc = JsonRpc.Attach(stream, this);
+            RpcServer.ChangeSerializationSettings(_rpc);
         }
 
         private JsonRpc Rpc => _rpc ?? throw new InvalidOperationException("Not connected");

@@ -228,7 +228,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new[] { new ResultObject(exception.InnerException, _quotas) };
+                Children = new[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return;
             }
 
@@ -370,7 +370,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { new ResultObject(exception, _quotas) };
+                Children = new[] { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -416,9 +416,9 @@ namespace RoslynPad.Runtime
             }
             catch (Exception exception)
             {
-                Header = _member.Name;
+                Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { new ResultObject(exception, _quotas) };
+                Children = new[] { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -466,7 +466,7 @@ namespace RoslynPad.Runtime
         // ReSharper disable once UnusedMember.Local
         private ExceptionResultObject() { }
 
-        private ExceptionResultObject(Exception exception) : base(exception, DumpQuotas.Default)
+        private ExceptionResultObject(Exception exception, DumpQuotas quotas) : base(exception, quotas)
         {
             Message = exception.Message;
 
@@ -481,7 +481,7 @@ namespace RoslynPad.Runtime
             }
         }
 
-        public static ExceptionResultObject Create(Exception exception) => new ExceptionResultObject(exception);
+        public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new ExceptionResultObject(exception, quotas ?? DumpQuotas.Default);
 
         [DataMember]
         public int LineNumber { get; private set; }

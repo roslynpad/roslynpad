@@ -359,7 +359,7 @@
                     </Grid.ColumnDefinitions>
                     <DockPanel Grid.Column="0">
                         <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
-                        <Button Name="Copy"
+                        <Button Command="Copy"
                                 Padding="0"
                                 Margin="2 0 5 0"
                                 VerticalAlignment="Top"

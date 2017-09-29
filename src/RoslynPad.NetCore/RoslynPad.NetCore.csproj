@@ -8,6 +8,7 @@
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <IsAvaloniaProject>True</IsAvaloniaProject>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
