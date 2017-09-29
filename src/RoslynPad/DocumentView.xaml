@@ -309,7 +309,6 @@
                 </TabItem>
                 <TabItem Name="ILViewerTab"
                          Header="IL"
-                         FontSize="{Binding MainViewModel.EditorFontSize}"
                          IsSelected="{Binding ShowIL}" />
             </TabControl>
         </Grid>

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
@@ -143,7 +144,7 @@ namespace RoslynPad
                 }
             }
         }
-        
+
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
             Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
@@ -287,6 +288,8 @@ namespace RoslynPad
             if (ILViewerTab.IsSelected && ILViewerTab.Content == null)
             {
                 var ilViewer = new ILViewer();
+                ilViewer.SetBinding(TextElement.FontSizeProperty,
+                    nameof(_viewModel.MainViewModel) + "." + nameof(_viewModel.MainViewModel.EditorFontSize));
                 ilViewer.SetBinding(ILViewer.TextProperty, nameof(_viewModel.ILText));
                 ILViewerTab.Content = ilViewer;
             }
