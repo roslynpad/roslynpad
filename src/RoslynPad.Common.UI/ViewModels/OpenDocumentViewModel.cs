@@ -42,6 +42,8 @@ namespace RoslynPad.UI
         private Func<TextSpan> _getSelection;
         private string _ilText;
         private bool _isInitialized;
+        private bool _isLiveMode;
+        private Timer _liveModeTimer;
 
         public string WorkingDirectory { get; private set; }
 
@@ -55,6 +57,31 @@ namespace RoslynPad.UI
             {
                 _results = value;
                 OnPropertyChanged(nameof(Results));
+            }
+        }
+
+        public IDelegateCommand ToggleLiveModeCommand { get; }
+
+        public bool IsLiveMode
+        {
+            get { return _isLiveMode; }
+            private set
+            {
+                if (!SetProperty(ref _isLiveMode, value)) return;
+                RunCommand.RaiseCanExecuteChanged();
+
+                if (value)
+                {
+                    var task = Run();
+
+                    if (_liveModeTimer == null)
+                    {
+                        _liveModeTimer = new Timer(o => _dispatcher.InvokeAsync(() =>
+                        {
+                            var runTask = Run();
+                        }), null, Timeout.Infinite, Timeout.Infinite);
+                    }
+                }
             }
         }
 
@@ -86,6 +113,7 @@ namespace RoslynPad.UI
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
+            ToggleLiveModeCommand = commands.Create(() => IsLiveMode = !IsLiveMode);
 
             ILText = DefaultILText;
         }
@@ -585,7 +613,8 @@ namespace RoslynPad.UI
 
         public bool IsDirty
         {
-            get => _isDirty; private set => SetProperty(ref _isDirty, value);
+            get => _isDirty;
+            private set => SetProperty(ref _isDirty, value);
         }
 
         public bool ShowIL { get; set; }
@@ -597,9 +626,14 @@ namespace RoslynPad.UI
             EditorFocus?.Invoke(this, EventArgs.Empty);
         }
 
-        public void SetDirty()
+        public void OnTextChanged()
         {
             IsDirty = true;
+
+            if (IsLiveMode)
+            {
+                _liveModeTimer?.Change(MainViewModel.Settings.LiveModeDelayMs, Timeout.Infinite);
+            }
         }
     }
 }

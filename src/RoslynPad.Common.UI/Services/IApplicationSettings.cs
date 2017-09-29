@@ -20,11 +20,15 @@ namespace RoslynPad.UI
         bool SearchFileContents { get; set; }
         bool SearchUsingRegex { get; set; }
         bool OptimizeCompilation { get; set; }
+        int LiveModeDelayMs { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
     internal class ApplicationSettings : NotificationObject, IApplicationSettings
     {
+        private const int LiveModeDelayMsDefault = 2000;
+        private const int EditorFontSizeDefault = 12;
+
         private readonly ITelemetryProvider _telemetryProvider;
         private string _path;
 
@@ -33,11 +37,12 @@ namespace RoslynPad.UI
         private string _windowBounds;
         private string _dockLayout;
         private string _windowState;
-        private double _editorFontSize;
+        private double _editorFontSize = EditorFontSizeDefault;
         private string _documentPath;
         private bool _searchFileContents;
         private bool _searchUsingRegex;
         private bool _optimizeCompilation;
+        private int _liveModeDelayMs = LiveModeDelayMsDefault;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -114,6 +119,12 @@ namespace RoslynPad.UI
             set => SetProperty(ref _optimizeCompilation, value);
         }
 
+        public int LiveModeDelayMs
+        {
+            get => _liveModeDelayMs;
+            set => SetProperty(ref _liveModeDelayMs, value);
+        }
+
         protected override void OnPropertyChanged(string propertyName = null)
         {
             base.OnPropertyChanged(propertyName);
@@ -147,7 +158,8 @@ namespace RoslynPad.UI
         private void LoadDefaultSettings()
         {
             SendErrors = true;
-            EditorFontSize = 12;
+            EditorFontSize = EditorFontSizeDefault;
+            LiveModeDelayMs = LiveModeDelayMsDefault;
         }
 
         private void SaveSettings()
