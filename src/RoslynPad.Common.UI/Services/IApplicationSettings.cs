@@ -21,6 +21,7 @@ namespace RoslynPad.UI
         bool SearchUsingRegex { get; set; }
         bool OptimizeCompilation { get; set; }
         int LiveModeDelayMs { get; set; }
+        bool SearchWhileTyping { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -43,6 +44,7 @@ namespace RoslynPad.UI
         private bool _searchUsingRegex;
         private bool _optimizeCompilation;
         private int _liveModeDelayMs = LiveModeDelayMsDefault;
+        private bool _searchWhileTyping;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -123,6 +125,12 @@ namespace RoslynPad.UI
         {
             get => _liveModeDelayMs;
             set => SetProperty(ref _liveModeDelayMs, value);
+        }
+
+        public bool SearchWhileTyping
+        {
+            get => _searchWhileTyping;
+            set => SetProperty (ref _searchWhileTyping, value);
         }
 
         protected override void OnPropertyChanged(string propertyName = null)
