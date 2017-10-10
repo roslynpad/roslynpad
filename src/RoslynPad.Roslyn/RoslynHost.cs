@@ -25,6 +25,7 @@ namespace RoslynPad.Roslyn
             ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
 
         private readonly NuGetConfiguration _nuGetConfiguration;
+        private readonly SourceCodeKind _sourceCodeKind;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly CSharpParseOptions _parseOptions;
@@ -60,9 +61,11 @@ namespace RoslynPad.Roslyn
 
         public RoslynHost(NuGetConfiguration nuGetConfiguration = null,
             IEnumerable<Assembly> additionalAssemblies = null,
-            RoslynHostReferences references = null)
+            RoslynHostReferences references = null,
+            SourceCodeKind sourceCodeKind = SourceCodeKind.Script)
         {
             _nuGetConfiguration = nuGetConfiguration;
+            _sourceCodeKind = sourceCodeKind;
             if (references == null) references = RoslynHostReferences.Default;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
@@ -93,7 +96,7 @@ namespace RoslynPad.Roslyn
 
             _host = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script,
+            _parseOptions = new CSharpParseOptions(kind: _sourceCodeKind,
                 preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
 
             _documentationProviderService = GetService<IDocumentationProviderService>();
@@ -274,12 +277,22 @@ namespace RoslynPad.Roslyn
 
         private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory, bool addImports)
         {
-            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
-                usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
-                allowUnsafe: true,
-                sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
-                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory, useCache: true));
-            return compilationOptions;
+            if (_sourceCodeKind == SourceCodeKind.Script)
+            {
+                var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+                    usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
+                    allowUnsafe: true,
+                    sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
+                    metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory, useCache: true));
+                return compilationOptions;
+            }
+            else
+            {
+                var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+                    usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
+                    allowUnsafe: true);
+                return compilationOptions;
+            }
         }
 
         private static Document SetSubmissionDocument(RoslynWorkspace workspace, SourceTextContainer textContainer,
@@ -302,9 +315,8 @@ namespace RoslynPad.Roslyn
                 name, 
                 name,
                 LanguageNames.CSharp,
-                isSubmission: true,
                 parseOptions: _parseOptions,
-                compilationOptions: compilationOptions.WithScriptClassName(name),
+                compilationOptions: _sourceCodeKind == SourceCodeKind.Script ? compilationOptions.WithScriptClassName(name) : compilationOptions,
                 metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences));
 
             var project = solution.GetProject(id);
