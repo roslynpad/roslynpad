@@ -106,7 +106,7 @@ namespace RoslynPad.UI
 
         private async Task InitializeInternal()
         {
-            RoslynHost = await Task.Run(() => new RoslynHost(NuGetConfiguration, CompositionAssemblies, 
+            RoslynHost = await Task.Run(() => new RoslynHost(NuGetConfiguration, CompositionAssemblies,
                 RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
                 .ConfigureAwait(true);
 
@@ -219,7 +219,7 @@ namespace RoslynPad.UI
         {
             if (_documentPath == null)
             {
-                
+
                 var userDefinedPath = Settings.DocumentPath;
                 _documentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
                     ? userDefinedPath
@@ -461,6 +461,10 @@ namespace RoslynPad.UI
             set
             {
                 SetProperty(ref _searchText, value);
+                if (Settings.SearchWhileTyping)
+                {
+                    SearchCommand.Execute();
+                }
                 OnPropertyChanged(nameof(CanClearSearch));
             }
         }
@@ -578,7 +582,7 @@ namespace RoslynPad.UI
                 }).ConfigureAwait(false);
             }
         }
-        
+
         private static IEnumerable<DocumentViewModel> GetAllDocumentsForSearch(DocumentViewModel root)
         {
             foreach (var document in root.Children)
@@ -632,7 +636,7 @@ namespace RoslynPad.UI
 
         private void ClearSearch()
         {
-            SearchText = null;
+            _searchText = null;
             IsWithinSearchResults = false;
             ClearErrors(nameof(SearchText));
 
