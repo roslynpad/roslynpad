@@ -33,8 +33,8 @@ namespace RoslynPad.UI
     [Export, Shared]
     public sealed class NuGetViewModel : NotificationObject
     {
-        private const string TargetFrameworkName = "net46";
-        private const string TargetFrameworkFullName = ".NET Framework, Version=4.6";
+        private const string TargetFrameworkName = "net462";
+        private const string TargetFrameworkFullName = ".NET Framework, Version=4.6.2";
         private const int MaxSearchResults = 50;
 
         private readonly ISettings _settings;
