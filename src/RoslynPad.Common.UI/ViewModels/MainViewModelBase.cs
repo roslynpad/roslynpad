@@ -460,8 +460,7 @@ namespace RoslynPad.UI
             get => _searchText;
             set
             {
-                SetProperty(ref _searchText, value);
-                if (Settings.SearchWhileTyping)
+                if (SetProperty(ref _searchText, value) && Settings.SearchWhileTyping)
                 {
                     SearchCommand.Execute();
                 }
@@ -636,7 +635,7 @@ namespace RoslynPad.UI
 
         private void ClearSearch()
         {
-            _searchText = null;
+            SearchText = null;
             IsWithinSearchResults = false;
             ClearErrors(nameof(SearchText));
 

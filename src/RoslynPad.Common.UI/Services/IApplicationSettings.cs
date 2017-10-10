@@ -44,7 +44,7 @@ namespace RoslynPad.UI
         private bool _searchUsingRegex;
         private bool _optimizeCompilation;
         private int _liveModeDelayMs = LiveModeDelayMsDefault;
-        private bool _searchWhileTyping = false;
+        private bool _searchWhileTyping;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
