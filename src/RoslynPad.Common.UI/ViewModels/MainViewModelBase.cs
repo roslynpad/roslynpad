@@ -35,9 +35,14 @@ namespace RoslynPad.UI
         private bool _isWithinSearchResults;
         private string _documentPath;
         private bool _isInitialized;
+        private DocumentViewModel _documentViewModel;
 
         public IApplicationSettings Settings { get; }
-        public DocumentViewModel DocumentRoot { get; private set; }
+        public DocumentViewModel DocumentRoot
+        {
+            get => _documentViewModel;
+            private set => SetProperty (ref _documentViewModel, value);
+        }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
 
@@ -76,6 +81,7 @@ namespace RoslynPad.UI
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
+            RefreshUserDocumentsCommand = commands.Create (RefreshUserDocumends);
             ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
@@ -84,6 +90,11 @@ namespace RoslynPad.UI
 
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
+        }
+
+        private void RefreshUserDocumends ()
+        {
+            DocumentRoot = CreateDocumentRoot ();
         }
 
         public async Task Initialize()
@@ -304,6 +315,8 @@ namespace RoslynPad.UI
         public IDelegateCommand OpenFileCommand { get; }
 
         public IDelegateCommand EditUserDocumentPathCommand { get; }
+
+        public IDelegateCommand RefreshUserDocumentsCommand { get; }
 
         public IDelegateCommand CloseCurrentDocumentCommand { get; }
 
