@@ -35,13 +35,13 @@ namespace RoslynPad.UI
         private bool _isWithinSearchResults;
         private string _documentPath;
         private bool _isInitialized;
-        private DocumentViewModel _documentViewModel;
+        private DocumentViewModel _documentRoot;
 
         public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot
         {
-            get => _documentViewModel;
-            private set => SetProperty (ref _documentViewModel, value);
+            get => _documentRoot;
+            private set => SetProperty (ref _documentRoot, value);
         }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
