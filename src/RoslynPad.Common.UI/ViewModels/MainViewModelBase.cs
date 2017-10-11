@@ -81,7 +81,7 @@ namespace RoslynPad.UI
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
-            RefreshUserDocumentsCommand = commands.Create (RefreshUserDocumends);
+            RefreshUserDocumentsCommand = commands.Create (RefreshUserDocuments);
             ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
@@ -92,7 +92,7 @@ namespace RoslynPad.UI
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        private void RefreshUserDocumends ()
+        private void RefreshUserDocuments ()
         {
             DocumentRoot = CreateDocumentRoot ();
         }
