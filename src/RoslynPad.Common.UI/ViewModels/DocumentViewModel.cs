@@ -3,11 +3,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
 {
-    public class DocumentViewModel : NotificationObject
+    public class DocumentViewModel : NotificationObject, IDisposable
     {
         internal const string DefaultFileExtension = ".csx";
         internal const string AutoSaveSuffix = ".autosave";
@@ -16,6 +17,7 @@ namespace RoslynPad.UI
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
         private bool _isSearchMatch;
+        private readonly FileSystemWatcher _fileSystemWatcher;
 
         private DocumentViewModel(string rootPath)
         {
@@ -23,6 +25,36 @@ namespace RoslynPad.UI
             IOUtilities.PerformIO(() => Directory.CreateDirectory(Path));
             IsFolder = true;
             IsSearchMatch = true;
+            _fileSystemWatcher = CreateFileSystemWatcher (rootPath);
+        }
+
+        private FileSystemWatcher CreateFileSystemWatcher (string path)
+        {
+            var fileSystemWatcher = new FileSystemWatcher(path)
+            {
+                EnableRaisingEvents = true,
+                IncludeSubdirectories = false,
+            };
+            fileSystemWatcher.Deleted += OnDirectoryChanged;
+            fileSystemWatcher.Created += OnDirectoryChanged;
+            fileSystemWatcher.Renamed += OnDirectoryChanged;
+            return fileSystemWatcher;
+        }
+        private void OnDirectoryChanged (object sender, FileSystemEventArgs args)
+        {
+            switch (args.ChangeType)
+            {
+            case WatcherChangeTypes.Created:
+                Children.Add(new DocumentViewModel(args.FullPath, IOUtilities.IsDirectory(args.FullPath)));
+                break;
+            case WatcherChangeTypes.Deleted:
+                var remove = Children.SingleOrDefault (d => d.Path == args.FullPath);
+                if(remove == null) return;
+                Children.Remove (remove);
+                break;
+            case WatcherChangeTypes.Renamed:
+                break;
+            }
         }
 
         private DocumentViewModel(string path, bool isFolder)
@@ -36,7 +68,10 @@ namespace RoslynPad.UI
             {
                 Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
             }
-
+            if (isFolder)
+            {
+                _fileSystemWatcher = CreateFileSystemWatcher (path);
+            }
             IsSearchMatch = true;
         }
 
@@ -171,6 +206,17 @@ namespace RoslynPad.UI
         private static string OrderByName(DocumentViewModel x)
         {
             return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
+        }
+
+        public void Dispose ()
+        {
+            _fileSystemWatcher?.Dispose ();
+            GC.SuppressFinalize(this);
+        }
+
+        ~DocumentViewModel ()
+        {
+            Dispose();
         }
     }
 }
