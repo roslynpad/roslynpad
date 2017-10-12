@@ -1,15 +1,18 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
+using RoslynPad.UI.Services;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
 {
-    public class DocumentViewModel : NotificationObject, IDisposable
+    [DebuggerDisplay("{Name}:{IsFolder}")]
+    public class DocumentViewModel : NotificationObject
     {
+        private readonly DocumentWatcher _documentWatcher;
         internal const string DefaultFileExtension = ".csx";
         internal const string AutoSaveSuffix = ".autosave";
 
@@ -17,65 +20,78 @@ namespace RoslynPad.UI
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
         private bool _isSearchMatch;
-        private readonly FileSystemWatcher _fileSystemWatcher;
+        private string _path;
+        private string _name;
 
-        private DocumentViewModel(string rootPath)
+        private DocumentViewModel(string rootPath, DocumentWatcher documentWatcher)
         {
+            _documentWatcher = documentWatcher;
+            documentWatcher.Subscribe (rootPath, OnDirectoryChanged);
+            Name = System.IO.Path.GetFileName(rootPath);
             Path = rootPath;
             IOUtilities.PerformIO(() => Directory.CreateDirectory(Path));
             IsFolder = true;
             IsSearchMatch = true;
-            _fileSystemWatcher = CreateFileSystemWatcher (rootPath);
         }
 
-        private FileSystemWatcher CreateFileSystemWatcher (string path)
-        {
-            var fileSystemWatcher = new FileSystemWatcher(path)
-            {
-                EnableRaisingEvents = true,
-                IncludeSubdirectories = false,
-            };
-            fileSystemWatcher.Deleted += OnDirectoryChanged;
-            fileSystemWatcher.Created += OnDirectoryChanged;
-            fileSystemWatcher.Renamed += OnDirectoryChanged;
-            return fileSystemWatcher;
-        }
-        private void OnDirectoryChanged (object sender, FileSystemEventArgs args)
+        private void OnDirectoryChanged (DocumentWatcher.DocumentWatcherArgs args)
         {
             switch (args.ChangeType)
             {
-            case WatcherChangeTypes.Created:
-                Children.Add(new DocumentViewModel(args.FullPath, IOUtilities.IsDirectory(args.FullPath)));
+            case DocumentWatcher.ChangeType.Created:
+                {
+                    if (IOUtilities.IsDirectory (args.Path))
+                    {
+                        _children.Add(new DocumentViewModel(args.Path, _documentWatcher));
+                    }
+                    else
+                    {
+                        _children.Add(new DocumentViewModel(args.Path));
+                    }
+                }
                 break;
-            case WatcherChangeTypes.Deleted:
-                var remove = Children.SingleOrDefault (d => d.Path == args.FullPath);
-                if(remove == null) return;
-                Children.Remove (remove);
+            case DocumentWatcher.ChangeType.Deleted:
+                {
+                    var child = _children.Single (c => c.Path == args.Path);
+                    _children.Remove(child);
+                }
                 break;
-            case WatcherChangeTypes.Renamed:
+            case DocumentWatcher.ChangeType.Renamed:
+                {
+                    var child = _children.Single (c => c.Path == args.OldPath);
+                    child.Name = args.Name;
+                    child.Path = args.Path;
+                }
                 break;
             }
         }
 
-        private DocumentViewModel(string path, bool isFolder)
+        private DocumentViewModel(string filePath)
         {
-            Path = path;
-            IsFolder = isFolder;
-            Name = isFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            Path = filePath;
+            IsFolder = false;
+            Name = System.IO.Path.GetFileNameWithoutExtension(Path);
             // ReSharper disable once PossibleNullReferenceException
             IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
             if (IsAutoSave)
             {
                 Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
             }
-            if (isFolder)
-            {
-                _fileSystemWatcher = CreateFileSystemWatcher (path);
-            }
             IsSearchMatch = true;
         }
 
-        public string Path { get; set; }
+        public string Path
+        {
+            get => _path;
+            set
+            {
+                SetProperty (ref _path, value);
+                if (IsFolder)
+                {
+                    //TODO: update subitems
+                }
+            }
+        }
 
         public bool IsFolder { get; }
 
@@ -100,21 +116,21 @@ namespace RoslynPad.UI
             return name + AutoSaveSuffix + DefaultFileExtension;
         }
 
-        public static DocumentViewModel CreateRoot(string rootPath)
+        public static DocumentViewModel CreateRoot(string rootPath, DocumentWatcher documentWatcher)
         {
-            return new DocumentViewModel(rootPath);
+            return new DocumentViewModel(rootPath, documentWatcher);
         }
 
         public static DocumentViewModel FromPath(string path)
         {
-            return new DocumentViewModel(path, isFolder: false);
+            return new DocumentViewModel(path);
         }
 
         public DocumentViewModel CreateNew(string documentName)
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
-            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName), isFolder: false);
+            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName));
 
             var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
             Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
@@ -153,7 +169,11 @@ namespace RoslynPad.UI
             set => SetProperty(ref _isExpanded, value);
         }
 
-        public string Name { get; }
+        public string Name
+        {
+            get => _name;
+            set => SetProperty(ref _name, value);
+        }
 
         public bool IsAutoSave { get; }
 
@@ -195,10 +215,10 @@ namespace RoslynPad.UI
         {
             return new ObservableCollection<DocumentViewModel>(
                 IOUtilities.EnumerateDirectories(Path)
-                .Select(x => new DocumentViewModel(x, isFolder: true))
+                .Select(x => new DocumentViewModel(x, _documentWatcher))
                 .OrderBy(OrderByName)
                     .Concat(IOUtilities.EnumerateFiles(Path, "*" + DefaultFileExtension)
-                        .Select(x => new DocumentViewModel(x, isFolder: false))
+                        .Select(x => new DocumentViewModel(x))
                         .Where(x => !x.IsAutoSave)
                         .OrderBy(OrderByName)));
         }
@@ -206,17 +226,6 @@ namespace RoslynPad.UI
         private static string OrderByName(DocumentViewModel x)
         {
             return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
-        }
-
-        public void Dispose ()
-        {
-            _fileSystemWatcher?.Dispose ();
-            GC.SuppressFinalize(this);
-        }
-
-        ~DocumentViewModel ()
-        {
-            Dispose();
         }
     }
 }

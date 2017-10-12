@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 using NuGet.Packaging;
+using RoslynPad.UI.Services;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
@@ -22,6 +23,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
+        private readonly DocumentWatcher _documentWatcher;
         private static readonly Version _currentVersion = new Version(13, 2);
         private static readonly string _currentVersionVariant = "";
 
@@ -56,11 +58,12 @@ namespace RoslynPad.UI
             }
         }
 
-        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
+        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentWatcher documentWatcher)
         {
             _serviceProvider = serviceProvider;
             _telemetryProvider = telemetryProvider;
             _commands = commands;
+            _documentWatcher = documentWatcher;
 
             settings.LoadFrom(Path.Combine(GetDefaultDocumentPath(), ConfigFileName));
             Settings = settings;
@@ -221,7 +224,7 @@ namespace RoslynPad.UI
 
         private DocumentViewModel CreateDocumentRoot()
         {
-            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
+            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath(), _documentWatcher);
 
             return root;
         }

@@ -27,7 +27,7 @@
                        Source="{StaticResource CsFile}"
                        Height="12"
                        Margin="0 0 3 0" />
-                <TextBlock Text="{Binding Name, Mode=OneTime}" />
+                <TextBlock Text="{Binding Name, Mode=OneWay}" />
             </DockPanel>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
