@@ -34,38 +34,6 @@ namespace RoslynPad.UI
             IsSearchMatch = true;
         }
 
-        private void OnDirectoryChanged (DocumentWatcher.DocumentWatcherArgs args)
-        {
-            switch (args.ChangeType)
-            {
-            case DocumentWatcher.ChangeType.Created:
-                {
-                    if (IOUtilities.IsDirectory (args.Path))
-                    {
-                        _children.Add(new DocumentViewModel(args.Path, _documentWatcher));
-                    }
-                    else
-                    {
-                        _children.Add(new DocumentViewModel(args.Path));
-                    }
-                }
-                break;
-            case DocumentWatcher.ChangeType.Deleted:
-                {
-                    var child = _children.Single (c => c.Path == args.Path);
-                    _children.Remove(child);
-                }
-                break;
-            case DocumentWatcher.ChangeType.Renamed:
-                {
-                    var child = _children.Single (c => c.Path == args.OldPath);
-                    child.Name = args.Name;
-                    child.Path = args.Path;
-                }
-                break;
-            }
-        }
-
         private DocumentViewModel(string filePath)
         {
             Path = filePath;
@@ -77,6 +45,7 @@ namespace RoslynPad.UI
             {
                 Name = Name.Substring(0, Name.Length - AutoSaveSuffix.Length);
             }
+
             IsSearchMatch = true;
         }
 
@@ -226,6 +195,38 @@ namespace RoslynPad.UI
         private static string OrderByName(DocumentViewModel x)
         {
             return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
+        }
+
+        private void OnDirectoryChanged(DocumentWatcher.DocumentWatcherArgs args)
+        {
+            switch (args.ChangeType)
+            {
+            case DocumentWatcher.ChangeType.Created:
+            {
+                if (IOUtilities.IsDirectory(args.Path))
+                {
+                    _children.Add(new DocumentViewModel(args.Path, _documentWatcher));
+                }
+                else
+                {
+                    _children.Add(new DocumentViewModel(args.Path));
+                }
+            }
+                break;
+            case DocumentWatcher.ChangeType.Deleted:
+            {
+                var child = _children.Single(c => c.Path == args.Path);
+                _children.Remove(child);
+            }
+                break;
+            case DocumentWatcher.ChangeType.Renamed:
+            {
+                var child = _children.Single(c => c.Path == args.OldPath);
+                child.Name = args.Name;
+                child.Path = args.Path;
+            }
+                break;
+            }
         }
     }
 }

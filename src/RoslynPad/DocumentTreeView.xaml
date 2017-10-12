@@ -136,13 +136,6 @@
                        Width="16"
                        Height="16" />
             </Button>
-            <Button ToolTip="Refresh Documents"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding RefreshUserDocumentsCommand, Mode=OneTime}">
-                <Image Source="{StaticResource Restart}"
-                       Width="16"
-                       Height="16" />
-            </Button>
         </ToolBar>
 
     </Grid>

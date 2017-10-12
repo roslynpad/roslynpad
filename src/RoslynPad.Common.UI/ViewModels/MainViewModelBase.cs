@@ -84,7 +84,6 @@ namespace RoslynPad.UI
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
-            RefreshUserDocumentsCommand = commands.Create (RefreshUserDocuments);
             ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
@@ -93,11 +92,6 @@ namespace RoslynPad.UI
 
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
-        }
-
-        private void RefreshUserDocuments ()
-        {
-            DocumentRoot = CreateDocumentRoot ();
         }
 
         public async Task Initialize()
@@ -318,8 +312,6 @@ namespace RoslynPad.UI
         public IDelegateCommand OpenFileCommand { get; }
 
         public IDelegateCommand EditUserDocumentPathCommand { get; }
-
-        public IDelegateCommand RefreshUserDocumentsCommand { get; }
 
         public IDelegateCommand CloseCurrentDocumentCommand { get; }
 
