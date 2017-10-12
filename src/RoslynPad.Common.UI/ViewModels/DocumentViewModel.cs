@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RoslynPad.UI.Services;
+using RoslynPad.UI.Utilities;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -100,9 +102,8 @@ namespace RoslynPad.UI
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
             var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName));
-
-            var insertAfter = Children.FirstOrDefault(x => string.Compare(document.Path, x.Path, StringComparison.OrdinalIgnoreCase) >= 0);
-            Children.Insert(insertAfter == null ? 0 : Children.IndexOf(insertAfter) + 1, document);
+            Children.Add(document);
+            Children.Sort(SortPredicate);
             return document;
         }
 
@@ -197,20 +198,26 @@ namespace RoslynPad.UI
             return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
         }
 
+        private static Func<IEnumerable<DocumentViewModel>, IOrderedEnumerable<DocumentViewModel>> SortPredicate =>
+            d => d.OrderBy (dd => !dd.IsFolder).ThenBy (OrderByName);
+
         private void OnDirectoryChanged(DocumentWatcher.DocumentWatcherArgs args)
         {
             switch (args.ChangeType)
             {
             case DocumentWatcher.ChangeType.Created:
             {
+                if (_children.Any (d => d.Path == args.Path))
+                    return;
                 if (IOUtilities.IsDirectory(args.Path))
                 {
                     _children.Add(new DocumentViewModel(args.Path, _documentWatcher));
                 }
-                else
+                else if(System.IO.Path.GetExtension(args.Path) == ".csx")
                 {
                     _children.Add(new DocumentViewModel(args.Path));
                 }
+                _children.Sort(SortPredicate);
             }
                 break;
             case DocumentWatcher.ChangeType.Deleted:
