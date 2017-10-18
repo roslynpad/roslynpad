@@ -17,6 +17,7 @@ using RoslynPad.Hosting;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Rename;
 using RoslynPad.Runtime;
+using RoslynPad.UI.Services;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -29,6 +30,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
+        private readonly DocumentFileWatcher _documentFileWatcher;
         private ExecutionHost _executionHost;
         private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
@@ -94,7 +96,7 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider, DocumentFileWatcher documentFileWatcher)
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
@@ -102,6 +104,7 @@ namespace RoslynPad.UI
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
             _dispatcher = appDispatcher;
             _telemetryProvider = telemetryProvider;
+            _documentFileWatcher = documentFileWatcher;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
 
@@ -307,7 +310,7 @@ namespace RoslynPad.UI
                 {
                     path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
                 } while (File.Exists(path));
-                Document = DocumentViewModel.FromPath(path);
+                Document = DocumentViewModel.FromPath(path, _documentFileWatcher);
             }
 
             await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);
