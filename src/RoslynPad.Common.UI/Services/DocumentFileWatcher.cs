@@ -64,6 +64,7 @@ namespace RoslynPad.UI.Services
             {
                 _fileSystemWatcher.Path = value;
                 _fileSystemWatcher.EnableRaisingEvents = IOUtilities.IsDirectory(_fileSystemWatcher.Path);
+                _observers.Clear(); //Most likely root has changed
             }
         }
 
