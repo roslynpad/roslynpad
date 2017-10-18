@@ -32,7 +32,7 @@ namespace RoslynPad.UI
             _documentFileWatcherDisposable = _documentFileWatcher.Subscribe(OnDocumentFileChanged);
             Path = rootPath;
             IsFolder = IOUtilities.IsDirectory(Path);
-            Name = IsFolder ? System.IO.Path.GetFileName(Path) : System.IO.Path.GetFileNameWithoutExtension(Path);
+            Name = System.IO.Path.GetFileName(Path);
             IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
             if (IsAutoSave)
             {
@@ -136,7 +136,13 @@ namespace RoslynPad.UI
         public string Name
         {
             get => _name;
-            set => SetProperty(ref _name, value);
+            set
+            {
+                if (!IsFolder)
+                    value = System.IO.Path.GetFileNameWithoutExtension (value);
+
+                SetProperty (ref _name, value);
+            }
         }
 
         public bool IsAutoSave { get; }
@@ -229,8 +235,8 @@ namespace RoslynPad.UI
 
         private void OnDocumentCreated (DocumentFileChanged value)
         {
-            if(!IsFolder)
-                throw new Exception("How did I got here?");
+            if (!IsFolder)
+                return;
 
             if (Children.Any(d => d.Path == value.Path)) //if already added for some strange reason
                 return;

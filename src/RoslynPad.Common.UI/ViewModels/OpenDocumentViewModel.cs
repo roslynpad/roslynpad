@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
@@ -46,8 +47,11 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private bool _isLiveMode;
         private Timer _liveModeTimer;
+        private DocumentViewModel _document;
 
-        public string WorkingDirectory { get; private set; }
+        public string WorkingDirectory => Document != null
+            ? Path.GetDirectoryName(Document.Path)
+            : MainViewModel.DocumentRoot.Path;
 
         public IEnumerable<object> Results => _results;
 
@@ -87,7 +91,29 @@ namespace RoslynPad.UI
             }
         }
 
-        public DocumentViewModel Document { get; private set; }
+        public DocumentViewModel Document
+        {
+            get => _document;
+            private set
+            {
+                var oldDocument = _document;
+                if (!SetProperty (ref _document, value))
+                    return;
+
+                if (oldDocument != null)
+                    oldDocument.PropertyChanged -= DocumentOnPropertyChanged;
+                if(_document != null)
+                    _document.PropertyChanged += DocumentOnPropertyChanged;
+            }
+        }
+
+        private void DocumentOnPropertyChanged (object sender, PropertyChangedEventArgs args)
+        {
+            if(args.PropertyName == nameof(Document.Name))
+                OnPropertyChanged(nameof(Title));
+            if(args.PropertyName == nameof(Document.Path))
+                OnPropertyChanged(nameof(WorkingDirectory));
+        }
 
         public string ILText
         {
@@ -160,10 +186,6 @@ namespace RoslynPad.UI
             Document = document;
 
             IsDirty = document?.IsAutoSave == true;
-
-            WorkingDirectory = Document != null
-                ? Path.GetDirectoryName(Document.Path)
-                : MainViewModel.DocumentRoot.Path;
 
             var roslynHost = MainViewModel.RoslynHost;
 
