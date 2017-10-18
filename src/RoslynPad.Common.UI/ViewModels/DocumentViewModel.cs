@@ -48,7 +48,10 @@ namespace RoslynPad.UI
             {
                 if (IsFolder)
                 {
-                    //TODO: handle children
+                    foreach (var child in Children)
+                    {
+                        child.Path = child.Path.Replace (_path, value);
+                    }
                 }
                 SetProperty (ref _path, value);
             }
