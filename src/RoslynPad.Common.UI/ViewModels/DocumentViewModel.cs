@@ -257,7 +257,7 @@ namespace RoslynPad.UI
                 _documentFileWatcherDisposable.Dispose();
                 return;
             }
-            var child = Children.Single(c => c.Path == value.Path);
+            var child = Children.SingleOrDefault(c => c.Path == value.Path);
             Children.Remove(child);
         }
     }

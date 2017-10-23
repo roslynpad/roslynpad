@@ -89,7 +89,7 @@ namespace RoslynPad.UI.Services
 
         private void Publish(DocumentFileChanged documentFileChanged)
         {
-            foreach (var observer in _observers)
+            foreach (var observer in _observers.ToArray())
             {
                 _appDispatcher.InvokeAsync(() => observer.OnNext(documentFileChanged));
             }
