@@ -44,7 +44,6 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private bool _isLiveMode;
         private Timer _liveModeTimer;
-        private DocumentViewModel _document;
 
         public string WorkingDirectory => Document != null
             ? Path.GetDirectoryName(Document.Path)
@@ -88,11 +87,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public DocumentViewModel Document
-        {
-            get => _document;
-            private set => SetProperty (ref _document, value == null ? null : DocumentViewModel.FromPath(value.Path));
-        }
+        public DocumentViewModel Document { get; private set; }
 
         public string ILText
         {
@@ -161,7 +156,7 @@ namespace RoslynPad.UI
 
         public void SetDocument(DocumentViewModel document)
         {
-            Document = document;
+            Document = document == null ? null : DocumentViewModel.FromPath(document.Path);
 
             IsDirty = document?.IsAutoSave == true;
 
