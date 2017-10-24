@@ -149,7 +149,7 @@ namespace RoslynPad.UI
         private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
         {
             return IOUtilities.EnumerateFilesRecursive(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
-                GetOpenDocumentViewModel(DocumentViewModel.FromPath(x, _documentFileWatcher)));
+                GetOpenDocumentViewModel(DocumentViewModel.FromPath(x)));
         }
 
         private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel documentViewModel)
@@ -341,13 +341,13 @@ namespace RoslynPad.UI
                 return;
             }
 
-            var document = DocumentViewModel.FromPath(dialog.FileName, _documentFileWatcher);
+            var document = DocumentViewModel.FromPath(dialog.FileName);
             if (!document.IsAutoSave)
             {
                 var autoSavePath = document.GetAutoSavePath();
                 if (File.Exists(autoSavePath))
                 {
-                    document = DocumentViewModel.FromPath(autoSavePath, _documentFileWatcher);
+                    document = DocumentViewModel.FromPath(autoSavePath);
                 }
             }
 
@@ -460,7 +460,7 @@ namespace RoslynPad.UI
 
         public DocumentViewModel AddDocument(string documentName)
         {
-            return DocumentRoot.CreateNew(documentName, _documentFileWatcher);
+            return DocumentRoot.CreateNew(documentName);
         }
 
         public string SearchText

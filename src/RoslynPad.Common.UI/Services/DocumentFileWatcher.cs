@@ -26,7 +26,7 @@ namespace RoslynPad.UI.Services
         public string NewPath { get; }
     }
 
-    [Export, Shared]
+    [Export]
     public class DocumentFileWatcher : IDisposable, IObservable<DocumentFileChanged>
     {
         private readonly IAppDispatcher _appDispatcher;
@@ -63,7 +63,7 @@ namespace RoslynPad.UI.Services
             set
             {
                 _fileSystemWatcher.Path = value;
-                _fileSystemWatcher.EnableRaisingEvents = IOUtilities.IsDirectory(_fileSystemWatcher.Path);
+                _fileSystemWatcher.EnableRaisingEvents = Directory.Exists(_fileSystemWatcher.Path);
                 _observers.Clear(); //Most likely root has changed
             }
         }
@@ -98,7 +98,6 @@ namespace RoslynPad.UI.Services
         public void Dispose()
         {
             _fileSystemWatcher?.Dispose();
-            GC.SuppressFinalize(this);
         }
 
         public IDisposable Subscribe(IObserver<DocumentFileChanged> observer)
@@ -108,7 +107,5 @@ namespace RoslynPad.UI.Services
 
             return new Unsubscriber<DocumentFileChanged>(_observers, observer);
         }
-
-        ~DocumentFileWatcher() => Dispose();
     }
 }

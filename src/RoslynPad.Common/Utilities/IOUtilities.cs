@@ -116,7 +116,5 @@ namespace RoslynPad.Utilities
                    e is NotSupportedException ||
                    e is InvalidOperationException;
         }
-
-        public static bool IsDirectory (string path) => Directory.Exists(path);
     }
 }

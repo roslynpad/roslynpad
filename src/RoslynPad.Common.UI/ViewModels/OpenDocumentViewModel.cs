@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
@@ -18,7 +17,6 @@ using RoslynPad.Hosting;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Rename;
 using RoslynPad.Runtime;
-using RoslynPad.UI.Services;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -31,7 +29,6 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
-        private readonly DocumentFileWatcher _documentFileWatcher;
         private ExecutionHost _executionHost;
         private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
@@ -94,25 +91,7 @@ namespace RoslynPad.UI
         public DocumentViewModel Document
         {
             get => _document;
-            private set
-            {
-                var oldDocument = _document;
-                if (!SetProperty (ref _document, value))
-                    return;
-
-                if (oldDocument != null)
-                    oldDocument.PropertyChanged -= DocumentOnPropertyChanged;
-                if(_document != null)
-                    _document.PropertyChanged += DocumentOnPropertyChanged;
-            }
-        }
-
-        private void DocumentOnPropertyChanged (object sender, PropertyChangedEventArgs args)
-        {
-            if(args.PropertyName == nameof(Document.Name))
-                OnPropertyChanged(nameof(Title));
-            if(args.PropertyName == nameof(Document.Path))
-                OnPropertyChanged(nameof(WorkingDirectory));
+            private set => SetProperty (ref _document, value == null ? null : DocumentViewModel.FromPath(value.Path));
         }
 
         public string ILText
@@ -122,7 +101,7 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider, DocumentFileWatcher documentFileWatcher)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
@@ -130,7 +109,6 @@ namespace RoslynPad.UI
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
             _dispatcher = appDispatcher;
             _telemetryProvider = telemetryProvider;
-            _documentFileWatcher = documentFileWatcher;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
 
@@ -332,7 +310,7 @@ namespace RoslynPad.UI
                 {
                     path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
                 } while (File.Exists(path));
-                Document = DocumentViewModel.FromPath(path, _documentFileWatcher);
+                Document = DocumentViewModel.FromPath(path);
             }
 
             await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);
