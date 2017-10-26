@@ -321,7 +321,7 @@ namespace RoslynPad.UI
         {
             if (document.IsFolder) return;
 
-            var openDocument = OpenDocuments.FirstOrDefault(x => x.Document == document);
+            var openDocument = OpenDocuments.FirstOrDefault(x => x.Document?.Path != null && x.Document.Path == document.Path);
             if (openDocument == null)
             {
                 openDocument = GetOpenDocumentViewModel(document);
