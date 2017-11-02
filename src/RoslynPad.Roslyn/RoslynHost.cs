@@ -1,9 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -13,7 +11,7 @@ using System.Composition.Hosting;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace RoslynPad.Roslyn
 {
@@ -24,15 +22,28 @@ namespace RoslynPad.Roslyn
         internal static readonly ImmutableArray<string> PreprocessorSymbols =
             ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
 
+        internal static readonly ImmutableArray<Assembly> DefaultCompositionAssemblies =
+            ImmutableArray.Create(
+                // Microsoft.CodeAnalysis.Workspaces
+                typeof(WorkspacesResources).GetTypeInfo().Assembly,
+                // Microsoft.CodeAnalysis.CSharp.Workspaces
+                typeof(CSharpWorkspaceResources).GetTypeInfo().Assembly,
+                // Microsoft.CodeAnalysis.Features
+                typeof(FeaturesResources).GetTypeInfo().Assembly,
+                // Microsoft.CodeAnalysis.CSharp.Features
+                typeof(CSharpFeaturesResources).GetTypeInfo().Assembly,
+                // RoslynPad.Roslyn
+                typeof(RoslynHost).GetTypeInfo().Assembly);
+
         private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
-        private readonly CSharpParseOptions _parseOptions;
+        private readonly ParseOptions _parseOptions;
         private readonly IDocumentationProviderService _documentationProviderService;
         private readonly CompositionHost _compositionContext;
-        private readonly MefHostServices _host;
-
         private int _documentNumber;
+
+        public HostServices HostServices { get; }
 
         public ImmutableArray<MetadataReference> DefaultReferences { get; }
 
@@ -68,22 +79,15 @@ namespace RoslynPad.Roslyn
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
 
-            IEnumerable<Assembly> assemblies = new[]
-            {
-                Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis")),
-                Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis.CSharp")),
-                Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis.Features")),
-                Assembly.Load(new AssemblyName("Microsoft.CodeAnalysis.CSharp.Features")),
-                typeof(RoslynHost).GetTypeInfo().Assembly,
-            };
+            // ReSharper disable once VirtualMemberCallInConstructor
+            var assemblies = GetDefaultCompositionAssemblies();
 
             if (additionalAssemblies != null)
             {
                 assemblies = assemblies.Concat(additionalAssemblies);
             }
 
-            var partTypes = MefHostServices.DefaultAssemblies.Concat(assemblies)
-                .Distinct()
+            var partTypes = assemblies
                 .SelectMany(x => x.DefinedTypes)
                 .Select(x => x.AsType());
 
@@ -91,10 +95,10 @@ namespace RoslynPad.Roslyn
                 .WithParts(partTypes)
                 .CreateContainer();
 
-            _host = MefHostServices.Create(_compositionContext);
+            HostServices = MefHostServices.Create(_compositionContext);
 
-            _parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Script,
-                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
+            // ReSharper disable once VirtualMemberCallInConstructor
+            _parseOptions = CreateDefaultParseOptions();
 
             _documentationProviderService = GetService<IDocumentationProviderService>();
 
@@ -104,7 +108,18 @@ namespace RoslynPad.Roslyn
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
 
-        internal MetadataReference CreateMetadataReference(string location)
+        protected virtual IEnumerable<Assembly> GetDefaultCompositionAssemblies()
+        {
+            return DefaultCompositionAssemblies;
+        }
+
+        protected virtual ParseOptions CreateDefaultParseOptions()
+        {
+            return new CSharpParseOptions(kind: SourceCodeKind.Script,
+                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
+        }
+
+        public MetadataReference CreateMetadataReference(string location)
         {
             return MetadataReference.CreateFromFile(location,
                 documentation: _documentationProviderService.GetDocumentationProvider(location));
@@ -169,7 +184,7 @@ namespace RoslynPad.Roslyn
             using (workspace) { }
         }
 
-        public RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(_host, this);
+        public virtual RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(HostServices, roslynHost: this);
 
         public void CloseDocument(DocumentId documentId)
         {
@@ -196,7 +211,6 @@ namespace RoslynPad.Roslyn
                 }
             }
 
-
             _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
         }
 
@@ -209,51 +223,53 @@ namespace RoslynPad.Roslyn
                 : null;
         }
 
-        public DocumentId AddDocument(SourceTextContainer sourceTextContainer, string workingDirectory,
-            Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated)
+        public DocumentId AddDocument(DocumentCreationArgs args)
         {
-            if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
+            if (args == null) throw new ArgumentNullException(nameof(args));
+            if (args.SourceTextContainer == null) throw new ArgumentNullException(nameof(args.SourceTextContainer));
 
-            return AddDocument(CreateWorkspace(), sourceTextContainer, workingDirectory, onDiagnosticsUpdated, onTextUpdated);
+            return AddDocument(CreateWorkspace(), args);
         }
 
-        public DocumentId AddRelatedDocument(DocumentId relatedDocumentId, SourceTextContainer sourceTextContainer,
-            string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
-            bool addProjectReference = true)
+        public DocumentId AddRelatedDocument(DocumentId relatedDocumentId, DocumentCreationArgs args, bool addProjectReference = true)
         {
+            if (args == null) throw new ArgumentNullException(nameof(args));
+
             if (!_workspaces.TryGetValue(relatedDocumentId, out var workspace))
             {
                 throw new ArgumentException("Unable to locate the document's workspace", nameof(relatedDocumentId));
             }
 
-            if (sourceTextContainer == null) throw new ArgumentNullException(nameof(sourceTextContainer));
+            if (args.SourceTextContainer == null) throw new ArgumentNullException(nameof(args.SourceTextContainer));
 
-            var documentId = AddDocument(workspace, sourceTextContainer, workingDirectory, onDiagnosticsUpdated, onTextUpdated,
+            var documentId = AddDocument(workspace, args,
                 addProjectReference ? workspace.CurrentSolution.GetDocument(relatedDocumentId) : null);
 
             return documentId;
         }
 
-        private DocumentId AddDocument(RoslynWorkspace workspace, SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated, Document previousDocument = null)
+        private DocumentId AddDocument(RoslynWorkspace workspace, DocumentCreationArgs args, Document previousDocument = null)
         {
-            var currentSolution = workspace.CurrentSolution;
-            var project = CreateSubmissionProject(currentSolution,
-                CreateCompilationOptions(workspace, workingDirectory, previousDocument == null), previousDocument?.Project);
-            var currentDocument = SetSubmissionDocument(workspace, sourceTextContainer, project);
+            var project = CreateProject(workspace.CurrentSolution, args,
+                CreateCompilationOptions(args, previousDocument == null), previousDocument?.Project);
+            var document = CreateDocument(project, args);
+            var documentId = document.Id;
 
-            var documentId = currentDocument.Id;
+            workspace.SetCurrentSolution(document.Project.Solution);
+            workspace.OpenDocument(documentId, args.SourceTextContainer);
+
             _workspaces.TryAdd(documentId, workspace);
 
-            if (onDiagnosticsUpdated != null)
+            if (args.OnDiagnosticsUpdated != null)
             {
-                _diagnosticsUpdatedNotifiers.TryAdd(documentId, onDiagnosticsUpdated);
+                _diagnosticsUpdatedNotifiers.TryAdd(documentId, args.OnDiagnosticsUpdated);
             }
 
-            if (onTextUpdated != null)
+            if (args.OnTextUpdated != null)
             {
                 workspace.ApplyingTextChange += (d, s) =>
                 {
-                    if (documentId == d) onTextUpdated(s);
+                    if (documentId == d) args.OnTextUpdated(s);
                 };
             }
 
@@ -272,47 +288,48 @@ namespace RoslynPad.Roslyn
             workspace.TryApplyChanges(document.Project.Solution);
         }
 
-        private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory, bool addImports)
+        protected virtual CompilationOptions CreateCompilationOptions(DocumentCreationArgs args, bool addDefaultImports)
         {
             var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
-                usings: addImports ? DefaultImports : ImmutableArray<string>.Empty,
+                usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
-                sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
-                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, workingDirectory, useCache: true));
+                sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
+                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, args.WorkingDirectory, useCache: true));
             return compilationOptions;
         }
 
-        private static Document SetSubmissionDocument(RoslynWorkspace workspace, SourceTextContainer textContainer,
-            Project project)
+        protected virtual Document CreateDocument(Project project, DocumentCreationArgs args)
         {
             var id = DocumentId.CreateNewId(project.Id);
-            var solution = project.Solution.AddDocument(id, project.Name, textContainer.CurrentText);
-            workspace.SetCurrentSolution(solution);
-            workspace.OpenDocument(id, textContainer);
+            var solution = project.Solution.AddDocument(id, args.Name ?? project.Name, args.SourceTextContainer.CurrentText);
             return solution.GetDocument(id);
         }
 
-        private Project CreateSubmissionProject(Solution solution, CSharpCompilationOptions compilationOptions, Project previousProject)
+        protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project previousProject = null)
         {
-            var name = "Program" + _documentNumber++;
+            var name = args.Name ?? "Program" + Interlocked.Increment(ref _documentNumber);
             var id = ProjectId.CreateNewId(name);
+
+            var isScript = _parseOptions.Kind == SourceCodeKind.Script;
+
+            if (isScript)
+            {
+                compilationOptions = compilationOptions.WithScriptClassName(name);
+            }
+
             solution = solution.AddProject(ProjectInfo.Create(
                 id, 
                 VersionStamp.Create(),
                 name, 
                 name,
                 LanguageNames.CSharp,
-                isSubmission: true,
+                isSubmission: isScript,
                 parseOptions: _parseOptions,
-                compilationOptions: compilationOptions.WithScriptClassName(name),
-                metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences));
+                compilationOptions: compilationOptions,
+                metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences,
+                projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null));
 
             var project = solution.GetProject(id);
-
-            if (previousProject != null)
-            {
-                project = project.AddProjectReference(new ProjectReference(previousProject.Id));
-            }
 
             return project;
         }

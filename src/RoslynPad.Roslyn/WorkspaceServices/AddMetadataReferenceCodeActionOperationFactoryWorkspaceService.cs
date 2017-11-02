@@ -28,8 +28,8 @@ namespace RoslynPad.Roslyn.WorkspaceServices
 
             public override void Apply(Workspace workspace, CancellationToken cancellationToken)
             {
-                var roslynPadWorkspace = (RoslynWorkspace)workspace;
-                roslynPadWorkspace.RoslynHost.AddMetadataReference(_projectId, _assemblyIdentity);
+                var roslynPadWorkspace = workspace as RoslynWorkspace;
+                roslynPadWorkspace?.RoslynHost?.AddMetadataReference(_projectId, _assemblyIdentity);
             }
 
             public override string Title => "Add Reference";

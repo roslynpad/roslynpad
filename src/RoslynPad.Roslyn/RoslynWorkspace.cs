@@ -9,15 +9,15 @@ namespace RoslynPad.Roslyn
 {
     public class RoslynWorkspace : Workspace
     {
-        public RoslynHost RoslynHost { get; }
         public DocumentId OpenDocumentId { get; private set; }
+        public RoslynHost RoslynHost { get; }
 
-        protected internal RoslynWorkspace(HostServices host, RoslynHost roslynHost)
-            : base(host, WorkspaceKind.Host)
+        public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost roslynHost = null)
+            : base(hostServices, workspaceKind)
         {
-            RoslynHost = roslynHost;
-
             DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
+
+            RoslynHost = roslynHost;
         }
 
         public new void SetCurrentSolution(Solution solution)
@@ -68,26 +68,6 @@ namespace RoslynPad.Roslyn
             ApplyingTextChange?.Invoke(document, newText);
 
             OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
-        }
-
-        public new void ClearSolution()
-        {
-            base.ClearSolution();
-        }
-
-        internal void ClearOpenDocument(DocumentId documentId)
-        {
-            base.ClearOpenDocument(documentId);
-        }
-
-        internal new void RegisterText(SourceTextContainer textContainer)
-        {
-            base.RegisterText(textContainer);
-        }
-
-        internal new void UnregisterText(SourceTextContainer textContainer)
-        {
-            base.UnregisterText(textContainer);
         }
     }
 }

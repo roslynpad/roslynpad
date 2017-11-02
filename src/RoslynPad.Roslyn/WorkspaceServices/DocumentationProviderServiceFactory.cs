@@ -27,14 +27,18 @@ namespace RoslynPad.Roslyn.WorkspaceServices
         public DocumentationProvider GetDocumentationProvider(string location)
         {
             var finalPath = Path.ChangeExtension(location, "xml");
-            if (!File.Exists(finalPath))
-            {
-                finalPath = GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.docPath, finalPath) ??
-                            GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, finalPath);
-            }
 
             return _assemblyPathToDocumentationProviderMap.GetOrAdd(location,
-                _ => finalPath == null ? null : XmlDocumentationProvider.CreateFromFile(finalPath));
+                _ =>
+                {
+                    if (!File.Exists(finalPath))
+                    {
+                        finalPath = GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.docPath, finalPath) ??
+                                    GetFilePath(RoslynHostReferences.ReferenceAssembliesPath.assemblyPath, finalPath);
+                    }
+
+                    return finalPath == null ? null : XmlDocumentationProvider.CreateFromFile(finalPath);
+                });
         }
 
         private static string GetFilePath(string path, string location)
