@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -22,7 +21,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
-        private static readonly Version _currentVersion = new Version(13, 2);
+        private static readonly Version _currentVersion = new Version(13, 3);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
@@ -43,7 +42,7 @@ namespace RoslynPad.UI
 
         public bool IsInitialized
         {
-            get { return _isInitialized; }
+            get => _isInitialized;
             private set
             {
                 SetProperty(ref _isInitialized, value);
@@ -118,6 +117,7 @@ namespace RoslynPad.UI
             }
             else
             {
+                // ReSharper disable once UnusedVariable
                 var task = Task.Run(CheckForUpdates);
             }
         }
