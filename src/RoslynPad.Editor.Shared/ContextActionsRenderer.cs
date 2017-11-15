@@ -195,7 +195,7 @@ namespace RoslynPad.Editor
             foreach (var provider in _providers)
             {
                 var offset = _editor.TextArea.Caret.Offset;
-                var length = 1;
+                var length = 0;
                 var marker = _textMarkerService.GetMarkersAtOffset(offset).FirstOrDefault();
                 if (marker != null)
                 {

@@ -44,7 +44,7 @@ namespace RoslynPad.Editor
     internal sealed class RoslynSemanticHighlighter : IHighlighter
     {
         private const int CacheSize = 512;
-        private const int DelayInMs = 250;
+        private const int DelayInMs = 100;
         private readonly TextView _textView;
         private readonly IDocument _document;
         private readonly DocumentId _documentId;

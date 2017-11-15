@@ -1,7 +1,4 @@
-using System;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Roslyn.Diagnostics;
 
 namespace RoslynPad.Roslyn
 {
@@ -9,7 +6,7 @@ namespace RoslynPad.Roslyn
     {
         TService GetService<TService>();
 
-        DocumentId AddDocument(SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated);
+        DocumentId AddDocument(DocumentCreationArgs args);
 
         Document GetDocument(DocumentId documentId);
 

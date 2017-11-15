@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
@@ -24,7 +23,7 @@ namespace RoslynPad.Roslyn.Diagnostics
                         // Microsoft.CodeAnalysis
                         typeof(Compilation).GetTypeInfo().Assembly.GetLocation(),
                         // Microsoft.CodeAnalysis.CSharp
-                        typeof(CSharpCompilation).GetTypeInfo().Assembly.GetLocation(),
+                        typeof(CSharpResources).GetTypeInfo().Assembly.GetLocation(),
                         // Microsoft.CodeAnalysis.Features
                         typeof(FeaturesResources).GetTypeInfo().Assembly.GetLocation(),
                         // Microsoft.CodeAnalysis.CSharp.Features
@@ -39,7 +38,7 @@ namespace RoslynPad.Roslyn.Diagnostics
     }
 
     [ExportWorkspaceService(typeof(IAnalyzerService), ServiceLayer.Host), Shared]
-    internal sealed class AnalyzerAssemblyLoaderService : IAnalyzerService, IWorkspaceService
+    internal sealed class AnalyzerAssemblyLoaderService : IAnalyzerService
     {
         public IAnalyzerAssemblyLoader GetLoader()
         {
@@ -49,7 +48,7 @@ namespace RoslynPad.Roslyn.Diagnostics
 
     internal class SimpleAnalyzerAssemblyLoader : AnalyzerAssemblyLoader
     {
-        public static readonly IAnalyzerAssemblyLoader Instance = new SimpleAnalyzerAssemblyLoader();
+        public static IAnalyzerAssemblyLoader Instance { get; } = new SimpleAnalyzerAssemblyLoader();
 
         protected override Assembly LoadFromPathImpl(string fullPath)
         {

@@ -101,9 +101,8 @@ namespace RoslynPad.Editor
             OnCreatingDocument(creatingDocumentArgs);
 
             _documentId = creatingDocumentArgs.DocumentId ??
-                roslynHost.AddDocument(avalonEditTextContainer, workingDirectory,
-                    args => ProcessDiagnostics(args),
-                    text => avalonEditTextContainer.UpdateText(text));
+                roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory, 
+                    args => ProcessDiagnostics(args), text => avalonEditTextContainer.UpdateText(text)));
 
             AppendText(documentText);
             Document.UndoStack.ClearAll();
