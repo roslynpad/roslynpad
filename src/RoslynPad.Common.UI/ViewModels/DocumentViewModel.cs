@@ -47,8 +47,11 @@ namespace RoslynPad.UI
             get => _path;
             private set
             {
-                UpdateChildPaths(value);
-                SetProperty(ref _path, value);
+                var oldPath = _path;
+                if (SetProperty (ref _path, value))
+                {
+                    UpdateChildPaths(oldPath);
+                }
             }
         }
 
@@ -215,11 +218,11 @@ namespace RoslynPad.UI
 
         public void OnDocumentFileChanged(DocumentFileChanged value)
         {
-            if (!IsFolder && value.Path != Path)
+            if (!IsFolder && string.Equals(Path, value.Path, StringComparison.Ordinal))
             {
                 return;
             }
-            if (IsFolder && value.Path != Path && System.IO.Path.GetDirectoryName(value.Path) != Path)
+            if (IsFolder && string.Equals(Path, value.Path, StringComparison.Ordinal) && System.IO.Path.GetDirectoryName(value.Path) != Path)
             {
                 return;
             }
@@ -252,12 +255,12 @@ namespace RoslynPad.UI
             if (!IsFolder || !IsChildrenInitialized)
                 return;
 
-            if (Children.Any(d => d.Path == value.Path)) //if already added for some strange reason
+            if (Children.Any(d => string.Equals(d.Path, value.Path, StringComparison.Ordinal))) //if already added for some strange reason
                 return;
 
             //We only add supported files
             var isFolder = Directory.Exists (value.Path);
-            if (System.IO.Path.GetExtension(value.Path) != ".csx" && !isFolder) //TODO: get supported extensions
+            if (System.IO.Path.GetExtension(value.Path) != DefaultFileExtension && !isFolder)
                 return;
 
             AddChild(new DocumentViewModel(value.Path, isFolder, _documentFileWatcher));
@@ -274,7 +277,7 @@ namespace RoslynPad.UI
 
             if (IsChildrenInitialized)
             {
-                var child = Children.SingleOrDefault(c => c.Path == value.Path);
+                var child = Children.FirstOrDefault(c => string.Equals(c.Path, value.Path, StringComparison.Ordinal));
                 Children.Remove(child);
             }
         }
