@@ -22,6 +22,8 @@
     <PackageReference Include="NuGet.Resolver" Version="4.3.0" />
     <PackageReference Include="System.AppDomain" Version="2.0.11" />
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
+    <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    <PackageReference Include="System.Reactive.Core" Version="3.1.1" />
   </ItemGroup>
 </Project>

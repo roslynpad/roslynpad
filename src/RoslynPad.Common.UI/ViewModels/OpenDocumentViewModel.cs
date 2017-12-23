@@ -45,7 +45,9 @@ namespace RoslynPad.UI
         private bool _isLiveMode;
         private Timer _liveModeTimer;
 
-        public string WorkingDirectory { get; private set; }
+        public string WorkingDirectory => Document != null
+            ? Path.GetDirectoryName(Document.Path)
+            : MainViewModel.DocumentRoot.Path;
 
         public IEnumerable<object> Results => _results;
 
@@ -154,13 +156,9 @@ namespace RoslynPad.UI
 
         public void SetDocument(DocumentViewModel document)
         {
-            Document = document;
+            Document = document == null ? null : DocumentViewModel.FromPath(document.Path);
 
             IsDirty = document?.IsAutoSave == true;
-
-            WorkingDirectory = Document != null
-                ? Path.GetDirectoryName(Document.Path)
-                : MainViewModel.DocumentRoot.Path;
 
             var roslynHost = MainViewModel.RoslynHost;
 

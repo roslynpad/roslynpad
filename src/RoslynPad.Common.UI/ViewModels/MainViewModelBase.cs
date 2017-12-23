@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 using NuGet.Packaging;
+using RoslynPad.UI.Services;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
@@ -21,6 +22,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
+        private readonly DocumentFileWatcher _documentFileWatcher;
         private static readonly Version _currentVersion = new Version(13, 3);
         private static readonly string _currentVersionVariant = "";
 
@@ -34,9 +36,14 @@ namespace RoslynPad.UI
         private bool _isWithinSearchResults;
         private string _documentPath;
         private bool _isInitialized;
+        private DocumentViewModel _documentRoot;
 
         public IApplicationSettings Settings { get; }
-        public DocumentViewModel DocumentRoot { get; private set; }
+        public DocumentViewModel DocumentRoot
+        {
+            get => _documentRoot;
+            private set => SetProperty (ref _documentRoot, value);
+        }
         public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
 
@@ -50,11 +57,12 @@ namespace RoslynPad.UI
             }
         }
 
-        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel)
+        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
         {
             _serviceProvider = serviceProvider;
             _telemetryProvider = telemetryProvider;
             _commands = commands;
+            _documentFileWatcher = documentFileWatcher;
 
             settings.LoadFrom(Path.Combine(GetDefaultDocumentPath(), ConfigFileName));
             Settings = settings;
@@ -210,8 +218,8 @@ namespace RoslynPad.UI
 
         private DocumentViewModel CreateDocumentRoot()
         {
-            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
-
+            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath(), _documentFileWatcher);
+            _documentFileWatcher.Path = root.Path;
             return root;
         }
 
@@ -313,7 +321,7 @@ namespace RoslynPad.UI
         {
             if (document.IsFolder) return;
 
-            var openDocument = OpenDocuments.FirstOrDefault(x => x.Document == document);
+            var openDocument = OpenDocuments.FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
             if (openDocument == null)
             {
                 openDocument = GetOpenDocumentViewModel(document);

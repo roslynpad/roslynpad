@@ -4,6 +4,7 @@ using System.Composition;
 using System.Reflection;
 using RoslynPad.UI;
 using System.Collections.Immutable;
+using RoslynPad.UI.Services;
 
 namespace RoslynPad
 {
@@ -11,7 +12,7 @@ namespace RoslynPad
     public class MainViewModel : MainViewModelBase
     {
         [ImportingConstructor]
-        public MainViewModel(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel) : base(serviceProvider, telemetryProvider, commands, settings, nugetViewModel)
+        public MainViewModel(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher) : base(serviceProvider, telemetryProvider, commands, settings, nugetViewModel, documentFileWatcher)
         {
         }
 
