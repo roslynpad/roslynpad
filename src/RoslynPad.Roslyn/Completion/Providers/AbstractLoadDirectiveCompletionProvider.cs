@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.Completion;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
