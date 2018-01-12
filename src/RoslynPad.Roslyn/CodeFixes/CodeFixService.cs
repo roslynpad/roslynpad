@@ -18,6 +18,7 @@ using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.CodeFixes
 {
@@ -342,7 +343,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 if (fixAllProviderInfo != null)
                 {
                     var codeFixProvider = (fixer as CodeFixProvider) ?? new WrapperCodeFixProvider((ISuppressionFixProvider)fixer, diagnostics.Select(d => d.Id));
-                    fixAllState = FixAllState.Create(
+                    fixAllState = CreateFixAllState(
                         fixAllProviderInfo.FixAllProvider,
                         document, fixAllProviderInfo, codeFixProvider, diagnostics,
                         GetDocumentDiagnosticsAsync, GetProjectDiagnosticsAsync);
@@ -353,6 +354,33 @@ namespace RoslynPad.Roslyn.CodeFixes
                     fixer, span, fixes, fixAllState,
                     supportedScopes, diagnostics.First());
                 result.Add(codeFix);
+            }
+
+            private FixAllState CreateFixAllState(
+                          FixAllProvider fixAllProvider,
+                          Document document,
+                          FixAllProviderInfo fixAllProviderInfo,
+                          CodeFixProvider originalFixProvider,
+                          IEnumerable<Diagnostic> originalFixDiagnostics,
+                          Func<Document, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> getDocumentDiagnosticsAsync,
+                          Func<Project, bool, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> getProjectDiagnosticsAsync)
+            {
+                var diagnosticIds = GetFixAllDiagnosticIds(fixAllProviderInfo, originalFixDiagnostics).ToImmutableHashSet();
+                var diagnosticProvider = new FixAllDiagnosticProvider(diagnosticIds, getDocumentDiagnosticsAsync, getProjectDiagnosticsAsync);
+                return new FixAllState(
+                       fixAllProvider: fixAllProvider,
+                    document: document,
+                    codeFixProvider: originalFixProvider,
+                    scope: FixAllScope.Document,
+                    codeActionEquivalenceKey: null,
+                    diagnosticIds: diagnosticIds,
+                    fixAllDiagnosticProvider: diagnosticProvider);
+            }
+
+            private static IEnumerable<string> GetFixAllDiagnosticIds(FixAllProviderInfo fixAllProviderInfo, IEnumerable<Diagnostic> originalFixDiagnostics)
+            {
+                return originalFixDiagnostics.Where(fixAllProviderInfo.CanBeFixed)
+                        .Select(d => d.Id);
             }
 
             public CodeFixProvider GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds)
@@ -470,8 +498,8 @@ namespace RoslynPad.Roslyn.CodeFixes
                         // Have to see if this fix is still applicable.  Jump to the foreground thread
                         // to make that check.
                         var applicable = await Task.Factory.StartNew(() => fix.Action.IsApplicable(document.Project.Solution.Workspace), cancellationToken).ConfigureAwait(false);
-                            // TODO: check if this is needed
-                            //  cancellationToken, TaskCreationOptions.None, this.ForegroundTaskScheduler).ConfigureAwait(false);
+                        // TODO: check if this is needed
+                        //  cancellationToken, TaskCreationOptions.None, this.ForegroundTaskScheduler).ConfigureAwait(false);
 
                         if (applicable)
                         {
@@ -740,6 +768,51 @@ namespace RoslynPad.Roslyn.CodeFixes
                     return builder.ToImmutableAndFree();
                 }
             }
+        }
+    }
+    internal class FixAllDiagnosticProvider : FixAllContext.DiagnosticProvider
+    {
+        private readonly ImmutableHashSet<string> _diagnosticIds;
+
+        /// <summary>
+        /// Delegate to fetch diagnostics for any given document within the given fix all scope.
+        /// This delegate is invoked by <see cref="GetDocumentDiagnosticsAsync(Document, CancellationToken)"/> with the given <see cref="_diagnosticIds"/> as arguments.
+        /// </summary>
+        private readonly Func<Document, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> _getDocumentDiagnosticsAsync;
+
+        /// <summary>
+        /// Delegate to fetch diagnostics for any given project within the given fix all scope.
+        /// This delegate is invoked by <see cref="GetProjectDiagnosticsAsync(Project, CancellationToken)"/> and <see cref="GetAllDiagnosticsAsync(Project, CancellationToken)"/>
+        /// with the given <see cref="_diagnosticIds"/> as arguments.
+        /// The boolean argument to the delegate indicates whether or not to return location-based diagnostics, i.e.
+        /// (a) False => Return only diagnostics with <see cref="Location.None"/>.
+        /// (b) True => Return all project diagnostics, regardless of whether or not they have a location.
+        /// </summary>
+        private readonly Func<Project, bool, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> _getProjectDiagnosticsAsync;
+
+        public FixAllDiagnosticProvider(
+            ImmutableHashSet<string> diagnosticIds,
+            Func<Document, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> getDocumentDiagnosticsAsync,
+            Func<Project, bool, ImmutableHashSet<string>, CancellationToken, Task<IEnumerable<Diagnostic>>> getProjectDiagnosticsAsync)
+        {
+            _diagnosticIds = diagnosticIds;
+            _getDocumentDiagnosticsAsync = getDocumentDiagnosticsAsync;
+            _getProjectDiagnosticsAsync = getProjectDiagnosticsAsync;
+        }
+
+        public override Task<IEnumerable<Diagnostic>> GetDocumentDiagnosticsAsync(Document document, CancellationToken cancellationToken)
+        {
+            return _getDocumentDiagnosticsAsync(document, _diagnosticIds, cancellationToken);
+        }
+
+        public override Task<IEnumerable<Diagnostic>> GetAllDiagnosticsAsync(Project project, CancellationToken cancellationToken)
+        {
+            return _getProjectDiagnosticsAsync(project, true, _diagnosticIds, cancellationToken);
+        }
+
+        public override Task<IEnumerable<Diagnostic>> GetProjectDiagnosticsAsync(Project project, CancellationToken cancellationToken)
+        {
+            return _getProjectDiagnosticsAsync(project, false, _diagnosticIds, cancellationToken);
         }
     }
 }
