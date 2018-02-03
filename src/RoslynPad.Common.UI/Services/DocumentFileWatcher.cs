@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Composition;
 using System.IO;
-using RoslynPad.Utilities;
+using RoslynPad.UI.Utilities;
 
-namespace RoslynPad.UI.Services
+namespace RoslynPad.UI
 {
     public enum DocumentFileChangeType
     {
@@ -31,44 +31,44 @@ namespace RoslynPad.UI.Services
     {
         private readonly IAppDispatcher _appDispatcher;
         private readonly FileSystemWatcher _fileSystemWatcher;
-        private readonly List<IObserver<DocumentFileChanged>> _observers = new List<IObserver<DocumentFileChanged>>();
-
-        private class Unsubscriber<T> : IDisposable
-        {
-            private readonly List<IObserver<T>> _observers;
-            private readonly IObserver<T> _observer;
-
-            public Unsubscriber(List<IObserver<T>> observers, IObserver<T> observer)
-            {
-                _observers = observers;
-                _observer = observer;
-            }
-            public void Dispose() => _observers.Remove(_observer);
-        }
+        private readonly List<IObserver<DocumentFileChanged>> _observers;
 
         [ImportingConstructor]
         public DocumentFileWatcher(IAppDispatcher appDispatcher)
         {
             _appDispatcher = appDispatcher;
+            _observers = new List<IObserver<DocumentFileChanged>>();
             _fileSystemWatcher = new FileSystemWatcher();
             _fileSystemWatcher.Created += OnChanged;
             _fileSystemWatcher.Renamed += OnRenamed;
             _fileSystemWatcher.Deleted += OnChanged;
             _fileSystemWatcher.IncludeSubdirectories = true;
         }
-
+        
         public string Path
         {
             get => _fileSystemWatcher.Path;
             set
             {
-                _fileSystemWatcher.Path = value;
-                _fileSystemWatcher.EnableRaisingEvents = Directory.Exists(_fileSystemWatcher.Path);
-                _observers.Clear(); //Most likely root has changed
+                var exists = Directory.Exists(value);
+                if (exists)
+                {
+                    _fileSystemWatcher.Path = value;
+                    _fileSystemWatcher.EnableRaisingEvents = true;
+                }
+                else
+                {
+                    _fileSystemWatcher.EnableRaisingEvents = false;
+                }
+
+                _observers.Clear(); // Most likely root has changed
             }
         }
 
-        private void OnChanged(object sender, FileSystemEventArgs e) => Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.FullPath));
+        private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.FullPath));
+        }
 
         private DocumentFileChangeType ToDocumentFileChangeType(WatcherChangeTypes changeType)
         {
@@ -85,7 +85,10 @@ namespace RoslynPad.UI.Services
             }
         }
 
-        private void OnRenamed(object sender, RenamedEventArgs e) => Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.OldFullPath, e.FullPath));
+        private void OnRenamed(object sender, RenamedEventArgs e)
+        {
+            Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.OldFullPath, e.FullPath));
+        }
 
         private void Publish(DocumentFileChanged documentFileChanged)
         {
@@ -105,7 +108,7 @@ namespace RoslynPad.UI.Services
             if (!_observers.Contains(observer))
                 _observers.Add(observer);
 
-            return new Unsubscriber<DocumentFileChanged>(_observers, observer);
+            return new Disposer(() => _observers.Remove(observer));
         }
     }
 }

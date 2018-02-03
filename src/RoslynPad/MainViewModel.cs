@@ -4,7 +4,6 @@ using System.Composition;
 using System.Reflection;
 using RoslynPad.UI;
 using System.Collections.Immutable;
-using RoslynPad.UI.Services;
 
 namespace RoslynPad
 {

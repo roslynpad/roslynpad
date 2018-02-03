@@ -46,6 +46,26 @@ namespace RoslynPad.Utilities
 
         public static string CurrentDirectory => PerformIO(Directory.GetCurrentDirectory, ".");
 
+        public static string NormalizeFilePath(string filename)
+        {
+            var fileInfo = new FileInfo(filename);
+            var directoryInfo = fileInfo.Directory;
+            return Path.Combine(NormalizeDirectory(directoryInfo),
+                directoryInfo.GetFiles(fileInfo.Name)[0].Name);
+        }
+
+        private static string NormalizeDirectory(DirectoryInfo dirInfo)
+        {
+            var parentDirInfo = dirInfo.Parent;
+            if (parentDirInfo == null)
+            {
+                return dirInfo.Name;
+            }
+
+            return Path.Combine(NormalizeDirectory(parentDirInfo),
+                parentDirInfo.GetDirectories(dirInfo.Name)[0].Name);
+        }
+
         public static IEnumerable<string> EnumerateFilesRecursive(string path, string searchPattern = "*")
         {
             return EnumerateDirectories(path).Aggregate(

@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 using NuGet.Packaging;
-using RoslynPad.UI.Services;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
@@ -37,6 +36,7 @@ namespace RoslynPad.UI
         private string _documentPath;
         private bool _isInitialized;
         private DocumentViewModel _documentRoot;
+        private DocumentWatcher _documentWatcher;
 
         public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot
@@ -218,8 +218,9 @@ namespace RoslynPad.UI
 
         private DocumentViewModel CreateDocumentRoot()
         {
-            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath(), _documentFileWatcher);
-            _documentFileWatcher.Path = root.Path;
+            _documentWatcher?.Dispose();
+            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
+            _documentWatcher  = new DocumentWatcher(_documentFileWatcher, root);
             return root;
         }
 
@@ -341,7 +342,9 @@ namespace RoslynPad.UI
                 return;
             }
 
-            var document = DocumentViewModel.FromPath(dialog.FileName);
+            // make sure we use the normalized path, in case the user used the wrong capitalization on Windows
+            var filePath = IOUtilities.NormalizeFilePath(dialog.FileName);
+            var document = DocumentViewModel.FromPath(filePath);
             if (!document.IsAutoSave)
             {
                 var autoSavePath = document.GetAutoSavePath();
@@ -650,6 +653,94 @@ namespace RoslynPad.UI
             foreach (var document in GetAllDocumentsForSearch(DocumentRoot))
             {
                 document.IsSearchMatch = true;
+            }
+        }
+
+        #endregion
+
+        #region Document Watcher
+
+        private class DocumentWatcher : IDisposable
+        {
+            private static readonly char[] PathSeparators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+
+            private readonly DocumentViewModel _documentRoot;
+            private readonly IDisposable _subscription;
+
+            public DocumentWatcher(DocumentFileWatcher watcher, DocumentViewModel documentRoot)
+            {
+                _documentRoot = documentRoot;
+                watcher.Path = documentRoot.Path;
+                _subscription = watcher.Subscribe(OnDocumentFileChanged);
+            }
+
+            public void Dispose() => _subscription.Dispose();
+
+            private void OnDocumentFileChanged(DocumentFileChanged data)
+            {
+                var pathParts = data.Path.Substring(_documentRoot.Path.Length)
+                    .Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+                
+                var current = _documentRoot;
+
+                for (var index = 0; index < pathParts.Length; index++)
+                {
+                    if (!current.IsChildrenInitialized)
+                    {
+                        break;
+                    }
+
+                    var part = pathParts[index];
+                    var isLast = index == pathParts.Length - 1;
+
+                    var parent = current;
+                    current = current.InternalChildren[part];
+
+                    // the current part is not in the tree
+                    if (current == null)
+                    {
+                        if (data.Type != DocumentFileChangeType.Deleted)
+                        {
+                            var currentPath = isLast && data.Type == DocumentFileChangeType.Renamed 
+                                ? data.NewPath 
+                                : Path.Combine(_documentRoot.Path, Path.Combine(pathParts.Take(index + 1).ToArray()));
+                            var newDocument = DocumentViewModel.FromPath(currentPath);
+                            if (!newDocument.IsAutoSave && 
+                                IsRelevantDocument(newDocument))
+                            {
+                                parent.AddChild(newDocument);
+                            }
+                        }
+
+                        break;
+                    }
+
+                    // it's the last part - the actual file
+                    if (isLast)
+                    {
+                        switch (data.Type)
+                        {
+                            case DocumentFileChangeType.Renamed:
+                                current.ChangePath(data.NewPath);
+                                // move it to the correct place
+                                parent.InternalChildren.Remove(current);
+                                if (IsRelevantDocument(current))
+                                {
+                                    parent.AddChild(current);
+                                }
+                                break;
+                            case DocumentFileChangeType.Deleted:
+                                parent.InternalChildren.Remove(current);
+                                break;
+                        }
+                    }
+                }
+            }
+
+            private static bool IsRelevantDocument(DocumentViewModel document)
+            {
+                return document.IsFolder || string.Equals(Path.GetExtension(document.OriginalName), 
+                           DocumentViewModel.DefaultFileExtension, StringComparison.OrdinalIgnoreCase);
             }
         }
 

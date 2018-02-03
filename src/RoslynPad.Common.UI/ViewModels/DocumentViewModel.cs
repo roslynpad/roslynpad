@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using RoslynPad.UI.Services;
-using RoslynPad.UI.Utilities;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -14,25 +11,22 @@ namespace RoslynPad.UI
     [DebuggerDisplay("{Name}:{IsFolder}")]
     public class DocumentViewModel : NotificationObject
     {
-        private readonly IDisposable _documentFileWatcherDisposable;
-        private readonly DocumentFileWatcher _documentFileWatcher;
         internal const string DefaultFileExtension = ".csx";
         internal const string AutoSaveSuffix = ".autosave";
 
-        private ObservableCollection<DocumentViewModel> _children;
+        private DocumentCollection _children;
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
         private bool _isSearchMatch;
         private string _path;
         private string _name;
+        private string _orderByName;
+        private string _originalName;
 
-        private DocumentViewModel(string rootPath, bool isFolder, DocumentFileWatcher documentFileWatcher)
+        private DocumentViewModel(string rootPath, bool isFolder)
         {
-            _documentFileWatcher = documentFileWatcher;
-            _documentFileWatcherDisposable = _documentFileWatcher?.Subscribe(OnDocumentFileChanged);
             Path = rootPath;
             IsFolder = isFolder;
-            Name = System.IO.Path.GetFileName(Path);
             IsAutoSave = Name.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
             if (IsAutoSave)
             {
@@ -42,14 +36,21 @@ namespace RoslynPad.UI
             IsSearchMatch = true;
         }
 
+        public void ChangePath(string newPath)
+        {
+            Path = newPath;
+            _orderByName = null;
+        }
+
         public string Path
         {
             get => _path;
             private set
             {
                 var oldPath = _path;
-                if (SetProperty (ref _path, value))
+                if (SetProperty(ref _path, value))
                 {
+                    OriginalName = System.IO.Path.GetFileName(value);
                     UpdateChildPaths(oldPath);
                 }
             }
@@ -89,22 +90,22 @@ namespace RoslynPad.UI
             return name + AutoSaveSuffix + DefaultFileExtension;
         }
 
-        public static DocumentViewModel CreateRoot(string rootPath, DocumentFileWatcher documentFileWatcher)
+        public static DocumentViewModel CreateRoot(string rootPath)
         {
             IOUtilities.PerformIO(() => Directory.CreateDirectory(rootPath));
-            return new DocumentViewModel(rootPath, true, documentFileWatcher);
+            return new DocumentViewModel(rootPath, true);
         }
 
         public static DocumentViewModel FromPath(string path)
         {
-            return new DocumentViewModel(path, false, null);
+            return new DocumentViewModel(path, isFolder: Directory.Exists(path));
         }
 
         public DocumentViewModel CreateNew(string documentName)
         {
             if (!IsFolder) throw new InvalidOperationException("Parent must be a folder");
 
-            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName), false, _documentFileWatcher);
+            var document = new DocumentViewModel(GetDocumentPathFromName(Path, documentName), false);
             AddChild(document);
             return document;
         }
@@ -141,18 +142,20 @@ namespace RoslynPad.UI
             set => SetProperty(ref _isExpanded, value);
         }
 
+        internal string OriginalName
+        {
+            get => _originalName;
+            private set
+            {
+                _originalName = value;
+                Name = IsFolder ? value : System.IO.Path.GetFileNameWithoutExtension(value);
+            }
+        }
+
         public string Name
         {
             get => _name;
-            set
-            {
-                if (!IsFolder)
-                {
-                    value = System.IO.Path.GetFileNameWithoutExtension(value);
-                }
-
-                SetProperty(ref _name, value);
-            }
+            private set => SetProperty(ref _name, value);
         }
 
         public bool IsAutoSave { get; }
@@ -174,6 +177,8 @@ namespace RoslynPad.UI
 
         public bool IsChildrenInitialized => _children != null;
 
+        internal DocumentCollection InternalChildren => _children;
+
         public ObservableCollection<DocumentViewModel> Children
         {
             get
@@ -193,93 +198,47 @@ namespace RoslynPad.UI
             internal set => SetProperty(ref _isSearchMatch, value);
         }
 
-        private ObservableCollection<DocumentViewModel> ReadChildren()
+        private DocumentCollection ReadChildren()
         {
-            return new ObservableCollection<DocumentViewModel>(
+            return new DocumentCollection(
                 IOUtilities.EnumerateDirectories(Path)
-                .Select(x => new DocumentViewModel(x, true, _documentFileWatcher))
-                .OrderBy(OrderByName)
+                .Select(x => new DocumentViewModel(x, isFolder: true))
+                .OrderBy(x => x.OrderByName)
                     .Concat(IOUtilities.EnumerateFiles(Path, "*" + DefaultFileExtension)
-                        .Select(x => new DocumentViewModel(x, false, _documentFileWatcher))
+                        .Select(x => new DocumentViewModel(x, isFolder: false))
                         .Where(x => !x.IsAutoSave)
-                        .OrderBy(OrderByName)));
+                        .OrderBy(x => x.OrderByName)));
         }
 
-        private static string OrderByName(DocumentViewModel x)
+        private string OrderByName
         {
-            return Regex.Replace(x.Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
-        }
-
-        private void AddChild (DocumentViewModel documentViewModel)
-        {
-            Children.Add(documentViewModel);
-            Children.Sort(d => d.OrderBy(dd => !dd.IsFolder).ThenBy(OrderByName));
-        }
-
-        public void OnDocumentFileChanged(DocumentFileChanged value)
-        {
-            if (!IsFolder && string.Equals(Path, value.Path, StringComparison.Ordinal))
+            get
             {
-                return;
-            }
-            if (IsFolder && string.Equals(Path, value.Path, StringComparison.Ordinal) && System.IO.Path.GetDirectoryName(value.Path) != Path)
-            {
-                return;
-            }
+                if (_orderByName == null)
+                {
+                    _orderByName = Regex.Replace(Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
+                }
 
-            switch (value.Type)
-            {
-            case DocumentFileChangeType.Created:
-                OnDocumentCreated(value);
-                break;
-            case DocumentFileChangeType.Deleted:
-                OnDocumentDeleted(value);
-                break;
-            case DocumentFileChangeType.Renamed:
-                OnDocumentRenamed(value);
-                break;
+                return _orderByName;
             }
         }
 
-        private void OnDocumentRenamed(DocumentFileChanged value)
+        internal void AddChild(DocumentViewModel documentViewModel)
         {
-            if (Path != value.Path)
-                return; //Rename only applies to self
-
-            Path = value.NewPath;
-            Name = System.IO.Path.GetFileName(value.NewPath);
-        }
-
-        private void OnDocumentCreated(DocumentFileChanged value)
-        {
-            if (!IsFolder || !IsChildrenInitialized)
-                return;
-
-            if (Children.Any(d => string.Equals(d.Path, value.Path, StringComparison.Ordinal))) //if already added for some strange reason
-                return;
-
-            //We only add supported files
-            var isFolder = Directory.Exists (value.Path);
-            if (System.IO.Path.GetExtension(value.Path) != DefaultFileExtension && !isFolder)
-                return;
-
-            AddChild(new DocumentViewModel(value.Path, isFolder, _documentFileWatcher));
-        }
-
-        private void OnDocumentDeleted(DocumentFileChanged value)
-        {
-            if (value.Path == Path)
+            var insertIndex = Children.IndexOf(d => d.IsFolder == documentViewModel.IsFolder &&
+                                                    string.Compare(documentViewModel.OrderByName, d.OrderByName,
+                                                        StringComparison.CurrentCulture) <= 0);
+            if (insertIndex < 0)
             {
-                //Since this document was removed it no longer needs to watch it's status
-                _documentFileWatcherDisposable.Dispose();
-                return;
+                insertIndex = documentViewModel.IsFolder ? Children.IndexOf(c => !c.IsFolder) : Children.Count;
+
+                if (insertIndex < 0)
+                {
+                    insertIndex = 0;
+                }
             }
 
-            if (IsChildrenInitialized)
-            {
-                var child = Children.FirstOrDefault(c => string.Equals(c.Path, value.Path, StringComparison.Ordinal));
-                Children.Remove(child);
-            }
+            Children.Insert(insertIndex, documentViewModel);
         }
     }
 }
