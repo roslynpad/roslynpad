@@ -537,7 +537,7 @@ namespace RoslynPad.UI
 
         public bool Prerelease
         {
-            get { return _prerelease; }
+            get => _prerelease;
             set
             {
                 if (SetProperty(ref _prerelease, value))

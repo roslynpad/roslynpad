@@ -41,10 +41,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
         private int? _selectedIndex;
         public int? SelectedIndex
         {
-            get
-            {
-                return _selectedIndex;
-            }
+            get => _selectedIndex;
 
             set
             {
@@ -163,7 +160,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
             private bool _isChecked;
             public bool IsChecked
             {
-                get { return _isChecked; }
+                get => _isChecked;
                 set { SetProperty(ref _isChecked, value); }
             }
 

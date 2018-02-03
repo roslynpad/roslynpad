@@ -66,7 +66,7 @@ namespace RoslynPad.UI
 
         public bool IsLiveMode
         {
-            get { return _isLiveMode; }
+            get => _isLiveMode;
             private set
             {
                 if (!SetProperty(ref _isLiveMode, value)) return;
@@ -74,12 +74,14 @@ namespace RoslynPad.UI
 
                 if (value)
                 {
+                    // ReSharper disable once UnusedVariable
                     var task = Run();
 
                     if (_liveModeTimer == null)
                     {
                         _liveModeTimer = new Timer(o => _dispatcher.InvokeAsync(() =>
                         {
+                            // ReSharper disable once UnusedVariable
                             var runTask = Run();
                         }), null, Timeout.Infinite, Timeout.Infinite);
                     }

@@ -13,10 +13,10 @@ namespace RoslynPad.Roslyn.Rename
     public static class RenameHelper
     {
         public static async Task<ISymbol> GetRenameSymbol(
-            Document document, int position, CancellationToken cancellationToken = default(CancellationToken))
+            Document document, int position, CancellationToken cancellationToken = default)
         {
             var token = await document.GetTouchingWordAsync(position, cancellationToken).ConfigureAwait(false);
-            return token != default(SyntaxToken) 
+            return token != default 
                     ? await GetRenameSymbol(document, token, cancellationToken).ConfigureAwait(false)
                     : null;
         }

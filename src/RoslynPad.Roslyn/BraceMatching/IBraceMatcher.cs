@@ -8,6 +8,6 @@ namespace RoslynPad.Roslyn.BraceMatching
 {
     internal interface IBraceMatcher
     {
-        Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken = default(CancellationToken));
+        Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken = default);
     }
 }

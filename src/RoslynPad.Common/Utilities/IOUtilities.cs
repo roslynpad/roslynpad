@@ -18,7 +18,7 @@ namespace RoslynPad.Utilities
             });
         }
 
-        public static T PerformIO<T>(Func<T> function, T defaultValue = default(T))
+        public static T PerformIO<T>(Func<T> function, T defaultValue = default)
         {
             try
             {
@@ -31,7 +31,7 @@ namespace RoslynPad.Utilities
             return defaultValue;
         }
 
-        public static async Task<T> PerformIOAsync<T>(Func<Task<T>> function, T defaultValue = default(T))
+        public static async Task<T> PerformIOAsync<T>(Func<Task<T>> function, T defaultValue = default)
         {
             try
             {
@@ -50,6 +50,11 @@ namespace RoslynPad.Utilities
         {
             var fileInfo = new FileInfo(filename);
             var directoryInfo = fileInfo.Directory;
+            if (directoryInfo == null)
+            {
+                throw new ArgumentException("Invalid path", nameof(filename));
+            }
+
             return Path.Combine(NormalizeDirectory(directoryInfo),
                 directoryInfo.GetFiles(fileInfo.Name)[0].Name);
         }

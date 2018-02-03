@@ -110,7 +110,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             {
                 if (document == null || !document.IsOpen())
                 {
-                    return default(FirstDiagnosticResult);
+                    return default;
                 }
 
                 using (var diagnostics = SharedPools.Default<List<DiagnosticData>>().GetPooledObject())
@@ -140,7 +140,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                         }
                     }
 
-                    return new FirstDiagnosticResult(!fullResult, false, default(DiagnosticData));
+                    return new FirstDiagnosticResult(!fullResult, false, default);
                 }
             }
 

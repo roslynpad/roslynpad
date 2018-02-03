@@ -66,7 +66,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             int position,
             CancellationToken cancellationToken)
         {
-            if (token != default(SyntaxToken) &&
+            if (token != default &&
                 token.Span.IntersectsWith(position))
             {
                 var deferredContent = await BuildContentAsync(document, token, cancellationToken).ConfigureAwait(false);
@@ -125,7 +125,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 var linkedDocument = document.Project.Solution.GetDocument(link);
                 var linkedToken = await FindTokenInLinkedDocument(token, linkedDocument, cancellationToken).ConfigureAwait(false);
 
-                if (linkedToken != default(SyntaxToken))
+                if (linkedToken != default)
                 {
                     // Not in an inactive region, so this file is a candidate.
                     candidateProjects.Add(link.ProjectId);
@@ -167,7 +167,7 @@ namespace RoslynPad.Roslyn.QuickInfo
         {
             if (!linkedDocument.SupportsSyntaxTree)
             {
-                return default(SyntaxToken);
+                return default;
             }
 
             var root = await linkedDocument.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
@@ -181,7 +181,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 return linkedToken;
             }
 
-            return default(SyntaxToken);
+            return default;
         }
 
         private async Task<IDeferredQuickInfoContent> CreateContentAsync(

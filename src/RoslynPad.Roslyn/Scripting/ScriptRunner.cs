@@ -74,7 +74,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         public CSharpParseOptions ParseOptions { get; }
 
-        public ImmutableArray<Diagnostic> Compile(Action<Stream> peStreamAction, CancellationToken cancellationToken = default(CancellationToken))
+        public ImmutableArray<Diagnostic> Compile(Action<Stream> peStreamAction, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace RoslynPad.Roslyn.Scripting
             }
         }
 
-        public async Task<object> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<object> RunAsync(CancellationToken cancellationToken = default)
         {
             var entryPoint = GetExecutor(null, cancellationToken);
             if (entryPoint == null)
@@ -101,7 +101,7 @@ namespace RoslynPad.Roslyn.Scripting
             return result;
         }
 
-        public async Task<ImmutableArray<Diagnostic>> SaveAssembly(string assemblyPath, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<ImmutableArray<Diagnostic>> SaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
         {
             var compilation = GetCompilation().WithAssemblyName(Path.GetFileNameWithoutExtension(assemblyPath));
 

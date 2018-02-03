@@ -10,7 +10,7 @@ namespace RoslynPad.Roslyn.BraceMatching
 {
     public interface IBraceMatchingService
     {
-        Task<BraceMatchingResult?> GetMatchingBracesAsync(Document document, int position, CancellationToken cancellationToken = default(CancellationToken));
+        Task<BraceMatchingResult?> GetMatchingBracesAsync(Document document, int position, CancellationToken cancellationToken = default);
     }
 
     public struct BraceMatchingResult : IEquatable<BraceMatchingResult>
@@ -32,8 +32,8 @@ namespace RoslynPad.Roslyn.BraceMatching
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            return obj is BraceMatchingResult && Equals((BraceMatchingResult) obj);
+            if (obj is null) return false;
+            return obj is BraceMatchingResult result && Equals(result);
         }
 
         public override int GetHashCode()

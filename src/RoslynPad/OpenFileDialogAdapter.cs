@@ -25,7 +25,7 @@ namespace RoslynPad
 
         public FileDialogFilter Filter
         {
-            set => _dialog.Filter = value?.ToString();
+            set => _dialog.Filter = value + string.Empty;
         }
 
         public string InitialDirectory

@@ -90,7 +90,7 @@ namespace RoslynPad
                 try
                 {
                     var bounds = Rect.Parse(boundsString);
-                    if (bounds != default(Rect))
+                    if (bounds != default)
                     {
                         Left = bounds.Left;
                         Top = bounds.Top;

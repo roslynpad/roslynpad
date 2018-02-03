@@ -47,7 +47,7 @@ namespace RoslynPad.Roslyn.BraceMatching
                 }
             }
 
-            match = default(SyntaxToken);
+            match = default;
             return false;
         }
 

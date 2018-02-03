@@ -72,8 +72,8 @@ namespace RoslynPad.Hosting
 
         public virtual void Dispose()
         {
-            // ReSharper disable once UnusedVariable
             _cts.Cancel();
+            // ReSharper disable once UnusedVariable
             var task = StopAsync();
             _cts.Dispose();
             _stream.Dispose();

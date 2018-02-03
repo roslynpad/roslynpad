@@ -24,7 +24,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 }
             }
 
-            stringLiteral = default(SyntaxToken);
+            stringLiteral = default;
             return false;
         }
     }

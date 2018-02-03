@@ -42,7 +42,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public bool UseRegex
         {
-            get { return (bool)GetValue(UseRegexProperty); }
+            get => (bool)GetValue(UseRegexProperty);
             set { SetValue(UseRegexProperty, value); }
         }
 
@@ -58,7 +58,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public bool MatchCase
         {
-            get { return (bool)GetValue(MatchCaseProperty); }
+            get => (bool)GetValue(MatchCaseProperty);
             set { SetValue(MatchCaseProperty, value); }
         }
 
@@ -74,7 +74,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public bool WholeWords
         {
-            get { return (bool)GetValue(WholeWordsProperty); }
+            get => (bool)GetValue(WholeWordsProperty);
             set { SetValue(WholeWordsProperty, value); }
         }
 
@@ -90,7 +90,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public string SearchPattern
         {
-            get { return (string)GetValue(SearchPatternProperty); }
+            get => (string)GetValue(SearchPatternProperty);
             set { SetValue(SearchPatternProperty, value); }
         }
 
@@ -106,7 +106,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public Brush MarkerBrush
         {
-            get { return (Brush)GetValue(MarkerBrushProperty); }
+            get => (Brush)GetValue(MarkerBrushProperty);
             set { SetValue(MarkerBrushProperty, value); }
         }
 
@@ -122,7 +122,7 @@ namespace RoslynPad.Editor
         /// </summary>
         public Localization Localization
         {
-            get { return (Localization)GetValue(LocalizationProperty); }
+            get => (Localization)GetValue(LocalizationProperty);
             set { SetValue(LocalizationProperty, value); }
         }
         #endregion
@@ -653,10 +653,7 @@ namespace RoslynPad.Editor
             AddVisualChild(panel);
         }
 
-        protected override int VisualChildrenCount
-        {
-            get { return 1; }
-        }
+        protected override int VisualChildrenCount => 1;
 
         protected override Visual GetVisualChild(int index)
         {
@@ -679,14 +676,7 @@ namespace RoslynPad.Editor
 
         public TextSegmentCollection<TextSegment> CurrentResults { get; } = new TextSegmentCollection<TextSegment>();
 
-        public KnownLayer Layer
-        {
-            get
-            {
-                // draw behind selection
-                return KnownLayer.Selection;
-            }
-        }
+        public KnownLayer Layer => KnownLayer.Selection;
 
         public SearchReplaceResultBackgroundRenderer()
         {
@@ -696,7 +686,7 @@ namespace RoslynPad.Editor
 
         public Brush MarkerBrush
         {
-            get { return _markerBrush; }
+            get => _markerBrush;
             set
             {
                 _markerBrush = value;

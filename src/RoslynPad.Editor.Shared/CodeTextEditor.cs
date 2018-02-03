@@ -104,10 +104,7 @@ namespace RoslynPad.Editor
         public static readonly StyledProperty<Brush> CompletionBackgroundProperty = CommonProperty.Register<CodeTextEditor, Brush>(
             nameof(CompletionBackground), CreateDefaultCompletionBackground());
 
-        public bool IsCompletionWindowOpen
-        {
-            get => _completionWindow?.IsVisible == true;
-        }
+        public bool IsCompletionWindowOpen => _completionWindow?.IsVisible == true;
 
         public void CloseCompletionWindow()
         {
@@ -118,10 +115,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        public bool IsInsightWindowOpen
-        {
-            get => _insightWindow?.IsVisible == true;
-        }
+        public bool IsInsightWindowOpen => _insightWindow?.IsVisible == true;
 
         public void CloseInsightWindow()
         {
@@ -303,8 +297,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            int offset;
-            GetCompletionDocument(out offset);
+            GetCompletionDocument(out var offset);
             var completionChar = triggerMode == TriggerMode.Text ? Document.GetCharAt(offset - 1) : (char?)null;
             var results = await CompletionProvider.GetCompletionData(offset, completionChar,
                         triggerMode == TriggerMode.SignatureHelp).ConfigureAwait(true);

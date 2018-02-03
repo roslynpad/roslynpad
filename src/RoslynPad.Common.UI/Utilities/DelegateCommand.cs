@@ -123,12 +123,12 @@ namespace RoslynPad.Utilities
 
         void IDelegateCommand.Execute()
         {
-            Execute(default(T));
+            Execute(default);
         }
 
         bool IDelegateCommand.CanExecute()
         {
-            return CanExecute(default(T));
+            return CanExecute(default);
         }
     }
 }

@@ -28,13 +28,13 @@ namespace RoslynPad.Roslyn
 
             public event EventHandler<DocumentId> ActiveDocumentChanged
             {
-                add { _inner.ActiveDocumentChanged += value; }
+                add => _inner.ActiveDocumentChanged += value;
                 remove { _inner.ActiveDocumentChanged -= value; }
             }
 
             public event EventHandler<EventArgs> NonRoslynBufferTextChanged
             {
-                add { _inner.NonRoslynBufferTextChanged += value; }
+                add => _inner.NonRoslynBufferTextChanged += value;
                 remove { _inner.NonRoslynBufferTextChanged -= value; }
             }
 

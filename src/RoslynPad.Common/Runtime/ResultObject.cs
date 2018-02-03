@@ -199,7 +199,7 @@ namespace RoslynPad.Runtime
 
         private void PopulateMember(object o, DumpQuotas targetQuotas)
         {
-            object value = null;
+            object value;
             try
             {
                 if (o is Exception exception)
@@ -228,7 +228,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
+                Children = new ResultObject[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return;
             }
 
@@ -370,7 +370,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -418,7 +418,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
