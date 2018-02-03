@@ -27,7 +27,6 @@ namespace RoslynPad.Hosting
     internal class ExecutionHost : IDisposable
     {
         private readonly InitializationParameters _initializationParameters;
-        private const int MillisecondsTimeout = 5000;
         private const int MaxAttemptsToCreateProcess = 2;
 
         private static readonly ManualResetEventSlim _clientExited = new ManualResetEventSlim(false);
@@ -107,11 +106,8 @@ namespace RoslynPad.Hosting
 
             var setApartmentState = typeof(Thread).GetRuntimeMethods()
                 .FirstOrDefault(m => m.Name == "SetApartmentState");
-            if (setApartmentState != null)
-            {
-                setApartmentState.Invoke(executionThread, new object[] {0});
-            }
-            
+            setApartmentState?.Invoke(executionThread, new object[] { 0 });
+
             executionThread.IsBackground = true;
             executionThread.Start();
             return (syncContext, syncContext.Complete);
@@ -428,6 +424,7 @@ namespace RoslynPad.Hosting
 
         private class ServerImpl : RpcServer, IService, IServiceCallback
         {
+            private const int MaxDumpsPerSession = 100000;
             private const int WindowMillisecondsTimeout = 500;
             private const int WindowMaxCount = 10000;
 
@@ -466,6 +463,7 @@ namespace RoslynPad.Hosting
             private OptimizationLevel _optimizationLevel;
             private bool _checkOverflow;
             private bool _allowUnsafe;
+            private int _dumpCount;
 
             public ServerImpl(string pipeName, SynchronizationContext syncContext) : base(pipeName)
             {
@@ -474,7 +472,7 @@ namespace RoslynPad.Hosting
                 _scriptOptions = ScriptOptions.Default;
 
                 ObjectExtensions.Dumped += OnDumped;
-                this._syncContext = syncContext;
+                _syncContext = syncContext;
             }
 
             public Task Dump(DumpMessage message)
@@ -525,10 +523,22 @@ namespace RoslynPad.Hosting
 
             private void OnDumped(DumpData data)
             {
-                EnqueueResult(ResultObject.Create(data.Object, data.Quotas, data.Header));
+                var currentCount = _dumpCount++;
+                if (currentCount >= MaxDumpsPerSession)
+                {
+                    if (currentCount == MaxDumpsPerSession)
+                    {
+                        EnqueueDump(ResultObject.Create("<max results reached>", DumpQuotas.Default));
+                    }
+
+                    return;
+                }
+
+                var resultObject = ResultObject.Create(data.Object, data.Quotas, data.Header);
+                EnqueueDump(resultObject);
             }
 
-            private void EnqueueResult(ResultObject resultObject)
+            private void EnqueueDump(ResultObject resultObject)
             {
                 _dumpQueue.Enqueue(resultObject);
                 _dumpLock.Release();
@@ -536,6 +546,8 @@ namespace RoslynPad.Hosting
 
             private async Task ProcessDumpQueue(CancellationToken cancellationToken)
             {
+                _dumpCount = 0;
+
                 while (true)
                 {
                     // ReSharper disable once MethodSupportsCancellation
@@ -640,17 +652,13 @@ namespace RoslynPad.Hosting
                     if (script != null)
                     {
                         var result = await PostToExecutionThread(script).ConfigureAwait(false);
-                        var errorResult = result as ExceptionResultObject;
-                        if (errorResult == null)
-                        {
-                            if (result != null)
-                            {
-                                DisplaySubmissionResult(result);
-                            }
-                        }
-                        else
+                        if (result is ExceptionResultObject errorResult)
                         {
                             await Error(new ErrorMessage { Error = errorResult }).ConfigureAwait(false);
+                        }
+                        else if (result != null)
+                        {
+                            DisplaySubmissionResult(result);
                         }
                     }
                 }
@@ -886,7 +894,7 @@ namespace RoslynPad.Hosting
             }
         }
 
-#region Win32 API
+        #region Win32 API
 
         [DllImport("kernel32", PreserveSig = true)]
         internal static extern ErrorMode SetErrorMode(ErrorMode mode);
@@ -907,6 +915,6 @@ namespace RoslynPad.Hosting
             SEM_NOOPENFILEERRORBOX = 0x8000,
         }
 
-#endregion
+        #endregion
     }
 }
