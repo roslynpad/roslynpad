@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn
 {

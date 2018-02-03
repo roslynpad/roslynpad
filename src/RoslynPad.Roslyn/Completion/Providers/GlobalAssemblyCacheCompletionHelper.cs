@@ -9,6 +9,7 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {

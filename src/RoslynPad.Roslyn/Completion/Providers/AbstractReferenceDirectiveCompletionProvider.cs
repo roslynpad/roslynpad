@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Scripting.Hosting;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
