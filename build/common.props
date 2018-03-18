@@ -3,9 +3,9 @@
 		<Features>strict</Features>
 		<Deterministic>True</Deterministic>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-		<EditorPackageVersion>1.0.5</EditorPackageVersion>
-		<RoslynPackageVersion>2.6.1</RoslynPackageVersion>
-		<RoslynAssemblyVersion>2.6.1.0</RoslynAssemblyVersion>
+		<EditorPackageVersion>1.0.6</EditorPackageVersion>
+		<RoslynPackageVersion>2.7.0</RoslynPackageVersion>
+		<RoslynAssemblyVersion>2.7.0.0</RoslynAssemblyVersion>
 		<LangVersion>latest</LangVersion>
 		<Authors>Eli Arbel</Authors>
 		<PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
