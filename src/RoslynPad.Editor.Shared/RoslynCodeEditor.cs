@@ -80,7 +80,7 @@ namespace RoslynPad.Editor
         {
             if (e.Text.Length == 1)
             {
-                _braceCompletionProvider.TryComplete(_roslynHost.GetDocument(_documentId), CaretOffset);
+              //  _braceCompletionProvider.TryComplete(_roslynHost.GetDocument(_documentId), CaretOffset);
             }
         }
 
