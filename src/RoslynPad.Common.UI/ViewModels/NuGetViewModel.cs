@@ -86,7 +86,7 @@ namespace RoslynPad.UI
 
             var projectContext = new EmptyNuGetProjectContext
             {
-                PackageExtractionContext = new PackageExtractionContext(NullLogger.Instance)
+                PackageExtractionContext = new PackageExtractionContext(PackageSaveMode.Defaultv3, XmlDocFileSaveMode.None, NullLogger.Instance, null)
             };
 
             PackageIdentity currentIdentity = null;
