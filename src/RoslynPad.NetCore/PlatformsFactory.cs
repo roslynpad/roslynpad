@@ -14,8 +14,8 @@ namespace RoslynPad
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
             var platform = IntPtr.Size == 8 ? "x64" : "x86";
-
-            yield return new ExecutionPlatform("Core " + platform, Process.GetCurrentProcess().MainModule.FileName, 
+            
+            yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.0", Process.GetCurrentProcess().MainModule.FileName, 
                 '\"' + Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "RoslynPad.HostNetCore.dll") + '\"');
         }
     }

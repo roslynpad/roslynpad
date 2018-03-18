@@ -33,8 +33,6 @@ namespace RoslynPad.UI
     [Export, Shared]
     public sealed class NuGetViewModel : NotificationObject
     {
-        private const string TargetFrameworkName = "net46";
-        private const string TargetFrameworkFullName = ".NET Framework, Version=4.6";
         private const int MaxSearchResults = 50;
 
         private readonly ISettings _settings;
@@ -78,7 +76,8 @@ namespace RoslynPad.UI
         public async Task<NuGetInstallResult> InstallPackage(
             string packageId,
             NuGetVersion version,
-            bool prerelease)
+            bool prerelease,
+            string targetFrameworkName)
         {
             _initializationException?.Throw();
 
@@ -94,7 +93,8 @@ namespace RoslynPad.UI
             var frameworkReferences = new List<string>();
             var projectSystem = new DummyNuGetProjectSystem(projectContext,
                 path => references.Add(GetPackagePath(currentIdentity, path)),
-                path => frameworkReferences.Add(path));
+                path => frameworkReferences.Add(path),
+                targetFrameworkName);
 
             var project = new MSBuildNuGetProject(projectSystem, installPath, installPath);
             // this is a hack to get the identity of the package added in DummyNuGetProjectSystem.AddReference
@@ -146,7 +146,7 @@ namespace RoslynPad.UI
 
         private static string GetPackagePath(PackageIdentity identity, string path)
         {
-            return $@"{identity.Id}\{identity.Version.ToFullString()}\{path}";
+            return $@"{identity.Id}/{identity.Version.ToFullString()}/{path}";
         }
 
         private static void OverrideProject(MSBuildNuGetProject project)
@@ -164,7 +164,7 @@ namespace RoslynPad.UI
         {
             var filter = new SearchFilter(includePrerelease)
             {
-                SupportedFrameworks = new[] { TargetFrameworkFullName }
+                //SupportedFrameworks = new[] { TargetFrameworkFullName }
             };
 
             foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
@@ -287,14 +287,15 @@ namespace RoslynPad.UI
             private readonly Action<string> _addReference;
             private readonly Action<string> _addFrameworkReference;
 
-            public DummyNuGetProjectSystem(INuGetProjectContext projectContext, Action<string> addReference, Action<string> addFrameworkReference)
+            public DummyNuGetProjectSystem(INuGetProjectContext projectContext, Action<string> addReference, Action<string> addFrameworkReference, string targetFrameworkName)
             {
                 _addReference = addReference;
                 _addFrameworkReference = addFrameworkReference;
                 NuGetProjectContext = projectContext;
+                TargetFramework = NuGetFramework.Parse(targetFrameworkName);
             }
 
-            public NuGetFramework TargetFramework { get; } = NuGetFramework.Parse(TargetFrameworkName);
+            public NuGetFramework TargetFramework { get; }
 
             public Task AddReferenceAsync(string referencePath)
             {
@@ -475,7 +476,7 @@ namespace RoslynPad.UI
             IsEnabled = false;
             try
             {
-                var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true).ConfigureAwait(false);
+                var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true, TargetFrameworkName).ConfigureAwait(false);
 
                 if (reportInstalled)
                 {
@@ -547,6 +548,8 @@ namespace RoslynPad.UI
             }
         }
 
+        public string TargetFrameworkName { get; set; }
+
         private void PerformSearch()
         {
             _cts?.Cancel();
@@ -603,15 +606,7 @@ namespace RoslynPad.UI
         public string Id { get; }
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
-
-        //public PackageData(IList<IPackage> packages)
-        //{
-        //    var package = packages[0];
-        //    Id = package.Id;
-        //    Version = NuGetVersion.Parse(package.Version.ToString());
-        //    OtherVersions = packages.Select(x => new PackageData(Id, NuGetVersion.Parse(x.Version.ToString()))).OrderByDescending(x => x.Version).ToImmutableArray();
-        //}
-
+        
         public PackageData(IPackageSearchMetadata package)
         {
             _package = package;

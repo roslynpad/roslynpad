@@ -264,6 +264,7 @@ namespace RoslynPad.UI
                 {
                     _executionHost.HostPath = value.HostPath;
                     _executionHost.HostArguments = value.HostArguments;
+                    NuGet.TargetFrameworkName = value.TargetFrameworkName;
 
                     if (_isInitialized)
                     {
