@@ -5,6 +5,7 @@ using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -125,7 +126,7 @@ namespace RoslynPad
             return false;
         }
 
-        public void Show()
+        public Task ShowAsync()
         {
             _dialog = new InlineModalDialog
             {
@@ -133,6 +134,7 @@ namespace RoslynPad
                 Content = this
             };
             _dialog.Show();
+            return Task.CompletedTask;
         }
 
         public void Close()

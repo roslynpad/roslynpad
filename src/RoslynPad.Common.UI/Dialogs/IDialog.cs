@@ -1,8 +1,10 @@
+using System.Threading.Tasks;
+
 namespace RoslynPad.UI
 {
     public interface IDialog
     {
-        void Show();
+        Task ShowAsync();
         void Close();
     }
 }

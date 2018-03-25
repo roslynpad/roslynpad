@@ -37,6 +37,11 @@ namespace RoslynPad
             DataContextChanged += OnDataContextChanged;
         }
 
+        private object Get(string s)
+        {
+            return App.Current.FindResource(s);
+        }
+
         private async void OnDataContextChanged(object sender, EventArgs args)
         {
             _viewModel = DataContext as OpenDocumentViewModel;

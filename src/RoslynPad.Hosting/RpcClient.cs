@@ -43,8 +43,15 @@ namespace RoslynPad.Hosting
 
         public virtual void Dispose()
         {
-            _stream?.Dispose();
-            _rpc?.Dispose();
+            try
+            {
+                _stream?.Dispose();
+                _rpc?.Dispose();
+            }
+            catch
+            {
+                // this shouldn't throw but it does in netcore
+            }
         }
     }
 }

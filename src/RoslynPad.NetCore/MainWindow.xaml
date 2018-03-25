@@ -1,11 +1,29 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad.NetCore"
         MinWidth="500"
         MinHeight="300"
-        Title="RoslynPad">
+        Title="RoslynPad"
+        Name="This">
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+N"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+O"
+                    Command="{Binding OpenFileCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+W"
+                    Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+Shift+O"
+                    Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
+    </Window.KeyBindings>
     <DockPanel>
-        <local:DocumentTreeView DockPanel.Dock="Left" />
+        <Expander DockPanel.Dock="Left"
+                  Header="Documents"
+                  IsExpanded="False"
+                  ContentTransition="{x:Null}"
+                  ExpandDirection="Left">
+            <local:DocumentTreeView />
+        </Expander>
         <Border Padding="3"
                 Margin="1"
                 Background="#eebbbb"
@@ -27,8 +45,18 @@
             </DockPanel>
         </Border>
         <TabControl Items="{Binding OpenDocuments}"
-                    SelectedItem="{Binding CurrentOpenDocument}"
-                    MemberSelector="Title">
+                    SelectedItem="{Binding CurrentOpenDocument}">
+            <Templates.HeaderTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <Button Command="{Binding RelativeSource={RelativeSource AncestorType=TabControl}, Path=DataContext.CloseDocumentCommand}"
+                                CommandParameter="{Binding}"
+                                DockPanel.Dock="Right"
+                                Content="X" />
+                        <TextBlock Text="{Binding Title}" />
+                    </DockPanel>
+                </DataTemplate>
+            </Templates.HeaderTemplate>
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <local:DocumentView />

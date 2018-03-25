@@ -1,4 +1,5 @@
 ﻿using System.Composition;
+using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
 using RoslynPad.UI;
@@ -27,10 +28,9 @@ namespace RoslynPad
             set => _dialog.AddExtension = value;
         }
 
-        public string Filter
+        public FileDialogFilter Filter
         {
-            get => _dialog.Filter;
-            set => _dialog.Filter = value;
+            set => _dialog.Filter = value.ToString();
         }
 
         public string DefaultExt
@@ -45,9 +45,14 @@ namespace RoslynPad
             set => _dialog.FileName = value;
         }
 
-        public bool? Show()
+        public Task<string> ShowAsync()
         {
-            return _dialog.ShowDialog(Application.Current.MainWindow);
+            if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
+            {
+                return Task.FromResult(_dialog.FileName);
+            }
+
+            return Task.FromResult<string>(null);
         }
     }
 }

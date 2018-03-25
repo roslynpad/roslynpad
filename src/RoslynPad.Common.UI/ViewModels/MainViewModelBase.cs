@@ -80,6 +80,7 @@ namespace RoslynPad.UI
             NewDocumentCommand = commands.Create(CreateNewDocument);
             OpenFileCommand = commands.CreateAsync(OpenFile);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
+            CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
@@ -316,6 +317,8 @@ namespace RoslynPad.UI
 
         public IDelegateCommand CloseCurrentDocumentCommand { get; }
 
+        public IDelegateCommand<OpenDocumentViewModel> CloseDocumentCommand { get; }
+
         public IDelegateCommand ToggleOptimizationCommand { get; }
 
         public void OpenDocument(DocumentViewModel document)
@@ -337,13 +340,14 @@ namespace RoslynPad.UI
 
             var dialog = _serviceProvider.GetService<IOpenFileDialog>();
             dialog.Filter = new FileDialogFilter("C# Scripts", "csx");
-            if (!await dialog.ShowAsync().ConfigureAwait(true))
+            var fileNames = await dialog.ShowAsync().ConfigureAwait(true);
+            if (fileNames == null)
             {
                 return;
             }
 
             // make sure we use the normalized path, in case the user used the wrong capitalization on Windows
-            var filePath = IOUtilities.NormalizeFilePath(dialog.FileName);
+            var filePath = IOUtilities.NormalizeFilePath(fileNames.First());
             var document = DocumentViewModel.FromPath(filePath);
             if (!document.IsAutoSave)
             {

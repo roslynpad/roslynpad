@@ -184,7 +184,7 @@ namespace RoslynPad.UI
 
             var dialog = _serviceProvider.GetService<IRenameSymbolDialog>();
             dialog.Initialize(symbol.Name);
-            dialog.Show();
+            await dialog.ShowAsync();
             if (dialog.ShouldRename)
             {
                 var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName, null).ConfigureAwait(true);
@@ -329,7 +329,7 @@ namespace RoslynPad.UI
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
                     dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, s);
-                    dialog.Show();
+                    await dialog.ShowAsync();
                     result = dialog.Result;
                     if (result == SaveResult.Save)
                     {
@@ -343,7 +343,7 @@ namespace RoslynPad.UI
                     var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = true;
                     dialog.DocumentName = Document.Name;
-                    dialog.Show();
+                    await dialog.ShowAsync();
                     result = dialog.Result;
                 }
 
@@ -437,9 +437,10 @@ namespace RoslynPad.UI
             var saveDialog = _serviceProvider.GetService<ISaveFileDialog>();
             saveDialog.OverwritePrompt = true;
             saveDialog.AddExtension = true;
-            saveDialog.Filter = "Libraries|*.dll|Executables|*.exe";
+            saveDialog.Filter = new FileDialogFilter("Libraries", "*.dll", "*.exe");
             saveDialog.DefaultExt = "dll";
-            if (saveDialog.Show() != true) return;
+            var fileName = await saveDialog.ShowAsync().ConfigureAwait(true);
+            if (fileName == null) return;
 
             var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
 
@@ -450,7 +451,7 @@ namespace RoslynPad.UI
 
             try
             {
-                await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName, OptimizationLevel)).ConfigureAwait(true);
+                await Task.Run(() => _executionHost.CompileAndSave(code, fileName, OptimizationLevel)).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {

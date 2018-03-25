@@ -1,14 +1,65 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad.NetCore"
              xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad.NetCore"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="resm:RoslynPad.Resources.Icons.xaml?assembly=RoslynPad.NetCore" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
     <Application.Styles>
         <StyleInclude Source="resm:Avalonia.Themes.Default.DefaultTheme.xaml?assembly=Avalonia.Themes.Default" />
         <StyleInclude Source="resm:Avalonia.Themes.Default.Accents.BaseLight.xaml?assembly=Avalonia.Themes.Default" />
         <StyleInclude Source="resm:AvaloniaEdit.AvaloniaEdit.xaml?assembly=AvaloniaEdit" />
+
+        <Style Selector="Expander:left">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}">
+                        <DockPanel>
+                            <ToggleButton Name="PART_toggle"
+                                          DockPanel.Dock="Right"
+                                          Content="{TemplateBinding Header}"
+                                          IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
+                                <ToggleButton.RenderTransform>
+                                    <RotateTransform Angle="270" />
+                                </ToggleButton.RenderTransform>
+                            </ToggleButton>
+                            <ContentPresenter Name="PART_ContentPresenter"
+                                              IsVisible="{TemplateBinding IsExpanded}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              Content="{TemplateBinding Content}"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch" />
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      Background="Transparent"
+                                      Content="{TemplateBinding Content}"
+                                      VerticalAlignment="Center" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="Expander:left:expanded /template/ ToggleButton#PART_toggle">
+            <Setter Property="RenderTransform"
+                    Value="{x:Null}" />
+            <Setter Property="DockPanel.Dock"
+                    Value="Top" />
+        </Style>
 
         <Style Selector="TabControl">
             <Setter Property="Template">
@@ -18,7 +69,7 @@
                             BorderThickness="{TemplateBinding BorderThickness}">
                         <DockPanel>
                             <TabStrip Name="PART_TabStrip"
-                                      MemberSelector="{TemplateBinding MemberSelector}"
+                                      ItemTemplate="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=(Templates.HeaderTemplate)}"
                                       Items="{TemplateBinding Items}"
                                       SelectedIndex="{TemplateBinding Path=SelectedIndex, Mode=TwoWay}" />
                             <Carousel Name="PART_Content"

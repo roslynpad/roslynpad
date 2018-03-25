@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui">
-    <TreeView Items="{Binding DocumentRoot.Children}">
+    <TreeView Items="{Binding DocumentRoot.Children}"
+              Name="Tree">
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Children}">
                 <TextBlock Text="{Binding Name}" />

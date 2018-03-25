@@ -40,11 +40,14 @@ namespace RoslynPad
             set => _dialog.FileName = value;
         }
 
-        public IList<string> FileNames => _dialog.FileNames;
-
-        public Task<bool> ShowAsync()
+        public Task<string[]> ShowAsync()
         {
-            return Task.FromResult(_dialog.ShowDialog(Application.Current.MainWindow) == true);
+            if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
+            {
+                return Task.FromResult(_dialog.FileNames);
+            }
+
+            return Task.FromResult<string[]>(null);
         }
     }
 }

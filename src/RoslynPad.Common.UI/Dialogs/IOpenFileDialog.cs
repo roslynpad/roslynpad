@@ -16,9 +16,7 @@ namespace RoslynPad.UI
 
         string FileName { get; set; }
 
-        IList<string> FileNames { get; }
-
-        Task<bool> ShowAsync();
+        Task<string[]> ShowAsync();
     }
 
     public class FileDialogFilter

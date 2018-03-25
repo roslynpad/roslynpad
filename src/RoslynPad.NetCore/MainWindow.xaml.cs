@@ -15,12 +15,6 @@ namespace RoslynPad
 
         public MainWindow()
         {
-            using (var stream = typeof(App).Assembly.GetManifestResourceStream("RoslynPad.Resources.Icons.xaml"))
-            {
-                var dictionary = (ResourceDictionary)new AvaloniaXamlLoader().Load(stream);
-                Resources = dictionary;
-            }
-
             var container = new ContainerConfiguration()
                 .WithAssembly(Assembly.Load(new AssemblyName("RoslynPad.Common.UI")))
                 .WithAssembly(Assembly.GetEntryAssembly());

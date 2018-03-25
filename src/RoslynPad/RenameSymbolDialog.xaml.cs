@@ -2,6 +2,7 @@
 using System.Composition;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Avalon.Windows.Controls;
@@ -79,7 +80,7 @@ namespace RoslynPad
             }
         }
 
-        public void Show()
+        public Task ShowAsync()
         {
             _dialog = new InlineModalDialog
             {
@@ -87,6 +88,7 @@ namespace RoslynPad
                 Content = this
             };
             _dialog.Show();
+            return Task.CompletedTask;
         }
 
         public void Close()
