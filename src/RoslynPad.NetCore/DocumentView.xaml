@@ -1,13 +1,145 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
+             xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI">
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="F5"
+                    Command="{Binding RunCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Shift+F5"
+                    Command="{Binding RestartHostCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+S"
+                    Command="{Binding SaveCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+D"
+                    Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+K"
+                    Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="Ctrl+U"
+                    Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
+        <KeyBinding Gesture="F2"
+                    Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
+    </UserControl.KeyBindings>
     <Grid RowDefinitions="Auto,*,5,*">
         <StackPanel Grid.Row="0"
+                    Background="White"
                     Orientation="Horizontal">
-            <Button Content="Run"
-                    Command="{Binding RunCommand}" />
+            <Button Command="{Binding RunCommand, Mode=OneTime}"
+                    ToolTip.Tip="Run (F5)">
+                <Grid>
+                    <DrawingPresenter Drawing="{DynamicResource Run}" />
+                    <ProgressBar VerticalAlignment="Bottom"
+                                 Height="4"
+                                 IsIndeterminate="{Binding IsRunning}"
+                                 BorderThickness="0"
+                                 IsVisible="{Binding IsRunning}" />
+                </Grid>
+            </Button>
+            <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
+                    ToolTip.Tip="Restart host process (Shift+F5)"
+                    Content="{DynamicResource Restart}" />
+            <DropDown Items="{Binding AvailablePlatforms, Mode=OneTime}"
+                      SelectedItem="{Binding Platform}" />
+            <Button Content="{DynamicResource BuildSolution}"
+                    Command="{Binding CompileAndSaveCommand, Mode=OneTime}"
+                    ToolTip.Tip="Compile and save assembly" />
+            <Separator />
+            <Button Command="{Binding SaveCommand, Mode=OneTime}"
+                    ToolTip.Tip="Save (Ctrl+S)"
+                    Content="{DynamicResource Save}" />
+            <Separator />
+            <Menu Background="Transparent"
+                  Name="RootMenu"
+                  IsEnabled="{Binding NuGet.IsEnabled}">
+                <MenuItem Name="RootNuGetMenu"
+                          IsSubMenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
+                          Items="{Binding NuGet.Packages}"
+                          Header="{Binding NuGet, Mode=OneTime}"
+                          ToolTip.Tip="NuGet Packages">
+                    <MenuItem.Styles>
+                        <Style Selector="MenuItem">
+                            <Setter Property="Command"
+                                    Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
+                            <Setter Property="CommandParameter"
+                                    Value="{Binding Mode=OneTime}" />
+                            <Setter Property="Icon"
+                                    Value="{Binding Mode=OneTime}" />
+                        </Style>
+                    </MenuItem.Styles>
+                    <MenuItem.DataTemplates>
+                        <DataTemplate DataType="{x:Type ui:PackageData}">
+                            <TextBlock>
+                                    <Run Text="{Binding Id, Mode=OneTime}" />
+                                    <Run Text="{Binding Version, Mode=OneTime}" />
+                            </TextBlock>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
+                            <Grid>
+                                <Image Source="{StaticResource NuGet}" />
+                                <ProgressBar VerticalAlignment="Bottom"
+                                             Height="4"
+                                             BorderThickness="0"
+                                             IsIndeterminate="{Binding IsBusy}"
+                                             IsVisible="{Binding IsBusy}" />
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type ui:PackageData}">
+                            <Menu Background="Transparent"
+                                  ToolTip.Tip="Other versions">
+                                <MenuItem ItemsSource="{Binding OtherVersions, Mode=OneTime}"
+                                          DisplayMemberPath="Version"
+                                          Padding="2">
+                                    <MenuItem.Header>
+                                        <TextBlock FontWeight="Bold"
+                                                   FontFamily="Segoe UI Symbol"
+                                                   Text=""
+                                                   FontSize="8" />
+                                    </MenuItem.Header>
+                                    <MenuItem.Styles>
+                                        <Style Selector="MenuItem">
+                                            <Setter Property="Command"
+                                                    Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
+                                            <Setter Property="CommandParameter"
+                                                    Value="{Binding Mode=OneTime}" />
+                                        </Style>
+                                    </MenuItem.Styles>
+                                </MenuItem>
+                            </Menu>
+                        </DataTemplate>
+                    </MenuItem.DataTemplates>
+                </MenuItem>
+            </Menu>
+            <TextBox Name="NuGetSearch"
+                     IsEnabled="{Binding NuGet.IsEnabled}"
+                     BorderBrush="#eeeeee"
+                     Text="{Binding NuGet.SearchTerm}"
+                     Watermark="Search NuGet (Ctrl+T)"
+                     Width="200" />
+            <!--
+                     PreviewKeyDown="SearchTerm_OnPreviewKeyDown"
+            -->
+            <Decorator VerticalAlignment="Center">
+                <CheckBox IsChecked="{Binding NuGet.Prerelease}"
+                          ToolTip.Tip="Include prerelease packages"
+                          Content="Prerelease" />
+            </Decorator>
+            <Separator />
+            <Button Content="{StaticResource FormatDocument}"
+                    ToolTip.Tip="Format Document (Ctrl+D)"
+                    Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
+            <Button Content="{StaticResource CommentCode}"
+                    ToolTip.Tip="Comment Selection (Ctrl+K)"
+                    Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
+            <Button Content="{StaticResource UncommentCode}"
+                    ToolTip.Tip="Uncomment Selection (Ctrl+U)"
+                    Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
+            <Button Content="{StaticResource Rename}"
+                    ToolTip.Tip="Rename Symbol (F2)"
+                    Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
         </StackPanel>
+
         <Editor:RoslynCodeEditor Name="Editor"
+                                 ContextActionsIcon="{DynamicResource Bulb}"
                                  Grid.Row="1" />
+
         <TreeView Grid.Row="3"
                   Items="{Binding Results}">
             <TreeView.ItemTemplate>

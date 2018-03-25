@@ -26,9 +26,10 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 #if AVALONIA
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
-using ImageSource = Avalonia.Media.Imaging.IBitmap;
+using ImageSource = Avalonia.Media.Drawing;
 #else
 using System.Windows;
 using System.Windows.Media;
@@ -164,6 +165,10 @@ namespace RoslynPad.Editor
                 {
                     _editor.GetDispatcher().InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
                 };
+
+#if AVALONIA
+                ((ISetLogicalParent)_popup).SetParent(_editor.GetWindow());
+#endif
             }
         }
 

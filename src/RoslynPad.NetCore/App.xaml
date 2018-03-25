@@ -1,4 +1,10 @@
-﻿<Application xmlns="https://github.com/avaloniaui">
+﻿<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
+             xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad.NetCore"
+             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
+             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn">
     <Application.Styles>
         <StyleInclude Source="resm:Avalonia.Themes.Default.DefaultTheme.xaml?assembly=Avalonia.Themes.Default" />
         <StyleInclude Source="resm:Avalonia.Themes.Default.Accents.BaseLight.xaml?assembly=Avalonia.Themes.Default" />
@@ -26,5 +32,52 @@
                 </ControlTemplate>
             </Setter>
         </Style>
+
+        <Style Selector="cc|CompletionList">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <cc:CompletionListBox Name="PART_ListBox">
+                        <cc:CompletionListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <DrawingPresenter Drawing="{Binding Drawing}"
+                                                      Width="16"
+                                                      Height="16"
+                                                      Margin="0,0,2,0" />
+                                    <TextBlock Text="{Binding Content}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </cc:CompletionListBox.ItemTemplate>
+                    </cc:CompletionListBox>
+                </ControlTemplate>
+            </Setter>
+        </Style>
     </Application.Styles>
+    <Application.DataTemplates>
+
+        <DataTemplate DataType="{x:Type Drawing}">
+            <DrawingPresenter Drawing="{Binding Mode=OneTime}" />
+        </DataTemplate>
+
+        <TreeDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
+                          ItemsSource="{Binding Fixes, Mode=OneTime}">
+            <TextBlock Text="{Binding Provider, Mode=OneTime}" />
+        </TreeDataTemplate>
+
+        <TreeDataTemplate DataType="{x:Type codeFixes:CodeFix}"
+                          ItemsSource="{Binding Action, Mode=OneTime, Converter={formatting:CodeActionsConverter}}">
+            <ContentPresenter Content="{Binding Action, Mode=OneTime}" />
+        </TreeDataTemplate>
+
+        <DataTemplate DataType="{x:Type codeActions:CodeAction}">
+            <DockPanel>
+                <Image Source="{Binding Mode=OneTime, Converter={formatting:CodeActionToGlyphConverter}}" />
+                <TextBlock Text="{Binding Title, Mode=OneTime}" />
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
+            <TextBlock Text="{Binding Descriptor.Title, Mode=OneTime}" />
+        </DataTemplate>
+    </Application.DataTemplates>
 </Application>

@@ -2,11 +2,13 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 #if AVALONIA
 using Avalonia.Controls;
 using Avalonia.Input;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
+using Avalonia.Media;
 using CommonTextEventArgs = Avalonia.Input.TextInputEventArgs;
 using CommonImage = Avalonia.Media.Imaging.IBitmap;
 #else
@@ -21,7 +23,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Completion;
-using System.Threading.Tasks;
 
 namespace RoslynPad.Editor
 {
@@ -45,7 +46,11 @@ namespace RoslynPad.Editor
             Content = item.DisplayText;
             _glyph = item.GetGlyph();
             _descriptionTask = new Lazy<Task>(RetrieveDescription);
+#if AVALONIA
+            Drawing = _glyph.ToImageSource();
+#else
             Image = _glyph.ToImageSource();
+#endif
         }
 
         public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
@@ -111,6 +116,10 @@ namespace RoslynPad.Editor
         }
 
         public CommonImage Image { get; }
+
+#if AVALONIA
+        public Drawing Drawing { get; set; }
+#endif
 
         public string Text { get; }
 

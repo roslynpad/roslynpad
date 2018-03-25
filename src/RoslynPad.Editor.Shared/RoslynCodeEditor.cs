@@ -12,7 +12,7 @@ using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Input;
-using ImageSource = Avalonia.Media.Imaging.IBitmap;
+using ImageSource = Avalonia.Media.Drawing;
 using ModifierKeys = Avalonia.Input.InputModifiers;
 using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
 using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;
@@ -28,7 +28,7 @@ namespace RoslynPad.Editor
     {
         private readonly TextMarkerService _textMarkerService;
         private BraceMatcherHighlightRenderer _braceMatcherHighlighter;
-        private ContextActionsRenderer _contextActionsRenderer;
+        private ContextActionsRenderer _contextActionsRenderer = null;
         private IClassificationHighlightColors _classificationHighlightColors;
         private IRoslynHost _roslynHost;
         private DocumentId _documentId;
@@ -110,8 +110,8 @@ namespace RoslynPad.Editor
 
             TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors));
 
-            _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
-            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
+            //_contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
+            //_contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
             var completionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
             completionProvider.Warmup();

@@ -34,7 +34,7 @@ namespace RoslynPad.Editor
     internal sealed class ContextActionsBulbPopup : ExtendedPopup
     {
         private readonly MenuItem _mainItem;
-        private readonly Image _headerImage;
+        private readonly DrawingPresenter _headerImage;
         private bool _isOpen;
 
         public ContextActionsBulbPopup(Control parent) : base(parent)
@@ -43,7 +43,7 @@ namespace RoslynPad.Editor
 
             StaysOpen = true;
 
-            _headerImage = new Image();
+            _headerImage = new DrawingPresenter();
 
             _mainItem = new MenuItem
             {
@@ -80,10 +80,10 @@ namespace RoslynPad.Editor
             Child = menu;
         }
 
-        public IBitmap Icon
+        public Drawing Icon
         {
-            get => _headerImage.Source;
-            set => _headerImage.Source = value;
+            get => _headerImage.Drawing;
+            set => _headerImage.Drawing = value;
         }
 
         public event EventHandler MenuOpened;

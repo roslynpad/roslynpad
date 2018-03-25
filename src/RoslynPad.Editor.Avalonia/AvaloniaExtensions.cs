@@ -4,7 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
-using RoslynPad.Utilities;
 using System;
 using System.Collections.Generic;
 
@@ -79,17 +78,9 @@ namespace RoslynPad.Editor
         public static bool HasModifiers(this KeyEventArgs args, InputModifiers modifier) =>
             (args.Modifiers & modifier) == modifier;
 
-        // workaround for Avalonia missing a settable ToolTip.IsOpen property
-        private static Action<object, PointerEventArgs> ToolTipOpen = ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerEnter");
-        private static Action<object, PointerEventArgs> ToolTipClose = ReflectionUtil.CreateDelegate<Action<object, PointerEventArgs>>(typeof(ToolTip), "ControlPointerLeave");
+        public static void Open(this ToolTip toolTip, IControl control) => ToolTip.SetIsOpen(toolTip, true);
 
-        public static void Open(this ToolTip toolTip, IControl control)
-        {
-            ToolTipClose(control, null);
-            ToolTipOpen(control, null);
-        }
-
-        public static void Close(this ToolTip toolTip, IControl control) => ToolTipClose(control, null);
+        public static void Close(this ToolTip toolTip, IControl control) => ToolTip.SetIsOpen(toolTip, false);
 
         public static void SetContent(this ToolTip toolTip, Control control, object content) => ToolTip.SetTip(control, content);
 

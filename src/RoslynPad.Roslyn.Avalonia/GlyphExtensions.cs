@@ -1,9 +1,9 @@
-using Avalonia.Media.Imaging;
-using Avalonia.Threading;
+using System.IO;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.Resources;
-using System.Collections.Generic;
-using System.Reflection;
+using Avalonia.Media;
 
 namespace RoslynPad.Roslyn
 {
@@ -11,32 +11,25 @@ namespace RoslynPad.Roslyn
     {
         private static readonly GlyphService _service = new GlyphService();
 
-        public static IBitmap ToImageSource(this Glyph glyph) => _service.GetGlyphImage(glyph);
+        public static Drawing ToImageSource(this Glyph glyph)
+        {
+            var image = _service.GetGlyphImage(glyph);
+            return image;
+        }
 
         private class GlyphService
         {
-            private readonly Dictionary<Glyph, IBitmap> _cache = new Dictionary<Glyph, IBitmap>();
+            private readonly ResourceDictionary _glyphs;
 
-            public IBitmap GetGlyphImage(Glyph glyph)
+            public GlyphService()
             {
-                Dispatcher.UIThread.VerifyAccess();
-
-                if (!_cache.TryGetValue(glyph, out var image))
+                using (var stream = typeof(Glyphs).Assembly.GetManifestResourceStream(typeof(Glyphs), $"{nameof(Glyphs)}.{nameof(Glyphs)}.xaml"))
                 {
-                    var assembly = typeof(Glyphs).GetTypeInfo().Assembly;
-                    using (var stream = assembly.GetManifestResourceStream(typeof(Glyphs).FullName + "." + glyph + ".png"))
-                    {
-                        if (stream != null)
-                        {
-                            image = new Bitmap(stream);
-                        }
-                    }
-
-                    _cache.Add(glyph, image);
+                    _glyphs = (ResourceDictionary)new AvaloniaXamlLoader().Load(stream);
                 }
-
-                return image;
             }
+
+            public Drawing GetGlyphImage(Glyph glyph) => _glyphs?[glyph] as Drawing;
         }
     }
 }
