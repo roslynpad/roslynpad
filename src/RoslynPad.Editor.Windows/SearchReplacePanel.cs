@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -477,11 +476,24 @@ namespace RoslynPad.Editor
         {
             if (!IsReplaceMode) return;
 
-            FindNext();
-            if (!_textArea.Selection.IsEmpty)
+            var selectedResult = GetSelectedResult();
+            if (selectedResult != null)
             {
                 _textArea.Selection.ReplaceSelectionWithText(ReplacePattern ?? string.Empty);
             }
+
+            FindNext();
+        }
+
+        private TextSegment GetSelectedResult()
+        {
+            if (_textArea.Selection.IsEmpty)
+                return null;
+
+            var selectionStartOffset = _textArea.Document.GetOffset(_textArea.Selection.StartPosition.Location);
+            var selectionLength = _textArea.Selection.Length;
+            return _renderer.CurrentResults.FirstOrDefault(r => r.StartOffset == selectionStartOffset
+                                                             && r.Length == selectionLength);
         }
 
         public void ReplaceAll()
