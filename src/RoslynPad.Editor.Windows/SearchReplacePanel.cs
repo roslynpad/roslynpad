@@ -333,10 +333,10 @@ namespace RoslynPad.Editor
             _textArea.TextView.InvalidateLayer(KnownLayer.Selection);
         }
 
-        void SelectResult(ISearchResult textSement)
+        void SelectResult(ISearchResult searchResult)
         {
-            _textArea.Caret.Offset = textSement.Offset;
-            _textArea.Selection = Selection.Create(_textArea, textSement.Offset, textSement.EndOffset);
+            _textArea.Caret.Offset = searchResult.Offset;
+            _textArea.Selection = Selection.Create(_textArea, searchResult.Offset, searchResult.EndOffset);
             _textArea.Caret.BringCaretToView();
             // show caret even if the editor does not have the Keyboard Focus
             _textArea.Caret.Show();
