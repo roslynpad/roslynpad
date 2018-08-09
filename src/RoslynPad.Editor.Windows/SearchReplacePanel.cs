@@ -13,6 +13,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.AvalonEdit;
 using Localization = ICSharpCode.AvalonEdit.Search.Localization;
+using System.Collections.Generic;
 
 namespace RoslynPad.Editor
 {
@@ -270,9 +271,10 @@ namespace RoslynPad.Editor
         /// </summary>
         public void FindNext()
         {
-            var result = _renderer.CurrentResults.FindFirstSegmentWithStartAfter(_textArea.Caret.Offset + 1);
-            if (result == null)
-                result = _renderer.CurrentResults.FirstSegment;
+            var selectedResult = GetSelectedResult();
+            var result = _renderer.CurrentResults.FirstOrDefault(r => r.Offset >= _textArea.Caret.Offset && r != selectedResult) ??
+                         _renderer.CurrentResults.FirstOrDefault();
+
             if (result != null)
             {
                 SelectResult(result);
@@ -284,11 +286,11 @@ namespace RoslynPad.Editor
         /// </summary>
         public void FindPrevious()
         {
-            var result = _renderer.CurrentResults.FindFirstSegmentWithStartAfter(_textArea.Caret.Offset);
-            if (result != null)
-                result = _renderer.CurrentResults.GetPreviousSegment(result);
-            if (result == null)
-                result = _renderer.CurrentResults.LastSegment;
+            var selectedResult = GetSelectedResult();
+            var result = _renderer.CurrentResults.LastOrDefault(r => r.EndOffset <= _textArea.Caret.Offset && r != selectedResult) ??
+                         _renderer.CurrentResults.LastOrDefault();
+
+
             if (result != null)
             {
                 SelectResult(result);
@@ -308,16 +310,17 @@ namespace RoslynPad.Editor
                 {
                     _textArea.ClearSelection();
                 }
-                // We cast from ISearchResult to SearchResult; this is safe because we always use the built-in strategy
-                foreach (var result in _strategy.FindAll(_textArea.Document, 0, _textArea.Document.TextLength).OfType<TextSegment>())
+                
+                foreach (var result in _strategy.FindAll(_textArea.Document, 0, _textArea.Document.TextLength))
                 {
-                    if (changeSelection && result.StartOffset >= offset)
+                    if (changeSelection && result.Offset >= offset)
                     {
                         SelectResult(result);
                         changeSelection = false;
                     }
                     _renderer.CurrentResults.Add(result);
                 }
+
                 if (!_renderer.CurrentResults.Any())
                 {
                     _messageView.IsOpen = true;
@@ -330,10 +333,10 @@ namespace RoslynPad.Editor
             _textArea.TextView.InvalidateLayer(KnownLayer.Selection);
         }
 
-        void SelectResult(TextSegment textSement)
+        void SelectResult(ISearchResult textSement)
         {
-            _textArea.Caret.Offset = textSement.StartOffset;
-            _textArea.Selection = Selection.Create(_textArea, textSement.StartOffset, textSement.EndOffset);
+            _textArea.Caret.Offset = textSement.Offset;
+            _textArea.Selection = Selection.Create(_textArea, textSement.Offset, textSement.EndOffset);
             _textArea.Caret.BringCaretToView();
             // show caret even if the editor does not have the Keyboard Focus
             _textArea.Caret.Show();
@@ -479,36 +482,35 @@ namespace RoslynPad.Editor
             var selectedResult = GetSelectedResult();
             if (selectedResult != null)
             {
-                _textArea.Selection.ReplaceSelectionWithText(ReplacePattern ?? string.Empty);
+                var replacement = selectedResult.ReplaceWith(ReplacePattern ?? string.Empty);
+                _textArea.Selection.ReplaceSelectionWithText(replacement);
             }
 
             FindNext();
         }
 
-        private TextSegment GetSelectedResult()
+        private ISearchResult GetSelectedResult()
         {
             if (_textArea.Selection.IsEmpty)
                 return null;
 
             var selectionStartOffset = _textArea.Document.GetOffset(_textArea.Selection.StartPosition.Location);
             var selectionLength = _textArea.Selection.Length;
-            return _renderer.CurrentResults.FirstOrDefault(r => r.StartOffset == selectionStartOffset
-                                                             && r.Length == selectionLength);
+            return _renderer.CurrentResults.FirstOrDefault(r => r.Offset == selectionStartOffset && r.Length == selectionLength);
         }
 
         public void ReplaceAll()
         {
             if (!IsReplaceMode) return;
 
-            var replacement = ReplacePattern ?? string.Empty;
             var document = _textArea.Document;
             using (document.RunUpdate())
             {
-                var segments = _renderer.CurrentResults.OrderByDescending(x => x.EndOffset).ToArray();
-                foreach (var textSegment in segments)
+                var results = _renderer.CurrentResults.OrderByDescending(x => x.EndOffset).ToArray();
+                foreach (var result in results)
                 {
-                    document.Replace(textSegment.StartOffset, textSegment.Length,
-                        new StringTextSource(replacement));
+                    var replacement = result.ReplaceWith(ReplacePattern ?? string.Empty);
+                    document.Replace(result.Offset, result.Length, new StringTextSource(replacement));
                 }
             }
         }
@@ -686,7 +688,7 @@ namespace RoslynPad.Editor
         private Brush _markerBrush;
         private Pen _markerPen;
 
-        public TextSegmentCollection<TextSegment> CurrentResults { get; } = new TextSegmentCollection<TextSegment>();
+        public List<ISearchResult> CurrentResults { get; } = new List<ISearchResult>();
 
         public KnownLayer Layer => KnownLayer.Selection;
 
@@ -723,7 +725,7 @@ namespace RoslynPad.Editor
             var viewStart = visualLines.First().FirstDocumentLine.Offset;
             var viewEnd = visualLines.Last().LastDocumentLine.EndOffset;
 
-            foreach (var result in CurrentResults.FindOverlappingSegments(viewStart, viewEnd - viewStart))
+            foreach (var result in CurrentResults.Where(r => viewStart <= r.Offset && r.Offset <= viewEnd || viewStart <= r.EndOffset && r.EndOffset <= viewEnd))
             {
                 var geoBuilder = new BackgroundGeometryBuilder
                 {
