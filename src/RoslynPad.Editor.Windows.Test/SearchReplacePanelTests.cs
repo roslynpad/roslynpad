@@ -1,16 +1,15 @@
 ﻿using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
-using NUnit.Framework;
-using System.Threading;
+using Xunit;
 
 namespace RoslynPad.Editor.Windows.Test
 {
-    [TestFixture, Apartment(ApartmentState.STA)]
     public class SearchReplacePanelTests
     {
-        [TestCase("one two two three", "two", 4, 5)]
-        [TestCase("one two two three", "two", 5, 9)]
-        [TestCase("one two two three", "two", 17, 5)]
+        [WpfTheory]
+        [InlineData("one two two three", "two", 17, 5)]
+        [InlineData("one two two three", "two", 4, 5)]
+        [InlineData("one two two three", "two", 5, 9)]
         public void FindNext_WithNoSelection_SelectsExpectedMatch(string documentText, string searchPattern, int caretOffset, int expectedSelectionStartColumn)
         {
             var textArea = new TextArea { Document = new TextDocument(documentText) };
@@ -25,12 +24,12 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.FindNext();
 
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(expectedSelectionStartColumn));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(searchPattern.Length));
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(expectedSelectionStartColumn, textArea.Selection.StartPosition.Column);
+            Assert.Equal(searchPattern.Length, textArea.Selection.Length);
         }
 
-        [Test]
+        [WpfFact]
         public void FindNext_WithMatchSelectedAndCaretAtStartOfMatch_SelectsNextMatch()
         {
             var textArea = new TextArea { Document = new TextDocument("one two two three") };
@@ -45,14 +44,15 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.FindNext();
 
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(9));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(3));
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(9, textArea.Selection.StartPosition.Column);
+            Assert.Equal(3, textArea.Selection.Length);
         }
 
-        [TestCase("one two two three", "two", 11, 9)]
-        [TestCase("one two two three", "two", 10, 5)]
-        [TestCase("one two two three", "two", 0, 9)]
+        [WpfTheory]
+        [InlineData("one two two three", "two", 11, 9)]
+        [InlineData("one two two three", "two", 10, 5)]
+        [InlineData("one two two three", "two", 0, 9)]
         public void FindPrevious_WithNoSelection_SelectsExpectedMatch(string documentText, string searchPattern, int caretOffset, int expectedSelectionStartColumn)
         {
             var textArea = new TextArea { Document = new TextDocument(documentText) };
@@ -67,12 +67,12 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.FindPrevious();
 
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(expectedSelectionStartColumn));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(searchPattern.Length));
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(expectedSelectionStartColumn, textArea.Selection.StartPosition.Column);
+            Assert.Equal(searchPattern.Length, textArea.Selection.Length);
         }
 
-        [Test]
+        [WpfFact]
         public void FindPrevious_WithMatchSelectedAndCaretAtEndOfMatch_SelectsPreviousMatch()
         {
             var textArea = new TextArea { Document = new TextDocument("one two two three") };
@@ -88,12 +88,12 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.FindPrevious();
 
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(5));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(3));
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(5, textArea.Selection.StartPosition.Column);
+            Assert.Equal(3, textArea.Selection.Length);
         }
 
-        [Test]
+        [WpfFact]
         public void ReplaceNext_WithNoSelection_SelectsNextMatch()
         {
             var textArea = new TextArea { Document = new TextDocument("one two three") };
@@ -109,12 +109,12 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.ReplaceNext();
 
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(5));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(3));
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(5, textArea.Selection.StartPosition.Column);
+            Assert.Equal(3, textArea.Selection.Length);
         }
 
-        [Test]
+        [WpfFact]
         public void ReplaceNext_WithMatchSelected_ReplacesMatchAndSelectsNextMatch()
         {
             var textArea = new TextArea { Document = new TextDocument("one two three two") };
@@ -131,13 +131,13 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.ReplaceNext();
 
-            Assert.That(textArea.Document.Text, Is.EqualTo("one 2 three two"));
-            Assert.That(textArea.Selection.StartPosition.Line, Is.EqualTo(1));
-            Assert.That(textArea.Selection.StartPosition.Column, Is.EqualTo(13));
-            Assert.That(textArea.Selection.Length, Is.EqualTo(3));
+            Assert.Equal("one 2 three two", textArea.Document.Text);
+            Assert.Equal(1, textArea.Selection.StartPosition.Line);
+            Assert.Equal(13, textArea.Selection.StartPosition.Column);
+            Assert.Equal(3, textArea.Selection.Length);
         }
 
-        [Test]
+        [WpfFact]
         public void ReplaceNext_WithMatchSelectedAndUsingRegularExpression_ReplacesMatchWithRegexSubstitution()
         {
             var textArea = new TextArea { Document = new TextDocument("one two three") };
@@ -155,10 +155,10 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.ReplaceNext();
 
-            Assert.That(textArea.Document.Text, Is.EqualTo("one twotwo three"));
+            Assert.Equal("one twotwo three", textArea.Document.Text);
         }
 
-        [Test]
+        [WpfFact]
         public void ReplaceAll_UsingRegularExpressions_ReplacesAllMatchesWithRegexSubstitution()
         {
             var textArea = new TextArea { Document = new TextDocument("one two three") };
@@ -173,7 +173,7 @@ namespace RoslynPad.Editor.Windows.Test
 
             searchReplacePanel.ReplaceAll();
 
-            Assert.That(textArea.Document.Text, Is.EqualTo("oonee twoo threeee"));
+            Assert.Equal("oonee twoo threeee", textArea.Document.Text);
         }
     }
 }
