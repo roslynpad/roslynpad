@@ -83,7 +83,7 @@ namespace RoslynPad.Editor
             {
                 CornerRadius = 1,
 #if !AVALONIA
-                AlignToMiddleOfPixels = true
+                AlignToWholePixels = true
 #endif
             };
 

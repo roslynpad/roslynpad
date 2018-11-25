@@ -282,7 +282,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     verifyArguments: false,
                     cancellationToken: cancellationToken);
 
-                var task = fixer.RegisterCodeFixesAsync(context) ?? SpecializedTasks.EmptyTask;
+                var task = fixer.RegisterCodeFixesAsync(context) ?? Task.CompletedTask;
                 await task.ConfigureAwait(false);
                 return fixes.ToImmutableAndFree();
             }
@@ -487,7 +487,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 // we do have fixer. now let's see whether it actually can fix it
                 foreach (var fixer in allFixers)
                 {
-                    await extensionManager.PerformActionAsync(fixer, () => fixer.RegisterCodeFixesAsync(context) ?? SpecializedTasks.EmptyTask).ConfigureAwait(false);
+                    await extensionManager.PerformActionAsync(fixer, () => fixer.RegisterCodeFixesAsync(context) ?? Task.CompletedTask).ConfigureAwait(false);
                     foreach (var fix in fixes)
                     {
                         if (!fix.Action.PerformFinalApplicabilityCheck)
@@ -746,7 +746,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                                     {
                                         if (attribute.Languages == null ||
                                             attribute.Languages.Length == 0 ||
-                                            EnumerableExtensions.Contains(attribute.Languages, language))
+                                            attribute.Languages.Contains(language))
                                         {
                                             builder.Add((CodeFixProvider)Activator.CreateInstance(typeInfo.AsType()));
                                         }
