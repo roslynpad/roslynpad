@@ -24,7 +24,7 @@
         <KeyBinding Gesture="Ctrl+W"
                     Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+Shift+O"
-                    Command="{Binding ToggleOptimizationCommand, Mode=OneTime}"/>
+                    Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
 
@@ -108,7 +108,7 @@
                         </dock:LayoutPanel>
                     </dock:LayoutRoot>
                 </dock:DockingManager>
-                
+
                 <Button HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Padding="5"
@@ -128,6 +128,17 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="5">
+
+                    <ToggleButton Margin="20 0 0 0"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  IsChecked="{Binding Settings.EnableBraceCompletion}"
+                                  ToolTipService.Placement="Top"
+                                  ToolTip="Enable brace completion">
+                        <Image Source="{StaticResource MatchBrace}"
+                               Width="16"
+                               Height="16" />
+                    </ToggleButton>
 
                     <ToggleButton Margin="20 0 0 0"
                                   BorderThickness="0"

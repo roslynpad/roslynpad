@@ -46,6 +46,15 @@ namespace RoslynPad.Editor
             TextArea.TextEntered += OnTextEntered;
         }
 
+        public bool IsBraceCompletionEnabled
+        {
+            get { return this.GetValue(IsBraceCompletionEnabledProperty); }
+            set { this.SetValue(IsBraceCompletionEnabledProperty, value); }
+        }
+
+        public static readonly StyledProperty<bool> IsBraceCompletionEnabledProperty =
+            CommonProperty.Register<RoslynCodeEditor, bool>(nameof(IsBraceCompletionEnabled), defaultValue: true);
+
         public static readonly StyledProperty<ImageSource> ContextActionsIconProperty = CommonProperty.Register<RoslynCodeEditor, ImageSource>(
             nameof(ContextActionsIcon), onChanged: OnContextActionsIconChanged);
 
@@ -78,7 +87,7 @@ namespace RoslynPad.Editor
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
-            if (e.Text.Length == 1)
+            if (IsBraceCompletionEnabled && e.Text.Length == 1)
             {
                 _braceCompletionProvider.TryComplete(_roslynHost.GetDocument(_documentId), CaretOffset);
             }
@@ -110,8 +119,8 @@ namespace RoslynPad.Editor
 
             TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors));
 
-            //_contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
-            //_contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
+            _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
+            _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
 
             var completionProvider = new RoslynCodeEditorCompletionProvider(_documentId, _roslynHost);
             completionProvider.Warmup();
@@ -233,7 +242,7 @@ namespace RoslynPad.Editor
                 case DiagnosticSeverity.Error:
                     return Colors.Red;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(diagnosticData));
             }
         }
 

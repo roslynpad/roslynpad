@@ -226,6 +226,7 @@
             <editor:RoslynCodeEditor x:Name="Editor"
                                      x:FieldModifier="private"
                                      ContextActionsIcon="{StaticResource Bulb}"
+                                     IsBraceCompletionEnabled="{Binding MainViewModel.Settings.EnableBraceCompletion}"
                                      FontFamily="Consolas"
                                      Grid.Row="1"
                                      Grid.Column="0"

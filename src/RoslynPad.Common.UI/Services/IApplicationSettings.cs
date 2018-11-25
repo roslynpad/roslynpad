@@ -11,6 +11,7 @@ namespace RoslynPad.UI
         void LoadFrom(string path);
 
         bool SendErrors { get; set; }
+        bool EnableBraceCompletion { get; set; }
         string LatestVersion { get; set; }
         string WindowBounds { get; set; }
         string DockLayout { get; set; }
@@ -45,6 +46,7 @@ namespace RoslynPad.UI
         private bool _optimizeCompilation;
         private int _liveModeDelayMs = LiveModeDelayMsDefault;
         private bool _searchWhileTyping;
+        private bool _enableBraceCompletion = true;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -65,6 +67,13 @@ namespace RoslynPad.UI
         {
             get => _sendErrors;
             set => SetProperty(ref _sendErrors, value);
+        }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool EnableBraceCompletion
+        {
+            get => _enableBraceCompletion;
+            set => SetProperty(ref _enableBraceCompletion, value);
         }
 
         public string LatestVersion
@@ -130,7 +139,7 @@ namespace RoslynPad.UI
         public bool SearchWhileTyping
         {
             get => _searchWhileTyping;
-            set => SetProperty (ref _searchWhileTyping, value);
+            set => SetProperty(ref _searchWhileTyping, value);
         }
 
         protected override void OnPropertyChanged(string propertyName = null)
@@ -173,10 +182,10 @@ namespace RoslynPad.UI
         private void SaveSettings()
         {
             if (_path == null) return;
-            
+
             try
             {
-                var serializer = new JsonSerializer {Formatting = Formatting.Indented};
+                var serializer = new JsonSerializer { Formatting = Formatting.Indented };
                 using (var writer = File.CreateText(_path))
                 {
                     serializer.Serialize(writer, this);
