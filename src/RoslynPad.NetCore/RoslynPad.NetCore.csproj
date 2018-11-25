@@ -20,12 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
-    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
     <ProjectReference Include="..\RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj" />
-    <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
-    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="Resources\Icons.xaml" />

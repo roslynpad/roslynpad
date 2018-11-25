@@ -75,7 +75,7 @@ namespace RoslynPad.Hosting
             }
 
             // force exit even if there are foreground threads running
-            Exit?.Invoke(0);
+            Environment.Exit(0);
         }
 
         private static (SynchronizationContext syncContext, Action complete) CreateExecutionThread()
@@ -113,11 +113,6 @@ namespace RoslynPad.Hosting
             return (syncContext, syncContext.Complete);
 #endif
         }
-
-        // Environment.Exit is not part of netstandard1.3...
-        private static readonly Action<int> Exit = (Action<int>)typeof(Environment)
-            .GetRuntimeMethod("Exit", new[] { typeof(int) })
-            ?.CreateDelegate(typeof(Action<int>));
 
         /// <summary>
         /// Disables Windows Error Reporting for the process, so that the process fails fast.
