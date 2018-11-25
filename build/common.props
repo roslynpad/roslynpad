@@ -3,7 +3,7 @@
 		<Features>strict</Features>
 		<Deterministic>True</Deterministic>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-		<EditorPackageVersion>1.0.6</EditorPackageVersion>
+		<EditorPackageVersion>1.0.7</EditorPackageVersion>
 		<RoslynPackageVersion>2.10.0</RoslynPackageVersion>
 		<RoslynAssemblyVersion>2.10.0.0</RoslynAssemblyVersion>
 		<LangVersion>latest</LangVersion>
