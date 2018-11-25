@@ -328,7 +328,7 @@ namespace RoslynPad.Runtime
 
         protected static IEnumerable<StackFrame> GetStackFrames(Exception exception)
         {
-            var frames = new StackTrace(exception, needFileInfo: true).GetFrames();
+            var frames = new StackTrace(exception, fNeedFileInfo: true).GetFrames();
             if (frames == null || frames.Length == 0)
             {
                 return Array.Empty<StackFrame>();
@@ -470,7 +470,7 @@ namespace RoslynPad.Runtime
         {
             Message = exception.Message;
 
-            var stackFrames = new StackTrace(exception, needFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
+            var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
             foreach (var stackFrame in stackFrames)
             {
                 if (IsScriptMethod(stackFrame))

@@ -3,8 +3,7 @@
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <RootNamespace>RoslynPad.UI</RootNamespace>
-    <TargetFramework>netstandard1.3</TargetFramework>
-    <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="RoslynPad.Common.UI.csproj.DotSettings" />
@@ -15,15 +14,14 @@
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.4.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.1" />
     <PackageReference Include="NuGet.Commands" Version="4.6.0" />
     <PackageReference Include="NuGet.PackageManagement.NetStandard" Version="4.6.0" />
     <PackageReference Include="NuGet.ProjectModel" Version="4.6.0" />
     <PackageReference Include="NuGet.Resolver" Version="4.6.0" />
-    <PackageReference Include="System.AppDomain" Version="2.0.11" />
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageReference Include="System.Reactive.Core" Version="3.1.1" />
+    <PackageReference Include="System.Reactive.Core" Version="4.1.2" />
   </ItemGroup>
 </Project>
