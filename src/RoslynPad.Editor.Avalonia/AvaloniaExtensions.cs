@@ -54,11 +54,15 @@ namespace RoslynPad.Editor
             return freezable.ToImmutable();
         }
 
-        // nop
-        public static void Freeze(this Pen pen) { }
+        public static void Freeze(this Pen pen)
+        {
+            // nop
+        }
 
-        // nop
-        public static void Freeze(this Geometry geometry) { }
+        public static void Freeze(this Geometry geometry)
+        {
+            // nop
+        }
 
         public static void PolyLineTo(this StreamGeometryContext context, IList<Point> points, bool isStroked, bool isSmoothJoin)
         {
@@ -70,7 +74,7 @@ namespace RoslynPad.Editor
 
         public static void SetBorderThickness(this TemplatedControl control, double thickness)
         {
-            control.BorderThickness = thickness;
+            control.BorderThickness = new Thickness(thickness);
         }
 
         public static void Close(this PopupRoot window) => window.Hide();

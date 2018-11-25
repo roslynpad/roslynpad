@@ -21,13 +21,12 @@ using System.Globalization;
 using System.Windows.Input;
 using Avalonia.Controls;
 using AvaloniaEdit;
-using Avalonia.Media.Imaging;
 using Avalonia.Media;
 using Avalonia.Styling;
 using System.Linq;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml.Data;
-using Avalonia.Markup;
+using Avalonia.Data;
+using Avalonia.Data.Converters;
 
 namespace RoslynPad.Editor
 {

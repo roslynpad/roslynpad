@@ -23,9 +23,10 @@ namespace RoslynPad.Roslyn
 
             public GlyphService()
             {
-                using (var stream = typeof(Glyphs).Assembly.GetManifestResourceStream(typeof(Glyphs), $"{nameof(Glyphs)}.{nameof(Glyphs)}.xaml"))
+                var assembly = typeof(Glyphs).Assembly;
+                using (var stream = assembly.GetManifestResourceStream(typeof(Glyphs), $"{nameof(Glyphs)}.{nameof(Glyphs)}.xaml"))
                 {
-                    _glyphs = (ResourceDictionary)new AvaloniaXamlLoader().Load(stream);
+                    _glyphs = (ResourceDictionary)new AvaloniaXamlLoader().Load(stream, assembly);
                 }
             }
 

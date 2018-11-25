@@ -14,7 +14,7 @@ namespace RoslynPad.Editor
 
         static ErrorMargin()
         {
-            AffectsRender(LineNumberProperty);
+            AffectsRender<ErrorMargin>(LineNumberProperty);
         }
 
         public ErrorMargin()

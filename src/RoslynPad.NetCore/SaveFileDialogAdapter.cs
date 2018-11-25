@@ -1,6 +1,7 @@
 ﻿using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using RoslynPad.UI;
 
@@ -60,7 +61,7 @@ namespace RoslynPad
 
         public Task<string> ShowAsync()
         {
-            return _dialog.ShowAsync(Window.OpenWindows.First(w => w.IsActive));
+            return _dialog.ShowAsync(Application.Current.Windows.First(w => w.IsActive));
         }
     }
 }

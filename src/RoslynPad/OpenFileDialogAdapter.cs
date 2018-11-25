@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Composition;
 using System.Threading.Tasks;
 using System.Windows;

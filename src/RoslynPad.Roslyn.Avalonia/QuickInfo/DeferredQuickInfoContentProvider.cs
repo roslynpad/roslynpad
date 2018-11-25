@@ -3,8 +3,6 @@ using System.Composition;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Styling;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn.Completion;
 
@@ -122,7 +120,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                     symbolGlyph.Margin = new Thickness(1, 1, 3, 1);
                     symbolGlyphBorder = new Border()
                     {
-                        BorderThickness = 0,
+                        BorderThickness = new Thickness(),
                         BorderBrush = Brushes.Transparent,
                         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
                         Child = symbolGlyph
@@ -132,7 +130,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 mainDescription.Margin = new Thickness(1);
                 var mainDescriptionBorder = new Border()
                 {
-                    BorderThickness = 0,
+                    BorderThickness = new Thickness(),
                     BorderBrush = Brushes.Transparent,
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                     Child = mainDescription
@@ -157,7 +155,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                     warningGlyph.Margin = new Thickness(1, 1, 3, 1);
                     var warningGlyphBorder = new Border()
                     {
-                        BorderThickness = 0,
+                        BorderThickness = new Thickness(),
                         BorderBrush = Brushes.Transparent,
                         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
