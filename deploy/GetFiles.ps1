@@ -1,4 +1,10 @@
-$binPath = "..\src\RoslynPad\bin\Release"
+$telemetryKey = ${env:RoslynPadTelemetryKey};
+if ($telemetryKey -eq $null)
+{
+    throw "Missing RoslynPadTelemetryKey environment variable"
+}
+
+$binPath = "..\src\RoslynPad\bin\Release\net462"
 $exclude =
 @(
 	"Xceed.Wpf.AvalonDock.Themes.Aero.dll",
@@ -19,6 +25,5 @@ $files +=
 
 $configFile = "$location\$binPath\RoslynPad.exe.config"
 $config = get-content $configFile
-$telemetryKey = ${env:RoslynPadTelemetryKey};
 $config  = $config -replace 'key="InstrumentationKey" value="[^"]*', ('key="InstrumentationKey" value="' + $telemetryKey)
 set-content $configFile $config

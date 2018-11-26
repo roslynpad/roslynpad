@@ -1,4 +1,4 @@
-$env:Path += ";${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.15063.0\x64"
+$env:Path += ";${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x64"
 
 $mapping = "RoslynPad.mapping"
 Remove-Item $mapping -ErrorAction Ignore
