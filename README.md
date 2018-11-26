@@ -32,9 +32,8 @@ Open `src\RoslynPad.sln` in Visual Studio 2017.
 
 ## Try out RoslynPad for Mac/Linux (alpha)
 
-* Install .NET Core SDK 1.1
-* Review the Avalonia [platform prerequisites](https://github.com/AvaloniaUI/Avalonia/wiki/Platform-support) (mainly requires GTK3)
-  * On a Mac, just use [brew](https://brew.sh/): `brew install gtk+3`
+* Install .NET Core SDK 2.1
+* Review the Avalonia [release notes](http://avaloniaui.net/blog/2018-02-18-avalonia-beta1)
 * Run these commands:
 
   ```
