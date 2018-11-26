@@ -14,7 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.7.0" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.6.0" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.7.0" />
     <PackageReference Include="System.Reactive.Linq" Version="4.1.2" />
   </ItemGroup>
   <ItemGroup>

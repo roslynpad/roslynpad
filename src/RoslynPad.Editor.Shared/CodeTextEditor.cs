@@ -417,6 +417,15 @@ namespace RoslynPad.Editor
                 CompletionList.ListBox.PreviewMouseDown +=
 #endif
                     (o, e) => _isSoftSelectionActive = false;
+
+#if AVALONIA
+                // HACK alert - this is due to an Avalonia bug that assumes the parent of a PopupRoot must be a Popup (in our case it's a Window)
+                var toolTip = LogicalChildren.OfType<Avalonia.Controls.Primitives.Popup>().First();
+                LogicalChildren.Remove(toolTip);
+                var logicalChildrenProperty = typeof(StyledElement).GetProperty("LogicalChildren", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var logicalChildren = (Avalonia.Collections.IAvaloniaList<Avalonia.LogicalTree.ILogical>)logicalChildrenProperty.GetValue(textArea);
+                logicalChildren.Add(toolTip);
+#endif
             }
 
 #if AVALONIA

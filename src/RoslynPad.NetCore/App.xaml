@@ -71,12 +71,11 @@
                             <TabStrip Name="PART_TabStrip"
                                       ItemTemplate="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=(Templates.HeaderTemplate)}"
                                       Items="{TemplateBinding Items}"
-                                      SelectedIndex="{TemplateBinding Path=SelectedIndex, Mode=TwoWay}" />
+                                      SelectedIndex="{TemplateBinding SelectedIndex, Mode=TwoWay}" />
                             <Carousel Name="PART_Content"
                                       Items="{TemplateBinding Items}"
                                       ItemTemplate="{TemplateBinding ItemTemplate}"
                                       SelectedIndex="{TemplateBinding SelectedIndex}"
-                                      Transition="{TemplateBinding Transition}"
                                       Grid.Row="1" />
                         </DockPanel>
                     </Border>
@@ -122,7 +121,7 @@
 
         <DataTemplate DataType="{x:Type codeActions:CodeAction}">
             <DockPanel>
-                <Image Source="{Binding Mode=OneTime, Converter={formatting:CodeActionToGlyphConverter}}" />
+                <DrawingPresenter Drawing="{Binding Mode=OneTime, Converter={formatting:CodeActionToGlyphConverter}}" />
                 <TextBlock Text="{Binding Title, Mode=OneTime}" />
             </DockPanel>
         </DataTemplate>

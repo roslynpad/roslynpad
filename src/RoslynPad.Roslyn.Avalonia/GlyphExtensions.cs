@@ -1,4 +1,3 @@
-using System.IO;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using RoslynPad.Roslyn.Completion;
@@ -30,7 +29,15 @@ namespace RoslynPad.Roslyn
                 }
             }
 
-            public Drawing GetGlyphImage(Glyph glyph) => _glyphs?[glyph] as Drawing;
+            public Drawing GetGlyphImage(Glyph glyph)
+            {
+                if (_glyphs != null && _glyphs.TryGetValue(glyph, out var glyphImage))
+                {
+                    return glyphImage as Drawing;
+                }
+
+                return null;
+            }
         }
     }
 }
