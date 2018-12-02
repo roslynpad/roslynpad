@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using RoslynPad.Roslyn;
@@ -44,7 +43,6 @@ namespace RoslynPad.UI
             get => _documentRoot;
             private set => SetProperty (ref _documentRoot, value);
         }
-        public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
 
         public bool IsInitialized
@@ -75,7 +73,6 @@ namespace RoslynPad.UI
             };
 
             NuGet = nugetViewModel;
-            NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
 
             NewDocumentCommand = commands.Create(CreateNewDocument);
             OpenFileCommand = commands.CreateAsync(OpenFile);
@@ -114,7 +111,7 @@ namespace RoslynPad.UI
 
         private async Task InitializeInternal()
         {
-            RoslynHost = await Task.Run(() => new RoslynHost(NuGetConfiguration, CompositionAssemblies,
+            RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
                 RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
                 .ConfigureAwait(true);
 
@@ -245,13 +242,7 @@ namespace RoslynPad.UI
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                const int myDocuments = 5;
-                var stringBuilder = new StringBuilder(260);
-                var result = SHGetFolderPath(IntPtr.Zero, myDocuments, IntPtr.Zero, 0, stringBuilder);
-                if (result >= 0)
-                {
-                    documentsPath = stringBuilder.ToString();
-                }
+                documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             }
             else // Unix or Mac
             {
@@ -266,9 +257,6 @@ namespace RoslynPad.UI
 
             return Path.Combine(documentsPath, "RoslynPad");
         }
-
-        [DllImport("shell32.dll", BestFitMapping = false, CharSet = CharSet.Unicode)]
-        private static extern int SHGetFolderPath(IntPtr hwndOwner, int nFolder, IntPtr hToken, int dwFlags, [Out] StringBuilder lpszPath);
 
         public void EditUserDocumentPath()
         {
@@ -417,6 +405,7 @@ namespace RoslynPad.UI
         public async Task OnExit()
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
+            IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "RoslynPad"), recursive: true));
         }
 
         public Exception LastError

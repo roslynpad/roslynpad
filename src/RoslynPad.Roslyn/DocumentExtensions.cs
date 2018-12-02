@@ -1,10 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Shared.Extensions;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,14 +21,5 @@ namespace RoslynPad.Roslyn
             var syntaxFacts = document.GetLanguageService<ISyntaxFactsService>();
             return await syntaxTree.GetTouchingTokenAsync(position, syntaxFacts.IsWord, cancellationToken, findInsideTrivia).ConfigureAwait(false);
         }
-
-        public static async Task<ImmutableArray<string>> GetReferencesDirectivesAsync(this Document document)
-        {
-            var syntaxRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
-
-            return (syntaxRoot as CompilationUnitSyntax)?.GetReferenceDirectives()
-                   .Select(x => x.File.ValueText).ToImmutableArray() ?? ImmutableArray<string>.Empty;
-        }
-
     }
 }

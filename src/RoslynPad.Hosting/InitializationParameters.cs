@@ -10,11 +10,10 @@ namespace RoslynPad.Hosting
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class InitializationParameters
     {
-        public InitializationParameters(IList<string> references, IList<string> imports, NuGetConfiguration nuGetConfiguration, string workingDirectory, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
+        public InitializationParameters(IList<string> references, IList<string> imports, string workingDirectory, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
         {
             References = references;
             Imports = imports;
-            NuGetConfiguration = nuGetConfiguration;
             WorkingDirectory = workingDirectory;
             ShadowCopyAssemblies = shadowCopyAssemblies;
             OptimizationLevel = optimizationLevel;
@@ -23,11 +22,9 @@ namespace RoslynPad.Hosting
         }
 
         [DataMember]
-        public IList<string> References { get; private set; }
+        public IList<string> References { get; set; }
         [DataMember]
-        public IList<string> Imports { get; private set; }
-        [DataMember]
-        public NuGetConfiguration NuGetConfiguration { get; private set; }
+        public IList<string> Imports { get; set; }
         [DataMember]
         public string WorkingDirectory { get; private set; }
         [DataMember]

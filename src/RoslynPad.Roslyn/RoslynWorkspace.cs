@@ -34,6 +34,9 @@ namespace RoslynPad.Roslyn
             switch (feature)
             {
                 case ApplyChangesKind.ChangeDocument:
+                case ApplyChangesKind.ChangeDocumentInfo:
+                case ApplyChangesKind.AddMetadataReference:
+                case ApplyChangesKind.RemoveMetadataReference:
                     return true;
                 default:
                     return false;

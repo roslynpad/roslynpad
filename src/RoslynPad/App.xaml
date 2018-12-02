@@ -317,11 +317,12 @@
                                    ToolTip="Copy"
                                    Height="12" />
                         </Button>
-                        <Rectangle Name="Icon"
-                                   Fill="{StaticResource ExceptionMarker}"
-                                   VerticalAlignment="Top"
-                                   Width="12" Height="12"
-                                   Margin="0 0 5 0"/>
+                        <Image Name="Icon"
+                               Source="{StaticResource ExceptionMarker}"
+                               VerticalAlignment="Top"
+                               Width="12"
+                               Height="12"
+                               Margin="0 0 5 0" />
                         <TextBlock Text="{Binding Severity, Mode=OneTime}"
                                    Margin="0 0 5 0" />
                         <TextBlock Text="{Binding ErrorCode, Mode=OneTime}" />
@@ -340,12 +341,12 @@
                     <DataTrigger Binding="{Binding Severity}"
                                  Value="Warning">
                         <Setter TargetName="Icon"
-                                Property="Fill"
+                                Property="Source"
                                 Value="{StaticResource WarningMarker}" />
                     </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
-            
+
             <HierarchicalDataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.ResultObject}}"
                                       DataType="{x:Static rp:XamlTypes.ResultObject}"
                                       ItemsSource="{Binding Children, Mode=OneTime}">

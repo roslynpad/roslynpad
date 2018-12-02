@@ -111,8 +111,7 @@
                         Content="{StaticResource Save}" />
                 <Separator />
                 <Menu Background="Transparent"
-                      Name="RootMenu"
-                      IsEnabled="{Binding NuGet.IsEnabled}">
+                      Name="RootMenu">
                     <MenuItem Name="RootNuGetMenu"
                               IsSubmenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
                               ItemsSource="{Binding NuGet.Packages}"
@@ -126,8 +125,8 @@
                                     <ProgressBar VerticalAlignment="Bottom"
                                                  Height="4"
                                                  BorderThickness="0"
-                                                 IsIndeterminate="{Binding IsBusy}"
-                                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                 IsIndeterminate="{Binding IsSearching}"
+                                                 Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
                             </DataTemplate>
                         </MenuItem.HeaderTemplate>
@@ -178,7 +177,6 @@
                 </Menu>
                 <Grid>
                     <TextBox Name="NuGetSearch"
-                             IsEnabled="{Binding NuGet.IsEnabled}"
                              BorderBrush="#eee"
                              PreviewKeyDown="SearchTerm_OnPreviewKeyDown"
                              Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
@@ -209,6 +207,32 @@
                               ToolTip="Include prerelease packages"
                               Content="Prerelease" />
                 </Decorator>
+                <Menu Background="Transparent">
+                    <MenuItem Header="{Binding NuGet, Mode=OneTime}"
+                              ItemsSource="{Binding RestoreErrors}"
+                              ToolTip="NuGet Restore">
+                        <MenuItem.HeaderTemplate>
+                            <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
+                                <Grid>
+                                    <Image Name="Icon"
+                                           Source="{StaticResource NuGet}" />
+                                    <ProgressBar VerticalAlignment="Bottom"
+                                                 Height="4"
+                                                 BorderThickness="0"
+                                                 IsIndeterminate="{Binding IsRestoring}"
+                                                 Visibility="{Binding IsRestoring, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding RestoreFailed}">
+                                        <Setter TargetName="Icon"
+                                                Property="Source"
+                                                Value="{StaticResource WarningMarker}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </MenuItem.HeaderTemplate>
+                    </MenuItem>
+                </Menu>
                 <Separator />
                 <Button Content="{StaticResource FormatDocument}"
                         ToolTip="Format Document (Ctrl+D)"

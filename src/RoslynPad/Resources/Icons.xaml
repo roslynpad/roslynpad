@@ -237,8 +237,8 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-    <DrawingBrush x:Key="ExceptionMarker">
-        <DrawingBrush.Drawing>
+    <DrawingImage x:Key="ExceptionMarker">
+        <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
                     <GeometryDrawing Brush="#FFF6F6F6"
@@ -249,11 +249,11 @@
                                      Geometry="F1M7,5.9722L9,8.0002 8,9.0002 6,7.0002 4,9.0002 3,8.0002 5,5.9722 3,4.0002 4,3.0002 6,5.0002 8,3.0002 9,4.0002z" />
                 </DrawingGroup.Children>
             </DrawingGroup>
-        </DrawingBrush.Drawing>
-    </DrawingBrush>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
-    <DrawingBrush x:Key="WarningMarker">
-        <DrawingBrush.Drawing>
+    <DrawingImage x:Key="WarningMarker">
+        <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
                     <GeometryDrawing Brush="#FFF6F6F6"
@@ -266,8 +266,8 @@
                                      Geometry="F1M6,7L7,7 7,4 6,4z" />
                 </DrawingGroup.Children>
             </DrawingGroup>
-        </DrawingBrush.Drawing>
-    </DrawingBrush>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
     <DrawingImage x:Key="FormatDocument">
         <DrawingImage.Drawing>

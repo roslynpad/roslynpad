@@ -80,7 +80,7 @@ namespace RoslynPad.Hosting
 
         private static (SynchronizationContext syncContext, Action complete) CreateExecutionThread()
         {
-#if NET46
+#if NET462
             var tcs = new TaskCompletionSource<SynchronizationContext>();
             var executionThread = new Thread(() =>
             {
@@ -317,6 +317,16 @@ namespace RoslynPad.Hosting
             return null;
         }
 
+        public async Task Update(InitializationParameters parameters)
+        {
+            var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
+            if (service == null)
+            {
+                throw new InvalidOperationException("Unable to create host process");
+            }
+            await service.Initialize(new InitializationMessage { Parameters = parameters }).ConfigureAwait(false);
+        }
+
         public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
             var service = await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
@@ -500,12 +510,9 @@ namespace RoslynPad.Hosting
 
                 var scriptOptions = _scriptOptions
                     .WithReferences(initializationParameters.References)
-                    .WithImports(initializationParameters.Imports);
-                if (initializationParameters.NuGetConfiguration != null)
-                {
-                    var resolver = new NuGetScriptMetadataResolver(initializationParameters.NuGetConfiguration, initializationParameters.WorkingDirectory);
-                    scriptOptions = scriptOptions.WithMetadataResolver(resolver);
-                }
+                    .WithImports(initializationParameters.Imports)
+                    .WithMetadataResolver(new CachedScriptMetadataResolver(initializationParameters.WorkingDirectory));
+
                 _scriptOptions = scriptOptions;
 
                 _shadowCopyAssemblies = initializationParameters.ShadowCopyAssemblies;

@@ -35,7 +35,6 @@ namespace RoslynPad.Roslyn
                 // RoslynPad.Roslyn
                 typeof(RoslynHost).GetTypeInfo().Assembly);
 
-        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly ParseOptions _parseOptions;
@@ -69,11 +68,9 @@ namespace RoslynPad.Roslyn
                 ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.InnerException)));
         }
 
-        public RoslynHost(NuGetConfiguration nuGetConfiguration = null,
-            IEnumerable<Assembly> additionalAssemblies = null,
+        public RoslynHost(IEnumerable<Assembly> additionalAssemblies = null,
             RoslynHostReferences references = null)
         {
-            _nuGetConfiguration = nuGetConfiguration;
             if (references == null) references = RoslynHostReferences.Default;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
@@ -166,7 +163,7 @@ namespace RoslynPad.Roslyn
 
             return false;
         }
-        
+
         #endregion
 
         #region Documents
@@ -294,7 +291,7 @@ namespace RoslynPad.Roslyn
                 usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
-                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, args.WorkingDirectory, useCache: true));
+                metadataReferenceResolver: new CachedScriptMetadataResolver(args.WorkingDirectory, useCache: true));
             return compilationOptions;
         }
 
@@ -318,9 +315,9 @@ namespace RoslynPad.Roslyn
             }
 
             solution = solution.AddProject(ProjectInfo.Create(
-                id, 
+                id,
                 VersionStamp.Create(),
-                name, 
+                name,
                 name,
                 LanguageNames.CSharp,
                 isSubmission: isScript,

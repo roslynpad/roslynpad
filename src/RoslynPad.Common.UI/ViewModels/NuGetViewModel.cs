@@ -2,28 +2,28 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Configuration;
+using NuGet.Credentials;
 using NuGet.Frameworks;
-using NuGet.PackageManagement;
-using NuGet.Packaging;
-using NuGet.Packaging.Core;
-using NuGet.ProjectManagement;
+using NuGet.LibraryModel;
+using NuGet.ProjectModel;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
-using NuGet.Resolver;
 using NuGet.Versioning;
 using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
-using ISettings = NuGet.Configuration.ISettings;
-using PackageReference = NuGet.Packaging.PackageReference;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
 using Settings = NuGet.Configuration.Settings;
@@ -35,11 +35,10 @@ namespace RoslynPad.UI
     {
         private const int MaxSearchResults = 50;
 
-        private readonly ISettings _settings;
-        private readonly PackageSourceProvider _sourceProvider;
-        private readonly IEnumerable<PackageSource> _packageSources;
         private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
         private readonly ExceptionDispatchInfo _initializationException;
+        private readonly IEnumerable<string> _configFilePaths;
+        private readonly IEnumerable<PackageSource> _packageSources;
 
         public string GlobalPackageFolder { get; }
 
@@ -47,18 +46,19 @@ namespace RoslynPad.UI
         {
             try
             {
-                _settings = Settings.LoadDefaultSettings(
+                var settings = Settings.LoadDefaultSettings(
                     root: null,
                     configFileName: null,
                     machineWideSettings: new XPlatMachineWideSetting());
 
-                _sourceProvider = new PackageSourceProvider(_settings);
+                GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
+                _configFilePaths = SettingsUtility.GetConfigFilePaths(settings);
+                _packageSources = SettingsUtility.GetEnabledSources(settings);
 
-                GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(_settings);
+                DefaultCredentialServiceUtility.SetupDefaultCredentialService(NullLogger.Instance, nonInteractive: false);
 
-                _packageSources = GetPackageSources();
-
-                _sourceRepositoryProvider = new CommandLineSourceRepositoryProvider(_sourceProvider);
+                var sourceProvider = new PackageSourceProvider(settings);
+                _sourceRepositoryProvider = new CommandLineSourceRepositoryProvider(sourceProvider);
             }
             catch (Exception e)
             {
@@ -70,102 +70,7 @@ namespace RoslynPad.UI
         {
             _initializationException?.Throw();
 
-            return await GetPackages(searchTerm, includePrerelease, exactMatch, cancellationToken).ConfigureAwait(false);
-        }
-
-        public async Task<NuGetInstallResult> InstallPackage(
-            string packageId,
-            NuGetVersion version,
-            bool prerelease,
-            string targetFrameworkName)
-        {
-            _initializationException?.Throw();
-
-            var installPath = Path.Combine(Path.GetTempPath(), "dummynuget");
-
-            var projectContext = new EmptyNuGetProjectContext
-            {
-                PackageExtractionContext = new PackageExtractionContext(PackageSaveMode.Defaultv3, XmlDocFileSaveMode.None, NullLogger.Instance, null)
-            };
-
-            PackageIdentity currentIdentity = null;
-            var references = new List<string>();
-            var frameworkReferences = new List<string>();
-            var projectSystem = new DummyNuGetProjectSystem(projectContext,
-                path => references.Add(GetPackagePath(currentIdentity, path)),
-                path => frameworkReferences.Add(path),
-                targetFrameworkName);
-
-            var project = new MSBuildNuGetProject(projectSystem, installPath, installPath);
-            // this is a hack to get the identity of the package added in DummyNuGetProjectSystem.AddReference
-            project.PackageInstalling += (sender, args) => currentIdentity = args.Identity;
-            OverrideProject(project);
-
-            var packageManager = new NuGetPackageManager(_sourceRepositoryProvider, _settings, installPath);
-
-            var primaryRepositories = _packageSources.Select(_sourceRepositoryProvider.CreateRepository).ToArray();
-
-            var resolutionContext = new ResolutionContext(
-                DependencyBehavior.Lowest,
-                includePrelease: prerelease,
-                includeUnlisted: true,
-                versionConstraints: VersionConstraints.None);
-
-            if (version == null)
-            {
-                // Find the latest version using NuGetPackageManager
-                var resolvedPackage = await NuGetPackageManager.GetLatestVersionAsync(
-                    packageId,
-                    project,
-                    resolutionContext,
-                    primaryRepositories,
-                    NullLogger.Instance,
-                    CancellationToken.None).ConfigureAwait(false);
-
-                if (resolvedPackage == null)
-                {
-                    throw new Exception("Unable to find package");
-                }
-
-                version = resolvedPackage.LatestVersion;
-            }
-
-            var packageIdentity = new PackageIdentity(packageId, version);
-
-            await packageManager.InstallPackageAsync(
-                project,
-                packageIdentity,
-                resolutionContext,
-                projectContext,
-                primaryRepositories,
-                Enumerable.Empty<SourceRepository>(),
-                CancellationToken.None).ConfigureAwait(false);
-
-            return new NuGetInstallResult(references.AsReadOnly(), frameworkReferences.AsReadOnly());
-        }
-
-        private static string GetPackagePath(PackageIdentity identity, string path)
-        {
-            return $@"{identity.Id}/{identity.Version.ToFullString()}/{path}";
-        }
-
-        private static void OverrideProject(MSBuildNuGetProject project)
-        {
-            var folderNuGetProjectField = typeof(MSBuildNuGetProject).GetTypeInfo()
-                .DeclaredFields.First(x => x.FieldType == typeof(FolderNuGetProject));
-            folderNuGetProjectField.SetValue(project, new DummyFolderNuGetProject());
-
-            var packagesConfigNuGetProjectField = typeof(MSBuildNuGetProject).GetTypeInfo()
-                .DeclaredFields.First(x => x.FieldType == typeof(PackagesConfigNuGetProject));
-            packagesConfigNuGetProjectField.SetValue(project, new DummyPackagesConfigNuGetProject(project.Metadata));
-        }
-
-        private async Task<IReadOnlyList<PackageData>> GetPackages(string searchTerm, bool includePrerelease, bool exactMatch, CancellationToken cancellationToken)
-        {
-            var filter = new SearchFilter(includePrerelease)
-            {
-                //SupportedFrameworks = new[] { TargetFrameworkFullName }
-            };
+            var filter = new SearchFilter(includePrerelease);
 
             foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
             {
@@ -197,204 +102,175 @@ namespace RoslynPad.UI
             return Array.Empty<PackageData>();
         }
 
-        private IEnumerable<PackageSource> GetPackageSources()
+        internal enum ProjectLockReadMode
         {
-            var availableSources = _sourceProvider.LoadPackageSources().Where(source => source.IsEnabled);
-            var packageSources = new List<PackageSource>();
+            Compile,
+            Runtime
+        }
 
-            if (!string.IsNullOrEmpty(GlobalPackageFolder) && Directory.Exists(GlobalPackageFolder))
+        internal static List<string> ReadProjectLockJson(string packagesDirectory, TextReader reader, string framework, ProjectLockReadMode readMode)
+        {
+            var obj = LoadJson(reader);
+            var list = new List<string>();
+
+            var targets = (JObject)obj["targets"];
+            foreach (var target in targets)
             {
-                packageSources.Add(new PackageSource("Global", GlobalPackageFolder));
+                if (target.Key == framework)
+                {
+                    foreach (var package in (JObject)target.Value)
+                    {
+                        var packageRoot = Path.Combine(packagesDirectory, package.Key);
+                        var section = (JObject)((JObject)package.Value)[readMode.ToString().ToLowerInvariant()];
+                        if (section == null)
+                        {
+                            continue;
+                        }
+                        foreach (var item in section)
+                        {
+                            var relativePath = item.Key;
+                            // Ignore placeholder "_._" files.
+                            var name = Path.GetFileName(relativePath);
+                            if (string.Equals(name, "_._", StringComparison.InvariantCulture))
+                            {
+                                continue;
+                            }
+
+                            list.Add(Path.Combine(packageRoot, relativePath));
+                        }
+                    }
+                    break;
+                }
+            }
+            return list;
+        }
+
+        private static JObject LoadJson(TextReader reader)
+        {
+            JObject obj;
+
+            using (var jsonReader = new JsonTextReader(reader))
+            {
+                obj = JObject.Load(jsonReader);
             }
 
-            packageSources.AddRange(availableSources);
+            return obj;
+        }
 
-            return packageSources;
+        internal RestoreParams CreateRestoreParams()
+        {
+            var restoreParams = new RestoreParams();
+
+            foreach (var packageSource in _packageSources)
+            {
+                restoreParams.Sources.Add(packageSource);
+            }
+
+            foreach (var configFile in _configFilePaths)
+            {
+                restoreParams.ConfigFilePaths.Add(configFile);
+            }
+
+            restoreParams.PackagesPath = GlobalPackageFolder;
+
+            return restoreParams;
+        }
+
+        internal static async Task<RestoreResult> RestoreAsync(RestoreParams restoreParameters, ILogger logger, CancellationToken cancellationToken = default)
+        {
+            var providerCache = new RestoreCommandProvidersCache();
+
+            using (var cacheContext = new SourceCacheContext())
+            {
+                cacheContext.NoCache = false;
+                cacheContext.IgnoreFailedSources = true;
+
+                var providers = new List<IPreLoadedRestoreRequestProvider>();
+
+                var dgSpec = new DependencyGraphSpec();
+                dgSpec.AddRestore(restoreParameters.ProjectName);
+                var projectSpec = new PackageSpec
+                {
+                    Name = restoreParameters.ProjectName,
+                    FilePath = restoreParameters.ProjectName,
+                    RestoreMetadata = CreateRestoreMetadata(restoreParameters),
+                    TargetFrameworks = { CreateTargetFramework(restoreParameters) }
+                };
+                dgSpec.AddProject(projectSpec);
+
+                providers.Add(new DependencyGraphSpecRequestProvider(providerCache, dgSpec));
+
+                var restoreContext = new RestoreArgs
+                {
+                    CacheContext = cacheContext,
+                    LockFileVersion = LockFileFormat.Version,
+                    DisableParallel = false,
+                    Log = logger,
+                    MachineWideSettings = new XPlatMachineWideSetting(),
+                    PreLoadedRequestProviders = providers,
+                    AllowNoOp = true,
+                    HideWarningsAndErrors = true
+                };
+
+                var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken);
+
+                var result = new RestoreResult
+                {
+                    NoOp = restoreSummaries.All(x => x.NoOpRestore),
+                    Success = restoreSummaries.All(x => x.Success),
+                    Errors = restoreSummaries.SelectMany(x => x.Errors).Select(x => x.Message).ToImmutableArray()
+                };
+
+                return result;
+            }
+        }
+
+        private static ProjectRestoreMetadata CreateRestoreMetadata(RestoreParams restoreParameters)
+        {
+            var metadata = new ProjectRestoreMetadata
+            {
+                ProjectUniqueName = restoreParameters.ProjectName,
+                ProjectName = restoreParameters.ProjectName,
+                ProjectStyle = ProjectStyle.PackageReference,
+                ProjectPath = restoreParameters.ProjectName,
+                OutputPath = restoreParameters.OutputPath,
+                PackagesPath = restoreParameters.PackagesPath,
+                ValidateRuntimeAssets = false,
+                OriginalTargetFrameworks = { restoreParameters.TargetFramework.GetShortFolderName() }
+            };
+
+            foreach (var configPath in restoreParameters.ConfigFilePaths)
+            {
+                metadata.ConfigFilePaths.Add(configPath);
+            }
+
+            foreach (var source in restoreParameters.Sources)
+            {
+                metadata.Sources.Add(source);
+            }
+
+            return metadata;
+        }
+
+        private static TargetFrameworkInformation CreateTargetFramework(RestoreParams restoreParameters)
+        {
+            var targetFramework = new TargetFrameworkInformation
+            {
+                FrameworkName = restoreParameters.TargetFramework
+            };
+
+            foreach (var package in restoreParameters.Packages)
+            {
+                targetFramework.Dependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange(package.Id, package.VersionRange, LibraryDependencyTarget.Package)
+                });
+            }
+
+            return targetFramework;
         }
 
         #region Inner Classes
-
-        private class DummyFolderNuGetProject : FolderNuGetProject
-        {
-            public DummyFolderNuGetProject() : base(IOUtilities.CurrentDirectory)
-            {
-            }
-
-            public override Task<IEnumerable<PackageReference>> GetInstalledPackagesAsync(CancellationToken token)
-            {
-                return Task.FromResult(Enumerable.Empty<PackageReference>());
-            }
-
-            public override Task<bool> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult,
-                INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.FromResult(true);
-            }
-
-            public override Task PostProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.CompletedTask;
-            }
-
-            public override Task PreProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.CompletedTask;
-            }
-
-            public override Task<bool> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext,
-                CancellationToken token)
-            {
-                return Task.FromResult(true);
-            }
-        }
-
-        private class DummyPackagesConfigNuGetProject : PackagesConfigNuGetProject
-        {
-            public DummyPackagesConfigNuGetProject(IReadOnlyDictionary<string, object> metadata) : base(IOUtilities.CurrentDirectory, metadata.ToDictionary(x => x.Key, x => x.Value))
-            {
-            }
-
-            public override Task<IEnumerable<PackageReference>> GetInstalledPackagesAsync(CancellationToken token)
-            {
-                return Task.FromResult(Enumerable.Empty<PackageReference>());
-            }
-
-            public override Task<bool> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult,
-                INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.FromResult(true);
-            }
-
-            public override Task PostProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.CompletedTask;
-            }
-
-            public override Task PreProcessAsync(INuGetProjectContext nuGetProjectContext, CancellationToken token)
-            {
-                return Task.CompletedTask;
-            }
-
-            public override Task<bool> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext,
-                CancellationToken token)
-            {
-                return Task.FromResult(true);
-            }
-        }
-
-        private class DummyNuGetProjectSystem : IMSBuildProjectSystem
-        {
-            private readonly Action<string> _addReference;
-            private readonly Action<string> _addFrameworkReference;
-
-            public DummyNuGetProjectSystem(INuGetProjectContext projectContext, Action<string> addReference, Action<string> addFrameworkReference, string targetFrameworkName)
-            {
-                _addReference = addReference;
-                _addFrameworkReference = addFrameworkReference;
-                NuGetProjectContext = projectContext;
-                TargetFramework = NuGetFramework.Parse(targetFrameworkName);
-            }
-
-            public NuGetFramework TargetFramework { get; }
-
-            public Task AddReferenceAsync(string referencePath)
-            {
-                _addReference(referencePath);
-                return Task.CompletedTask;
-            }
-
-            public Task<bool> ReferenceExistsAsync(string name) => Task.FromResult(false);
-
-            public Task AddFrameworkReferenceAsync(string name, string packageId)
-            {
-                _addFrameworkReference(name);
-                return Task.CompletedTask;
-            }
-
-            #region Not used
-
-            public void AddFile(string path, Stream stream)
-            {
-            }
-
-            public void AddExistingFile(string path)
-            {
-            }
-
-            public void RemoveFile(string path)
-            {
-            }
-
-            public bool FileExistsInProject(string path)
-            {
-                return false;
-            }
-
-            public Task RemoveReferenceAsync(string name) => Task.CompletedTask;
-
-            public void AddImport(string targetFullPath, ImportLocation location)
-            {
-            }
-
-            public void RemoveImport(string targetFullPath)
-            {
-            }
-
-            public dynamic GetPropertyValue(string propertyName)
-            {
-                return null;
-            }
-
-            public string ResolvePath(string path)
-            {
-                return null;
-            }
-
-            public bool IsSupportedFile(string path)
-            {
-                return true;
-            }
-
-            public void AddBindingRedirects()
-            {
-            }
-
-            public Task BeginProcessingAsync() => Task.CompletedTask;
-
-            public void RegisterProcessedFiles(IEnumerable<string> files)
-            {
-            }
-
-            public Task EndProcessingAsync() => Task.CompletedTask;
-
-            public void DeleteDirectory(string path, bool recursive)
-            {
-            }
-
-            public IEnumerable<string> GetFiles(string path, string filter, bool recursive)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            public IEnumerable<string> GetFullPaths(string fileName)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            public IEnumerable<string> GetDirectories(string path)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            public string ProjectName => "P";
-            public string ProjectUniqueName => "P";
-            public string ProjectFullPath => "P";
-            public string ProjectFileFullPath => "P";
-
-            public INuGetProjectContext NuGetProjectContext { get; set; }
-
-            #endregion
-        }
 
         private class CommandLineSourceRepositoryProvider : ISourceRepositoryProvider
         {
@@ -440,74 +316,87 @@ namespace RoslynPad.UI
         #endregion
     }
 
+    public class NuGetRestoreResult
+    {
+        public IList<string> CompileReferences { get; set; }
+    }
+
     [Export]
     public sealed class NuGetDocumentViewModel : NotificationObject
     {
         private readonly NuGetViewModel _nuGetViewModel;
+        private readonly HashSet<PackageRef> _referencedPackages;
         private readonly ITelemetryProvider _telemetryProvider;
+        private readonly SemaphoreSlim _restoreLock;
 
-        private bool _isBusy;
-        private bool _isEnabled;
+        private bool _isRestoring;
+        private CancellationTokenSource _restoreCts;
         private string _searchTerm;
-        private CancellationTokenSource _cts;
+        private bool _isSearching;
+        private CancellationTokenSource _searchCts;
         private IReadOnlyList<PackageData> _packages;
         private bool _isPackagesMenuOpen;
         private bool _prerelease;
+        private string _buildPath;
+        private string _projectId;
+        private bool _restoreFailed;
+        private NuGetFramework _targetFramework;
+        private IReadOnlyList<string> _restoreErrors;
 
         [ImportingConstructor]
         public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands, ITelemetryProvider telemetryProvider)
         {
             _nuGetViewModel = nuGetViewModel;
             _telemetryProvider = telemetryProvider;
+            _restoreLock = new SemaphoreSlim(1, 1);
+            _referencedPackages = new HashSet<PackageRef>();
 
-            InstallPackageCommand = commands.CreateAsync<PackageData>(InstallPackage);
+            InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
 
-            IsEnabled = true;
+            Initialize();
         }
 
-        private Task InstallPackage(PackageData package)
+        private void Initialize()
         {
-            return InstallPackage(package.Id, package.Version);
-        }
-
-        public async Task InstallPackage(string id, NuGetVersion version, bool reportInstalled = true)
-        {
-            IsBusy = true;
-            IsEnabled = false;
+            _projectId = Guid.NewGuid().ToString();
+            var buildPath = Path.Combine(Path.GetTempPath(), "RoslynPad", "Build", _projectId);
             try
             {
-                var result = await _nuGetViewModel.InstallPackage(id, version, prerelease: true, TargetFrameworkName).ConfigureAwait(false);
-
-                if (reportInstalled)
-                {
-                    OnPackageInstalled(result);
-                }
+                Directory.CreateDirectory(buildPath);
+                _buildPath = buildPath;
             }
-            finally
+            catch (Exception ex)
             {
-                IsBusy = false;
-                IsEnabled = true;
+                _telemetryProvider.ReportError(ex);
             }
+        }
+
+        private void InstallPackage(PackageData package)
+        {
+            OnPackageInstalled(package);
         }
 
         public IDelegateCommand<PackageData> InstallPackageCommand { get; }
 
-        private void OnPackageInstalled(NuGetInstallResult result)
+        private void OnPackageInstalled(PackageData package)
         {
-            PackageInstalled?.Invoke(result);
+            PackageInstalled?.Invoke(package);
         }
 
-        public event Action<NuGetInstallResult> PackageInstalled;
+        public event Action<PackageData> PackageInstalled;
 
-        public bool IsBusy
+        public event Action<NuGetRestoreResult> RestoreCompleted;
+
+        public bool IsSearching
         {
-            get => _isBusy; private set => SetProperty(ref _isBusy, value);
+            get => _isSearching;
+            private set => SetProperty(ref _isSearching, value);
         }
 
-        public bool IsEnabled
+        public bool IsRestoring
         {
-            get => _isEnabled;
-            private set => SetProperty(ref _isEnabled, value);
+            get { return _isRestoring; }
+            private set => SetProperty(ref _isRestoring, value);
         }
 
         public string SearchTerm
@@ -526,6 +415,37 @@ namespace RoslynPad.UI
         {
             get => _packages;
             private set => SetProperty(ref _packages, value);
+        }
+
+        public void UpdatePackageReferences(List<PackageRef> packages)
+        {
+            var changed = false;
+
+            if ((packages == null || packages.Count == 0) && _referencedPackages.Count > 0)
+            {
+                _referencedPackages.Clear();
+                changed = true;
+            }
+            else
+            {
+                if (_referencedPackages.RemoveWhere(p => !packages.Contains(p)) > 0)
+                {
+                    changed = true;
+                }
+
+                foreach (var package in packages)
+                {
+                    if (_referencedPackages.Add(package))
+                    {
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                RefreshPackages();
+            }
         }
 
         public bool IsPackagesMenuOpen
@@ -548,26 +468,46 @@ namespace RoslynPad.UI
             }
         }
 
-        public string TargetFrameworkName { get; set; }
+        public bool RestoreFailed
+        {
+            get { return _restoreFailed; }
+            private set { SetProperty(ref _restoreFailed, value); }
+        }
+
+        public IReadOnlyList<string> RestoreErrors
+        {
+            get { return _restoreErrors; }
+            private set { SetProperty(ref _restoreErrors, value); }
+        }
+
+        public void SetTargetFramework(string targetFrameworkName)
+        {
+            _targetFramework = NuGetFramework.Parse(targetFrameworkName);
+            RefreshPackages();
+        }
 
         private void PerformSearch()
         {
-            _cts?.Cancel();
-            _cts = new CancellationTokenSource();
-            PerformSearch(SearchTerm, _cts.Token);
+            _searchCts?.Cancel();
+            var searchCts = new CancellationTokenSource();
+            var cancellationToken = searchCts.Token;
+            _searchCts = searchCts;
+
+            Task.Run(() => PerformSearch(SearchTerm, cancellationToken), cancellationToken);
         }
 
-        private async void PerformSearch(string searchTerm, CancellationToken cancellationToken)
+        private async Task PerformSearch(string searchTerm, CancellationToken cancellationToken)
         {
-            IsBusy = true;
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                Packages = null;
+                IsPackagesMenuOpen = false;
+                return;
+            }
+
+            IsSearching = true;
             try
             {
-                if (string.IsNullOrWhiteSpace(searchTerm))
-                {
-                    IsPackagesMenuOpen = false;
-                    Packages = null;
-                    return;
-                }
                 try
                 {
                     var packages = await Task.Run(() =>
@@ -578,19 +518,143 @@ namespace RoslynPad.UI
                     Packages = packages;
                     IsPackagesMenuOpen = Packages.Count > 0;
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                catch (Exception e)
+                catch (Exception e) when (!(e is OperationCanceledException))
                 {
                     _telemetryProvider.ReportError(e);
                 }
             }
             finally
             {
-                IsBusy = false;
+                IsSearching = false;
             }
         }
+
+        private void RefreshPackages()
+        {
+            if (_buildPath == null) return;
+
+            _restoreCts?.Cancel();
+
+            var packages = _referencedPackages?.ToArray();
+            if (packages == null || packages.Length == 0)
+            {
+                RestoreFailed = false;
+                RestoreErrors = null;
+                RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = Array.Empty<string>() });
+            }
+
+            var restoreCts = new CancellationTokenSource();
+            var cancellationToken = restoreCts.Token;
+            _restoreCts = restoreCts;
+
+            Task.Run(() => RefreshPackagesAsync(packages, cancellationToken), cancellationToken);
+        }
+
+        private async Task RefreshPackagesAsync(PackageRef[] packages, CancellationToken cancellationToken)
+        {
+            await _restoreLock.WaitAsync(cancellationToken);
+            IsRestoring = true;
+            try
+            {
+                var restoreParams = _nuGetViewModel.CreateRestoreParams();
+                restoreParams.ProjectName = _projectId;
+                restoreParams.OutputPath = _buildPath;
+                restoreParams.Packages = packages;
+                restoreParams.TargetFramework = _targetFramework;
+
+                var result = await NuGetViewModel.RestoreAsync(restoreParams, NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+
+                if (!result.Success)
+                {
+                    RestoreFailed = true;
+                    RestoreErrors = result.Errors;
+                    return;
+                }
+
+                RestoreFailed = false;
+                RestoreErrors = null;
+
+                if (result.NoOp)
+                {
+                    return;
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ParseLockFile(cancellationToken);
+            }
+            catch (Exception e) when (!(e is OperationCanceledException))
+            {
+                _telemetryProvider.ReportError(e);
+            }
+            finally
+            {
+                _restoreLock.Release();
+                IsRestoring = false;
+            }
+        }
+
+        private void ParseLockFile(CancellationToken cancellationToken)
+        {
+            var lockFilePath = Path.Combine(_buildPath, "project.assets.json");
+            var referencePaths = ReadProjectLockJson(lockFilePath);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = referencePaths });
+        }
+
+        private List<string> ReadProjectLockJson(string lockFilePath)
+        {
+            using (var reader = File.OpenText(lockFilePath))
+            {
+                return NuGetViewModel.ReadProjectLockJson(_nuGetViewModel.GlobalPackageFolder, reader, _targetFramework.DotNetFrameworkName, NuGetViewModel.ProjectLockReadMode.Compile);
+            }
+        }
+    }
+
+    public class RestoreParams
+    {
+        public string ProjectName { get; set; }
+        public NuGetFramework TargetFramework { get; set; }
+        public string OutputPath { get; set; }
+        public string PackagesPath { get; set; }
+        public IList<string> ConfigFilePaths { get; set; } = new List<string>();
+        public IList<PackageSource> Sources { get; set; } = new List<PackageSource>();
+        public IList<PackageRef> Packages { get; set; } = new List<PackageRef>();
+    }
+
+    public class PackageRef : IEquatable<PackageRef>
+    {
+        public PackageRef(string id, VersionRange versionRange)
+        {
+            Id = id;
+            VersionRange = versionRange;
+        }
+
+        public string Id { get; }
+        public VersionRange VersionRange { get; }
+
+        public bool Equals(PackageRef other)
+        {
+            return other == null
+                ? false
+                : Id == other.Id && VersionRange.Equals(other.VersionRange);
+        }
+
+        public override bool Equals(object obj) => Equals(obj as PackageRef);
+
+        public override int GetHashCode()
+        {
+            return (Id, VersionRange).GetHashCode();
+        }
+    }
+
+    public class RestoreResult
+    {
+        public IReadOnlyList<string> Errors { get; set; }
+        public bool Success { get; set; }
+        public bool NoOp { get; set; }
     }
 
     public sealed class PackageData
@@ -606,7 +670,7 @@ namespace RoslynPad.UI
         public string Id { get; }
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
-        
+
         public PackageData(IPackageSearchMetadata package)
         {
             _package = package;
@@ -620,18 +684,6 @@ namespace RoslynPad.UI
             var versions = await _package.GetVersionsAsync().ConfigureAwait(false);
             OtherVersions = versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version).ToImmutableArray();
         }
-    }
-
-    public sealed class NuGetInstallResult
-    {
-        public NuGetInstallResult(IReadOnlyList<string> references, IReadOnlyList<string> frameworkReferences)
-        {
-            References = references;
-            FrameworkReferences = frameworkReferences;
-        }
-
-        public IReadOnlyList<string> References { get; }
-        public IReadOnlyList<string> FrameworkReferences { get; }
     }
 
     internal static class SourceRepositoryExtensions

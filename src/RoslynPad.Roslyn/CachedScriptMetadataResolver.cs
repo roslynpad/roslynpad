@@ -7,15 +7,15 @@ using System.Linq;
 
 namespace RoslynPad.Roslyn
 {
-    public class NuGetScriptMetadataResolver : MetadataReferenceResolver
+    public class CachedScriptMetadataResolver : MetadataReferenceResolver
     {
-        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ScriptMetadataResolver _inner;
         private readonly ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>> _cache;
 
-        public NuGetScriptMetadataResolver(NuGetConfiguration nuGetConfiguration, string workingDirectory, bool useCache = false)
+        private ImmutableArray<PortableExecutableReference> _objectMetadataReference;
+
+        public CachedScriptMetadataResolver(string workingDirectory, bool useCache = false)
         {
-            _nuGetConfiguration = nuGetConfiguration;
             _inner = ScriptMetadataResolver.Default.WithBaseDirectory(workingDirectory);
             if (useCache)
             {
@@ -35,14 +35,24 @@ namespace RoslynPad.Roslyn
             {
                 return _inner.ResolveMissingAssembly(definition, referenceIdentity);
             }
-            
+
             return _cache.GetOrAdd(referenceIdentity.ToString(),
                 _ => ImmutableArray.Create(_inner.ResolveMissingAssembly(definition, referenceIdentity))).FirstOrDefault();
         }
 
         public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
         {
-            reference = NuGetConfigurationExtensions.ResolveReference(_nuGetConfiguration, reference);
+            // nuget references will be resolved externally
+            if (reference.StartsWith("nuget:", StringComparison.InvariantCultureIgnoreCase) ||
+                reference.StartsWith("$NuGet", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (_objectMetadataReference.IsDefault)
+                {
+                    _objectMetadataReference = ImmutableArray.Create(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+                }
+
+                return _objectMetadataReference;
+            }
 
             if (_cache == null)
             {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -107,24 +106,12 @@ namespace RoslynPad
             Editor.FontSize = fontSize;
         }
 
-        private void NuGetOnPackageInstalled(NuGetInstallResult installResult)
+        private void NuGetOnPackageInstalled(PackageData package)
         {
-            if (installResult.References.Count == 0) return;
-
             Dispatcher.InvokeAsync(() =>
             {
-                var text = string.Join(Environment.NewLine,
-                    installResult.References.Distinct().OrderBy(c => c)
-                    .Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
-                    .Concat(installResult.FrameworkReferences.Distinct())
-                    .Where(r => !_viewModel.MainViewModel.RoslynHost.HasReference(_viewModel.DocumentId, r))
-                    .Select(r => "#r \"" + r + "\"")
-                    .Where(r => Editor.Text.IndexOf(r, StringComparison.OrdinalIgnoreCase) < 0));
-
-                if (text.Length > 0)
-                {
-                    Editor.Document.Insert(0, text + Environment.NewLine, AnchorMovementType.Default);
-                }
+                var text = $"#r \"nuget:{package.Id}/{package.Version}\"{Environment.NewLine}";
+                Editor.Document.Insert(0, text, AnchorMovementType.Default);
             });
         }
 
