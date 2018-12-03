@@ -36,7 +36,6 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private DocumentViewModel _documentRoot;
         private DocumentWatcher _documentWatcher;
-        private string _filePath;
 
         public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot
@@ -358,8 +357,8 @@ namespace RoslynPad.UI
 
             if(args.Count() > 1 && args[1] != null)
             {
-                _filePath = args[1];
-                var document = DocumentViewModel.FromPath(_filePath);
+                string filePath = args[1];
+                var document = DocumentViewModel.FromPath(filePath);
                 openDocument = GetOpenDocumentViewModel(document);
             }
 
