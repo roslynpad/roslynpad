@@ -36,6 +36,7 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private DocumentViewModel _documentRoot;
         private DocumentWatcher _documentWatcher;
+        private string _filePath;
 
         public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot
@@ -351,7 +352,14 @@ namespace RoslynPad.UI
 
         public void CreateNewDocument()
         {
-            var openDocument = GetOpenDocumentViewModel(null);
+            //var openDocument = GetOpenDocumentViewModel(null);
+
+            string[] path = Environment.GetCommandLineArgs();
+            _filePath = path[1];
+
+            var document = DocumentViewModel.FromPath(_filePath);
+            var openDocument = GetOpenDocumentViewModel(document);
+
             OpenDocuments.Add(openDocument);
             CurrentOpenDocument = openDocument;
         }
