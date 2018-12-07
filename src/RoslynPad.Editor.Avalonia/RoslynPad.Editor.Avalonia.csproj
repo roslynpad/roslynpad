@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
