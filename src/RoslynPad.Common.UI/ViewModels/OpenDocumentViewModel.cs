@@ -567,11 +567,11 @@ namespace RoslynPad.UI
 
                 if (HasPrefix(NuGetPrefix, value))
                 {
-                    (id, version) = GetNuGetReference(NuGetPrefix, value);
+                    (id, version) = ParseNuGetReference(NuGetPrefix, value);
                 }
                 else if (HasPrefix(OldNuGetPrefix, value))
                 {
-                    (id, version) = GetOldNuGetReference(OldNuGetPrefix, value);
+                    (id, version) = GetOldNuGetReference(value);
                     if (id == null)
                     {
                         continue;
@@ -599,7 +599,7 @@ namespace RoslynPad.UI
             return packages;
         }
 
-        private (string id, string version) GetOldNuGetReference(string prefix, string value)
+        private static (string id, string version) GetOldNuGetReference(string value)
         {
             var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (split.Length >= 3)
@@ -610,7 +610,7 @@ namespace RoslynPad.UI
             return (null, null);
         }
 
-        private static (string id, string version) GetNuGetReference(string prefix, string value)
+        private static (string id, string version) ParseNuGetReference(string prefix, string value)
         {
             string id, version;
 

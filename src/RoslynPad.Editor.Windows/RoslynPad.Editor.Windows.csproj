@@ -25,5 +25,9 @@
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
     <PackageReference Include="System.Reactive.Linq" Version="4.1.2" />
   </ItemGroup>
-  <Import Project="..\RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">
+      <Link>Shared\%(RecursivePath)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
 </Project>

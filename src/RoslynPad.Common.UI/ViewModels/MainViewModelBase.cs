@@ -12,6 +12,7 @@ using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 using NuGet.Packaging;
 using HttpClient = System.Net.Http.HttpClient;
+using System.Collections.Immutable;
 
 namespace RoslynPad.UI
 {
@@ -107,7 +108,8 @@ namespace RoslynPad.UI
             }
         }
 
-        protected virtual IEnumerable<Assembly> CompositionAssemblies => Array.Empty<Assembly>();
+        protected virtual ImmutableArray<Assembly> CompositionAssemblies => ImmutableArray.Create(
+            typeof(MainViewModelBase).Assembly);
 
         private async Task InitializeInternal()
         {

@@ -21,5 +21,10 @@ namespace RoslynPad.Roslyn
             var syntaxFacts = document.GetLanguageService<ISyntaxFactsService>();
             return await syntaxTree.GetTouchingTokenAsync(position, syntaxFacts.IsWord, cancellationToken, findInsideTrivia).ConfigureAwait(false);
         }
+
+        public static Document WithFrozenPartialSemantics(this Document document, CancellationToken cancellationToken = default)
+        {
+            return document.WithFrozenPartialSemantics(cancellationToken);
+        }
     }
 }

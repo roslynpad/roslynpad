@@ -2,14 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Commands;
@@ -22,6 +20,7 @@ using NuGet.ProjectModel;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
+using RoslynPad.Roslyn.Completion.Providers;
 using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
 using PackageSource = NuGet.Configuration.PackageSource;
@@ -30,8 +29,8 @@ using Settings = NuGet.Configuration.Settings;
 
 namespace RoslynPad.UI
 {
-    [Export, Shared]
-    public sealed class NuGetViewModel : NotificationObject
+    [Export, Export(typeof(INuGetCompletionProvider)), Shared]
+    public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvider
     {
         private const int MaxSearchResults = 50;
 
@@ -212,7 +211,7 @@ namespace RoslynPad.UI
                     HideWarningsAndErrors = true
                 };
 
-                var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken);
+                var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken).ConfigureAwait(false);
 
                 var result = new RestoreResult
                 {
@@ -268,6 +267,12 @@ namespace RoslynPad.UI
             }
 
             return targetFramework;
+        }
+
+        async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
+        {
+            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
+            return packages;
         }
 
         #region Inner Classes
@@ -552,7 +557,7 @@ namespace RoslynPad.UI
 
         private async Task RefreshPackagesAsync(PackageRef[] packages, CancellationToken cancellationToken)
         {
-            await _restoreLock.WaitAsync(cancellationToken);
+            await _restoreLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             IsRestoring = true;
             try
             {
@@ -657,7 +662,7 @@ namespace RoslynPad.UI
         public bool NoOp { get; set; }
     }
 
-    public sealed class PackageData
+    public sealed class PackageData : INuGetPackage
     {
         private readonly IPackageSearchMetadata _package;
 
@@ -670,6 +675,29 @@ namespace RoslynPad.UI
         public string Id { get; }
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
+
+        IEnumerable<string> INuGetPackage.Versions
+        {
+            get
+            {
+                if (!OtherVersions.IsDefaultOrEmpty)
+                {
+                    var lastStable = OtherVersions.FirstOrDefault(v => !v.Version.IsPrerelease);
+                    if (lastStable != null)
+                    {
+                        yield return lastStable.Version.ToString();
+                    }
+
+                    foreach (var version in OtherVersions)
+                    {
+                        if (version != lastStable)
+                        {
+                            yield return version.Version.ToString();
+                        }
+                    }
+                }
+            }
+        }
 
         public PackageData(IPackageSearchMetadata package)
         {

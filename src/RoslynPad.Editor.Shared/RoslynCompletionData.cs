@@ -46,11 +46,6 @@ namespace RoslynPad.Editor
             Content = item.DisplayText;
             _glyph = item.GetGlyph();
             _descriptionTask = new Lazy<Task>(RetrieveDescription);
-#if AVALONIA
-            Drawing = _glyph.ToImageSource();
-#else
-            Image = _glyph.ToImageSource();
-#endif
         }
 
         public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
@@ -90,10 +85,9 @@ namespace RoslynPad.Editor
         {
             char? completionChar = null;
             var txea = e as CommonTextEventArgs;
-            var kea = e as KeyEventArgs;
             if (txea != null && txea.Text.Length > 0)
                 completionChar = txea.Text[0];
-            else if (kea != null && kea.Key == Key.Tab)
+            else if (e is KeyEventArgs kea && kea.Key == Key.Tab)
                 completionChar = '\t';
 
             if (completionChar == '\t')
@@ -115,10 +109,11 @@ namespace RoslynPad.Editor
             return false;
         }
 
-        public CommonImage Image { get; }
-
 #if AVALONIA
-        public Drawing Drawing { get; set; }
+        public CommonImage Image => null;
+        public Drawing Drawing => _glyph.ToImageSource();
+#else
+        public CommonImage Image => _glyph.ToImageSource();
 #endif
 
         public string Text { get; }

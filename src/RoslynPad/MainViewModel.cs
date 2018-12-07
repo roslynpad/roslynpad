@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Composition;
 using System.Reflection;
 using RoslynPad.UI;
@@ -15,8 +14,8 @@ namespace RoslynPad
         {
         }
 
-        protected override IEnumerable<Assembly> CompositionAssemblies => ImmutableArray.Create(
-            Assembly.Load(new AssemblyName("RoslynPad.Roslyn.Windows")),
-            Assembly.Load(new AssemblyName("RoslynPad.Editor.Windows")));
+        protected override ImmutableArray<Assembly> CompositionAssemblies => base.CompositionAssemblies
+            .Add(Assembly.Load(new AssemblyName("RoslynPad.Roslyn.Windows")))
+            .Add(Assembly.Load(new AssemblyName("RoslynPad.Editor.Windows")));
     }
 }

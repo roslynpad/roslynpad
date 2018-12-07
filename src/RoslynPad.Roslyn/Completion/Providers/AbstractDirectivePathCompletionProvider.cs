@@ -10,42 +10,51 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Scripting;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.ErrorReporting;
+using System.Diagnostics;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
     internal abstract class AbstractDirectivePathCompletionProvider : CompletionProvider
     {
         protected static bool IsDirectorySeparator(char ch) =>
-            ch == '/' || (ch == '\\' && !PathUtilities.IsUnixLikePlatform);
+             ch == '/' || (ch == '\\' && !PathUtilities.IsUnixLikePlatform);
 
         protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
         public sealed override async Task ProvideCompletionsAsync(CompletionContext context)
         {
-            var document = context.Document;
-            var position = context.Position;
-            var cancellationToken = context.CancellationToken;
-
-            var tree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
-
-            if (!TryGetStringLiteralToken(tree, position, out var stringLiteral, cancellationToken))
+            try
             {
-                return;
+                var document = context.Document;
+                var position = context.Position;
+                var cancellationToken = context.CancellationToken;
+
+                var tree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
+
+                if (!TryGetStringLiteralToken(tree, position, out var stringLiteral, cancellationToken))
+                {
+                    return;
+                }
+
+                var literalValue = stringLiteral.ToString();
+
+                context.CompletionListSpan = GetTextChangeSpan(
+                    quotedPath: literalValue,
+                    quotedPathStart: stringLiteral.SpanStart,
+                    position: position);
+
+                var pathThroughLastSlash = GetPathThroughLastSlash(
+                    quotedPath: literalValue,
+                    quotedPathStart: stringLiteral.SpanStart,
+                    position: position);
+
+                await ProvideCompletionsAsync(context, pathThroughLastSlash).ConfigureAwait(false);
             }
-
-            var literalValue = stringLiteral.ToString();
-
-            context.CompletionListSpan = GetTextChangeSpan(
-                quotedPath: literalValue,
-                quotedPathStart: stringLiteral.SpanStart,
-                position: position);
-
-            var pathThroughLastSlash = GetPathThroughLastSlash(
-                quotedPath: literalValue,
-                quotedPathStart: stringLiteral.SpanStart,
-                position: position);
-
-            await ProvideCompletionsAsync(context, pathThroughLastSlash).ConfigureAwait(false);
+            catch (Exception e) when (FatalError.ReportWithoutCrashUnlessCanceled(e))
+            {
+                // nop
+            }
         }
 
         public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options)
@@ -119,11 +128,35 @@ namespace RoslynPad.Roslyn.Completion.Providers
         }
 
         protected abstract Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash);
-        
-        protected static string GetBaseDirectory(Document document)
+
+        protected FileSystemCompletionHelper GetFileSystemCompletionHelper(
+            Document document,
+            Microsoft.CodeAnalysis.Glyph itemGlyph,
+            ImmutableArray<string> extensions,
+            CompletionItemRules completionRules)
+        {
+            var serviceOpt = document.Project.Solution.Workspace.Services.GetService<IScriptEnvironmentService>();
+            var searchPaths = serviceOpt?.MetadataReferenceSearchPaths ?? ImmutableArray<string>.Empty;
+
+            return new FileSystemCompletionHelper(
+                Microsoft.CodeAnalysis.Glyph.OpenFolder,
+                itemGlyph,
+                searchPaths,
+                GetBaseDirectory(document, serviceOpt),
+                extensions,
+                completionRules);
+        }
+
+        private static string GetBaseDirectory(Document document, IScriptEnvironmentService environmentOpt)
         {
             var result = PathUtilities.GetDirectoryName(document.FilePath);
-            return PathUtilities.IsAbsolute(result) ? result : null;
+            if (!PathUtilities.IsAbsolute(result))
+            {
+                result = environmentOpt?.BaseDirectory;
+                Debug.Assert(result == null || PathUtilities.IsAbsolute(result));
+            }
+
+            return result;
         }
     }
 }
