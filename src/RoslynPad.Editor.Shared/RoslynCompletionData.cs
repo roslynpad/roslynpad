@@ -56,7 +56,7 @@ namespace RoslynPad.Editor
             }
 
             var changes = await CompletionService.GetService(_document)
-                .GetChangeAsync(_document, _item, _completionChar).ConfigureAwait(true);
+                .GetChangeAsync(_document, _item, null).ConfigureAwait(true);
 
             var textChange = changes.TextChange;
             var document = textArea.Document;
