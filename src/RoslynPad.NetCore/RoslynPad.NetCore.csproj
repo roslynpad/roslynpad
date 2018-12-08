@@ -22,13 +22,10 @@
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
     <ProjectReference Include="..\RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Page Include="Resources\Icons.xaml" />
-  </ItemGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <ItemGroup>
       <CopyJsonHostFiles Include="../RoslynPad.HostNetCore/bin/$(Configuration)/**/RoslynPad.HostNetCore.*.json" />
     </ItemGroup>
-    <Copy SourceFiles="@(CopyJsonHostFiles)" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="@(CopyJsonHostFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 #if AVALONIA
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Media;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -36,18 +37,11 @@ using ICSharpCode.AvalonEdit.Highlighting;
 
 namespace RoslynPad.Editor
 {
-    public class CodeTextEditor : TextEditor
-#if AVALONIA
-        , IStyleable
-#endif
+    public partial class CodeTextEditor : TextEditor
     {
         private CustomCompletionWindow _completionWindow;
         private OverloadInsightWindow _insightWindow;
         private ToolTip _toolTip;
-
-#if AVALONIA
-        Type IStyleable.StyleKey => typeof(TextEditor);
-#endif
 
         public CodeTextEditor()
         {
@@ -59,29 +53,9 @@ namespace RoslynPad.Editor
                 EnableEmailHyperlinks = false,
             };
 
-            // TODO: remove this after bug fix
-#if AVALONIA
-            var lineMargin = new LineNumberMargin { Margin = new Thickness(0, 0, 10, 0) };
-            lineMargin[~TextBlock.ForegroundProperty] = this[~LineNumbersForegroundProperty];
-            TextArea.LeftMargins.Insert(0, lineMargin);
-#else
-            ShowLineNumbers = true;
-#endif
-
             TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
             TextArea.TextEntering += OnTextEntering;
             TextArea.TextEntered += OnTextEntered;
-
-#if AVALONIA
-            PointerHover += OnMouseHover;
-            PointerHoverStopped += OnMouseHoverStopped;
-#else
-            MouseHover += OnMouseHover;
-            MouseHoverStopped += OnMouseHoverStopped;
-
-            ToolTipService.SetInitialShowDelay(this, 0);
-            SearchReplacePanel.Install(this);
-#endif
 
             var commandBindings = TextArea.CommandBindings;
             var deleteLineCommand = commandBindings.OfType<CommandBinding>().FirstOrDefault(x =>
@@ -94,12 +68,16 @@ namespace RoslynPad.Editor
             var contextMenu = new ContextMenu();
             contextMenu.SetItems(new[]
             {
-                new MenuItem {Command = ApplicationCommands.Cut},
-                new MenuItem {Command = ApplicationCommands.Copy},
-                new MenuItem {Command = ApplicationCommands.Paste}
+                new MenuItem { Command = ApplicationCommands.Cut },
+                new MenuItem { Command = ApplicationCommands.Copy },
+                new MenuItem { Command = ApplicationCommands.Paste }
             });
             ContextMenu = contextMenu;
+
+            Initialize();
         }
+
+        partial void Initialize();
 
         public static readonly StyledProperty<Brush> CompletionBackgroundProperty = CommonProperty.Register<CodeTextEditor, Brush>(
             nameof(CompletionBackground), CreateDefaultCompletionBackground());
@@ -217,16 +195,15 @@ namespace RoslynPad.Editor
                 }
             }
 
-            if (args.ContentToShow == null) return;
+            if (args.ContentToShow == null)
+            {
+                return;
+            }
 
             if (_toolTip == null)
             {
                 _toolTip = new ToolTip { MaxWidth = 400 };
-#if !AVALONIA
-                _toolTip.Closed += (o, a) => _toolTip = null;
-                ToolTipService.SetInitialShowDelay(_toolTip, 0);
-                _toolTip.PlacementTarget = this; // required for property inheritance
-#endif
+                InitializeToolTip();
             }
 
             if (args.ContentToShow is string stringContent)
@@ -239,15 +216,21 @@ namespace RoslynPad.Editor
             }
             else
             {
-                _toolTip.SetContent(this, args.ContentToShow);
+                _toolTip.SetContent(this, new ContentPresenter
+                {
+                    Content = args.ContentToShow,
+                    MaxWidth = 400
+                });
             }
 
             e.Handled = true;
             _toolTip.Open(this);
-#if AVALONIA
-            _toolTip.InvalidateVisual();
-#endif
+
+            AfterToolTipOpen();
         }
+
+        partial void InitializeToolTip();
+        partial void AfterToolTipOpen();
 
         #region Open & Save File
 
@@ -315,11 +298,9 @@ namespace RoslynPad.Editor
                     {
                         Provider = results.OverloadProvider,
                         Background = CompletionBackground,
-                        // TODO: style
-#if !AVALONIA
-                        Style = TryFindResource(typeof(InsightWindow)) as Style
-#endif
                     };
+
+                    InitializeInsightWindow();
 
                     _insightWindow.Closed += (o, args) => _insightWindow = null;
                     _insightWindow.Show();
@@ -335,12 +316,11 @@ namespace RoslynPad.Editor
                 _completionWindow = new CustomCompletionWindow(TextArea)
                 {
                     MinWidth = 300,
-#if !AVALONIA
-                    Background = CompletionBackground,
-#endif
                     CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion || triggerMode == TriggerMode.Text,
                     UseHardSelection = results.UseHardSelection,
                 };
+
+                InitializeCompletionWindow();
 
                 if (completionChar != null && char.IsLetterOrDigit(completionChar.Value))
                 {
@@ -364,6 +344,10 @@ namespace RoslynPad.Editor
                 _completionWindow.Show();
             }
         }
+
+        partial void InitializeInsightWindow();
+
+        partial void InitializeCompletionWindow();
 
         private void OnTextEntering(object sender, TextCompositionEventArgs args)
         {
@@ -393,7 +377,7 @@ namespace RoslynPad.Editor
 
         #endregion
 
-        private class CustomCompletionWindow : CompletionWindow
+        private partial class CustomCompletionWindow : CompletionWindow
         {
             private bool _isSoftSelectionActive;
             private KeyEventArgs _keyDownArgs;
@@ -402,41 +386,11 @@ namespace RoslynPad.Editor
             {
                 _isSoftSelectionActive = true;
                 CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
-                CompletionList.ListBox.SetBorderThickness(
-// TODO: find a better way
-#if AVALONIA
-                    1
-#else
-                    0
-#endif
-                    );
 
-#if AVALONIA
-                CompletionList.ListBox.PointerPressed +=
-#else
-                CompletionList.ListBox.PreviewMouseDown +=
-#endif
-                    (o, e) => _isSoftSelectionActive = false;
-
-#if AVALONIA
-                // HACK alert - this is due to an Avalonia bug that assumes the parent of a PopupRoot must be a Popup (in our case it's a Window)
-                var toolTip = LogicalChildren.OfType<Avalonia.Controls.Primitives.Popup>().First();
-                LogicalChildren.Remove(toolTip);
-                var logicalChildrenProperty = typeof(StyledElement).GetProperty("LogicalChildren", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var logicalChildren = (Avalonia.Collections.IAvaloniaList<Avalonia.LogicalTree.ILogical>)logicalChildrenProperty.GetValue(textArea);
-                logicalChildren.Add(toolTip);
-#endif
+                Initialize();
             }
 
-#if AVALONIA
-            protected override void DetachEvents()
-            {
-                // TODO: temporary workaround until SetParent(null) is removed
-                var selected = CompletionList.SelectedItem;
-                base.DetachEvents();
-                CompletionList.SelectedItem = selected;
-            }
-#endif
+            partial void Initialize();
 
             private void CompletionListOnSelectionChanged(object sender, SelectionChangedEventArgs args)
             {

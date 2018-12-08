@@ -19,6 +19,14 @@
         <KeyBinding Gesture="F2"
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </UserControl.KeyBindings>
+    <UserControl.Styles>
+        <Style Selector="DrawingPresenter.Icon">
+            <Setter Property="Width"
+                            Value="16" />
+            <Setter Property="Height"
+                            Value="16" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,5,*">
         <StackPanel Grid.Row="0"
                     Orientation="Horizontal">
@@ -41,23 +49,12 @@
                     <Setter Property="Background"
                             Value="#eeeeee" />
                 </Style>
-                <Style Selector="Button DrawingPresenter">
-                    <Setter Property="Width"
-                            Value="16" />
-                    <Setter Property="Height"
-                            Value="16" />
-                </Style>
-                <Style Selector="MenuItem DrawingPresenter">
-                    <Setter Property="Width"
-                            Value="16" />
-                    <Setter Property="Height"
-                            Value="16" />
-                </Style>
             </StackPanel.Styles>
             <Button Command="{Binding RunCommand, Mode=OneTime}"
                     ToolTip.Tip="Run (F5)">
                 <Grid>
-                    <DrawingPresenter Drawing="{DynamicResource Run}" />
+                    <DrawingPresenter Classes="Icon"
+                                      Drawing="{DynamicResource Run}" />
                     <ProgressBar VerticalAlignment="Bottom"
                                  Height="4"
                                  IsIndeterminate="{Binding IsRunning}"
@@ -105,12 +102,14 @@
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
                             <Grid>
-                                <DrawingPresenter Drawing="{StaticResource NuGet}" />
+                                <DrawingPresenter Classes="Icon"
+                                                  Drawing="{StaticResource NuGet}" />
                                 <ProgressBar VerticalAlignment="Bottom"
                                              Height="4"
+                                             MinWidth="0"
                                              BorderThickness="0"
-                                             IsIndeterminate="{Binding IsBusy}"
-                                             IsVisible="{Binding IsBusy}" />
+                                             IsIndeterminate="{Binding IsSearching}"
+                                             IsVisible="{Binding IsSearching}" />
                             </Grid>
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type ui:PackageData}">
@@ -145,14 +144,27 @@
                      Text="{Binding NuGet.SearchTerm}"
                      Watermark="Search NuGet (Ctrl+T)"
                      Width="200" />
-            <!--
-                     PreviewKeyDown="SearchTerm_OnPreviewKeyDown"
-            -->
             <Decorator VerticalAlignment="Center">
                 <CheckBox IsChecked="{Binding NuGet.Prerelease}"
                           ToolTip.Tip="Include prerelease packages"
                           Content="Prerelease" />
             </Decorator>
+            <ContentPresenter Content="{Binding NuGet}">
+                <ContentPresenter.ContentTemplate>
+                    <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
+                        <Grid>
+                            <DrawingPresenter Classes="Icon"
+                                              Drawing="{StaticResource NuGet}" />
+                            <ProgressBar VerticalAlignment="Bottom"
+                                             Height="4"
+                                             MinWidth="0"
+                                             BorderThickness="0"
+                                             IsIndeterminate="{Binding IsRestoring}"
+                                             IsVisible="{Binding IsRestoring}" />
+                        </Grid>
+                    </DataTemplate>
+                </ContentPresenter.ContentTemplate>
+            </ContentPresenter>
             <Separator />
             <Button Content="{StaticResource FormatDocument}"
                     ToolTip.Tip="Format Document (Ctrl+D)"
@@ -167,7 +179,7 @@
                     ToolTip.Tip="Rename Symbol (F2)"
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
         </StackPanel>
-        
+
         <Editor:RoslynCodeEditor Name="Editor"
                                  ContextActionsIcon="{DynamicResource Bulb}"
                                  Grid.Row="1" />

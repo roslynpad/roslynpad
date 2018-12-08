@@ -1,12 +1,12 @@
-﻿using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-using RoslynPad.Editor;
-using System;
-using Microsoft.CodeAnalysis.Text;
-using RoslynPad.UI;
-using RoslynPad.Roslyn;
-using RoslynPad.Runtime;
+﻿using System;
 using System.Runtime.InteropServices;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+using AvaloniaEdit.Document;
+using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Editor;
+using RoslynPad.Runtime;
+using RoslynPad.UI;
 
 namespace RoslynPad
 {
@@ -21,25 +21,25 @@ namespace RoslynPad
 
             _editor = this.FindControl<RoslynCodeEditor>("Editor");
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                _editor.FontFamily = "Consolas";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                _editor.FontFamily = "Menlo";
-            }
-            else
-            {
-                _editor.FontFamily = "Monospace";
-            }
+            _editor.FontFamily = GetPlatformFontFamily();
 
             DataContextChanged += OnDataContextChanged;
         }
 
-        private object Get(string s)
+        private static string GetPlatformFontFamily()
         {
-            return App.Current.FindResource(s);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "Consolas";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "Menlo";
+            }
+            else
+            {
+                return "Monospace";
+            }
         }
 
         private async void OnDataContextChanged(object sender, EventArgs args)
@@ -47,7 +47,7 @@ namespace RoslynPad
             _viewModel = DataContext as OpenDocumentViewModel;
             if (_viewModel == null) return;
 
-            //_viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
             _viewModel.EditorFocus += (o, e) => _editor.Focus();
 
@@ -65,6 +65,15 @@ namespace RoslynPad
                 this);
 
             _editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+        }
+
+        private void NuGetOnPackageInstalled(PackageData package)
+        {
+            this.GetDispatcher().InvokeAsync(() =>
+            {
+                var text = $"#r \"nuget:{package.Id}/{package.Version}\"{Environment.NewLine}";
+                _editor.Document.Insert(0, text, AnchorMovementType.Default);
+            });
         }
 
         private void OnError(ExceptionResultObject e)
