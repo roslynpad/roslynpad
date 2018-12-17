@@ -71,7 +71,7 @@ namespace RoslynPad.Roslyn
         public RoslynHost(IEnumerable<Assembly> additionalAssemblies = null,
             RoslynHostReferences references = null)
         {
-            if (references == null) references = RoslynHostReferences.Default;
+            if (references == null) references = RoslynHostReferences.Empty;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
@@ -99,11 +99,13 @@ namespace RoslynPad.Roslyn
 
             _documentationProviderService = GetService<IDocumentationProviderService>();
 
-            DefaultReferences = references.GetReferences(_documentationProviderService.GetDocumentationProvider);
+            DefaultReferences = references.GetReferences(DocumentationProviderFactory);
             DefaultImports = references.Imports;
 
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
+
+        public Func<string, DocumentationProvider> DocumentationProviderFactory => _documentationProviderService.GetDocumentationProvider;
 
         protected virtual IEnumerable<Assembly> GetDefaultCompositionAssemblies()
         {
