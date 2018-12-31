@@ -121,6 +121,7 @@ namespace RoslynPad.UI
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
             ToggleLiveModeCommand = commands.Create(() => IsLiveMode = !IsLiveMode);
+            RestoreNugetPackagesCommand = commands.Create(() => RestoreNugetPackages());
 
             ILText = DefaultILText;
         }
@@ -462,6 +463,13 @@ namespace RoslynPad.UI
         public IDelegateCommand UncommentSelectionCommand { get; }
 
         public IDelegateCommand RenameSymbolCommand { get; }
+
+        public IDelegateCommand RestoreNugetPackagesCommand { get;  }
+
+        public void RestoreNugetPackages()
+        {
+
+        }
 
         public bool IsRunning
         {
