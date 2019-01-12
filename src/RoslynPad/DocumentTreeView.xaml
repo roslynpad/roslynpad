@@ -65,7 +65,7 @@
             <Setter Property="Width"
                     Value="22" />
             <Setter Property="Padding"
-                    Value="2"/>
+                    Value="2" />
         </Style>
 
     </FrameworkElement.Resources>
@@ -84,12 +84,12 @@
                               Style="{StaticResource SearchButtonStyle}"
                               IsChecked="{Binding SearchUsingRegex}"
                               ToolTip="Use Regular Expressions"
-                              Content="{StaticResource RegularExpression}"/>
+                              Content="{StaticResource RegularExpression}" />
                 <ToggleButton DockPanel.Dock="Right"
                               Style="{StaticResource SearchButtonStyle}"
                               IsChecked="{Binding SearchFileContents}"
                               ToolTip="Search File Contents"
-                              Content="{StaticResource FileCollection}"/>
+                              Content="{StaticResource FileCollection}" />
                 <Button DockPanel.Dock="Right"
                         Style="{StaticResource SearchButtonStyle}"
                         Command="{Binding ClearSearchCommand}"
