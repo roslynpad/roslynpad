@@ -9,11 +9,13 @@ namespace RoslynPad.Roslyn
 {
     public class CachedScriptMetadataResolver : MetadataReferenceResolver
     {
+        // hack - we need to return something for `#r`s
+        // TODO: replace with an in-memory empty assembly (byte[])
+        private static readonly ImmutableArray<PortableExecutableReference> _unresolved = ImmutableArray.Create(MetadataReference.CreateFromFile(typeof(CachedScriptMetadataResolver).Assembly.Location));
+
         private readonly ScriptMetadataResolver _inner;
         private readonly ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>> _cache;
-
-        private ImmutableArray<PortableExecutableReference> _objectMetadataReference;
-
+        
         public CachedScriptMetadataResolver(string workingDirectory, bool useCache = false)
         {
             _inner = ScriptMetadataResolver.Default.WithBaseDirectory(workingDirectory);
@@ -46,12 +48,7 @@ namespace RoslynPad.Roslyn
             if (reference.StartsWith("nuget:", StringComparison.InvariantCultureIgnoreCase) ||
                 reference.StartsWith("$NuGet", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (_objectMetadataReference.IsDefault)
-                {
-                    _objectMetadataReference = ImmutableArray.Create(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
-                }
-
-                return _objectMetadataReference;
+                return _unresolved;
             }
 
             if (_cache == null)

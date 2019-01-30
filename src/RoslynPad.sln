@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28315.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
@@ -11,9 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common", "RoslynP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host32", "RoslynPad.Host\RoslynPad.Host32.csproj", "{CA953492-94C7-4F25-9CF2-EB70AA07A55F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Host32", "RoslynPad.Host\RoslynPad.Host32.csproj", "{CA953492-94C7-4F25-9CF2-EB70AA07A55F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Host64", "RoslynPad.Host64\RoslynPad.Host64.csproj", "{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Host64", "RoslynPad.Host64\RoslynPad.Host64.csproj", "{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Hosting", "RoslynPad.Hosting\RoslynPad.Hosting.csproj", "{BBAC330F-94A5-4838-87C8-98055079626D}"
 EndProject
@@ -39,7 +39,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{E219
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Roslyn", "Roslyn", "{33A4C07C-3BBB-4BA5-8A4E-CC22883B8ED5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Windows.Test", "RoslynPad.Editor.Windows.Test\RoslynPad.Editor.Windows.Test.csproj", "{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows.Test", "RoslynPad.Editor.Windows.Test\RoslynPad.Editor.Windows.Test.csproj", "{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -70,10 +70,9 @@ Global
 		{CA953492-94C7-4F25-9CF2-EB70AA07A55F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA953492-94C7-4F25-9CF2-EB70AA07A55F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA953492-94C7-4F25-9CF2-EB70AA07A55F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Debug|Any CPU.Build.0 = Debug|x64
+		{4DAB681A-D6CE-4B39-8ED1-6218BB6679FD}.Release|Any CPU.ActiveCfg = Release|x64
 		{BBAC330F-94A5-4838-87C8-98055079626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BBAC330F-94A5-4838-87C8-98055079626D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBAC330F-94A5-4838-87C8-98055079626D}.Release|Any CPU.ActiveCfg = Release|Any CPU

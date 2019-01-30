@@ -2,14 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Commands;
@@ -22,6 +20,7 @@ using NuGet.ProjectModel;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
+using RoslynPad.Roslyn.Completion.Providers;
 using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
 using PackageSource = NuGet.Configuration.PackageSource;
@@ -30,8 +29,8 @@ using Settings = NuGet.Configuration.Settings;
 
 namespace RoslynPad.UI
 {
-    [Export, Shared]
-    public sealed class NuGetViewModel : NotificationObject
+    [Export, Export(typeof(INuGetCompletionProvider)), Shared]
+    public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvider
     {
         private const int MaxSearchResults = 50;
 
@@ -102,16 +101,11 @@ namespace RoslynPad.UI
             return Array.Empty<PackageData>();
         }
 
-        internal enum ProjectLockReadMode
-        {
-            Compile,
-            Runtime
-        }
-
-        internal static List<string> ReadProjectLockJson(string packagesDirectory, TextReader reader, string framework, ProjectLockReadMode readMode)
+        internal static (List<string> compile, List<string> runtime) ReadProjectLockJson(string packagesDirectory, TextReader reader, string framework)
         {
             var obj = LoadJson(reader);
-            var list = new List<string>();
+            var compile = new List<string>();
+            var runtime = new List<string>();
 
             var targets = (JObject)obj["targets"];
             foreach (var target in targets)
@@ -121,28 +115,36 @@ namespace RoslynPad.UI
                     foreach (var package in (JObject)target.Value)
                     {
                         var packageRoot = Path.Combine(packagesDirectory, package.Key);
-                        var section = (JObject)((JObject)package.Value)[readMode.ToString().ToLowerInvariant()];
-                        if (section == null)
-                        {
-                            continue;
-                        }
-                        foreach (var item in section)
-                        {
-                            var relativePath = item.Key;
-                            // Ignore placeholder "_._" files.
-                            var name = Path.GetFileName(relativePath);
-                            if (string.Equals(name, "_._", StringComparison.InvariantCulture))
-                            {
-                                continue;
-                            }
-
-                            list.Add(Path.Combine(packageRoot, relativePath));
-                        }
+                        ReadLockFileSection(packageRoot, package.Value, compile, nameof(compile));
+                        ReadLockFileSection(packageRoot, package.Value, runtime, nameof(runtime));
                     }
                     break;
                 }
             }
-            return list;
+
+            return (compile, runtime);
+        }
+
+        private static void ReadLockFileSection(string packageRoot, JToken root, List<string> items, string sectionName)
+        {
+            var section = (JObject)((JObject)root)[sectionName];
+            if (section == null)
+            {
+                return;
+            }
+
+            foreach (var item in section)
+            {
+                var relativePath = item.Key;
+                // Ignore placeholder "_._" files.
+                var name = Path.GetFileName(relativePath);
+                if (string.Equals(name, "_._", StringComparison.InvariantCulture))
+                {
+                    continue;
+                }
+
+                items.Add(Path.Combine(packageRoot, relativePath));
+            }
         }
 
         private static JObject LoadJson(TextReader reader)
@@ -212,7 +214,7 @@ namespace RoslynPad.UI
                     HideWarningsAndErrors = true
                 };
 
-                var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken);
+                var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken).ConfigureAwait(false);
 
                 var result = new RestoreResult
                 {
@@ -259,15 +261,35 @@ namespace RoslynPad.UI
                 FrameworkName = restoreParameters.TargetFramework
             };
 
-            foreach (var package in restoreParameters.Packages)
+            if (restoreParameters.TargetFramework.Framework == ".NETCoreApp")
             {
-                targetFramework.Dependencies.Add(new LibraryDependency
+                targetFramework.Dependencies.Add(new LibraryDependency(
+                    libraryRange: new LibraryRange("Microsoft.NETCore.App", new VersionRange(new NuGetVersion(restoreParameters.TargetFramework.Version)), LibraryDependencyTarget.Package),
+                    type: LibraryDependencyType.Platform,
+                    includeType: LibraryIncludeFlags.All,
+                    suppressParent: LibraryIncludeFlags.All,
+                    noWarn: Array.Empty<NuGetLogCode>(),
+                    autoReferenced: true));
+            }
+
+            if (restoreParameters.Packages != null)
+            {
+                foreach (var package in restoreParameters.Packages)
                 {
-                    LibraryRange = new LibraryRange(package.Id, package.VersionRange, LibraryDependencyTarget.Package)
-                });
+                    targetFramework.Dependencies.Add(new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange(package.Id, package.VersionRange, LibraryDependencyTarget.Package)
+                    });
+                }
             }
 
             return targetFramework;
+        }
+
+        async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
+        {
+            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
+            return packages;
         }
 
         #region Inner Classes
@@ -319,16 +341,17 @@ namespace RoslynPad.UI
     public class NuGetRestoreResult
     {
         public IList<string> CompileReferences { get; set; }
+        public IList<string> RuntimeReferences { get; set; }
     }
 
     [Export]
     public sealed class NuGetDocumentViewModel : NotificationObject
     {
         private readonly NuGetViewModel _nuGetViewModel;
-        private readonly HashSet<PackageRef> _referencedPackages;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly SemaphoreSlim _restoreLock;
 
+        private HashSet<PackageRef> _referencedPackages;
         private bool _isRestoring;
         private CancellationTokenSource _restoreCts;
         private string _searchTerm;
@@ -349,7 +372,6 @@ namespace RoslynPad.UI
             _nuGetViewModel = nuGetViewModel;
             _telemetryProvider = telemetryProvider;
             _restoreLock = new SemaphoreSlim(1, 1);
-            _referencedPackages = new HashSet<PackageRef>();
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
 
@@ -421,9 +443,17 @@ namespace RoslynPad.UI
         {
             var changed = false;
 
-            if ((packages == null || packages.Count == 0) && _referencedPackages.Count > 0)
+            if (_referencedPackages == null || (_referencedPackages.Count > 0 && (packages == null || packages.Count == 0)))
             {
-                _referencedPackages.Clear();
+                if (_referencedPackages == null)
+                {
+                    _referencedPackages = new HashSet<PackageRef>();
+                }
+                else
+                {
+                    _referencedPackages.Clear();
+                }
+
                 changed = true;
             }
             else
@@ -433,11 +463,14 @@ namespace RoslynPad.UI
                     changed = true;
                 }
 
-                foreach (var package in packages)
+                if (packages != null)
                 {
-                    if (_referencedPackages.Add(package))
+                    foreach (var package in packages)
                     {
-                        changed = true;
+                        if (_referencedPackages.Add(package))
+                        {
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -531,17 +564,11 @@ namespace RoslynPad.UI
 
         private void RefreshPackages()
         {
-            if (_buildPath == null) return;
+            if (_buildPath == null || _targetFramework == null) return;
 
             _restoreCts?.Cancel();
 
             var packages = _referencedPackages?.ToArray();
-            if (packages == null || packages.Length == 0)
-            {
-                RestoreFailed = false;
-                RestoreErrors = null;
-                RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = Array.Empty<string>() });
-            }
 
             var restoreCts = new CancellationTokenSource();
             var cancellationToken = restoreCts.Token;
@@ -552,7 +579,7 @@ namespace RoslynPad.UI
 
         private async Task RefreshPackagesAsync(PackageRef[] packages, CancellationToken cancellationToken)
         {
-            await _restoreLock.WaitAsync(cancellationToken);
+            await _restoreLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             IsRestoring = true;
             try
             {
@@ -597,19 +624,16 @@ namespace RoslynPad.UI
         private void ParseLockFile(CancellationToken cancellationToken)
         {
             var lockFilePath = Path.Combine(_buildPath, "project.assets.json");
-            var referencePaths = ReadProjectLockJson(lockFilePath);
+
+            List<string> compile, runtime;
+            using (var reader = File.OpenText(lockFilePath))
+            {
+                (compile, runtime) = NuGetViewModel.ReadProjectLockJson(_nuGetViewModel.GlobalPackageFolder, reader, _targetFramework.DotNetFrameworkName);
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = referencePaths });
-        }
-
-        private List<string> ReadProjectLockJson(string lockFilePath)
-        {
-            using (var reader = File.OpenText(lockFilePath))
-            {
-                return NuGetViewModel.ReadProjectLockJson(_nuGetViewModel.GlobalPackageFolder, reader, _targetFramework.DotNetFrameworkName, NuGetViewModel.ProjectLockReadMode.Compile);
-            }
+            RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = compile, RuntimeReferences = runtime });
         }
     }
 
@@ -657,7 +681,7 @@ namespace RoslynPad.UI
         public bool NoOp { get; set; }
     }
 
-    public sealed class PackageData
+    public sealed class PackageData : INuGetPackage
     {
         private readonly IPackageSearchMetadata _package;
 
@@ -670,6 +694,29 @@ namespace RoslynPad.UI
         public string Id { get; }
         public NuGetVersion Version { get; }
         public ImmutableArray<PackageData> OtherVersions { get; private set; }
+
+        IEnumerable<string> INuGetPackage.Versions
+        {
+            get
+            {
+                if (!OtherVersions.IsDefaultOrEmpty)
+                {
+                    var lastStable = OtherVersions.FirstOrDefault(v => !v.Version.IsPrerelease);
+                    if (lastStable != null)
+                    {
+                        yield return lastStable.Version.ToString();
+                    }
+
+                    foreach (var version in OtherVersions)
+                    {
+                        if (version != lastStable)
+                        {
+                            yield return version.Version.ToString();
+                        }
+                    }
+                }
+            }
+        }
 
         public PackageData(IPackageSearchMetadata package)
         {

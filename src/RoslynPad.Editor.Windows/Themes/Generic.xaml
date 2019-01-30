@@ -171,7 +171,7 @@
                          Height="24"
                          Margin="3 3 3 0"
                          Text="{Binding ReplacePattern, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
-               
+
                 <StackPanel Orientation="Horizontal"
                             Grid.Column="2"
                             Grid.Row="0">
@@ -273,6 +273,10 @@
     </ControlTemplate>
 
     <Style TargetType="windows:SearchReplacePanel">
+        <Setter Property="FontSize"
+                Value="{x:Static SystemFonts.MessageFontSize}" />
+        <Setter Property="FontFamily"
+                Value="{x:Static SystemFonts.MessageFontFamily}" />
         <Setter Property="Template"
                 Value="{StaticResource SearchReplacePanelTemplate}" />
     </Style>

@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using Microsoft.CodeAnalysis;
-using RoslynPad.Roslyn;
 
 namespace RoslynPad.Hosting
 {
@@ -10,9 +9,10 @@ namespace RoslynPad.Hosting
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class InitializationParameters
     {
-        public InitializationParameters(IList<string> references, IList<string> imports, string workingDirectory, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
+        public InitializationParameters(IList<string> compileReferences, IList<string> runtimeReferences, IList<string> imports, string workingDirectory, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
         {
-            References = references;
+            CompileReferences = compileReferences;
+            RuntimeReferences = runtimeReferences;
             Imports = imports;
             WorkingDirectory = workingDirectory;
             ShadowCopyAssemblies = shadowCopyAssemblies;
@@ -22,7 +22,9 @@ namespace RoslynPad.Hosting
         }
 
         [DataMember]
-        public IList<string> References { get; set; }
+        public IList<string> CompileReferences { get; set; }
+        [DataMember]
+        public IList<string> RuntimeReferences { get; set; }
         [DataMember]
         public IList<string> Imports { get; set; }
         [DataMember]

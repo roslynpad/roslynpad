@@ -16,7 +16,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
     internal sealed class GlobalAssemblyCacheCompletionHelper
     {
         private static readonly Lazy<List<string>> s_lazyAssemblySimpleNames =
-            new Lazy<List<string>>(() => GlobalAssemblyCache.Instance.GetAssemblySimpleNames().ToList());
+             new Lazy<List<string>>(() => GlobalAssemblyCache.Instance.GetAssemblySimpleNames().ToList());
 
         private readonly CompletionItemRules _itemRules;
 
@@ -42,7 +42,8 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 var partialName = directoryPath.Substring(0, comma);
                 foreach (var identity in GetAssemblyIdentities(partialName))
                 {
-                    result.Add(CommonCompletionItem.Create(identity.GetDisplayName(), glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
+                    result.Add(CommonCompletionItem.Create(
+                        identity.GetDisplayName(), glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
                 }
             }
             else
@@ -50,7 +51,8 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 foreach (var displayName in s_lazyAssemblySimpleNames.Value)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    result.Add(CommonCompletionItem.Create(displayName, glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
+                    result.Add(CommonCompletionItem.Create(
+                        displayName, glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
                 }
             }
 

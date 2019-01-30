@@ -69,7 +69,6 @@ namespace RoslynPad.UI
             set => SetProperty(ref _sendErrors, value);
         }
 
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool EnableBraceCompletion
         {
             get => _enableBraceCompletion;
@@ -159,7 +158,7 @@ namespace RoslynPad.UI
 
             try
             {
-                var serializer = new JsonSerializer();
+                var serializer = new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Ignore };
                 using (var reader = File.OpenText(path))
                 {
                     serializer.Populate(reader, this);

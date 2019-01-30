@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -21,5 +20,9 @@
     <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
-  <Import Project="..\RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">
+      <Link>Shared\%(RecursivePath)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
 </Project>

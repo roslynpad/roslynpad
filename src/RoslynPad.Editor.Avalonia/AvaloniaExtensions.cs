@@ -82,9 +82,9 @@ namespace RoslynPad.Editor
         public static bool HasModifiers(this KeyEventArgs args, InputModifiers modifier) =>
             (args.Modifiers & modifier) == modifier;
 
-        public static void Open(this ToolTip toolTip, IControl control) => ToolTip.SetIsOpen(toolTip, true);
+        public static void Open(this ToolTip toolTip, Control control) => ToolTip.SetIsOpen(control, true);
 
-        public static void Close(this ToolTip toolTip, IControl control) => ToolTip.SetIsOpen(toolTip, false);
+        public static void Close(this ToolTip toolTip, Control control) => ToolTip.SetIsOpen(control, false);
 
         public static void SetContent(this ToolTip toolTip, Control control, object content) => ToolTip.SetTip(control, content);
 

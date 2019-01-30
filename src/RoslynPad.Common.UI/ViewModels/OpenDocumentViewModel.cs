@@ -131,16 +131,28 @@ namespace RoslynPad.UI
             var document = host.GetDocument(DocumentId);
             var project = document.Project;
 
+            bool useDesktopReferences = Platform?.UseDesktopReferences == true;
+
             var nugetReferences = restoreResult.CompileReferences.Select(x => host.CreateMetadataReference(x));
-            var references = host.DefaultReferences.AddRange(nugetReferences);
+            var references = useDesktopReferences ? MainViewModel.DesktopReferences.AddRange(nugetReferences) : nugetReferences;
+            references = references.Concat(MainViewModel.RoslynHost.DefaultReferences);
 
             project = project.WithMetadataReferences(references);
             document = project.GetDocument(DocumentId);
 
             host.UpdateDocument(document);
 
-            _executionHostParameters.References = GetReferencePaths(references);
+            _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host, useDesktopReferences);
+            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences);
+
             var task = _executionHost.Update(_executionHostParameters);
+        }
+
+        private string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host, bool useDesktopReferences)
+        {
+            return useDesktopReferences
+                ? GetReferencePaths(host.DefaultReferences.Concat(MainViewModel.DesktopReferences)).Concat(references).ToArray()
+                : GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
         }
 
         public event Action ResultsAvailable;
@@ -186,7 +198,8 @@ namespace RoslynPad.UI
             var roslynHost = MainViewModel.RoslynHost;
 
             _executionHostParameters = new InitializationParameters(
-                GetReferencePaths(roslynHost.DefaultReferences),
+                Array.Empty<string>(), // will be updated during NuGet restore
+                Array.Empty<string>(),
                 roslynHost.DefaultImports, WorkingDirectory);
             _executionHost = new ExecutionHost(_executionHostParameters);
 
@@ -197,9 +210,9 @@ namespace RoslynPad.UI
             Platform = AvailablePlatforms.FirstOrDefault();
         }
 
-        private IList<string> GetReferencePaths(IEnumerable<MetadataReference> references)
+        private IEnumerable<string> GetReferencePaths(IEnumerable<MetadataReference> references)
         {
-            return references.OfType<PortableExecutableReference>().Select(x => x.FilePath).ToImmutableArray();
+            return references.OfType<PortableExecutableReference>().Select(x => x.FilePath);
         }
 
         private async Task RenameSymbol()
@@ -542,7 +555,7 @@ namespace RoslynPad.UI
         private async Task UpdatePackages()
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
-            var syntaxRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
+            var syntaxRoot = await document.GetSyntaxRootAsync().ConfigureAwait(true);
             var packages = GetNuGetPackageReferences(syntaxRoot);
 
             NuGet.UpdatePackageReferences(packages);
@@ -567,11 +580,11 @@ namespace RoslynPad.UI
 
                 if (HasPrefix(NuGetPrefix, value))
                 {
-                    (id, version) = GetNuGetReference(NuGetPrefix, value);
+                    (id, version) = ParseNuGetReference(NuGetPrefix, value);
                 }
                 else if (HasPrefix(OldNuGetPrefix, value))
                 {
-                    (id, version) = GetOldNuGetReference(OldNuGetPrefix, value);
+                    (id, version) = GetOldNuGetReference(value);
                     if (id == null)
                     {
                         continue;
@@ -599,7 +612,7 @@ namespace RoslynPad.UI
             return packages;
         }
 
-        private (string id, string version) GetOldNuGetReference(string prefix, string value)
+        private static (string id, string version) GetOldNuGetReference(string value)
         {
             var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (split.Length >= 3)
@@ -610,7 +623,7 @@ namespace RoslynPad.UI
             return (null, null);
         }
 
-        private static (string id, string version) GetNuGetReference(string prefix, string value)
+        private static (string id, string version) ParseNuGetReference(string prefix, string value)
         {
             string id, version;
 

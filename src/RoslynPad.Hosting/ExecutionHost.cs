@@ -461,10 +461,10 @@ namespace RoslynPad.Hosting
             private readonly SynchronizationContext _syncContext;
             private readonly SemaphoreSlim _dumpLock;
 
+            private InteractiveAssemblyLoader _assemblyLoader;
             private ScriptOptions _scriptOptions;
             private CSharpParseOptions _parseOptions;
             private string _workingDirectory;
-            private bool _shadowCopyAssemblies;
             private OptimizationLevel _optimizationLevel;
             private bool _checkOverflow;
             private bool _allowUnsafe;
@@ -504,23 +504,52 @@ namespace RoslynPad.Hosting
             {
                 _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.Latest);
 
-                var initializationParameters = message.Parameters;
+                var parameters = message.Parameters;
 
-                _workingDirectory = initializationParameters.WorkingDirectory;
+                _workingDirectory = parameters.WorkingDirectory;
 
                 var scriptOptions = _scriptOptions
-                    .WithReferences(initializationParameters.References)
-                    .WithImports(initializationParameters.Imports)
-                    .WithMetadataResolver(new CachedScriptMetadataResolver(initializationParameters.WorkingDirectory));
+                    .WithReferences(parameters.CompileReferences.Select(p => MetadataReference.CreateFromFile(p)))
+                    .WithImports(parameters.Imports)
+                    .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
 
                 _scriptOptions = scriptOptions;
 
-                _shadowCopyAssemblies = initializationParameters.ShadowCopyAssemblies;
-                _optimizationLevel = initializationParameters.OptimizationLevel;
-                _checkOverflow = initializationParameters.CheckOverflow;
-                _allowUnsafe = initializationParameters.AllowUnsafe;
+                _optimizationLevel = parameters.OptimizationLevel;
+                _checkOverflow = parameters.CheckOverflow;
+                _allowUnsafe = parameters.AllowUnsafe;
+
+                if (_assemblyLoader == null)
+                {
+                    _assemblyLoader = parameters.ShadowCopyAssemblies
+                            ? new InteractiveAssemblyLoader(
+                                new MetadataShadowCopyProvider(Path.GetTempPath(), SystemNoShadowCopyDirectories.Value))
+                            : null;
+                }
+
+                LoadReferences(parameters.RuntimeReferences);
 
                 return Task.CompletedTask;
+            }
+
+            private void LoadReferences(IEnumerable<string> referencePaths)
+            {
+                foreach (var referencePath in referencePaths)
+                {
+                    AssemblyName name;
+                    try
+                    {
+                        name = AssemblyName.GetAssemblyName(referencePath);
+                    }
+                    catch
+                    {
+                        // TODO: log
+                        continue;
+                    }
+
+                    var id = new AssemblyIdentity(name.Name, name.Version, name.CultureName, name.GetPublicKeyToken().ToImmutableArray());
+                    _assemblyLoader.RegisterDependency(id, referencePath);
+                }
             }
 
             private void OnDumped(DumpData data)
@@ -707,10 +736,7 @@ namespace RoslynPad.Hosting
                 var script = new ScriptRunner(code, _parseOptions, outputKind, platform,
                     options.MetadataReferences, options.Imports,
                     options.FilePath, _workingDirectory, options.MetadataResolver,
-                    assemblyLoader: _shadowCopyAssemblies
-                        ? new InteractiveAssemblyLoader(
-                            new MetadataShadowCopyProvider(Path.GetTempPath(), SystemNoShadowCopyDirectories.Value))
-                        : null,
+                    assemblyLoader: _assemblyLoader,
                     optimizationLevel: optimizationLevel ?? _optimizationLevel,
                     checkOverflow: _checkOverflow,
                     allowUnsafe: _allowUnsafe

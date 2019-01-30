@@ -21,7 +21,7 @@ namespace RoslynPad.Roslyn
         private static readonly Lazy<(string assemblyPath, string docPath)> _referenceAssembliesPath =
             new Lazy<(string, string)>(GetReferenceAssembliesPath);
 
-        private static readonly Lazy<RoslynHostReferences> _default = new Lazy<RoslynHostReferences>(() =>
+        private static readonly Lazy<RoslynHostReferences> _desktopDefault = new Lazy<RoslynHostReferences>(() =>
         {
             var result = Empty.With(typeNamespaceImports: new[]
             {
@@ -65,13 +65,31 @@ namespace RoslynPad.Roslyn
             return result;
         });
 
-
         public static RoslynHostReferences Empty { get; } = new RoslynHostReferences(
             ImmutableArray<MetadataReference>.Empty,
             ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase),
             ImmutableArray<string>.Empty);
 
-        public static RoslynHostReferences Default => _default.Value;
+        /// <summary>
+        /// Returns desired defaults for .NET Framework (desktop).
+        /// </summary>
+        public static RoslynHostReferences DesktopDefault => _desktopDefault.Value;
+
+        /// <summary>
+        /// Returns namespace-only (no assemblies) defaults that fit all frameworks.
+        /// </summary>
+        public static RoslynHostReferences NamespaceDefault { get; } = Empty.With(imports: new[]{
+            "System",
+            "System.Threading",
+            "System.Threading.Tasks",
+            "System.Collections",
+            "System.Collections.Generic",
+            "System.Text",
+            "System.Text.RegularExpressions",
+            "System.Linq",
+            "System.IO",
+            "System.Reflection",
+        });
 
         internal static (string assemblyPath, string docPath) ReferenceAssembliesPath => _referenceAssembliesPath.Value;
 
@@ -81,7 +99,7 @@ namespace RoslynPad.Roslyn
             var referenceLocations = _referenceLocations;
             var importsArray = Imports.AddRange(imports.WhereNotNull());
 
-            var locations = 
+            var locations =
                 assemblyReferences.WhereNotNull().Select(c => c.GetLocation()).Concat(
                 assemblyPathReferences.WhereNotNull());
 
@@ -120,7 +138,7 @@ namespace RoslynPad.Roslyn
         public ImmutableArray<string> Imports { get; }
 
         public ImmutableArray<MetadataReference> GetReferences(Func<string, DocumentationProvider> documentationProviderFactory = null) =>
-            Enumerable.Concat<MetadataReference>(_references, Enumerable.Select<KeyValuePair<string, string>, PortableExecutableReference>(_referenceLocations, c => MetadataReference.CreateFromFile(c.Key, documentation: documentationProviderFactory?.Invoke(c.Key))))
+            Enumerable.Concat(_references, Enumerable.Select(_referenceLocations, c => MetadataReference.CreateFromFile(c.Key, documentation: documentationProviderFactory?.Invoke(c.Key))))
                 .ToImmutableArray();
 
         private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
@@ -128,10 +146,10 @@ namespace RoslynPad.Roslyn
             string assemblyPath = null;
             string docPath = null;
 
-            // TODO: reference assemblies xplat?
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
                 RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
             {
+                // all NuGet
                 return (assemblyPath, docPath);
             }
 

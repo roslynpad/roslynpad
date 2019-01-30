@@ -29,17 +29,20 @@ namespace RoslynPad.Roslyn.Scripting
         private readonly OptimizationLevel _optimizationLevel;
         private readonly bool _checkOverflow;
         private readonly bool _allowUnsafe;
+        private readonly bool _registerDependencies;
 
         public ScriptRunner(string code, CSharpParseOptions parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference> references = null,
             IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, 
             MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null,
             InteractiveAssemblyLoader assemblyLoader = null, 
-            OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
+            OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true,
+            bool registerDependencies = false)
         {
             _optimizationLevel = optimizationLevel;
             _checkOverflow = checkOverflow;
             _allowUnsafe = allowUnsafe;
+            _registerDependencies = registerDependencies;
             Code = code;
             OutputKind = outputKind;
             Platform = platform;
@@ -196,16 +199,19 @@ namespace RoslynPad.Roslyn.Scripting
                 {
                     return null;
                 }
-                
-                foreach (var referencedAssembly in compilation.References.Select(
-                    x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) as IAssemblySymbol }))
-                {
-                    if (referencedAssembly.Value == null) continue;
-                    
-                    var path = (referencedAssembly.Key as PortableExecutableReference)?.FilePath;
-                    if (path == null) continue;
 
-                    _assemblyLoader.RegisterDependency(referencedAssembly.Value.Identity, path);
+                if (_registerDependencies)
+                {
+                    foreach (var referencedAssembly in compilation.References.Select(
+                        x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) as IAssemblySymbol }))
+                    {
+                        if (referencedAssembly.Value == null) continue;
+
+                        var path = (referencedAssembly.Key as PortableExecutableReference)?.FilePath;
+                        if (path == null) continue;
+
+                        _assemblyLoader.RegisterDependency(referencedAssembly.Value.Identity, path);
+                    }
                 }
 
                 peStream.Position = 0;
@@ -273,7 +279,7 @@ namespace RoslynPad.Roslyn.Scripting
                 xmlReferenceResolver: null,
                 sourceReferenceResolver: SourceResolver,
                 metadataReferenceResolver: MetadataResolver,
-                assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default
+                assemblyIdentityComparer: AssemblyIdentityComparer.Default
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
 
@@ -292,8 +298,7 @@ namespace RoslynPad.Roslyn.Scripting
                     _globalAssemblyNamePrefix + assemblyNumber,
                     tree,
                     references,
-                    compilationOptions,
-                    returnType: typeof(object));
+                    compilationOptions);
         }
 
         private IEnumerable<MetadataReference> GetReferences()

@@ -4,8 +4,6 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
 using Roslyn.Utilities;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.Completion.Providers
@@ -13,11 +11,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
     internal abstract class AbstractLoadDirectiveCompletionProvider : AbstractDirectivePathCompletionProvider
     {
         private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
-            filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-            commitCharacterRules: ImmutableArray.Create(
-                CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
-            enterKeyRule: EnterKeyRule.Never,
-            selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
+             filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+             commitCharacterRules: ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
+             enterKeyRule: EnterKeyRule.Never,
+             selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
 
         private static ImmutableArray<char> GetCommitCharacters()
         {
@@ -36,32 +33,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
             return builder.ToImmutableAndFree();
         }
 
-        private FileSystemCompletionHelper GetFileSystemCompletionHelper(SourceText text, Document document)
-        {
-            // TODO: https://github.com/dotnet/roslyn/issues/5263
-            // Avoid dependency on a specific resolver.
-            // The search paths should be provided by specialized workspaces:
-            // - InteractiveWorkspace for interactive window 
-            // - MiscFilesWorkspace for loose .csx files
-            var searchPaths =
-                (document.Project.CompilationOptions.SourceReferenceResolver as SourceFileResolver)?.SearchPaths ??
-                ImmutableArray<string>.Empty;
-
-            return new FileSystemCompletionHelper(
-                Microsoft.CodeAnalysis.Glyph.OpenFolder,
-                Microsoft.CodeAnalysis.Glyph.CSharpFile,
-                searchPaths: searchPaths,
-                baseDirectoryOpt: GetBaseDirectory(document),
-                allowableExtensions: ImmutableArray.Create(".csx"),
-                itemRules: s_rules);
-        }
-
         protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
         {
-            var text = await context.Document.GetTextAsync(context.CancellationToken).ConfigureAwait(false);
-            var helper = GetFileSystemCompletionHelper(text, context.Document);
-            context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken)
-                .ConfigureAwait(false));
+            var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.CSharpFile, ImmutableArray.Create(".csx"), s_rules);
+            context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
         }
     }
 }
