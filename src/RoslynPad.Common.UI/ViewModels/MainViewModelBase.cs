@@ -118,6 +118,7 @@ namespace RoslynPad.UI
                 RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
                 .ConfigureAwait(true);
 
+            OpenDocumentFromCommandLine();
             await OpenAutoSavedDocuments().ConfigureAwait(true);
 
             if (HasCachedUpdate())
@@ -128,6 +129,24 @@ namespace RoslynPad.UI
             {
                 // ReSharper disable once UnusedVariable
                 var task = Task.Run(CheckForUpdates);
+            }
+        }
+
+        private void OpenDocumentFromCommandLine()
+        {
+            var openDocument = GetOpenDocumentViewModel(null);
+
+            string[] args = Environment.GetCommandLineArgs();
+
+            if (args.Length > 1)
+            {
+                string filePath = args[1];
+
+                if (File.Exists(filePath))
+                {
+                    var document = DocumentViewModel.FromPath(filePath);
+                    OpenDocument(document);
+                }
             }
         }
 
