@@ -138,24 +138,16 @@ namespace RoslynPad.UI
 
             string[] args = Environment.GetCommandLineArgs();
 
-            if (args.Count() > 1)
+            if (args.Length > 1)
             {
                 string filePath = args[1];
 
                 if (File.Exists(filePath))
                 {
                     var document = DocumentViewModel.FromPath(filePath);
-                    openDocument = GetOpenDocumentViewModel(document);
+                    OpenDocument(document);
                 }
             }
-
-            else
-            {
-                openDocument = GetOpenDocumentViewModel(null);
-            }
-
-            OpenDocuments.Add(openDocument);
-            CurrentOpenDocument = openDocument;
         }
 
         private async Task OpenAutoSavedDocuments()
@@ -382,7 +374,6 @@ namespace RoslynPad.UI
         public void CreateNewDocument()
         {
             var openDocument = GetOpenDocumentViewModel(null);
-
             OpenDocuments.Add(openDocument);
             CurrentOpenDocument = openDocument;
         }
