@@ -115,6 +115,7 @@ namespace RoslynPad.UI
                 RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
                 .ConfigureAwait(true);
 
+            OpenDocumentFromCommandLine();
             await OpenAutoSavedDocuments().ConfigureAwait(true);
 
             if (HasCachedUpdate())
@@ -126,6 +127,32 @@ namespace RoslynPad.UI
                 // ReSharper disable once UnusedVariable
                 var task = Task.Run(CheckForUpdates);
             }
+        }
+
+        private void OpenDocumentFromCommandLine()
+        {
+            var openDocument = GetOpenDocumentViewModel(null);
+
+            string[] args = Environment.GetCommandLineArgs();
+
+            if (args.Count() > 1)
+            {
+                string filePath = args[1];
+
+                if (File.Exists(filePath))
+                {
+                    var document = DocumentViewModel.FromPath(filePath);
+                    openDocument = GetOpenDocumentViewModel(document);
+                }
+            }
+
+            else
+            {
+                openDocument = GetOpenDocumentViewModel(null);
+            }
+
+            OpenDocuments.Add(openDocument);
+            CurrentOpenDocument = openDocument;
         }
 
         private async Task OpenAutoSavedDocuments()
@@ -352,20 +379,6 @@ namespace RoslynPad.UI
         public void CreateNewDocument()
         {
             var openDocument = GetOpenDocumentViewModel(null);
-
-            string[] args = Environment.GetCommandLineArgs();
-
-            if(args.Count() > 1 && args[1] != null)
-            {
-                string filePath = args[1];
-                var document = DocumentViewModel.FromPath(filePath);
-                openDocument = GetOpenDocumentViewModel(document);
-            }
-
-            else
-            {
-                openDocument = GetOpenDocumentViewModel(null);
-            }
 
             OpenDocuments.Add(openDocument);
             CurrentOpenDocument = openDocument;
