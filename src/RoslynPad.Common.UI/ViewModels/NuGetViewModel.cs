@@ -350,8 +350,8 @@ namespace RoslynPad.UI
         private readonly NuGetViewModel _nuGetViewModel;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly SemaphoreSlim _restoreLock;
+        private readonly HashSet<PackageRef> _referencedPackages;
 
-        private HashSet<PackageRef> _referencedPackages;
         private bool _isRestoring;
         private CancellationTokenSource _restoreCts;
         private string _searchTerm;
@@ -372,6 +372,7 @@ namespace RoslynPad.UI
             _nuGetViewModel = nuGetViewModel;
             _telemetryProvider = telemetryProvider;
             _restoreLock = new SemaphoreSlim(1, 1);
+            _referencedPackages = new HashSet<PackageRef>();
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
 
@@ -443,16 +444,9 @@ namespace RoslynPad.UI
         {
             var changed = false;
 
-            if (_referencedPackages == null || (_referencedPackages.Count > 0 && (packages == null || packages.Count == 0)))
+            if (_referencedPackages.Count > 0 && (packages == null || packages.Count == 0))
             {
-                if (_referencedPackages == null)
-                {
-                    _referencedPackages = new HashSet<PackageRef>();
-                }
-                else
-                {
-                    _referencedPackages.Clear();
-                }
+                _referencedPackages.Clear();
 
                 changed = true;
             }
