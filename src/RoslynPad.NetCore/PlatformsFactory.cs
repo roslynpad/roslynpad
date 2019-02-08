@@ -25,14 +25,14 @@ namespace RoslynPad
 
             if (File.Exists(exe))
             {
-                yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.1", exe, string.Empty);
+                yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.2", exe, string.Empty);
             }
             else
             {
                 var processExe = Process.GetCurrentProcess().MainModule.FileName;
                 if (Path.GetFileNameWithoutExtension(processExe).Equals("dotnet", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.1",
+                    yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.2",
                         processExe,
                         exeNoExt + ".dll");
                 }

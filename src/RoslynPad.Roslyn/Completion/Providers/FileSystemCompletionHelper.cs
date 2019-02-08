@@ -52,7 +52,7 @@ namespace RoslynPad.Roslyn
 
         // virtual for testing
         protected virtual string[] GetLogicalDrives()
-            => IOUtilities.PerformIO(CorLightup.Desktop.GetLogicalDrives, Array.Empty<string>());
+            => IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>());
 
         // virtual for testing
         protected virtual bool DirectoryExists(string fullPath)
@@ -85,6 +85,7 @@ namespace RoslynPad.Roslyn
         private CompletionItem CreateNetworkRoot()
             => CommonCompletionItem.Create(
                 "\\\\",
+                "",
                 glyph: null,
                 description: "\\\\".ToSymbolDisplayParts(),
                 rules: _itemRules);
@@ -92,6 +93,7 @@ namespace RoslynPad.Roslyn
         private CompletionItem CreateUnixRoot()
             => CommonCompletionItem.Create(
                 "/",
+                "",
                 glyph: _folderGlyph,
                 description: "/".ToSymbolDisplayParts(),
                 rules: _itemRules);
@@ -99,6 +101,7 @@ namespace RoslynPad.Roslyn
         private CompletionItem CreateFileSystemEntryItem(string fullPath, bool isDirectory)
             => CommonCompletionItem.Create(
                 PathUtilities.GetFileName(fullPath),
+                "",
                 glyph: isDirectory ? _folderGlyph : _fileGlyph,
                 description: fullPath.ToSymbolDisplayParts(),
                 rules: _itemRules);
@@ -106,6 +109,7 @@ namespace RoslynPad.Roslyn
         private CompletionItem CreateLogicalDriveItem(string drive)
             => CommonCompletionItem.Create(
                 drive,
+                "",
                 glyph: _folderGlyph,
                 description: drive.ToSymbolDisplayParts(),
                 rules: _itemRules);

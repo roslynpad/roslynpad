@@ -19,29 +19,19 @@ namespace RoslynPad
                 _workspace = (RoslynWorkspace)workspace;
             }
 
-            public DocumentId GetActiveDocument()
-            {
-                return _workspace.OpenDocumentId;
-            }
+            public DocumentId GetActiveDocument() => _workspace.OpenDocumentId;
 
-            public ImmutableArray<DocumentId> GetVisibleDocuments()
-            {
-                return ImmutableArray.Create(_workspace.OpenDocumentId);
-            }
+            public DocumentId TryGetActiveDocument() => _workspace.OpenDocumentId;
+
+            public ImmutableArray<DocumentId> GetVisibleDocuments() => ImmutableArray.Create(_workspace.OpenDocumentId);
 
             public event EventHandler<DocumentId> ActiveDocumentChanged;
 
             public event EventHandler<EventArgs> NonRoslynBufferTextChanged;
 
-            private void OnActiveDocumentChanged(DocumentId e)
-            {
-                ActiveDocumentChanged?.Invoke(this, e);
-            }
+            private void OnActiveDocumentChanged(DocumentId e) => ActiveDocumentChanged?.Invoke(this, e);
 
-            private void OnNonRoslynBufferTextChanged()
-            {
-                NonRoslynBufferTextChanged?.Invoke(this, EventArgs.Empty);
-            }
+            private void OnNonRoslynBufferTextChanged() => NonRoslynBufferTextChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)

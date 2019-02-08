@@ -279,7 +279,8 @@ namespace RoslynPad.Roslyn.Scripting
                 xmlReferenceResolver: null,
                 sourceReferenceResolver: SourceResolver,
                 metadataReferenceResolver: MetadataResolver,
-                assemblyIdentityComparer: AssemblyIdentityComparer.Default
+                assemblyIdentityComparer: AssemblyIdentityComparer.Default,
+                nullableContextOptions: NullableContextOptions.Enable
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
 

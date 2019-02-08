@@ -41,7 +41,7 @@ namespace RoslynPad.Roslyn
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetTypeInfo().Assembly
             });
 
-            var objectAssemblyPath = typeof(object).GetTypeInfo().Assembly.GetLocation();
+            var objectAssemblyPath = typeof(object).GetTypeInfo().Assembly.Location;
             var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), "mscorlib.dll");
             if (File.Exists(mscorlibPath))
             {
@@ -100,7 +100,7 @@ namespace RoslynPad.Roslyn
             var importsArray = Imports.AddRange(imports.WhereNotNull());
 
             var locations =
-                assemblyReferences.WhereNotNull().Select(c => c.GetLocation()).Concat(
+                assemblyReferences.WhereNotNull().Select(c => c.Location).Concat(
                 assemblyPathReferences.WhereNotNull());
 
             foreach (var location in locations)
@@ -111,7 +111,7 @@ namespace RoslynPad.Roslyn
             foreach (var type in typeNamespaceImports.WhereNotNull())
             {
                 importsArray = importsArray.Add(type.Namespace);
-                var location = type.GetTypeInfo().Assembly.GetLocation();
+                var location = type.GetTypeInfo().Assembly.Location;
                 referenceLocations = referenceLocations.SetItem(location, null);
             }
 

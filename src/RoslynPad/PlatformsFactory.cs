@@ -23,14 +23,14 @@ namespace RoslynPad
             // requires .NET Core 3 SDK which produces an EXE
             if (File.Exists(netCoreHost))
             {
-                yield return new ExecutionPlatform("Core x64", "netcoreapp2.1", netCoreHost, string.Empty);
+                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", netCoreHost, string.Empty);
             }
             else
             {
                 var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
                 if (File.Exists(dotnetExe))
                 {
-                    yield return new ExecutionPlatform("Core x64", "netcoreapp2.1", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
+                    yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
                 }
             }
         }

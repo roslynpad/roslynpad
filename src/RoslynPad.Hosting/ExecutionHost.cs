@@ -439,7 +439,7 @@ namespace RoslynPad.Hosting
             {
                 var paths = new List<string>
                 {
-                    Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.GetLocation())
+                    Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location)
                 };
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -502,7 +502,7 @@ namespace RoslynPad.Hosting
 
             public Task Initialize(InitializationMessage message)
             {
-                _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.Latest);
+                _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.CSharp8);
 
                 var parameters = message.Parameters;
 

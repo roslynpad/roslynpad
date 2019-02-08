@@ -43,7 +43,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 foreach (var identity in GetAssemblyIdentities(partialName))
                 {
                     result.Add(CommonCompletionItem.Create(
-                        identity.GetDisplayName(), glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
+                        identity.GetDisplayName(), "", glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
                 }
             }
             else
@@ -52,7 +52,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     result.Add(CommonCompletionItem.Create(
-                        displayName, glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
+                        displayName, "", glyph: Microsoft.CodeAnalysis.Glyph.Assembly, rules: _itemRules));
                 }
             }
 

@@ -115,7 +115,7 @@ namespace RoslynPad.Roslyn
         protected virtual ParseOptions CreateDefaultParseOptions()
         {
             return new CSharpParseOptions(kind: SourceCodeKind.Script,
-                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Latest);
+                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.CSharp8);
         }
 
         public MetadataReference CreateMetadataReference(string location)
@@ -293,7 +293,8 @@ namespace RoslynPad.Roslyn
                 usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
-                metadataReferenceResolver: new CachedScriptMetadataResolver(args.WorkingDirectory, useCache: true));
+                metadataReferenceResolver: new CachedScriptMetadataResolver(args.WorkingDirectory, useCache: true),
+                nullableContextOptions: NullableContextOptions.Enable);
             return compilationOptions;
         }
 

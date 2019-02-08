@@ -25,7 +25,7 @@ namespace RoslynPad.Roslyn.Rename
             Document document, SyntaxToken triggerToken, CancellationToken cancellationToken)
         {
             var syntaxFactsService = document.Project.LanguageServices.GetService<ISyntaxFactsService>();
-            if (syntaxFactsService.IsKeyword(triggerToken))
+            if (syntaxFactsService.IsReservedOrContextualKeyword(triggerToken))
             {
                 return null;
             }

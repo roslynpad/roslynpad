@@ -9,6 +9,12 @@ using Glyph = RoslynPad.Roslyn.Completion.Glyph;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {
+    internal enum InterfaceDestination
+    {
+        CurrentFile,
+        NewFile
+    }
+
     internal class ExtractInterfaceDialogViewModel : NotificationObject
     {
         private readonly object _syntaxFactsService;
@@ -121,6 +127,21 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         public string GeneratedName =>
             $"{(string.IsNullOrEmpty(_defaultNamespace) ? string.Empty : _defaultNamespace + ".")}{_interfaceName.Trim()}{_generatedNameTypeParameterSuffix}"
             ;
+
+        private InterfaceDestination _destination = InterfaceDestination.NewFile;
+        public InterfaceDestination Destination
+        {
+            get { return _destination; }
+            set
+            {
+                if (SetProperty(ref _destination, value))
+                {
+                    OnPropertyChanged(nameof(FileNameEnabled));
+                }
+            }
+        }
+
+        public bool FileNameEnabled => Destination == InterfaceDestination.NewFile;
 
         private string _fileName;
         public string FileName

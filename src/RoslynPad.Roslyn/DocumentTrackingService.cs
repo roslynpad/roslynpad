@@ -11,6 +11,7 @@ namespace RoslynPad.Roslyn
         event EventHandler<DocumentId> ActiveDocumentChanged;
         event EventHandler<EventArgs> NonRoslynBufferTextChanged;
         DocumentId GetActiveDocument();
+        DocumentId TryGetActiveDocument();
         ImmutableArray<DocumentId> GetVisibleDocuments();
     }
 
@@ -29,24 +30,20 @@ namespace RoslynPad.Roslyn
             public event EventHandler<DocumentId> ActiveDocumentChanged
             {
                 add => _inner.ActiveDocumentChanged += value;
-                remove { _inner.ActiveDocumentChanged -= value; }
+                remove => _inner.ActiveDocumentChanged -= value;
             }
 
             public event EventHandler<EventArgs> NonRoslynBufferTextChanged
             {
                 add => _inner.NonRoslynBufferTextChanged += value;
-                remove { _inner.NonRoslynBufferTextChanged -= value; }
+                remove => _inner.NonRoslynBufferTextChanged -= value;
             }
 
-            public DocumentId GetActiveDocument()
-            {
-                return _inner.GetActiveDocument();
-            }
+            public DocumentId GetActiveDocument() => _inner.GetActiveDocument();
 
-            public ImmutableArray<DocumentId> GetVisibleDocuments()
-            {
-                return _inner.GetVisibleDocuments();
-            }
+            public ImmutableArray<DocumentId> GetVisibleDocuments() => _inner.GetVisibleDocuments();
+
+            public DocumentId TryGetActiveDocument() => _inner.TryGetActiveDocument();
         }
 
         public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)
