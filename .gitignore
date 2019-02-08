@@ -200,3 +200,6 @@ FakesAssemblies/
 RoslynPad.zip
 /lib
 *.binlog
+
+*.appx
+*.msix

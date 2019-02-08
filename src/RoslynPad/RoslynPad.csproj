@@ -33,7 +33,7 @@
   </ItemGroup>
   <Target Name="CopyNetCoreHost" AfterTargets="Build">
     <ItemGroup>
-      <NetCoreHostFile Include="..\RoslynPad.HostNetCore\bin\$(Configuration)\netcoreapp2.1\*.*" />
+      <NetCoreHostFile Include="..\RoslynPad.HostNetCore\bin\$(Configuration)\netcoreapp2.2\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(NetCoreHostFile)" DestinationFolder="$(OutDir)\NetCoreHost" />
   </Target>

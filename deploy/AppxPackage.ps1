@@ -15,10 +15,10 @@ foreach ($asset in Get-ChildItem PackageRoot\Assets)
 {
 	('"' + $asset.FullName + '" "Assets\' + $asset.Name + '"') >> $mapping
 }
+
 foreach ($file in $files)
 {
-	$target = "$location\$binPath\$file"
-	('"' + $target + '" "' + $file + '"') >> $mapping
+	('"' + $file + '" "' + $file.Substring($rootPath.Length) + '"') >> $mapping
 	$file
 }
 
@@ -30,6 +30,6 @@ foreach ($file in Get-ChildItem *.pri)
 	$file
 }
 
-MakeAppx.exe pack /f $mapping /l /p RoslynPad.appx
+MakeAppx.exe pack /f $mapping /l /p RoslynPad.msix
 
 ./SignAppx.ps1

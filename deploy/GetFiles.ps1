@@ -12,16 +12,14 @@ $exclude =
 	"Xceed.Wpf.AvalonDock.Themes.VS2010.dll",
 	"Xceed.Wpf.DataGrid.dll"
 );
-$files = get-childitem "$location\$binPath\*.dll" | select -ExpandProperty Name | where { $exclude -notcontains $_ }	
-$files +=
-@(
-	"RoslynPad.exe",
-	"RoslynPad.Host32.exe",
-	"RoslynPad.Host64.exe",
-	"RoslynPad.exe.config",
-	"RoslynPad.Host32.exe.config",
-	"RoslynPad.Host64.exe.config"
-)
+
+$rootPath = [IO.Path]::GetFullPath("$location\$binPath\")
+
+$files = get-childitem "$rootPath\*.dll" | where { $exclude -notcontains $_.Name } | select -ExpandProperty FullName
+$files += get-childitem "$rootPath\*.exe" | select -ExpandProperty FullName
+$files += get-childitem "$rootPath\*.pdb" | select -ExpandProperty FullName
+$files += get-childitem "$rootPath\*.config" | select -ExpandProperty FullName
+$files += get-childitem "$rootPath\NetCoreHost\*" | select -ExpandProperty FullName
 
 $configFile = "$location\$binPath\RoslynPad.exe.config"
 $config = get-content $configFile

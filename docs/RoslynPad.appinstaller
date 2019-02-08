@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller
+    xmlns="http://schemas.microsoft.com/appx/appinstaller/2017/2"
+    Version="1.0.0.0"
+    Uri="https://roslynpad.net/RoslynPad.appinstaller" >
+
+    <MainBundle
+        Name="RoslynPad"
+        Publisher="CN=9C7E53B6-ADB4-497A-97E5-B4B9B239B179"
+        Version="14.0.0.0"
+        Uri="https://github.com/aelij/RoslynPad/releases/download/14.0/RoslynPad.msix" />
+
+    <UpdateSettings>
+        <OnLaunch HoursBetweenUpdateChecks="0" />
+    </UpdateSettings>
+
+</AppInstaller>

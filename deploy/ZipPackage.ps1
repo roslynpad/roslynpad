@@ -13,8 +13,7 @@ try
 
 	foreach ($file in $files)
 	{
-		$target = "$location\$binPath\$file"
-		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $target, $file) | Out-Null
+		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file, $file.Substring($rootPath.Length)) | Out-Null
 		$file
 	}
 }
