@@ -20,7 +20,7 @@
 
         <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
                                   ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
-            <DockPanel Margin="0 0 0 3">
+            <DockPanel Margin="0 2 0 2" VerticalAlignment="Center">
                 <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
 
                 <Image Name="Icon"
@@ -63,7 +63,9 @@
             <Setter Property="Background"
                     Value="Transparent" />
             <Setter Property="Width"
-                    Value="16" />
+                    Value="22" />
+            <Setter Property="Padding"
+                    Value="2" />
         </Style>
 
     </FrameworkElement.Resources>
