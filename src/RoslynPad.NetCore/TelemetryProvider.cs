@@ -1,6 +1,4 @@
-﻿using System;
-using System.Composition;
-using Microsoft.ApplicationInsights;
+﻿using System.Composition;
 using RoslynPad.UI;
 
 namespace RoslynPad

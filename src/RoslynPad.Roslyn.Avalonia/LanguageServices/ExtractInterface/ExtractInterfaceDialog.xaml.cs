@@ -1,8 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using System.Collections.Generic;
 using System.Composition;
-using System.Linq;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 {

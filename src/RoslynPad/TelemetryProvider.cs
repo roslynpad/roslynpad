@@ -1,9 +1,7 @@
-﻿using System;
-using System.Composition;
+﻿using System.Composition;
 using System.Configuration;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.ApplicationInsights;
 using RoslynPad.UI;
 
 namespace RoslynPad

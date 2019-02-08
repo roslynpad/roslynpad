@@ -7,6 +7,8 @@
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    <NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="**\*.xshd" />

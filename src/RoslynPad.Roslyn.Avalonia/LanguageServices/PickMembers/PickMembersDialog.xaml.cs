@@ -2,7 +2,6 @@
 
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using System;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.PickMembers

@@ -1,13 +1,12 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
 using System.Runtime;
 
 namespace RoslynPad
 {
     public partial class App
     {
-        private const string ProfileFileName = "JitProfile.profile";
+        private const string ProfileFileName = "RoslynPad.jitprofile";
+
         public App()
         {
             ProfileOptimization.SetProfileRoot(AppDomain.CurrentDomain.BaseDirectory);

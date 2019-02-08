@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Composition;
 using System.Reflection;
 using RoslynPad.UI;

@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using System;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
