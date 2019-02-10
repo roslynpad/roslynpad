@@ -42,8 +42,8 @@ namespace RoslynPad.Editor
             _item = item;
             _completionChar = completionChar;
             _snippetManager = snippetManager;
-            Text = item.DisplayText;
-            Content = item.DisplayText;
+            Text = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix;
+            Content = Text;
             _glyph = item.GetGlyph();
             _descriptionTask = new Lazy<Task>(RetrieveDescription);
         }
@@ -140,9 +140,9 @@ namespace RoslynPad.Editor
 
         private async Task RetrieveDescription()
         {
-            var description = await Task.Run(() => CompletionService.GetService(_document).GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
             if (_description != null)
             {
+                var description = await Task.Run(() => CompletionService.GetService(_document).GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
                 _description.Child = description.TaggedParts.ToTextBlock();
             }
         }
