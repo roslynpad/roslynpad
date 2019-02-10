@@ -36,6 +36,7 @@ namespace RoslynPad.Editor
         private IBraceMatchingService _braceMatchingService;
         private IBraceCompletionProvider _braceCompletionProvider;
         private CancellationTokenSource _braceMatchingCts;
+        private RoslynHighlightingColorizer _colorizer;
 
         public RoslynCodeEditor()
         {
@@ -132,14 +133,13 @@ namespace RoslynPad.Editor
 
         public void RefreshHighlighting()
         {
-            if (TextArea.TextView.LineTransformers.Count > 0 &&
-                TextArea.TextView.LineTransformers[0] is RoslynHighlightingColorizer)
+            if (_colorizer != null)
             {
-                TextArea.TextView.LineTransformers.RemoveAt(0);
+                TextArea.TextView.LineTransformers.Remove(_colorizer);
             }
 
-            var colorizer = new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors);
-            TextArea.TextView.LineTransformers.Insert(0, colorizer);
+            _colorizer = new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors);
+            TextArea.TextView.LineTransformers.Insert(0, _colorizer);
         }
 
         private async void CaretOnPositionChanged(object sender, EventArgs eventArgs)
