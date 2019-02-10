@@ -25,7 +25,9 @@ namespace RoslynPad.Controls
                 });
         }
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public ILViewer()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             InitializeComponent();
 

@@ -29,10 +29,11 @@ namespace RoslynPad.Editor
 
         public const string BraceMatchingClassificationTypeName = "brace matching";
 
-        private ImmutableDictionary<string, HighlightingColor> _map;
-        protected virtual ImmutableDictionary<string, HighlightingColor> GetOrCreateMap()
+        private readonly ImmutableDictionary<string, HighlightingColor> _map;
+
+        public ClassificationHighlightColors()
         {
-            return _map ?? (_map = new Dictionary<string, HighlightingColor>
+            _map = new Dictionary<string, HighlightingColor>
             {
                 [ClassificationTypeNames.ClassName] = AsFrozen(TypeBrush),
                 [ClassificationTypeNames.StructName] = AsFrozen(TypeBrush),
@@ -59,7 +60,12 @@ namespace RoslynPad.Editor
                 [ClassificationTypeNames.StringLiteral] = AsFrozen(StringBrush),
                 [ClassificationTypeNames.VerbatimStringLiteral] = AsFrozen(StringBrush),
                 [BraceMatchingClassificationTypeName] = AsFrozen(BraceMatchingBrush)
-            }.ToImmutableDictionary());
+            }.ToImmutableDictionary();
+        }
+
+        protected virtual ImmutableDictionary<string, HighlightingColor> GetOrCreateMap()
+        {
+            return _map;
         }
 
         public HighlightingColor GetBrush(string classificationTypeName)

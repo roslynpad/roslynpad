@@ -4,7 +4,7 @@ namespace RoslynPad.UI
 {
     public interface ISaveDocumentDialog : IDialog
     {
-        string DocumentName { get; set; }
+        string? DocumentName { get; set; }
         SaveResult Result { get; }
         bool AllowNameEdit { get; set; }
         bool ShowDontSave { get; set; }

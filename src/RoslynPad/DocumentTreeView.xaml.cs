@@ -14,7 +14,9 @@ namespace RoslynPad
     {
         private MainViewModel _viewModel;
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public DocumentTreeView()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             InitializeComponent();
 
@@ -23,7 +25,7 @@ namespace RoslynPad
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            _viewModel = e.NewValue as MainViewModel;
+            _viewModel = (MainViewModel)e.NewValue;
         }
 
         private void OnDocumentClick(object sender, MouseButtonEventArgs e)
@@ -81,7 +83,7 @@ namespace RoslynPad
 
     internal class FilterCollectionViewConverter : IValueConverter
     {
-        public string FilterProperty { get; set; }
+        public string? FilterProperty { get; set; }
 
         public event Predicate<object> Filter;
 
@@ -95,7 +97,7 @@ namespace RoslynPad
                     LiveFilteringProperties = { FilterProperty }
                 };
 
-                collectionView.Filter += Filter;
+                collectionView.Filter = Filter;
 
                 return collectionView;
             }

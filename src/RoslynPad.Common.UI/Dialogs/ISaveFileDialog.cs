@@ -10,6 +10,6 @@ namespace RoslynPad.UI
         string DefaultExt { get; set; }
         string FileName { get; set; }
 
-        Task<string> ShowAsync();
+        Task<string?> ShowAsync();
     }
 }

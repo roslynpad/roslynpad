@@ -26,7 +26,7 @@ namespace RoslynPad.Editor
         /// <summary>
         /// If set, <see cref="TextEditor.CaretOffset"/> will be updated.
         /// </summary>
-        public TextEditor Editor { get; set; }
+        public TextEditor? Editor { get; set; }
 
         public override SourceText CurrentText => _currentText;
         
@@ -106,11 +106,14 @@ namespace RoslynPad.Editor
             }
         }
 
-        int IEditorCaretProvider.CaretPosition => Editor.CaretOffset;
+        int IEditorCaretProvider.CaretPosition => Editor?.CaretOffset ?? 0;
 
         bool IEditorCaretProvider.TryMoveCaret(int position)
         {
-            Editor.CaretOffset = position;
+            if (Editor != null)
+            {
+                Editor.CaretOffset = position;
+            }
             return true;
         }
 

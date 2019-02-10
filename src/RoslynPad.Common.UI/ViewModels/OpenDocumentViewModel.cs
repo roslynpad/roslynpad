@@ -28,7 +28,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
-        private ExecutionHost _executionHost;
+        private ExecutionHost? _executionHost;
         private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
@@ -37,7 +37,7 @@ namespace RoslynPad.UI
         private ExecutionPlatform _platform;
         private bool _isSaving;
         private IDisposable _viewDisposable;
-        private Action<ExceptionResultObject> _onError;
+        private Action<ExceptionResultObject?> _onError;
         private Func<TextSpan> _getSelection;
         private string _ilText;
         private bool _isInitialized;
@@ -89,7 +89,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public DocumentViewModel Document { get; private set; }
+        public DocumentViewModel? Document { get; private set; }
 
         public string ILText
         {
@@ -98,7 +98,9 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
@@ -129,6 +131,11 @@ namespace RoslynPad.UI
         {
             var host = MainViewModel.RoslynHost;
             var document = host.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var project = document.Project;
 
             bool useDesktopReferences = Platform?.UseDesktopReferences == true;
@@ -146,7 +153,7 @@ namespace RoslynPad.UI
             _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host, useDesktopReferences);
             _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences);
 
-            var task = _executionHost.Update(_executionHostParameters);
+            var task = _executionHost?.Update(_executionHostParameters);
         }
 
         private void OnDocumentUpdated()
@@ -197,7 +204,7 @@ namespace RoslynPad.UI
             ILText = il;
         }
 
-        public void SetDocument(DocumentViewModel document)
+        public void SetDocument(DocumentViewModel? document)
         {
             Document = document == null ? null : DocumentViewModel.FromPath(document.Path);
 
@@ -227,6 +234,11 @@ namespace RoslynPad.UI
         {
             var host = MainViewModel.RoslynHost;
             var document = host.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var symbol = await RenameHelper.GetRenameSymbol(document, _getSelection().Start).ConfigureAwait(true);
             if (symbol == null) return;
 
@@ -252,7 +264,13 @@ namespace RoslynPad.UI
         private async Task CommentUncommentSelection(CommentAction action)
         {
             const string singleLineCommentString = "//";
+
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var selection = _getSelection();
             var documentText = await document.GetTextAsync().ConfigureAwait(false);
             var changes = new List<TextChange>();
@@ -327,7 +345,7 @@ namespace RoslynPad.UI
             Reset();
             try
             {
-                await Task.Run(() => _executionHost.ResetAsync()).ConfigureAwait(false);
+                await Task.Run(() => _executionHost?.ResetAsync()).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -379,7 +397,7 @@ namespace RoslynPad.UI
                     dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, s);
                     await dialog.ShowAsync();
                     result = dialog.Result;
-                    if (result == SaveResult.Save)
+                    if (result == SaveResult.Save && dialog.DocumentName != null)
                     {
                         Document?.DeleteAutoSave();
                         Document = MainViewModel.AddDocument(dialog.DocumentName);
@@ -395,7 +413,7 @@ namespace RoslynPad.UI
                     result = dialog.Result;
                 }
 
-                if (result == SaveResult.Save)
+                if (result == SaveResult.Save && Document != null)
                 {
                     // ReSharper disable once PossibleNullReferenceException
                     await SaveDocument(Document.GetSavePath()).ConfigureAwait(true);
@@ -419,7 +437,13 @@ namespace RoslynPad.UI
         {
             if (DocumentId == null) return;
 
-            var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync().ConfigureAwait(false);
+            var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return;
+            }
+
+            var text = await document.GetTextAsync().ConfigureAwait(false);
             using (var writer = File.CreateText(path))
             {
                 for (int lineIndex = 0; lineIndex < text.Lines.Count - 1; ++lineIndex)
@@ -432,7 +456,7 @@ namespace RoslynPad.UI
         }
 
         internal void Initialize(DocumentId documentId,
-            Action<ExceptionResultObject> onError,
+            Action<ExceptionResultObject?> onError,
             Func<TextSpan> getSelection, IDisposable viewDisposable)
         {
             _viewDisposable = viewDisposable;
@@ -501,7 +525,7 @@ namespace RoslynPad.UI
 
             try
             {
-                await Task.Run(() => _executionHost.CompileAndSave(code, fileName, OptimizationLevel)).ConfigureAwait(true);
+                await Task.Run(() => _executionHost?.CompileAndSave(code, fileName, OptimizationLevel)).ConfigureAwait(true);
             }
             catch (CompilationErrorException ex)
             {
@@ -539,7 +563,10 @@ namespace RoslynPad.UI
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
-                await _executionHost.ExecuteAsync(code, ShowIL, OptimizationLevel).ConfigureAwait(true);
+                if (_executionHost != null)
+                {
+                    await _executionHost.ExecuteAsync(code, ShowIL, OptimizationLevel).ConfigureAwait(true);
+                }
             }
             catch (CompilationErrorException ex)
             {
@@ -563,23 +590,28 @@ namespace RoslynPad.UI
         private async Task UpdatePackages()
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var syntaxRoot = await document.GetSyntaxRootAsync().ConfigureAwait(true);
             var packages = GetNuGetPackageReferences(syntaxRoot);
 
             NuGet.UpdatePackageReferences(packages);
         }
 
-        private List<PackageRef> GetNuGetPackageReferences(SyntaxNode syntaxRoot)
+        private IReadOnlyList<PackageRef> GetNuGetPackageReferences(SyntaxNode syntaxRoot)
         {
             const string NuGetPrefix = "nuget:";
             const string OldNuGetPrefix = "$NuGet\\";
 
             if (!(syntaxRoot is Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax compilation))
             {
-                return null;
+                return Array.Empty<PackageRef>();
             }
 
-            List<PackageRef> packages = null;
+            List<PackageRef>? packages = null;
 
             foreach (var directive in compilation.GetReferenceDirectives())
             {
@@ -617,10 +649,10 @@ namespace RoslynPad.UI
                 packages.Add(new PackageRef(id, versionRange));
             }
 
-            return packages;
+            return packages ?? (IReadOnlyList<PackageRef>)Array.Empty<PackageRef>();
         }
 
-        private static (string id, string version) GetOldNuGetReference(string value)
+        private static (string? id, string? version) GetOldNuGetReference(string value)
         {
             var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (split.Length >= 3)
@@ -659,6 +691,7 @@ namespace RoslynPad.UI
         private void HookDumped(ObservableCollection<IResultObject> results, CancellationToken cancellationToken)
         {
             _onError?.Invoke(null);
+            if (_executionHost == null) return;
 
             if (_executionHostOnDumped != null)
             {
@@ -676,7 +709,13 @@ namespace RoslynPad.UI
 
         private async Task<string> GetCode(CancellationToken cancellationToken)
         {
-            return (await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken)
+            var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
+            if (document == null)
+            {
+                return string.Empty;
+            }
+
+            return (await document.GetTextAsync(cancellationToken)
                 .ConfigureAwait(false)).ToString();
         }
 

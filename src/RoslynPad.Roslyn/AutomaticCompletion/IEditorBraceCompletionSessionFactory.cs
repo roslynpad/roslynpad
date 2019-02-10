@@ -6,6 +6,6 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
 {
     internal interface IEditorBraceCompletionSessionFactory : ILanguageService
     {
-        IEditorBraceCompletionSession TryCreateSession(Document document, int openingPosition, char openingBrace, CancellationToken cancellationToken);
+        IEditorBraceCompletionSession? TryCreateSession(Document document, int openingPosition, char openingBrace, CancellationToken cancellationToken);
     }
 }

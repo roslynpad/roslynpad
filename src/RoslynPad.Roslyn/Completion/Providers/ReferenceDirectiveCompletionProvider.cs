@@ -91,9 +91,10 @@ namespace RoslynPad.Roslyn.Completion.Providers
             }
         }
 
-        private static (string id, string version) ParseNuGetReference(string value)
+        private static (string id, string? version) ParseNuGetReference(string value)
         {
-            string id, version;
+            string id;
+            string? version;
 
             var indexOfSlash = value.IndexOf('/');
             if (indexOfSlash >= 0)

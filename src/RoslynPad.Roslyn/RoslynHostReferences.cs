@@ -93,8 +93,8 @@ namespace RoslynPad.Roslyn
 
         internal static (string assemblyPath, string docPath) ReferenceAssembliesPath => _referenceAssembliesPath.Value;
 
-        public RoslynHostReferences With(IEnumerable<MetadataReference> references = null, IEnumerable<string> imports = null,
-            IEnumerable<Assembly> assemblyReferences = null, IEnumerable<string> assemblyPathReferences = null, IEnumerable<Type> typeNamespaceImports = null)
+        public RoslynHostReferences With(IEnumerable<MetadataReference>? references = null, IEnumerable<string>? imports = null,
+            IEnumerable<Assembly>? assemblyReferences = null, IEnumerable<string>? assemblyPathReferences = null, IEnumerable<Type>? typeNamespaceImports = null)
         {
             var referenceLocations = _referenceLocations;
             var importsArray = Imports.AddRange(imports.WhereNotNull());
@@ -105,14 +105,14 @@ namespace RoslynPad.Roslyn
 
             foreach (var location in locations)
             {
-                referenceLocations = referenceLocations.SetItem(location, null);
+                referenceLocations = referenceLocations.SetItem(location, string.Empty);
             }
 
             foreach (var type in typeNamespaceImports.WhereNotNull())
             {
                 importsArray = importsArray.Add(type.Namespace);
                 var location = type.GetTypeInfo().Assembly.Location;
-                referenceLocations = referenceLocations.SetItem(location, null);
+                referenceLocations = referenceLocations.SetItem(location, string.Empty);
             }
 
             return new RoslynHostReferences(
@@ -137,14 +137,14 @@ namespace RoslynPad.Roslyn
 
         public ImmutableArray<string> Imports { get; }
 
-        public ImmutableArray<MetadataReference> GetReferences(Func<string, DocumentationProvider> documentationProviderFactory = null) =>
+        public ImmutableArray<MetadataReference> GetReferences(Func<string, DocumentationProvider>? documentationProviderFactory = null) =>
             Enumerable.Concat(_references, Enumerable.Select(_referenceLocations, c => MetadataReference.CreateFromFile(c.Key, documentation: documentationProviderFactory?.Invoke(c.Key))))
                 .ToImmutableArray();
 
-        private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
+        private static (string? assemblyPath, string? docPath) GetReferenceAssembliesPath()
         {
-            string assemblyPath = null;
-            string docPath = null;
+            string? assemblyPath = null;
+            string? docPath = null;
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
                 RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
@@ -182,9 +182,9 @@ namespace RoslynPad.Roslyn
             return (assemblyPath, docPath);
         }
 
-        private static string GetReferenceDocumentationPath(string path)
+        private static string? GetReferenceDocumentationPath(string path)
         {
-            string docPath = null;
+            string? docPath = null;
 
             var docPathTemp = Path.Combine(path, "V4.X");
             if (File.Exists(Path.Combine(docPathTemp, "System.xml")))
@@ -218,7 +218,7 @@ namespace RoslynPad.Roslyn
             return new Version(0, 0);
         }
 
-        private static IEnumerable<string> TryGetFacadeAssemblies(string referenceAssembliesPath)
+        private static IEnumerable<string>? TryGetFacadeAssemblies(string referenceAssembliesPath)
         {
             if (referenceAssembliesPath != null)
             {

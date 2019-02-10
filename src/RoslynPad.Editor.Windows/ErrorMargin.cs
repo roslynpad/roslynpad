@@ -60,11 +60,11 @@ namespace RoslynPad.Editor
         }
 
         public static readonly DependencyProperty MarkerBrushProperty = DependencyProperty.Register(
-            nameof(MarkerBrush), typeof(Brush), typeof(ErrorMargin), new FrameworkPropertyMetadata());
+            nameof(MarkerBrush), typeof(Brush?), typeof(ErrorMargin), new FrameworkPropertyMetadata());
 
-        public Brush MarkerBrush
+        public Brush? MarkerBrush
         {
-            get => (Brush)GetValue(MarkerBrushProperty);
+            get => (Brush?)GetValue(MarkerBrushProperty);
             set => SetValue(MarkerBrushProperty, value);
         }
 

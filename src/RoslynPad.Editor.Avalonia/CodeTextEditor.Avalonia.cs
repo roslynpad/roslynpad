@@ -24,18 +24,24 @@ namespace RoslynPad.Editor
 
         partial void InitializeToolTip()
         {
-            ToolTip.SetShowDelay(this, 0);
-            ToolTip.SetTip(this, _toolTip);
-            _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
+            if (_toolTip != null)
             {
-                if (!(bool)c.NewValue)
-                    _toolTip = null;
-            });
+                ToolTip.SetShowDelay(this, 0);
+                ToolTip.SetTip(this, _toolTip);
+                _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
+                {
+                    if (!(bool)c.NewValue)
+                        _toolTip = null;
+                });
+            }
         }
 
         partial void AfterToolTipOpen()
         {
-            _toolTip.InvalidateVisual();
+            if (_toolTip != null)
+            {
+                _toolTip.InvalidateVisual();
+            }
         }
 
         partial class CustomCompletionWindow

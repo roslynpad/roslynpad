@@ -15,7 +15,9 @@ namespace RoslynPad
         private readonly RoslynCodeEditor _editor;
         private OpenDocumentViewModel _viewModel;
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public DocumentView()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             AvaloniaXamlLoader.Load(this);
 
@@ -44,7 +46,7 @@ namespace RoslynPad
 
         private async void OnDataContextChanged(object sender, EventArgs args)
         {
-            _viewModel = DataContext as OpenDocumentViewModel;
+            _viewModel = (OpenDocumentViewModel)DataContext;
             if (_viewModel == null) return;
 
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
@@ -76,7 +78,7 @@ namespace RoslynPad
             });
         }
 
-        private void OnError(ExceptionResultObject e)
+        private void OnError(ExceptionResultObject? e)
         {
         }
 

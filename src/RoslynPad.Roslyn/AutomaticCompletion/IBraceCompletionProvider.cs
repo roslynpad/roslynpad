@@ -28,10 +28,8 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
             }
 
             var caretProvider = text.Container as IEditorCaretProvider;
-            var session = new Session(caretProvider)
+            var session = new Session(caretProvider, document, text)
             {
-                Document = document,
-                Text = text,
                 OpeningPoint = position - 1,
                 ClosingPoint = position,
                 OpeningBrace = editorSession.OpeningBrace,
@@ -55,11 +53,13 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
 
         private class Session : IBraceCompletionSession
         {
-            private readonly IEditorCaretProvider _caretProvider;
+            private readonly IEditorCaretProvider? _caretProvider;
 
-            public Session(IEditorCaretProvider caretProvider)
+            public Session(IEditorCaretProvider? caretProvider, Document document, SourceText text)
             {
                 _caretProvider = caretProvider;
+                Document = document;
+                Text = text;
             }
 
             public Document Document { get; set; }

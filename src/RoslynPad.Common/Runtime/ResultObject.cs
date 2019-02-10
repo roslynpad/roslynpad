@@ -15,7 +15,7 @@ namespace RoslynPad.Runtime
 {
     internal interface IResultObject
     {
-        string Value { get; }
+        string? Value { get; }
 
         void WriteTo(StringBuilder builder);
     }
@@ -35,9 +35,9 @@ namespace RoslynPad.Runtime
             .Add("JObject", "{...}");
 
         private readonly DumpQuotas _quotas;
-        private readonly MemberInfo _member;
+        private readonly MemberInfo? _member;
 
-        public static ResultObject Create(object o, DumpQuotas quotas, string header = null)
+        public static ResultObject Create(object? o, DumpQuotas quotas, string? header = null)
         {
             return new ResultObject(o, quotas, header);
         }
@@ -47,7 +47,7 @@ namespace RoslynPad.Runtime
         {
         }
 
-        internal ResultObject(object o, DumpQuotas quotas, string header = null, MemberInfo member = null)
+        internal ResultObject(object? o, DumpQuotas quotas, string? header = null, MemberInfo? member = null)
         {
             _quotas = quotas;
             _member = member;
@@ -90,36 +90,35 @@ namespace RoslynPad.Runtime
         }
 
         [DataMember]
-        public string Header { get; private set; }
+        public string? Header { get; private set; }
 
         [DataMember]
-        public string Value { get; protected set; }
+        public string? Value { get; protected set; }
 
         [DataMember]
-        public string Type { get; private set; }
+        public string? Type { get; private set; }
 
         [DataMember]
-        public IList<ResultObject> Children { get; private set; }
+        public IList<ResultObject>? Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
         [DataMember]
         public bool IsExpanded { get; private set; }
 
-        private void Initialize(object o, string headerPrefix)
+        private void Initialize(object? o, string? headerPrefix)
         {
             var targetQuota = _quotas.StepDown();
 
-            if (_member != null)
+            if (TryPopulateMember(o, targetQuota))
             {
-                PopulateMember(o, targetQuota);
                 return;
             }
 
             PopulateObject(o, headerPrefix, targetQuota);
         }
 
-        private void PopulateObject(object o, string headerPrefix, DumpQuotas targetQuotas)
+        private void PopulateObject(object? o, string? headerPrefix, DumpQuotas targetQuotas)
         {
             if (o == null)
             {
@@ -187,7 +186,7 @@ namespace RoslynPad.Runtime
                 .ToImmutableArray();
         }
 
-        private IEnumerable GetEnumerable(object o, Type type)
+        private IEnumerable? GetEnumerable(object o, Type type)
         {
             if (o is IEnumerable e && !_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
             {
@@ -197,9 +196,14 @@ namespace RoslynPad.Runtime
             return null;
         }
 
-        private void PopulateMember(object o, DumpQuotas targetQuotas)
+        private bool TryPopulateMember(object? o, DumpQuotas targetQuotas)
         {
-            object value;
+            if (_member == null)
+            {
+                return false;
+            }
+
+            object? value;
             try
             {
                 if (o is Exception exception)
@@ -229,7 +233,7 @@ namespace RoslynPad.Runtime
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
                 Children = new ResultObject[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
-                return;
+                return true;
             }
 
             if (value == null)
@@ -245,11 +249,12 @@ namespace RoslynPad.Runtime
             }
 
             PopulateObject(value, _member.Name, targetQuotas);
+            return true;
         }
 
-        private object GetMemberValue(object o)
+        private object? GetMemberValue(object? o)
         {
-            object value = null;
+            object? value = null;
 
             if (_member is PropertyInfo propertyInfo)
             {
@@ -282,7 +287,7 @@ namespace RoslynPad.Runtime
         private static string GetTypeName(Type type)
         {
             var ns = type.Namespace;
-            string typeName = null;
+            string? typeName = null;
             do
             {
                 var currentName = GetSimpleTypeName(type);
@@ -309,7 +314,7 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, DumpQuotas targetQuotas, IEnumerable<MemberInfo> properties, string headerPrefix)
+        private void PopulateChildren(object o, DumpQuotas targetQuotas, IEnumerable<MemberInfo> properties, string? headerPrefix)
         {
             Header = headerPrefix;
             Value = GetString(o);
@@ -350,7 +355,7 @@ namespace RoslynPad.Runtime
                    Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
         }
 
-        private void InitializeEnumerableHeaderOnly(string headerPrefix, IEnumerable e)
+        private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
         {
             Header = headerPrefix;
 
@@ -368,13 +373,13 @@ namespace RoslynPad.Runtime
             }
             catch (Exception exception)
             {
-                Header = _member.Name;
+                Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
                 Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
-        private void InitializeEnumerable(string headerPrefix, IEnumerable e, DumpQuotas targetQuotas)
+        private void InitializeEnumerable(string? headerPrefix, IEnumerable e, DumpQuotas targetQuotas)
         {
             try
             {
@@ -464,7 +469,10 @@ namespace RoslynPad.Runtime
     {
         // for serialization
         // ReSharper disable once UnusedMember.Local
-        private ExceptionResultObject() { }
+        private ExceptionResultObject()
+        {
+            Message = string.Empty;
+        }
 
         private ExceptionResultObject(Exception exception, DumpQuotas quotas) : base(exception, quotas)
         {
@@ -496,7 +504,12 @@ namespace RoslynPad.Runtime
     {
         // for serialization
         // ReSharper disable once UnusedMember.Local
-        private CompilationErrorResultObject() { }
+        private CompilationErrorResultObject()
+        {
+            ErrorCode = string.Empty;
+            Severity = string.Empty;
+            Message = string.Empty;
+        }
 
         [DataMember]
         public string ErrorCode { get; private set; }
@@ -524,7 +537,7 @@ namespace RoslynPad.Runtime
 
         public override string ToString() => $"{ErrorCode}: {Message}";
 
-        string IResultObject.Value => ToString();
+        string? IResultObject.Value => ToString();
 
         public void WriteTo(StringBuilder builder) => builder.Append(ToString());
     }

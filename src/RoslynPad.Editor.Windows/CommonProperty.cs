@@ -7,7 +7,7 @@ namespace RoslynPad.Editor
     {
         public static StyledProperty<TValue> Register<TOwner, TValue>(string name,
             TValue defaultValue = default, PropertyOptions options = PropertyOptions.None,
-            Action<TOwner, CommonPropertyChangedArgs<TValue>> onChanged = null)
+            Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
             where TOwner : DependencyObject
         {
             var metadataOptions = FrameworkPropertyMetadataOptions.None;

@@ -68,8 +68,8 @@ namespace RoslynPad.Roslyn
                 ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.InnerException)));
         }
 
-        public RoslynHost(IEnumerable<Assembly> additionalAssemblies = null,
-            RoslynHostReferences references = null)
+        public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
+            RoslynHostReferences? references = null)
         {
             if (references == null) references = RoslynHostReferences.Empty;
 
@@ -213,7 +213,7 @@ namespace RoslynPad.Roslyn
             _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
         }
 
-        public Document GetDocument(DocumentId documentId)
+        public Document? GetDocument(DocumentId documentId)
         {
             if (documentId == null) throw new ArgumentNullException(nameof(documentId));
 
@@ -247,7 +247,7 @@ namespace RoslynPad.Roslyn
             return documentId;
         }
 
-        private DocumentId AddDocument(RoslynWorkspace workspace, DocumentCreationArgs args, Document previousDocument = null)
+        private DocumentId AddDocument(RoslynWorkspace workspace, DocumentCreationArgs args, Document? previousDocument = null)
         {
             var project = CreateProject(workspace.CurrentSolution, args,
                 CreateCompilationOptions(args, previousDocument == null), previousDocument?.Project);
@@ -264,11 +264,12 @@ namespace RoslynPad.Roslyn
                 _diagnosticsUpdatedNotifiers.TryAdd(documentId, args.OnDiagnosticsUpdated);
             }
 
-            if (args.OnTextUpdated != null)
+            var onTextUpdated = args.OnTextUpdated;
+            if (onTextUpdated != null)
             {
                 workspace.ApplyingTextChange += (d, s) =>
                 {
-                    if (documentId == d) args.OnTextUpdated(s);
+                    if (documentId == d) onTextUpdated(s);
                 };
             }
 
@@ -305,7 +306,7 @@ namespace RoslynPad.Roslyn
             return solution.GetDocument(id);
         }
 
-        protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project previousProject = null)
+        protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project? previousProject = null)
         {
             var name = args.Name ?? "Program" + Interlocked.Increment(ref _documentNumber);
             var id = ProjectId.CreateNewId(name);

@@ -34,7 +34,7 @@ namespace RoslynPad.Hosting
         private static DelegatingTextWriter _outWriter;
         private static DelegatingTextWriter _errorWriter;
 
-        private LazyRemoteService _lazyRemoteService;
+        private LazyRemoteService? _lazyRemoteService;
         private bool _disposed;
 
         private static bool Is64BitProcess => IntPtr.Size == 8;
@@ -48,7 +48,7 @@ namespace RoslynPad.Hosting
 
             DisableWer();
 
-            ServerImpl server = null;
+            ServerImpl? server = null;
             try
             {
                 var executionThread = CreateExecutionThread();
@@ -94,7 +94,7 @@ namespace RoslynPad.Hosting
             executionThread.Start();
 
             var syncContext = tcs.Task.Result;
-            return (syncContext, () => syncContext.Post(o => 
+            return (syncContext, () => syncContext.Post(o =>
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown(), null));
 #else
             var syncContext = new AsyncPump.SingleThreadSynchronizationContext(false);
@@ -164,10 +164,9 @@ namespace RoslynPad.Hosting
             _initializationParameters = initializationParameters;
         }
 
-        public string HostPath { get; set; }
+        public string? HostPath { get; set; }
 
-        public string HostArguments { get; set; }
-
+        public string? HostArguments { get; set; }
 
         public event Action<IList<ResultObject>> Dumped;
 
@@ -185,9 +184,9 @@ namespace RoslynPad.Hosting
 
         private void OnDisassembled(string il) => Disassembled?.Invoke(il);
 
-        private async Task<RemoteService> TryStartProcess(CancellationToken cancellationToken)
+        private async Task<RemoteService?> TryStartProcess(CancellationToken cancellationToken)
         {
-            Process newProcess = null;
+            Process? newProcess = null;
             int newProcessId = -1;
             try
             {
@@ -224,7 +223,7 @@ namespace RoslynPad.Hosting
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                ClientImpl client = null;
+                ClientImpl? client = null;
                 // instantiate remote service
                 try
                 {
@@ -269,7 +268,7 @@ namespace RoslynPad.Hosting
             _lazyRemoteService = null;
         }
 
-        private async Task<IService> TryGetOrCreateRemoteServiceAsync()
+        private async Task<IService?> TryGetOrCreateRemoteServiceAsync()
         {
             ThrowIfDisposed();
 
@@ -358,6 +357,8 @@ namespace RoslynPad.Hosting
             await TryGetOrCreateRemoteServiceAsync().ConfigureAwait(false);
         }
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
+
         [DataContract]
         private class DumpMessage
         {
@@ -412,6 +413,8 @@ namespace RoslynPad.Hosting
             public string IL { get; set; }
         }
 
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
+
         private interface IServiceCallback
         {
             Task Dump(DumpMessage message);
@@ -461,7 +464,7 @@ namespace RoslynPad.Hosting
             private readonly SynchronizationContext _syncContext;
             private readonly SemaphoreSlim _dumpLock;
 
-            private InteractiveAssemblyLoader _assemblyLoader;
+            private InteractiveAssemblyLoader? _assemblyLoader;
             private ScriptOptions _scriptOptions;
             private CSharpParseOptions _parseOptions;
             private string _workingDirectory;
@@ -475,6 +478,8 @@ namespace RoslynPad.Hosting
                 _dumpQueue = new ConcurrentQueue<ResultObject>();
                 _dumpLock = new SemaphoreSlim(0);
                 _scriptOptions = ScriptOptions.Default;
+                _parseOptions = CSharpParseOptions.Default;
+                _workingDirectory = Directory.GetCurrentDirectory();
 
                 ObjectExtensions.Dumped += OnDumped;
                 _syncContext = syncContext;
@@ -548,7 +553,10 @@ namespace RoslynPad.Hosting
                     }
 
                     var id = new AssemblyIdentity(name.Name, name.Version, name.CultureName, name.GetPublicKeyToken().ToImmutableArray());
-                    _assemblyLoader.RegisterDependency(id, referencePath);
+                    if (_assemblyLoader != null)
+                    {
+                        _assemblyLoader.RegisterDependency(id, referencePath);
+                    }
                 }
             }
 
@@ -707,7 +715,7 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private async Task<ScriptRunner> TryCompile(string code, bool decompile, OptimizationLevel? optimizationLevel, ScriptOptions options)
+            private async Task<ScriptRunner?> TryCompile(string code, bool decompile, OptimizationLevel? optimizationLevel, ScriptOptions options)
             {
                 var script = CreateScript(code, optimizationLevel, options);
 
@@ -779,12 +787,10 @@ namespace RoslynPad.Hosting
                     var innerTcs = (TaskCompletionSource<object>)o;
                     try
                     {
-                        innerTcs.TrySetResult(await script.RunAsync().ConfigureAwait(false));
-                    }
-                    catch (FileLoadException e) when (e.InnerException is NotSupportedException)
-                    {
-                        Console.Error.WriteLine(e.InnerException.Message);
-                        innerTcs.TrySetResult(null);
+                        var result = await script.RunAsync().ConfigureAwait(false);
+#pragma warning disable CS8604 // Possible null reference argument. - TCS can accept a null result
+                        innerTcs.TrySetResult(result);
+#pragma warning restore CS8604 // Possible null reference argument.
                     }
                     catch (Exception e)
                     {
@@ -891,14 +897,14 @@ namespace RoslynPad.Hosting
 
         private sealed class LazyRemoteService : IDisposable
         {
-            public readonly Lazy<Task<RemoteService>> InitializedService;
+            public readonly Lazy<Task<RemoteService?>> InitializedService;
             private readonly CancellationTokenSource _cancellationSource;
             private readonly ExecutionHost _host;
 
             public LazyRemoteService(ExecutionHost host)
             {
                 _cancellationSource = new CancellationTokenSource();
-                InitializedService = new Lazy<Task<RemoteService>>(TryStartAndInitializeProcessAsync);
+                InitializedService = new Lazy<Task<RemoteService?>>(TryStartAndInitializeProcessAsync);
                 _host = host;
             }
 
@@ -915,7 +921,7 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private Task<RemoteService> TryStartAndInitializeProcessAsync()
+            private Task<RemoteService?> TryStartAndInitializeProcessAsync()
             {
                 var cancellationToken = _cancellationSource.Token;
                 return Task.Run(() => _host.TryStartProcess(cancellationToken), cancellationToken);

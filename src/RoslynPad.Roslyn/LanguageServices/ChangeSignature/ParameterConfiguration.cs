@@ -5,7 +5,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
     internal sealed class ParameterConfiguration
     {
-        private readonly Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration _inner;
+        private readonly Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration? _inner;
 
         public ParameterConfiguration(Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration inner)
         {
@@ -16,7 +16,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             ParamsParameter = inner.ParamsParameter;
         }
 
-        public ParameterConfiguration(IParameterSymbol thisParameter, List<IParameterSymbol> parametersWithoutDefaultValues, List<IParameterSymbol> remainingEditableParameters, IParameterSymbol paramsParameter)
+        public ParameterConfiguration(IParameterSymbol thisParameter, List<IParameterSymbol> parametersWithoutDefaultValues, List<IParameterSymbol> remainingEditableParameters, IParameterSymbol? paramsParameter)
         {
             ThisParameter = thisParameter;
             ParametersWithoutDefaultValues = parametersWithoutDefaultValues;
@@ -27,7 +27,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         public IParameterSymbol ThisParameter { get; }
         public List<IParameterSymbol> ParametersWithoutDefaultValues { get; }
         public List<IParameterSymbol> RemainingEditableParameters { get; }
-        public IParameterSymbol ParamsParameter { get; }
+        public IParameterSymbol? ParamsParameter { get; }
 
         internal Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration ToInternal()
         {

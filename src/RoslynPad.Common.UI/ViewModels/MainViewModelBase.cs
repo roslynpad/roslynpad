@@ -28,10 +28,10 @@ namespace RoslynPad.UI
         public const string NuGetPathVariableName = "$NuGet";
         private const string ConfigFileName = "RoslynPad.json";
 
-        private OpenDocumentViewModel _currentOpenDocument;
+        private OpenDocumentViewModel? _currentOpenDocument;
         private bool _hasUpdate;
         private double _editorFontSize;
-        private string _searchText;
+        private string? _searchText;
         private bool _isWithinSearchResults;
         private string _documentPath;
         private bool _isInitialized;
@@ -57,7 +57,9 @@ namespace RoslynPad.UI
             }
         }
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             _serviceProvider = serviceProvider;
             _telemetryProvider = telemetryProvider;
@@ -172,7 +174,7 @@ namespace RoslynPad.UI
                 GetOpenDocumentViewModel(DocumentViewModel.FromPath(x)));
         }
 
-        private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel documentViewModel)
+        private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel? documentViewModel = null)
         {
             var d = _serviceProvider.GetService<OpenDocumentViewModel>();
             d.SetDocument(documentViewModel);
@@ -260,7 +262,7 @@ namespace RoslynPad.UI
 
         private string GetDefaultDocumentPath()
         {
-            string documentsPath = null;
+            string? documentsPath = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -302,7 +304,7 @@ namespace RoslynPad.UI
 
         public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
 
-        public OpenDocumentViewModel CurrentOpenDocument
+        public OpenDocumentViewModel? CurrentOpenDocument
         {
             get => _currentOpenDocument;
             set
@@ -430,7 +432,7 @@ namespace RoslynPad.UI
             IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "RoslynPad"), recursive: true));
         }
 
-        public Exception LastError
+        public Exception? LastError
         {
             get
             {
@@ -481,7 +483,7 @@ namespace RoslynPad.UI
             return DocumentRoot.CreateNew(documentName);
         }
 
-        public string SearchText
+        public string? SearchText
         {
             get => _searchText;
             set
@@ -530,7 +532,7 @@ namespace RoslynPad.UI
                 return;
             }
 
-            Regex regex = null;
+            Regex? regex = null;
             if (SearchUsingRegex)
             {
                 regex = CreateSearchRegex();
@@ -561,7 +563,7 @@ namespace RoslynPad.UI
             return document.Name.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private Regex CreateSearchRegex()
+        private Regex? CreateSearchRegex()
         {
             try
             {
@@ -579,7 +581,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private async Task SearchInFile(DocumentViewModel document, Regex regex)
+        private async Task SearchInFile(DocumentViewModel document, Regex? regex)
         {
             // a regex can span many lines so we need to load the entire file;
             // otherwise, search line-by-line
@@ -732,6 +734,8 @@ namespace RoslynPad.UI
                             var currentPath = isLast && data.Type == DocumentFileChangeType.Renamed
                                 ? data.NewPath
                                 : Path.Combine(_documentRoot.Path, Path.Combine(pathParts.Take(index + 1).ToArray()));
+                            Debug.Assert(currentPath != null);
+
                             var newDocument = DocumentViewModel.FromPath(currentPath);
                             if (!newDocument.IsAutoSave &&
                                 IsRelevantDocument(newDocument))
@@ -749,6 +753,7 @@ namespace RoslynPad.UI
                         switch (data.Type)
                         {
                             case DocumentFileChangeType.Renamed:
+                                Debug.Assert(data.NewPath != null);
                                 current.ChangePath(data.NewPath);
                                 // move it to the correct place
                                 parent.InternalChildren.Remove(current);

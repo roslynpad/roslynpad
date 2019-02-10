@@ -50,7 +50,7 @@ namespace RoslynPad.Editor
         private readonly DocumentId _documentId;
         private readonly IRoslynHost _roslynHost;
         private readonly IClassificationHighlightColors _highlightColors;
-        private readonly List<CachedLine> _cachedLines;
+        private readonly List<CachedLine>? _cachedLines;
         private readonly Subject<HighlightedLine> _subject;
         private List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
         private readonly SynchronizationContext _syncContext;
@@ -131,7 +131,7 @@ namespace RoslynPad.Editor
 
         IDocument IHighlighter.Document => _document;
 
-        IEnumerable<HighlightingColor> IHighlighter.GetColorStack(int lineNumber) => null;
+        IEnumerable<HighlightingColor>? IHighlighter.GetColorStack(int lineNumber) => null;
 
         public void UpdateHighlightingState(int lineNumber)
         {
@@ -145,7 +145,7 @@ namespace RoslynPad.Editor
         {
             var documentLine = _document.GetLineByNumber(lineNumber);
             var newVersion = _document.Version;
-            CachedLine cachedLine = null;
+            CachedLine? cachedLine = null;
             if (_cachedLines != null)
             {
                 for (var i = 0; i < _cachedLines.Count; i++)
@@ -187,13 +187,13 @@ namespace RoslynPad.Editor
             }
         }
 
-        private HighlightedLine DoHighlightLine(IDocumentLine documentLine, CachedLine previousCachedLine)
+        private HighlightedLine DoHighlightLine(IDocumentLine documentLine, CachedLine? previousCachedLine)
         {
             var line = new HighlightedLine(_document, documentLine);
 
             // If we have previous cached data, use it in the meantime since our request is asynchronous
-            var previousHighlight = previousCachedLine?.HighlightedLine;
-            if (previousHighlight != null && previousHighlight.Sections.Count > 0)
+            if (previousCachedLine != null && previousCachedLine.HighlightedLine is var previousHighlight && 
+                previousHighlight.Sections.Count > 0)
             {
                 var offsetShift = documentLine.Offset - previousCachedLine.Offset;
 
@@ -235,7 +235,7 @@ namespace RoslynPad.Editor
             connectible.Connect();
         }
 
-        private async Task<object> SubscribeToLine(HighlightedLine line)
+        private async Task<object?> SubscribeToLine(HighlightedLine line)
         {
             var document = _roslynHost.GetDocument(_documentId);
             if (document == null)
@@ -342,7 +342,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        public HighlightingColor GetNamedColor(string name) => null;
+        public HighlightingColor? GetNamedColor(string name) => null;
 
         #region Caching
 

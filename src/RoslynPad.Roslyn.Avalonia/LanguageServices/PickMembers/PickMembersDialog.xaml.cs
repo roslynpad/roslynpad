@@ -26,7 +26,9 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
         public string Cancel => "Cancel";
         
         [ImportingConstructor]
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public PickMembersDialog()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             //SetCommandBindings();
 
@@ -149,7 +151,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
             get => DataContext;
             set
             {
-                _viewModel = value as PickMembersDialogViewModel;
+                _viewModel = (PickMembersDialogViewModel)value;
                 DataContext = value;
             }
         }

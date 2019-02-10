@@ -401,7 +401,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             _output.Write(") ");
         }
 
-        private void WriteNativeType(NativeType nativeType, MarshalInfo marshalInfo = null)
+        private void WriteNativeType(NativeType nativeType, MarshalInfo? marshalInfo = null)
         {
             switch (nativeType)
             {
@@ -452,7 +452,7 @@ namespace RoslynPad.Hosting.ILDecompiler
                 case NativeType.Func:
                     goto default; // ??
                 case NativeType.Array:
-                    var ami = (ArrayMarshalInfo)marshalInfo;
+                    var ami = marshalInfo as ArrayMarshalInfo;
                     if (ami == null)
                         goto default;
                     if (ami.ElementType != NativeType.Max)
@@ -484,8 +484,7 @@ namespace RoslynPad.Hosting.ILDecompiler
                     _output.Write("lptstr");
                     break;
                 case NativeType.FixedSysString:
-                    // ReSharper disable once PossibleNullReferenceException
-                    _output.Write("fixed sysstring[{0}]", ((FixedSysStringMarshalInfo)marshalInfo).Size);
+                    _output.Write("fixed sysstring[{0}]", (marshalInfo as FixedSysStringMarshalInfo)?.Size ?? 0);
                     break;
                 case NativeType.IUnknown:
                     _output.Write("iunknown");
@@ -1090,7 +1089,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             _output.Indent();
         }
 
-        private void CloseBlock(string comment = null)
+        private void CloseBlock(string? comment = null)
         {
             _output.Unindent();
             _output.Write("}");
@@ -1140,16 +1139,16 @@ namespace RoslynPad.Hosting.ILDecompiler
 
         }
 
-        private sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
+        private sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string?>> where T : struct
         {
-            private readonly List<KeyValuePair<long, string>> _names = new List<KeyValuePair<long, string>>();
+            private readonly List<KeyValuePair<long, string?>> _names = new List<KeyValuePair<long, string?>>();
 
-            public void Add(T flag, string name)
+            public void Add(T flag, string? name)
             {
-                _names.Add(new KeyValuePair<long, string>(Convert.ToInt64(flag), name));
+                _names.Add(new KeyValuePair<long, string?>(Convert.ToInt64(flag), name));
             }
 
-            public IEnumerator<KeyValuePair<long, string>> GetEnumerator()
+            public IEnumerator<KeyValuePair<long, string?>> GetEnumerator()
             {
                 return _names.GetEnumerator();
             }

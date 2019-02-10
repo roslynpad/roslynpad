@@ -46,7 +46,7 @@ namespace RoslynPad.Controls
             }
         }
 
-        private GridViewColumnCollection _columns;
+        private GridViewColumnCollection? _columns;
     }
 
     internal class TreeListViewItem : TreeViewItem

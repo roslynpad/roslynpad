@@ -14,16 +14,17 @@ namespace RoslynPad.UI
         internal const string DefaultFileExtension = ".csx";
         internal const string AutoSaveSuffix = ".autosave";
 
-        private DocumentCollection _children;
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
         private bool _isSearchMatch;
         private string _path;
         private string _name;
-        private string _orderByName;
+        private string? _orderByName;
         private string _originalName;
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         private DocumentViewModel(string rootPath, bool isFolder)
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             Path = rootPath;
             IsFolder = isFolder;
@@ -175,20 +176,20 @@ namespace RoslynPad.UI
             }
         }
 
-        public bool IsChildrenInitialized => _children != null;
+        public bool IsChildrenInitialized => InternalChildren != null;
 
-        internal DocumentCollection InternalChildren => _children;
+        internal DocumentCollection InternalChildren { get; private set; }
 
         public ObservableCollection<DocumentViewModel> Children
         {
             get
             {
-                if (IsFolder && _children == null)
+                if (IsFolder && InternalChildren == null)
                 {
-                    _children = ReadChildren();
+                    InternalChildren = ReadChildren();
                 }
 
-                return _children;
+                return InternalChildren;
             }
         }
 

@@ -19,11 +19,11 @@ namespace RoslynPad
                 _workspace = (RoslynWorkspace)workspace;
             }
 
-            public DocumentId GetActiveDocument() => _workspace.OpenDocumentId;
+            public DocumentId GetActiveDocument() => _workspace.OpenDocumentId ?? throw new InvalidOperationException("No active document");
 
-            public DocumentId TryGetActiveDocument() => _workspace.OpenDocumentId;
+            public DocumentId? TryGetActiveDocument() => _workspace.OpenDocumentId;
 
-            public ImmutableArray<DocumentId> GetVisibleDocuments() => ImmutableArray.Create(_workspace.OpenDocumentId);
+            public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? ImmutableArray.Create(_workspace.OpenDocumentId) : ImmutableArray<DocumentId>.Empty;
 
             public event EventHandler<DocumentId> ActiveDocumentChanged;
 

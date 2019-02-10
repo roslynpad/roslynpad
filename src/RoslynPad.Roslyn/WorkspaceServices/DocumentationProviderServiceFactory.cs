@@ -21,10 +21,10 @@ namespace RoslynPad.Roslyn.WorkspaceServices
     [Export(typeof(IDocumentationProviderService)), Shared]
     internal sealed class DocumentationProviderService : IDocumentationProviderService
     {
-        private readonly ConcurrentDictionary<string, DocumentationProvider> _assemblyPathToDocumentationProviderMap
-            = new ConcurrentDictionary<string, DocumentationProvider>();
+        private readonly ConcurrentDictionary<string, DocumentationProvider?> _assemblyPathToDocumentationProviderMap
+            = new ConcurrentDictionary<string, DocumentationProvider?>();
 
-        public DocumentationProvider GetDocumentationProvider(string location)
+        public DocumentationProvider? GetDocumentationProvider(string location)
         {
             var finalPath = Path.ChangeExtension(location, "xml");
 
@@ -41,7 +41,7 @@ namespace RoslynPad.Roslyn.WorkspaceServices
                 });
         }
 
-        private static string GetFilePath(string path, string location)
+        private static string? GetFilePath(string path, string location)
         {
             if (path != null)
             {

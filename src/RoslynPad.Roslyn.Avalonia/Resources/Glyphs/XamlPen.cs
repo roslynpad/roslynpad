@@ -6,11 +6,11 @@ namespace RoslynPad.Roslyn.Resources
 {
     public class PenExtension : MarkupExtension
     {
-        public IBrush Brush { get; set; }
+        public IBrush? Brush { get; set; }
 
         public double Thickness { get; set; } = 1.0;
 
-        public DashStyle DashStyle { get; set; }
+        public DashStyle? DashStyle { get; set; }
 
         public PenLineCap DashCap { get; set; }
 

@@ -8,7 +8,7 @@ namespace RoslynPad.Editor
     {
         public static StyledProperty<TValue> Register<TOwner, TValue>(string name,
             TValue defaultValue = default, PropertyOptions options = PropertyOptions.None,
-            Action<TOwner, CommonPropertyChangedArgs<TValue>> onChanged = null)
+            Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
             where TOwner : AvaloniaObject
         {
             var property = AvaloniaProperty.Register<TOwner, TValue>(name, defaultValue,
@@ -32,10 +32,11 @@ namespace RoslynPad.Editor
                 AffectsMeasure(new[] { property });
             }
 
-            if (onChanged != null)
+            var onChangedLocal = onChanged;
+            if (onChangedLocal != null)
             {
                 property.Changed.AddClassHandler<TOwner>(
-                    (o, e) => onChanged(o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue, (TValue)e.NewValue)));
+                    (o, e) => onChangedLocal(o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue, (TValue)e.NewValue)));
             }
 
             return property;

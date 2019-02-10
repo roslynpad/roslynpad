@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Shared.Extensions;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace RoslynPad.Roslyn
         {
             var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
             var syntaxFacts = document.GetLanguageService<ISyntaxFactsService>();
-            return await syntaxTree.GetTouchingTokenAsync(position, syntaxFacts.IsWord, cancellationToken, findInsideTrivia).ConfigureAwait(false);
+            return await syntaxTree.GetTouchingTokenAsync(position, token => syntaxFacts.IsWord(token), cancellationToken, findInsideTrivia).ConfigureAwait(false);
         }
 
         public static Document WithFrozenPartialSemantics(this Document document, CancellationToken cancellationToken = default)

@@ -41,7 +41,9 @@ namespace RoslynPad.UI
 
         public string GlobalPackageFolder { get; }
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public NuGetViewModel()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             try
             {
@@ -73,7 +75,7 @@ namespace RoslynPad.UI
 
             foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
             {
-                IPackageSearchMetadata[] result;
+                IPackageSearchMetadata[]? result;
                 try
                 {
                     result = await sourceRepository.SearchAsync(searchTerm, filter, MaxSearchResults, cancellationToken).ConfigureAwait(false);
@@ -216,12 +218,10 @@ namespace RoslynPad.UI
 
                 var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, cancellationToken).ConfigureAwait(false);
 
-                var result = new RestoreResult
-                {
-                    NoOp = restoreSummaries.All(x => x.NoOpRestore),
-                    Success = restoreSummaries.All(x => x.Success),
-                    Errors = restoreSummaries.SelectMany(x => x.Errors).Select(x => x.Message).ToImmutableArray()
-                };
+                var result = new RestoreResult(
+                    success: restoreSummaries.All(x => x.Success),
+                    noOp: restoreSummaries.All(x => x.NoOpRestore),
+                    errors: restoreSummaries.SelectMany(x => x.Errors).Select(x => x.Message).ToImmutableArray());
 
                 return result;
             }
@@ -340,8 +340,14 @@ namespace RoslynPad.UI
 
     public class NuGetRestoreResult
     {
-        public IList<string> CompileReferences { get; set; }
-        public IList<string> RuntimeReferences { get; set; }
+        public NuGetRestoreResult(IList<string> compileReferences, IList<string> runtimeReferences)
+        {
+            CompileReferences = compileReferences;
+            RuntimeReferences = runtimeReferences;
+        }
+
+        public IList<string> CompileReferences { get; }
+        public IList<string> RuntimeReferences { get; }
     }
 
     [Export]
@@ -367,12 +373,15 @@ namespace RoslynPad.UI
         private IReadOnlyList<string> _restoreErrors;
 
         [ImportingConstructor]
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands, ITelemetryProvider telemetryProvider)
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             _nuGetViewModel = nuGetViewModel;
             _telemetryProvider = telemetryProvider;
             _restoreLock = new SemaphoreSlim(1, 1);
             _referencedPackages = new HashSet<PackageRef>();
+            _packages = Array.Empty<PackageData>();
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
 
@@ -440,7 +449,7 @@ namespace RoslynPad.UI
             private set => SetProperty(ref _packages, value);
         }
 
-        public void UpdatePackageReferences(List<PackageRef> packages)
+        public void UpdatePackageReferences(IReadOnlyList<PackageRef> packages)
         {
             var changed = false;
 
@@ -527,7 +536,7 @@ namespace RoslynPad.UI
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                Packages = null;
+                Packages = Array.Empty<PackageData>();
                 IsPackagesMenuOpen = false;
                 return;
             }
@@ -593,7 +602,7 @@ namespace RoslynPad.UI
                 }
 
                 RestoreFailed = false;
-                RestoreErrors = null;
+                RestoreErrors = Array.Empty<string>();
 
                 if (result.NoOp)
                 {
@@ -627,11 +636,13 @@ namespace RoslynPad.UI
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            RestoreCompleted?.Invoke(new NuGetRestoreResult { CompileReferences = compile, RuntimeReferences = runtime });
+            RestoreCompleted?.Invoke(new NuGetRestoreResult(compile, runtime));
         }
     }
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public class RestoreParams
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         public string ProjectName { get; set; }
         public NuGetFramework TargetFramework { get; set; }
@@ -642,7 +653,7 @@ namespace RoslynPad.UI
         public IList<PackageRef> Packages { get; set; } = new List<PackageRef>();
     }
 
-    public class PackageRef : IEquatable<PackageRef>
+    public class PackageRef : IEquatable<PackageRef?>
     {
         public PackageRef(string id, VersionRange versionRange)
         {
@@ -653,7 +664,7 @@ namespace RoslynPad.UI
         public string Id { get; }
         public VersionRange VersionRange { get; }
 
-        public bool Equals(PackageRef other)
+        public bool Equals(PackageRef? other)
         {
             return other == null
                 ? false
@@ -670,14 +681,21 @@ namespace RoslynPad.UI
 
     public class RestoreResult
     {
-        public IReadOnlyList<string> Errors { get; set; }
-        public bool Success { get; set; }
-        public bool NoOp { get; set; }
+        public RestoreResult(IReadOnlyList<string> errors, bool success, bool noOp)
+        {
+            Errors = errors;
+            Success = success;
+            NoOp = noOp;
+        }
+
+        public IReadOnlyList<string> Errors { get; }
+        public bool Success { get; }
+        public bool NoOp { get; }
     }
 
     public sealed class PackageData : INuGetPackage
     {
-        private readonly IPackageSearchMetadata _package;
+        private readonly IPackageSearchMetadata? _package;
 
         private PackageData(string id, NuGetVersion version)
         {

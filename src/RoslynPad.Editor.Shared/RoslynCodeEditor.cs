@@ -27,16 +27,16 @@ namespace RoslynPad.Editor
     public class RoslynCodeEditor : CodeTextEditor
     {
         private readonly TextMarkerService _textMarkerService;
-        private BraceMatcherHighlightRenderer _braceMatcherHighlighter;
-        private ContextActionsRenderer _contextActionsRenderer = null;
-        private IClassificationHighlightColors _classificationHighlightColors;
-        private IRoslynHost _roslynHost;
-        private DocumentId _documentId;
-        private IQuickInfoProvider _quickInfoProvider;
-        private IBraceMatchingService _braceMatchingService;
-        private IBraceCompletionProvider _braceCompletionProvider;
-        private CancellationTokenSource _braceMatchingCts;
-        private RoslynHighlightingColorizer _colorizer;
+        private BraceMatcherHighlightRenderer? _braceMatcherHighlighter;
+        private ContextActionsRenderer? _contextActionsRenderer;
+        private IClassificationHighlightColors? _classificationHighlightColors;
+        private IRoslynHost? _roslynHost;
+        private DocumentId? _documentId;
+        private IQuickInfoProvider? _quickInfoProvider;
+        private IBraceMatchingService? _braceMatchingService;
+        private IBraceCompletionProvider? _braceCompletionProvider;
+        private CancellationTokenSource? _braceMatchingCts;
+        private RoslynHighlightingColorizer? _colorizer;
 
         public RoslynCodeEditor()
         {
@@ -88,9 +88,10 @@ namespace RoslynPad.Editor
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
-            if (IsBraceCompletionEnabled && e.Text.Length == 1)
+            if (IsBraceCompletionEnabled && e.Text.Length == 1 && _braceCompletionProvider != null && _roslynHost != null &&
+                _documentId != null && _roslynHost.GetDocument(_documentId) is Document document)
             {
-                _braceCompletionProvider.TryComplete(_roslynHost.GetDocument(_documentId), CaretOffset);
+                _braceCompletionProvider.TryComplete(document, CaretOffset);
             }
         }
 
@@ -138,12 +139,20 @@ namespace RoslynPad.Editor
                 TextArea.TextView.LineTransformers.Remove(_colorizer);
             }
 
-            _colorizer = new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors);
-            TextArea.TextView.LineTransformers.Insert(0, _colorizer);
+            if (_documentId != null && _roslynHost != null && _classificationHighlightColors != null)
+            {
+                _colorizer = new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors);
+                TextArea.TextView.LineTransformers.Insert(0, _colorizer);
+            }
         }
 
         private async void CaretOnPositionChanged(object sender, EventArgs eventArgs)
         {
+            if (_roslynHost == null || _documentId == null || _braceMatcherHighlighter == null)
+            {
+                return;
+            }
+
             _braceMatchingCts?.Cancel();
 
             if (_braceMatchingService == null) return;
@@ -153,6 +162,11 @@ namespace RoslynPad.Editor
             _braceMatchingCts = cts;
 
             var document = _roslynHost.GetDocument(_documentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var text = await document.GetTextAsync().ConfigureAwait(false);
             var caretOffset = CaretOffset;
             if (caretOffset <= text.Length)
@@ -197,8 +211,18 @@ namespace RoslynPad.Editor
 
         private async Task OnAsyncToolTipRequest(ToolTipRequestEventArgs arg)
         {
+            if (_roslynHost == null || _documentId == null || _quickInfoProvider == null)
+            {
+                return;
+            }
+
             // TODO: consider invoking this with a delay, then showing the tool-tip without one
             var document = _roslynHost.GetDocument(_documentId);
+            if (document == null)
+            {
+                return;
+            }
+
             var info = await _quickInfoProvider.GetItemAsync(document, arg.Position, CancellationToken.None).ConfigureAwait(true);
             if (info != null)
             {
@@ -287,6 +311,6 @@ namespace RoslynPad.Editor
 
         public Action<DiagnosticsUpdatedArgs> ProcessDiagnostics { get; }
 
-        public DocumentId DocumentId { get; set; }
+        public DocumentId? DocumentId { get; set; }
     }
 }

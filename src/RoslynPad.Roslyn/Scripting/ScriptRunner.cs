@@ -22,20 +22,21 @@ namespace RoslynPad.Roslyn.Scripting
     {
         private static readonly string _globalAssemblyNamePrefix = "\u211B\u2118-" + Guid.NewGuid() + "-";
         private static int _assemblyNumber;
-        
+
         private readonly InteractiveAssemblyLoader _assemblyLoader;
-        private Func<object[], Task<object>> _lazyExecutor;
-        private Compilation _lazyCompilation;
         private readonly OptimizationLevel _optimizationLevel;
         private readonly bool _checkOverflow;
         private readonly bool _allowUnsafe;
         private readonly bool _registerDependencies;
 
-        public ScriptRunner(string code, CSharpParseOptions parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
-            Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference> references = null,
-            IEnumerable<string> usings = null, string filePath = null, string workingDirectory = null, 
-            MetadataReferenceResolver metadataResolver = null, SourceReferenceResolver sourceResolver = null,
-            InteractiveAssemblyLoader assemblyLoader = null, 
+        private Func<object[], Task<object>>? _lazyExecutor;
+        private Compilation? _lazyCompilation;
+
+        public ScriptRunner(string code, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+            Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
+            IEnumerable<string>? usings = null, string? filePath = null, string? workingDirectory = null,
+            MetadataReferenceResolver? metadataResolver = null, SourceReferenceResolver? sourceResolver = null,
+            InteractiveAssemblyLoader? assemblyLoader = null,
             OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true,
             bool registerDependencies = false)
         {
@@ -77,7 +78,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         public CSharpParseOptions ParseOptions { get; }
 
-        public ImmutableArray<Diagnostic> Compile(Action<Stream> peStreamAction, CancellationToken cancellationToken = default)
+        public ImmutableArray<Diagnostic> Compile(Action<Stream>? peStreamAction, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -91,7 +92,7 @@ namespace RoslynPad.Roslyn.Scripting
             }
         }
 
-        public async Task<object> RunAsync(CancellationToken cancellationToken = default)
+        public async Task<object?> RunAsync(CancellationToken cancellationToken = default)
         {
             var entryPoint = GetExecutor(null, cancellationToken);
             if (entryPoint == null)
@@ -119,7 +120,7 @@ namespace RoslynPad.Roslyn.Scripting
             return GetDiagnostics(diagnosticsBag);
         }
 
-        private Func<object[], Task<object>> GetExecutor(Action<Stream> peStreamAction, CancellationToken cancellationToken)
+        private Func<object[], Task<object>>? GetExecutor(Action<Stream>? peStreamAction, CancellationToken cancellationToken)
         {
             if (_lazyExecutor == null)
             {
@@ -129,7 +130,7 @@ namespace RoslynPad.Roslyn.Scripting
             return _lazyExecutor;
         }
 
-        private Func<object[], Task<object>> CreateExecutor(Action<Stream> peStreamAction, CancellationToken cancellationToken)
+        private Func<object[], Task<object>>? CreateExecutor(Action<Stream>? peStreamAction, CancellationToken cancellationToken)
         {
             var compilation = GetCompilation();
 
@@ -181,7 +182,7 @@ namespace RoslynPad.Roslyn.Scripting
             }
         }
 
-        private Func<object[], Task<object>> Build(Action<Stream> peStreamAction, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
+        private Func<object[], Task<object>>? Build(Action<Stream>? peStreamAction, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
         {
             var entryPoint = compilation.GetEntryPoint(cancellationToken);
 
@@ -257,7 +258,9 @@ namespace RoslynPad.Roslyn.Scripting
                 Interlocked.CompareExchange(ref _lazyCompilation, compilation, null);
             }
 
+#pragma warning disable CS8603 // Possible null reference return.
             return _lazyCompilation;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         private Compilation GetCompilationFromCode(string code)
@@ -345,7 +348,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         private class DiagnosticBag
         {
-            private ConcurrentQueue<Diagnostic> _lazyBag;
+            private ConcurrentQueue<Diagnostic>? _lazyBag;
 
             public bool IsEmptyWithoutResolution
             {

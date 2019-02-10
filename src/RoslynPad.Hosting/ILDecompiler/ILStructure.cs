@@ -71,12 +71,12 @@ namespace RoslynPad.Hosting.ILDecompiler
         /// <summary>
         /// The exception handler associated with the Try, Filter or Handler block.
         /// </summary>
-        public readonly ExceptionHandler ExceptionHandler;
+        public readonly ExceptionHandler? ExceptionHandler;
 
         /// <summary>
         /// The loop's entry point.
         /// </summary>
-        public readonly Instruction LoopEntryPoint;
+        public readonly Instruction? LoopEntryPoint;
 
         /// <summary>
         /// The list of child structures.
@@ -107,7 +107,7 @@ namespace RoslynPad.Hosting.ILDecompiler
                 {
                     // We found a backward branch. This is a potential loop.
                     // Check that is has only one entry point:
-                    Instruction entryPoint = null;
+                    Instruction? entryPoint = null;
 
                     // entry point is first instruction in loop if prev inst isn't an unconditional branch
                     var prev = allBranches[i].Value.Previous;
@@ -157,7 +157,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             }
         }
 
-        public ILStructure(ILStructureType type, int startOffset, int endOffset, ExceptionHandler handler = null)
+        public ILStructure(ILStructureType type, int startOffset, int endOffset, ExceptionHandler? handler = null)
         {
             Debug.Assert(startOffset < endOffset);
             Type = type;
@@ -166,7 +166,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             ExceptionHandler = handler;
         }
 
-        public ILStructure(ILStructureType type, int startOffset, int endOffset, Instruction loopEntryPoint)
+        public ILStructure(ILStructureType type, int startOffset, int endOffset, Instruction? loopEntryPoint)
         {
             Debug.Assert(startOffset < endOffset);
             Type = type;

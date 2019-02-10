@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn
         private static readonly ImmutableArray<PortableExecutableReference> _unresolved = ImmutableArray.Create(MetadataReference.CreateFromFile(typeof(CachedScriptMetadataResolver).Assembly.Location));
 
         private readonly ScriptMetadataResolver _inner;
-        private readonly ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>> _cache;
+        private readonly ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>>? _cache;
         
         public CachedScriptMetadataResolver(string workingDirectory, bool useCache = false)
         {

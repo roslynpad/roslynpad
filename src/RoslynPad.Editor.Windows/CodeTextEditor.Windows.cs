@@ -19,19 +19,28 @@ namespace RoslynPad.Editor
 
         partial void InitializeToolTip()
         {
-            _toolTip.Closed += (o, a) => _toolTip = null;
-            ToolTipService.SetInitialShowDelay(_toolTip, 0);
-            _toolTip.PlacementTarget = this; // required for property inheritance
+            if (_toolTip != null)
+            {
+                _toolTip.Closed += (o, a) => _toolTip = null;
+                ToolTipService.SetInitialShowDelay(_toolTip, 0);
+                _toolTip.PlacementTarget = this; // required for property inheritance
+            }
         }
 
         partial void InitializeInsightWindow()
         {
-            _insightWindow.Style = TryFindResource(typeof(InsightWindow)) as Style;
+            if (_insightWindow != null)
+            {
+                _insightWindow.Style = TryFindResource(typeof(InsightWindow)) as Style;
+            }
         }
 
         partial void InitializeCompletionWindow()
         {
-            _completionWindow.Background = CompletionBackground;
+            if (_completionWindow != null)
+            {
+                _completionWindow.Background = CompletionBackground;
+            }
         }
 
         partial class CustomCompletionWindow

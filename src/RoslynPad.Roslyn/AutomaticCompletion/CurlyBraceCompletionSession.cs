@@ -86,7 +86,7 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
             return SpecializedCollections.SingletonEnumerable(BraceCompletionFormattingRule.Instance).Concat(Formatter.GetDefaultFormattingRules(document));
         }
 
-        private void FormatTrackingSpan(IBraceCompletionSession session, bool shouldHonorAutoFormattingOnCloseBraceOption, IEnumerable<IFormattingRule> rules = null)
+        private void FormatTrackingSpan(IBraceCompletionSession session, bool shouldHonorAutoFormattingOnCloseBraceOption, IEnumerable<IFormattingRule>? rules = null)
         {
             var document = session.Document;
             var text = session.Text;
@@ -157,7 +157,7 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
 
             public static readonly IFormattingRule Instance = new BraceCompletionFormattingRule();
 
-            public override AdjustNewLinesOperation GetAdjustNewLinesOperation(SyntaxToken previousToken, SyntaxToken currentToken, OptionSet optionSet, NextOperation<AdjustNewLinesOperation> nextOperation)
+            public override AdjustNewLinesOperation? GetAdjustNewLinesOperation(SyntaxToken previousToken, SyntaxToken currentToken, OptionSet optionSet, NextOperation<AdjustNewLinesOperation> nextOperation)
             {
                 // Eg Cases -
                 // new MyObject {

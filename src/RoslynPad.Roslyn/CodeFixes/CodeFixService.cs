@@ -47,7 +47,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             return new FirstDiagnosticResult(result);
         }
 
-        public CodeFixProvider GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds)
+        public CodeFixProvider? GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds)
         {
             return _inner.GetSuppressionFixer(language, diagnosticIds);
         }
@@ -152,7 +152,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 //
                 // this design's weakness is that each side don't have enough information to narrow down works to do. it will most likely always do more works than needed.
                 // sometimes way more than it is needed. (compilation)
-                Dictionary<TextSpan, List<DiagnosticData>> aggregatedDiagnostics = null;
+                Dictionary<TextSpan, List<DiagnosticData>>? aggregatedDiagnostics = null;
                 foreach (var diagnostic in await _diagnosticService.GetDiagnosticsForSpanAsync(document, range, cancellationToken: cancellationToken).ConfigureAwait(false))
                 {
                     if (diagnostic.IsSuppressed)
@@ -338,7 +338,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 // If the fix provider supports fix all occurrences, then get the corresponding FixAllProviderInfo and fix all context.
                 var fixAllProviderInfo = extensionManager.PerformFunction(fixer, () => ImmutableInterlocked.GetOrAdd(ref _fixAllProviderMap, fixer, FixAllProviderInfo.Create), defaultValue: null);
 
-                FixAllState fixAllState = null;
+                FixAllState? fixAllState = null;
                 var supportedScopes = ImmutableArray<FixAllScope>.Empty;
                 if (fixAllProviderInfo != null)
                 {
@@ -383,7 +383,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                         .Select(d => d.Id);
             }
 
-            public CodeFixProvider GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds)
+            public CodeFixProvider? GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds)
             {
                 Lazy<ISuppressionFixProvider> lazySuppressionProvider;
                 if (!_suppressionProvidersMap.TryGetValue(language, out lazySuppressionProvider) || lazySuppressionProvider.Value == null)
@@ -438,7 +438,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     hasAnySharedFixer = workspaceFixers.Any();
                 }
 
-                Lazy<ISuppressionFixProvider> lazySuppressionProvider = null;
+                Lazy<ISuppressionFixProvider>? lazySuppressionProvider = null;
                 var hasSuppressionFixer =
                     considerSuppressionFixes &&
                     _suppressionProvidersMap.TryGetValue(document.Project.Language, out lazySuppressionProvider) &&
@@ -462,7 +462,7 @@ namespace RoslynPad.Roslyn.CodeFixes
 
                 var dx = await diagnostic.ToDiagnosticAsync(document.Project, cancellationToken).ConfigureAwait(false);
 
-                if (hasSuppressionFixer && lazySuppressionProvider.Value.CanBeSuppressedOrUnsuppressed(dx))
+                if (hasSuppressionFixer && lazySuppressionProvider?.Value.CanBeSuppressedOrUnsuppressed(dx) == true)
                 {
                     return true;
                 }
@@ -537,7 +537,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             // ReSharper disable once InconsistentNaming
             private static readonly Func<DiagnosticId, List<CodeFixProvider>> s_createList = _ => new List<CodeFixProvider>();
 
-            private ImmutableArray<DiagnosticId> GetFixableDiagnosticIds(CodeFixProvider fixer, IExtensionManager extensionManager)
+            private ImmutableArray<DiagnosticId> GetFixableDiagnosticIds(CodeFixProvider fixer, IExtensionManager? extensionManager)
             {
                 // If we are passed a null extension manager it means we do not have access to a document so there is nothing to 
                 // show the user.  In this case we will log any exceptions that occur, but the user will not see them.
@@ -579,7 +579,7 @@ namespace RoslynPad.Roslyn.CodeFixes
 
             private ImmutableDictionary<LanguageKind, Lazy<ImmutableDictionary<DiagnosticId, ImmutableArray<CodeFixProvider>>>> GetFixerPerLanguageMap(
                 Dictionary<LanguageKind, List<Lazy<CodeFixProvider, CodeChangeProviderMetadata>>> fixersPerLanguage,
-                IExtensionManager extensionManager)
+                IExtensionManager? extensionManager)
             {
                 var fixerMap = ImmutableDictionary.Create<LanguageKind, Lazy<ImmutableDictionary<DiagnosticId, ImmutableArray<CodeFixProvider>>>>();
                 foreach (var languageKindAndFixers in fixersPerLanguage)
@@ -667,7 +667,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             private ImmutableDictionary<DiagnosticId, List<CodeFixProvider>> ComputeProjectFixers(Project project)
             {
                 var extensionManager = project.Solution.Workspace.Services.GetService<IExtensionManager>();
-                ImmutableDictionary<DiagnosticId, List<CodeFixProvider>>.Builder builder = null;
+                ImmutableDictionary<DiagnosticId, List<CodeFixProvider>>.Builder? builder = null;
                 foreach (var reference in project.AnalyzerReferences)
                 {
                     var projectCodeFixerProvider = _analyzerReferenceToFixersMap.GetValue(reference, _createProjectCodeFixProvider);

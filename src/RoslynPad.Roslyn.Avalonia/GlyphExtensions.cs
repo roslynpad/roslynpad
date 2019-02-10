@@ -10,7 +10,7 @@ namespace RoslynPad.Roslyn
     {
         private static readonly GlyphService _service = new GlyphService();
 
-        public static Drawing ToImageSource(this Glyph glyph)
+        public static Drawing? ToImageSource(this Glyph glyph)
         {
             var image = _service.GetGlyphImage(glyph);
             return image;
@@ -29,7 +29,7 @@ namespace RoslynPad.Roslyn
                 }
             }
 
-            public Drawing GetGlyphImage(Glyph glyph)
+            public Drawing? GetGlyphImage(Glyph glyph)
             {
                 if (_glyphs != null && _glyphs.TryGetValue(glyph, out var glyphImage))
                 {

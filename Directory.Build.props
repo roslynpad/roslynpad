@@ -6,7 +6,8 @@
         <EditorPackageVersion>1.1.0</EditorPackageVersion>
         <RoslynPackageVersion>3.0.0</RoslynPackageVersion>
         <RoslynAssemblyVersion>3.0.0.0</RoslynAssemblyVersion>
-        <LangVersion>latest</LangVersion>
+        <LangVersion>8.0</LangVersion>
+        <NullableContextOptions>Enable</NullableContextOptions>
         <Authors>Eli Arbel</Authors>
         <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/aelij/RoslynPad/blob/master/LICENSE</PackageLicenseUrl>

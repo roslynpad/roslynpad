@@ -28,7 +28,7 @@ RoslynPad is also available as NuGet packages which allow you to use Roslyn serv
 
 ## Building
 
-Open `src\RoslynPad.sln` in Visual Studio 2017.
+Open `src\RoslynPad.sln` in Visual Studio 2019.
 
 ## Try out RoslynPad for Mac/Linux (alpha)
 

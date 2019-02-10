@@ -60,7 +60,7 @@ namespace RoslynPad.Editor
 
             var markersAtOffset = _textMarkerService.GetMarkersAtOffset(offset);
             var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
-            if (markerWithToolTip != null)
+            if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
             {
                 args.SetToolTip(markerWithToolTip.ToolTip);
             }
@@ -85,7 +85,7 @@ namespace RoslynPad.Editor
 
         public int Position { get; set; }
 
-        public object ContentToShow { get; set; }
+        public object? ContentToShow { get; set; }
 
         public void SetToolTip(object content)
         {

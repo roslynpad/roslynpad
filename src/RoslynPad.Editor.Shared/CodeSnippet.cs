@@ -145,7 +145,7 @@ namespace RoslynPad.Editor
             return new SnippetReplaceableTextElement { Text = val }; // ${unknown} -> replaceable element
         }
         
-        private static string GetValue(string propertyName)
+        private static string? GetValue(string propertyName)
         {
             if ("ClassName".Equals(propertyName, StringComparison.OrdinalIgnoreCase))
             {
@@ -159,7 +159,7 @@ namespace RoslynPad.Editor
             return null;
         }
 
-        private static SnippetElement GetDefaultElement(string tag, string snippetText, int position)
+        private static SnippetElement? GetDefaultElement(string tag, string snippetText, int position)
         {
             if ("Selection".Equals(tag, StringComparison.OrdinalIgnoreCase))
             {
@@ -184,13 +184,13 @@ namespace RoslynPad.Editor
             return snippetText.Substring(start, offset - start);
         }
 
-        private static string GetCurrentClass()
+        private static string? GetCurrentClass()
         {
             // TODO
             return null;
         }
 
-        private static Func<string, string> GetFunction(string name)
+        private static Func<string, string>? GetFunction(string name)
         {
             if ("toLower".Equals(name, StringComparison.OrdinalIgnoreCase))
                 return s => s.ToLower();
@@ -239,11 +239,11 @@ namespace RoslynPad.Editor
 
         private sealed class FunctionBoundElement : SnippetBoundElement
         {
-            internal Func<string, string> Function;
+            internal Func<string, string>? Function;
 
-            public override string ConvertText(string input)
+            public override string? ConvertText(string input)
             {
-                return Function(input);
+                return Function?.Invoke(input);
             }
         }
     }

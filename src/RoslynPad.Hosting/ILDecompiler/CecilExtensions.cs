@@ -207,21 +207,21 @@ namespace RoslynPad.Hosting.ILDecompiler
             return accessorMethods;
         }
 
-        public static TypeDefinition ResolveWithinSameModule(this TypeReference type)
+        public static TypeDefinition? ResolveWithinSameModule(this TypeReference type)
         {
             if (type != null && type.GetElementType().Module == type.Module)
                 return type.Resolve();
             return null;
         }
 
-        public static FieldDefinition ResolveWithinSameModule(this FieldReference field)
+        public static FieldDefinition? ResolveWithinSameModule(this FieldReference field)
         {
             if (field != null && field.DeclaringType.GetElementType().Module == field.Module)
                 return field.Resolve();
             return null;
         }
 
-        public static MethodDefinition ResolveWithinSameModule(this MethodReference method)
+        public static MethodDefinition? ResolveWithinSameModule(this MethodReference method)
         {
             if (method != null && method.DeclaringType.GetElementType().Module == method.Module)
                 return method.Resolve();
@@ -303,12 +303,12 @@ namespace RoslynPad.Hosting.ILDecompiler
             return typeSpec != null && typeSpec.ElementType.ContainsAnonymousType();
         }
 
-        public static string GetDefaultMemberName(this TypeDefinition type)
+        public static string? GetDefaultMemberName(this TypeDefinition type)
         {
             return type.GetDefaultMemberName(out var _);
         }
 
-        public static string GetDefaultMemberName(this TypeDefinition type, out CustomAttribute defaultMemberAttribute)
+        public static string? GetDefaultMemberName(this TypeDefinition type, out CustomAttribute? defaultMemberAttribute)
         {
             if (type.HasCustomAttributes)
                 foreach (var ca in type.CustomAttributes)
@@ -327,7 +327,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             return property.IsIndexer(out var _);
         }
 
-        public static bool IsIndexer(this PropertyDefinition property, out CustomAttribute defaultMemberAttribute)
+        public static bool IsIndexer(this PropertyDefinition property, out CustomAttribute? defaultMemberAttribute)
         {
             defaultMemberAttribute = null;
             if (property.HasParameters)
@@ -352,7 +352,7 @@ namespace RoslynPad.Hosting.ILDecompiler
                     else
                         return false;
                 }
-                var defaultMemberName = basePropDef.DeclaringType.GetDefaultMemberName(out CustomAttribute attr);
+                var defaultMemberName = basePropDef.DeclaringType.GetDefaultMemberName(out var attr);
                 if (defaultMemberName == basePropDef.Name)
                 {
                     defaultMemberAttribute = attr;

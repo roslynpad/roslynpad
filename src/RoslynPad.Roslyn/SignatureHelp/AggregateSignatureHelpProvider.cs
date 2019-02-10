@@ -33,9 +33,9 @@ namespace RoslynPad.Roslyn.SignatureHelp
             return _providers.Any(p => p.IsRetriggerCharacter(ch));
         }
 
-        public async Task<SignatureHelpItems> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo trigger, CancellationToken cancellationToken)
+        public async Task<SignatureHelpItems?> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo trigger, CancellationToken cancellationToken)
         {
-            Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems bestItems = null;
+            Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems? bestItems = null;
 
             // TODO(cyrusn): We're calling into extensions, we need to make ourselves resilient
             // to the extension crashing.
@@ -79,7 +79,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
             return null;
         }
 
-        private static bool IsBetter(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems bestItems, TextSpan? currentTextSpan)
+        private static bool IsBetter(Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems? bestItems, TextSpan? currentTextSpan)
         {
             return bestItems == null || currentTextSpan?.Start > bestItems.ApplicableSpan.Start;
         }
@@ -102,14 +102,14 @@ namespace RoslynPad.Roslyn.SignatureHelp
         {
             public static SignatureHelpSelection GetSelection(
                 IList<SignatureHelpItem> items,
-                SignatureHelpItem selectedItem,
+                SignatureHelpItem? selectedItem,
                 bool userSelected,
                 int argumentIndex,
                 int argumentCount,
                 string argumentName,
                 bool isCaseSensitive)
             {
-                SelectBestItem(ref selectedItem, ref userSelected, items, argumentIndex, argumentCount, argumentName, isCaseSensitive);
+                selectedItem = SelectBestItem(selectedItem, ref userSelected, items, argumentIndex, argumentCount, argumentName, isCaseSensitive);
                 var selectedParameter = GetSelectedParameter(selectedItem, argumentIndex, argumentName, isCaseSensitive);
                 return new SignatureHelpSelection(selectedItem, userSelected, selectedParameter);
             }
@@ -129,15 +129,15 @@ namespace RoslynPad.Roslyn.SignatureHelp
                 return parameterIndex;
             }
 
-            private static void SelectBestItem(ref SignatureHelpItem currentItem, ref bool userSelected,
-                IList<SignatureHelpItem> filteredItems, int selectedParameter, int argumentCount, string name, bool isCaseSensitive)
+            private static SignatureHelpItem SelectBestItem(SignatureHelpItem? currentItem, ref bool userSelected,
+                IList<SignatureHelpItem> filteredItems, int selectedParameter, int argumentCount, string? name, bool isCaseSensitive)
             {
                 // If the current item is still applicable, then just keep it.
-                if (filteredItems.Contains(currentItem) &&
+                if (currentItem != null && filteredItems.Contains(currentItem) &&
                     IsApplicable(currentItem, argumentCount, name, isCaseSensitive))
                 {
                     // If the current item was user-selected, we keep it as such.
-                    return;
+                    return currentItem;
                 }
 
                 // If the current item is no longer applicable, we'll be choosing a new one,
@@ -152,29 +152,28 @@ namespace RoslynPad.Roslyn.SignatureHelp
                 if (result != null)
                 {
                     currentItem = result;
-                    return;
+                    return currentItem;
                 }
 
                 // if we couldn't find a best item, and they provided a name, then try again without
                 // a name.
                 if (name != null)
                 {
-                    SelectBestItem(ref currentItem, ref userSelected, filteredItems, selectedParameter, argumentCount, null, isCaseSensitive);
-                    return;
+                    return SelectBestItem(currentItem, ref userSelected, filteredItems, selectedParameter, argumentCount, null, isCaseSensitive);
                 }
 
                 // If we don't have an item that can take that number of parameters, then just pick
                 // the last item.  Or stick with the current item if the last item isn't any better.
                 var lastItem = filteredItems.Last();
-                if (currentItem.IsVariadic || currentItem.Parameters.Length == lastItem.Parameters.Length)
+                if (currentItem != null && (currentItem.IsVariadic || currentItem.Parameters.Length == lastItem.Parameters.Length))
                 {
-                    return;
+                    return currentItem;
                 }
 
-                currentItem = lastItem;
+                return lastItem;
             }
 
-            private static bool IsApplicable(SignatureHelpItem item, int argumentCount, string name, bool isCaseSensitive)
+            private static bool IsApplicable(SignatureHelpItem item, int argumentCount, string? name, bool isCaseSensitive)
             {
                 // If they provided a name, then the item is only valid if it has a parameter that
                 // matches that name.

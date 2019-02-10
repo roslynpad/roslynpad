@@ -43,7 +43,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             return new SymbolGlyphDeferredContent(Glyph.CompletionWarning);
         }
 
-        public IDeferredQuickInfoContent CreateDocumentationCommentDeferredContent(string documentationComment)
+        public IDeferredQuickInfoContent CreateDocumentationCommentDeferredContent(string? documentationComment)
         {
             return new DocumentationCommentDeferredContent(documentationComment);
         }
@@ -55,16 +55,16 @@ namespace RoslynPad.Roslyn.QuickInfo
 
         private class QuickInfoDisplayDeferredContent : IDeferredQuickInfoContent
         {
-            private readonly IDeferredQuickInfoContent _symbolGlyph;
+            private readonly IDeferredQuickInfoContent? _symbolGlyph;
+            private readonly IDeferredQuickInfoContent? _warningGlyph;
             private readonly IDeferredQuickInfoContent _mainDescription;
             private readonly IDeferredQuickInfoContent _documentation;
             private readonly IDeferredQuickInfoContent _typeParameterMap;
             private readonly IDeferredQuickInfoContent _anonymousTypes;
             private readonly IDeferredQuickInfoContent _usageText;
             private readonly IDeferredQuickInfoContent _exceptionText;
-            private readonly IDeferredQuickInfoContent _warningGlyph;
 
-            public QuickInfoDisplayDeferredContent(IDeferredQuickInfoContent symbolGlyph, IDeferredQuickInfoContent warningGlyph, IDeferredQuickInfoContent mainDescription, IDeferredQuickInfoContent documentation, IDeferredQuickInfoContent typeParameterMap, IDeferredQuickInfoContent anonymousTypes, IDeferredQuickInfoContent usageText, IDeferredQuickInfoContent exceptionText)
+            public QuickInfoDisplayDeferredContent(IDeferredQuickInfoContent? symbolGlyph, IDeferredQuickInfoContent? warningGlyph, IDeferredQuickInfoContent mainDescription, IDeferredQuickInfoContent documentation, IDeferredQuickInfoContent typeParameterMap, IDeferredQuickInfoContent anonymousTypes, IDeferredQuickInfoContent usageText, IDeferredQuickInfoContent exceptionText)
             {
                 _symbolGlyph = symbolGlyph;
                 _warningGlyph = warningGlyph;
@@ -78,19 +78,21 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             public object Create()
             {
-                object warningGlyph = null;
+                object? warningGlyph = null;
                 if (_warningGlyph != null)
                 {
                     warningGlyph = _warningGlyph.Create();
                 }
-                object symbolGlyph = null;
+
+                object? symbolGlyph = null;
                 if (_symbolGlyph != null)
                 {
                     symbolGlyph = _symbolGlyph.Create();
                 }
+
                 return new QuickInfoDisplayPanel(
-                    (Control)symbolGlyph,
-                    (Control)warningGlyph, 
+                    symbolGlyph as Control,
+                    warningGlyph as Control, 
                     (Control)_mainDescription.Create(),
                     (Control)_documentation.Create(),
                     (Control)_typeParameterMap.Create(),
@@ -103,8 +105,8 @@ namespace RoslynPad.Roslyn.QuickInfo
         private class QuickInfoDisplayPanel : StackPanel
         {
             public QuickInfoDisplayPanel(
-                Control symbolGlyph,
-                Control warningGlyph,
+                Control? symbolGlyph,
+                Control? warningGlyph,
                 Control mainDescription,
                 Control documentation,
                 Control typeParameterMap,
@@ -114,7 +116,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             {
                 Orientation = Orientation.Vertical;
 
-                Border symbolGlyphBorder = null;
+                Border? symbolGlyphBorder = null;
                 if (symbolGlyph != null)
                 {
                     symbolGlyph.Margin = new Thickness(1, 1, 3, 1);
@@ -209,9 +211,9 @@ namespace RoslynPad.Roslyn.QuickInfo
 
         private class DocumentationCommentDeferredContent : IDeferredQuickInfoContent
         {
-            private readonly string _documentationComment;
+            private readonly string? _documentationComment;
 
-            public DocumentationCommentDeferredContent(string documentationComment)
+            public DocumentationCommentDeferredContent(string? documentationComment)
             {
                 _documentationComment = documentationComment;
             }

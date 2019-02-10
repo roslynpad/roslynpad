@@ -11,7 +11,7 @@ namespace RoslynPad.Utilities
     {
         public static void PerformIO(Action action)
         {
-            PerformIO<object>(() =>
+            PerformIO<object?>(() =>
             {
                 action();
                 return null;

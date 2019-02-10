@@ -13,6 +13,6 @@ namespace RoslynPad.Roslyn.CodeFixes
 
         Task<IEnumerable<CodeFixCollection>> GetFixesAsync(Document document, TextSpan textSpan, bool includeSuppressionFixes, CancellationToken cancellationToken);
 
-        CodeFixProvider GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds);
+        CodeFixProvider? GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds);
     }
 }

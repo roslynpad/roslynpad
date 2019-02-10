@@ -21,14 +21,16 @@ namespace RoslynPad
     [Export(typeof(ISaveDocumentDialog))]
     internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyPropertyChanged
     {
-        private string _documentName;
+        private string? _documentName;
         private bool _showDontSave;
         private InlineModalDialog _dialog;
         private bool _allowNameEdit;
         private string _filePath;
         private SaveResult _result;
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public SaveDocumentDialog()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             DataContext = this;
             InitializeComponent();
@@ -67,9 +69,10 @@ namespace RoslynPad
             }
         }
 
-        public string DocumentName
+        public string? DocumentName
         {
-            get => _documentName; set
+            get => _documentName;
+            set
             {
                 SetProperty(ref _documentName, value);
                 SetSaveButtonStatus();
@@ -109,13 +112,13 @@ namespace RoslynPad
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         [NotifyPropertyChangedInvocator]
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (!EqualityComparer<T>.Default.Equals(field, value))
             {
@@ -144,7 +147,7 @@ namespace RoslynPad
 
         private void PerformSave()
         {
-            if (AllowNameEdit)
+            if (AllowNameEdit && !string.IsNullOrEmpty(DocumentName))
             {
                 FilePath = FilePathFactory?.Invoke(DocumentName) ?? throw new InvalidOperationException();
                 if (File.Exists(FilePath))

@@ -473,7 +473,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             }
         }
 
-        public static string PrimitiveTypeName(string fullName)
+        public static string? PrimitiveTypeName(string fullName)
         {
             switch (fullName)
             {

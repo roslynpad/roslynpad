@@ -32,7 +32,7 @@ namespace RoslynPad.Roslyn.BraceMatching
                 return null;
             }
 
-            TDirectiveTriviaSyntax matchingDirective = null;
+            TDirectiveTriviaSyntax? matchingDirective = null;
             if (IsConditionalDirective(directive))
             {
                 // #if/#elif/#else/#endif directive cases.

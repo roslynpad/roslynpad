@@ -15,7 +15,7 @@ namespace RoslynPad.UI
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (!EqualityComparer<T>.Default.Equals(field, value))
             {
@@ -27,12 +27,12 @@ namespace RoslynPad.UI
         }
 
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private ConcurrentDictionary<string, List<ErrorInfo>> _propertyErrors;
+        private ConcurrentDictionary<string, List<ErrorInfo>>? _propertyErrors;
 
         protected void SetError(string propertyName, string id, string message)
         {
@@ -41,7 +41,9 @@ namespace RoslynPad.UI
                 LazyInitializer.EnsureInitialized(ref _propertyErrors, () => new ConcurrentDictionary<string, List<ErrorInfo>>());
             }
 
+#pragma warning disable CS8602 // Possible dereference of a null reference.
             var errors = _propertyErrors.GetOrAdd(propertyName, _ => new List<ErrorInfo>());
+#pragma warning restore CS8602 // Possible dereference of a null reference.
             errors.RemoveAll(e => e.Id == id);
             errors.Add(new ErrorInfo(id, message));
 
@@ -74,7 +76,7 @@ namespace RoslynPad.UI
 
         public IEnumerable GetErrors(string propertyName)
         {
-            List<ErrorInfo> errors = null;
+            List<ErrorInfo>? errors = null;
             _propertyErrors?.TryGetValue(propertyName, out errors);
             return errors?.AsEnumerable() ?? Array.Empty<ErrorInfo>();
         }

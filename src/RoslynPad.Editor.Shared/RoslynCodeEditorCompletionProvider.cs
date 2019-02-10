@@ -37,6 +37,10 @@ namespace RoslynPad.Editor
             Task.Run(() =>
             {
                 var document = _roslynHost.GetDocument(_documentId);
+                if (document == null)
+                {
+                    return;
+                }
 
                 var completionService = CompletionService.GetService(document);
                 completionService.GetCompletionsAsync(document, 0);
@@ -49,15 +53,20 @@ namespace RoslynPad.Editor
 
         public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
         {
-            IList<ICompletionDataEx> completionData = null;
-            IOverloadProviderEx overloadProvider = null;
+            IList<ICompletionDataEx>? completionData = null;
+            IOverloadProviderEx? overloadProvider = null;
             var useHardSelection = true;
 
             var document = _roslynHost.GetDocument(_documentId);
+            if (document == null)
+            {
+                return new CompletionResult(null, null, false);
+            }
+
             if (useSignatureHelp || triggerChar != null)
             {
                 var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
-                var isSignatureHelp = useSignatureHelp || signatureHelpProvider.IsTriggerCharacter(triggerChar.Value);
+                var isSignatureHelp = useSignatureHelp || signatureHelpProvider.IsTriggerCharacter(triggerChar.GetValueOrDefault());
                 if (isSignatureHelp)
                 {
                     var signatureHelp = await signatureHelpProvider.GetItemsAsync(

@@ -26,7 +26,7 @@ namespace RoslynPad.Hosting.ILDecompiler
 		void Indent();
 		void Unindent();
 		void Write(char ch);
-		void Write(string text);
+		void Write(string? text);
 		void WriteLine();
 		void WriteDefinition(string text, object definition, bool isLocal = true);
 		void WriteReference(string text, object reference, bool isLocal = false);
@@ -103,7 +103,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             _writer.Write(ch);
         }
 
-        public void Write(string text)
+        public void Write(string? text)
         {
             WriteIndent();
             _writer.Write(text);

@@ -75,7 +75,7 @@ namespace RoslynPad.Editor
 
             var markersAtOffset = GetMarkersAtOffset(offset);
             var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
-            if (markerWithToolTip != null)
+            if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
             {
                 args.SetToolTip(markerWithToolTip.ToolTip);
             }
@@ -85,7 +85,7 @@ namespace RoslynPad.Editor
 
         #region TextMarkerService
 
-        public TextMarker TryCreate(int startOffset, int length)
+        public TextMarker? TryCreate(int startOffset, int length)
         {
             if (_markers == null)
                 throw new InvalidOperationException("Cannot create a marker when not attached to a document");
@@ -159,7 +159,7 @@ namespace RoslynPad.Editor
             var lineEnd = lineStart + line.Length;
             foreach (var marker in _markers.FindOverlappingSegments(lineStart, line.Length))
             {
-                CommonBrush foregroundBrush = null;
+                CommonBrush? foregroundBrush = null;
                 if (marker.ForegroundColor != null)
                 {
                     foregroundBrush = new SolidColorBrush(marker.ForegroundColor.Value).AsFrozen();
@@ -189,9 +189,9 @@ namespace RoslynPad.Editor
             }
         }
 
-#endregion
+        #endregion
 
-#region IBackgroundRenderer
+        #region IBackgroundRenderer
 
         public KnownLayer Layer => KnownLayer.Selection;
 
@@ -259,9 +259,9 @@ namespace RoslynPad.Editor
                 yield return new Point(start.X + i * offset, start.Y - ((i + 1) % 2 == 0 ? offset : 0));
         }
 
-#endregion
+        #endregion
 
-#region ITextViewConnect
+        #region ITextViewConnect
 
         void ITextViewConnect.AddToTextView(TextView textView)
         {
@@ -281,6 +281,6 @@ namespace RoslynPad.Editor
             }
         }
 
-#endregion
+        #endregion
     }
 }

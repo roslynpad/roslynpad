@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
 
         protected abstract IEditorBraceCompletionSession CreateEditorSession(Document document, int openingPosition, char openingBrace, CancellationToken cancellationToken);
 
-        public IEditorBraceCompletionSession TryCreateSession(Document document, int openingPosition, char openingBrace, CancellationToken cancellationToken)
+        public IEditorBraceCompletionSession? TryCreateSession(Document document, int openingPosition, char openingBrace, CancellationToken cancellationToken)
         {
             if (IsSupportedOpeningBrace(openingBrace) &&
                 CheckCodeContext(document, openingPosition, openingBrace, cancellationToken))

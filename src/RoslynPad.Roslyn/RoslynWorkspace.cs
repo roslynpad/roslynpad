@@ -9,10 +9,10 @@ namespace RoslynPad.Roslyn
 {
     public class RoslynWorkspace : Workspace
     {
-        public DocumentId OpenDocumentId { get; private set; }
-        public RoslynHost RoslynHost { get; }
+        public DocumentId? OpenDocumentId { get; private set; }
+        public RoslynHost? RoslynHost { get; }
 
-        public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost roslynHost = null)
+        public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null)
             : base(hostServices, workspaceKind)
         {
             DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
@@ -50,7 +50,7 @@ namespace RoslynPad.Roslyn
             OnDocumentContextUpdated(documentId);
         }
 
-        public event Action<DocumentId, SourceText> ApplyingTextChange;
+        public event Action<DocumentId, SourceText>? ApplyingTextChange;
 
         protected override void Dispose(bool finalize)
         {

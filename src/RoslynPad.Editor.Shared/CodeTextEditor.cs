@@ -39,9 +39,9 @@ namespace RoslynPad.Editor
 {
     public partial class CodeTextEditor : TextEditor
     {
-        private CustomCompletionWindow _completionWindow;
-        private OverloadInsightWindow _insightWindow;
-        private ToolTip _toolTip;
+        private CustomCompletionWindow? _completionWindow;
+        private OverloadInsightWindow? _insightWindow;
+        private ToolTip? _toolTip;
 
         public CodeTextEditor()
         {
@@ -140,7 +140,7 @@ namespace RoslynPad.Editor
         public static readonly RoutedEvent ToolTipRequestEvent = CommonEvent.Register<CodeTextEditor, ToolTipRequestEventArgs>(
             nameof(ToolTipRequest), RoutingStrategy.Bubble);
 
-        public Func<ToolTipRequestEventArgs, Task> AsyncToolTipRequest { get; set; }
+        public Func<ToolTipRequestEventArgs, Task>? AsyncToolTipRequest { get; set; }
 
         public event EventHandler<ToolTipRequestEventArgs> ToolTipRequest
         {
@@ -265,7 +265,7 @@ namespace RoslynPad.Editor
 
         #region Code Completion
 
-        public ICodeEditorCompletionProvider CompletionProvider { get; set; }
+        public ICodeEditorCompletionProvider? CompletionProvider { get; set; }
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
@@ -288,7 +288,7 @@ namespace RoslynPad.Editor
             {
                 results.OverloadProvider.Refresh();
 
-                if (_insightWindow.IsOpen())
+                if (_insightWindow != null && _insightWindow.IsOpen())
                 {
                     _insightWindow.Provider = results.OverloadProvider;
                 }
@@ -308,7 +308,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            if (!_completionWindow.IsOpen() && results.CompletionData?.Any() == true)
+            if (_completionWindow?.IsOpen() != true && results.CompletionData != null && results.CompletionData.Any())
             {
                 _insightWindow?.Close();
 
@@ -328,13 +328,14 @@ namespace RoslynPad.Editor
                 }
 
                 var data = _completionWindow.CompletionList.CompletionData;
-                ICompletionDataEx selected = null;
+                ICompletionDataEx? selected = null;
                 foreach (var completion in results.CompletionData)
                 {
                     if (completion.IsSelected)
                     {
                         selected = completion;
                     }
+
                     data.Add(completion);
                 }
 
@@ -380,7 +381,7 @@ namespace RoslynPad.Editor
         private partial class CustomCompletionWindow : CompletionWindow
         {
             private bool _isSoftSelectionActive;
-            private KeyEventArgs _keyDownArgs;
+            private KeyEventArgs? _keyDownArgs;
 
             public CustomCompletionWindow(TextArea textArea) : base(textArea)
             {

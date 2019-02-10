@@ -6,8 +6,8 @@ namespace RoslynPad.UI
 {
     internal abstract class TelemetryProviderBase : ITelemetryProvider
     {
-        private TelemetryClient _client;
-        private Exception _lastError;
+        private TelemetryClient? _client;
+        private Exception? _lastError;
 
         public virtual void Initialize(string version, IApplicationSettings settings)
         {
@@ -64,7 +64,7 @@ namespace RoslynPad.UI
             HandleException(exception);
         }
 
-        public Exception LastError
+        public Exception? LastError
         {
             get => _lastError;
             private set

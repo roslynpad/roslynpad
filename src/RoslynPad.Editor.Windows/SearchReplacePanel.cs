@@ -23,7 +23,7 @@ namespace RoslynPad.Editor
         private SearchReplaceInputHandler _handler;
         private TextDocument _currentDocument;
         private SearchReplaceResultBackgroundRenderer _renderer;
-        private TextBox _searchTextBox;
+        private TextBox? _searchTextBox;
         private SearchReplacePanelAdorner _adorner;
         private ISearchStrategy _strategy;
 
@@ -161,10 +161,9 @@ namespace RoslynPad.Editor
             DoSearch(true);
         }
 
-        /// <summary>
-        /// Creates a new SearchReplacePanel.
-        /// </summary>
-        SearchReplacePanel()
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
+        private SearchReplacePanel()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
         }
 
@@ -489,7 +488,7 @@ namespace RoslynPad.Editor
             FindNext();
         }
 
-        private ISearchResult GetSelectedResult()
+        private ISearchResult? GetSelectedResult()
         {
             if (_textArea.Selection.IsEmpty)
                 return null;

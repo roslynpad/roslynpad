@@ -114,7 +114,7 @@ namespace RoslynPad.Utilities
         {
             if (displayFilenames && frame.GetILOffset() != -1)
             {
-                string text = null;
+                string? text = null;
                 try
                 {
                     text = frame.GetFileName();
@@ -127,6 +127,7 @@ namespace RoslynPad.Utilities
                 {
                     displayFilenames = false;
                 }
+
                 if (text != null)
                 {
                     stringBuilder.Append(' ');

@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
 {
     internal static class Extensions
     {
-        public static Document Format(this Document document, TextSpan span, IEnumerable<IFormattingRule> rules, CancellationToken cancellationToken)
+        public static Document Format(this Document document, TextSpan span, IEnumerable<IFormattingRule>? rules, CancellationToken cancellationToken)
         {
             rules = GetFormattingRules(document, rules, span);
             var syntaxRoot = document.GetSyntaxRootSynchronously(cancellationToken);
@@ -36,7 +36,7 @@ namespace RoslynPad.Roslyn.AutomaticCompletion
             return document;
         }
 
-        private static IEnumerable<IFormattingRule> GetFormattingRules(Document document, IEnumerable<IFormattingRule> rules, TextSpan span)
+        private static IEnumerable<IFormattingRule> GetFormattingRules(Document document, IEnumerable<IFormattingRule>? rules, TextSpan span)
         {
             var ruleFactoryService = document.Project.Solution.Workspace.Services.GetService<IHostDependentFormattingRuleFactoryService>();
             int position = (span.Start + span.End) / 2;

@@ -34,7 +34,7 @@ namespace RoslynPad.Editor
         private readonly SnippetManager _snippetManager;
         private readonly Glyph _glyph;
         private readonly Lazy<Task> _descriptionTask;
-        private Decorator _description;
+        private Decorator? _description;
 
         public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
         {
@@ -110,10 +110,10 @@ namespace RoslynPad.Editor
         }
 
 #if AVALONIA
-        public CommonImage Image => null;
-        public Drawing Drawing => _glyph.ToImageSource();
+        public CommonImage? Image => null;
+        public Drawing? Drawing => _glyph.ToImageSource();
 #else
-        public CommonImage Image => _glyph.ToImageSource();
+        public CommonImage? Image => _glyph.ToImageSource();
 #endif
 
         public string Text { get; }
@@ -141,7 +141,10 @@ namespace RoslynPad.Editor
         private async Task RetrieveDescription()
         {
             var description = await Task.Run(() => CompletionService.GetService(_document).GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
-            _description.Child = description.TaggedParts.ToTextBlock();
+            if (_description != null)
+            {
+                _description.Child = description.TaggedParts.ToTextBlock();
+            }
         }
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
@@ -153,7 +156,7 @@ namespace RoslynPad.Editor
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

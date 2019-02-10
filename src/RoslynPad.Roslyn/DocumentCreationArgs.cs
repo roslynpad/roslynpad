@@ -6,7 +6,7 @@ namespace RoslynPad.Roslyn
 {
     public class DocumentCreationArgs
     {
-        public DocumentCreationArgs(SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated = null, Action<SourceText> onTextUpdated = null, string name = null)
+        public DocumentCreationArgs(SourceTextContainer sourceTextContainer, string workingDirectory, Action<DiagnosticsUpdatedArgs>? onDiagnosticsUpdated = null, Action<SourceText>? onTextUpdated = null, string? name = null)
         {
             SourceTextContainer = sourceTextContainer;
             WorkingDirectory = workingDirectory;
@@ -17,8 +17,8 @@ namespace RoslynPad.Roslyn
 
         public SourceTextContainer SourceTextContainer { get; }
         public string WorkingDirectory { get; }
-        public Action<DiagnosticsUpdatedArgs> OnDiagnosticsUpdated { get; }
-        public Action<SourceText> OnTextUpdated { get; }
-        public string Name { get; }
+        public Action<DiagnosticsUpdatedArgs>? OnDiagnosticsUpdated { get; }
+        public Action<SourceText>? OnTextUpdated { get; }
+        public string? Name { get; }
     }
 }

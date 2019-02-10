@@ -8,7 +8,7 @@ namespace RoslynPad
     [Export(typeof(ISaveDocumentDialog))]
     public class SaveDocumentDialog : ISaveDocumentDialog
     {
-        public string DocumentName { get; set; }
+        public string? DocumentName { get; set; }
         public SaveResult Result { get; private set; }
         public bool AllowNameEdit { get; set; }
         public bool ShowDontSave { get; set; }
@@ -18,7 +18,9 @@ namespace RoslynPad
         private readonly ISaveFileDialog _saveFileDialog;
 
         [ImportingConstructor]
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public SaveDocumentDialog(ISaveFileDialog saveFileDialog)
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             _saveFileDialog = saveFileDialog;
         }

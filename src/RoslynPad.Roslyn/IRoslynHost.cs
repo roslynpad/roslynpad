@@ -8,7 +8,7 @@ namespace RoslynPad.Roslyn
 
         DocumentId AddDocument(DocumentCreationArgs args);
 
-        Document GetDocument(DocumentId documentId);
+        Document? GetDocument(DocumentId documentId);
 
         void CloseDocument(DocumentId documentId);
     }

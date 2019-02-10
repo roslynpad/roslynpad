@@ -59,7 +59,7 @@ namespace RoslynPad
             set => _dialog.InitialFileName = value;
         }
 
-        public Task<string> ShowAsync()
+        public Task<string?> ShowAsync()
         {
             return _dialog.ShowAsync(Application.Current.Windows.First(w => w.IsActive));
         }

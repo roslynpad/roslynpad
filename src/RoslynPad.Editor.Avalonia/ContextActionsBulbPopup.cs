@@ -79,7 +79,7 @@ namespace RoslynPad.Editor
             Child = menu;
         }
 
-        public Drawing Icon
+        public Drawing? Icon
         {
             get => _headerImage.Drawing;
             set => _headerImage.Drawing = value;
@@ -102,7 +102,7 @@ namespace RoslynPad.Editor
             return style;
         }
 
-        public System.Collections.IEnumerable ItemsSource
+        public System.Collections.IEnumerable? ItemsSource
         {
             get => _mainItem.Items;
             set => _mainItem.Items = value;
@@ -128,7 +128,7 @@ namespace RoslynPad.Editor
             set => _mainItem.IsSubMenuOpen = value;
         }
 
-        public Func<object, ICommand> CommandProvider { get; set; }
+        public Func<object, ICommand?>? CommandProvider { get; set; }
 
         public new void Focus()
         {
@@ -177,7 +177,7 @@ namespace RoslynPad.Editor
                 _owner = owner;
             }
 
-            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
             {
                 return _owner.CommandProvider?.Invoke(value);
             }

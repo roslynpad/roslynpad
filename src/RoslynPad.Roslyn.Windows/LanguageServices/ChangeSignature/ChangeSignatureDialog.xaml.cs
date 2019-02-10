@@ -32,8 +32,11 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         public Brush DisabledParameterBackground { get; }
         public Brush StrikethroughBrush { get; }
 
+
         // Use C# Reorder Parameters helpTopic for C# and VB.
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public ChangeSignatureDialog()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             InitializeComponent();
 
@@ -133,7 +136,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         {
             if (Members.SelectedIndex >= 0)
             {
-                DataGridRow row = Members.ItemContainerGenerator.ContainerFromIndex(Members.SelectedIndex) as DataGridRow;
+                var row = Members.ItemContainerGenerator.ContainerFromIndex(Members.SelectedIndex) as DataGridRow;
                 if (row == null)
                 {
                     Members.ScrollIntoView(Members.SelectedItem);
@@ -163,7 +166,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             if (oldSelectedIndex > 0)
             {
                 var potentialNewSelectedParameter = Members.Items[oldSelectedIndex - 1] as ChangeSignatureDialogViewModel.ParameterViewModel;
-                if (!potentialNewSelectedParameter.IsDisabled)
+                if (potentialNewSelectedParameter?.IsDisabled == false)
                 {
                     Members.SelectedIndex = oldSelectedIndex - 1;
                 }
@@ -210,7 +213,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         public object ViewModel
         {
-            get => DataContext; set
+            get => DataContext;
+            set
             {
                 DataContext = value;
                 _viewModel = (ChangeSignatureDialogViewModel)value;

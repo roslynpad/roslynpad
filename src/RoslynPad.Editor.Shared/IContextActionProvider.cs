@@ -9,6 +9,6 @@ namespace RoslynPad.Editor
     {
         Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken);
 
-        ICommand GetActionCommand(object action);
+        ICommand? GetActionCommand(object action);
     }
 }

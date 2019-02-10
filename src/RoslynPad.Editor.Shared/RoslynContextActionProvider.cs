@@ -35,6 +35,11 @@ namespace RoslynPad.Editor
         {
             var textSpan = new TextSpan(offset, length);
             var document = _roslynHost.GetDocument(_documentId);
+            if (document == null)
+            {
+                return Array.Empty<object>();
+            }
+
             var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             if (textSpan.End >= text.Length) return Array.Empty<object>();
 
@@ -51,7 +56,7 @@ namespace RoslynPad.Editor
                     .SelectMany(x => x.Actions));
         }
 
-        public ICommand GetActionCommand(object action)
+        public ICommand? GetActionCommand(object action)
         {
             if (action is CodeAction codeAction)
             {
@@ -67,8 +72,12 @@ namespace RoslynPad.Editor
             var operations = await codeAction.GetOperationsAsync(CancellationToken.None).ConfigureAwait(true);
             foreach (var operation in operations)
             {
-                operation.Apply(_roslynHost.GetDocument(_documentId).Project.Solution.Workspace,
-                    CancellationToken.None);
+                var document = _roslynHost.GetDocument(_documentId);
+                if (document != null)
+                {
+                    operation.Apply(document.Project.Solution.Workspace,
+                        CancellationToken.None);
+                }
             }
         }
 

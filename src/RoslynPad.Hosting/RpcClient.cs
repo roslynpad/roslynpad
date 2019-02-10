@@ -9,8 +9,8 @@ namespace RoslynPad.Hosting
     {
         private readonly string _pipeName;
 
-        private NamedPipeClientStream _stream;
-        private JsonRpc _rpc;
+        private NamedPipeClientStream? _stream;
+        private JsonRpc? _rpc;
 
         protected RpcClient(string pipeName)
         {

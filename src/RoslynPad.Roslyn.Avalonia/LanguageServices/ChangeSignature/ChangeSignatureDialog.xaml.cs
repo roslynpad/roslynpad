@@ -11,7 +11,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
     [Export(typeof(IChangeSignatureDialog))]
     internal partial class ChangeSignatureDialog : Window, IChangeSignatureDialog
     {
-        private ChangeSignatureDialogViewModel _viewModel;
+        private ChangeSignatureDialogViewModel? _viewModel;
 
         // Expose localized strings for binding
         public string ChangeSignatureDialogTitle => "Change Signature";
@@ -24,11 +24,11 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         public string OK => "OK";
         public string Cancel => "Cancel";
 
-        public IBrush ParameterText { get; }
-        public IBrush RemovedParameterText { get; }
-        public IBrush DisabledParameterForeground { get; }
-        public IBrush DisabledParameterBackground { get; }
-        public IBrush StrikethroughBrush { get; }
+        public IBrush? ParameterText { get; }
+        public IBrush? RemovedParameterText { get; }
+        public IBrush? DisabledParameterForeground { get; }
+        public IBrush? DisabledParameterBackground { get; }
+        public IBrush? StrikethroughBrush { get; }
 
         // Use C# Reorder Parameters helpTopic for C# and VB.
         public ChangeSignatureDialog()

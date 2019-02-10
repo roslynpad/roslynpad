@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 // ReSharper disable All
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
 
 #pragma warning disable 1591
 // ReSharper disable UnusedMember.Global
@@ -161,8 +162,8 @@ namespace RoslynPad.Annotations
   [Conditional("JETBRAINS_ANNOTATIONS")]
   internal sealed class NotifyPropertyChangedInvocatorAttribute : Attribute
   {
-    public NotifyPropertyChangedInvocatorAttribute() { }
-    public NotifyPropertyChangedInvocatorAttribute(string parameterName)
+        public NotifyPropertyChangedInvocatorAttribute() { }
+        public NotifyPropertyChangedInvocatorAttribute(string parameterName)
     {
       ParameterName = parameterName;
     }

@@ -8,7 +8,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 {
     public interface IQuickInfoProvider
     {
-        Task<QuickInfoItem> GetItemAsync(Document document, int position, CancellationToken cancellationToken);
+        Task<QuickInfoItem?> GetItemAsync(Document document, int position, CancellationToken cancellationToken);
     }
 
     public sealed class QuickInfoItem

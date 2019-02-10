@@ -131,12 +131,12 @@ namespace RoslynPad.Hosting.ILDecompiler
                     _output.WriteLine("{");
                     break;
                 case ILStructureType.Handler:
-                    switch (s.ExceptionHandler.HandlerType)
+                    switch (s.ExceptionHandler?.HandlerType)
                     {
                         case ExceptionHandlerType.Catch:
                         case ExceptionHandlerType.Filter:
                             _output.Write("catch");
-                            if (s.ExceptionHandler.CatchType != null)
+                            if (s.ExceptionHandler?.CatchType != null)
                             {
                                 _output.Write(' ');
                                 s.ExceptionHandler.CatchType.WriteTo(_output, ILNameSyntax.TypeName);

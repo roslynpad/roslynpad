@@ -15,7 +15,7 @@ namespace RoslynPad.UI
 
     public class DocumentFileChanged
     {
-        public DocumentFileChanged(DocumentFileChangeType type, string path, string newPath = null)
+        public DocumentFileChanged(DocumentFileChangeType type, string path, string? newPath = null)
         {
             Type = type;
             Path = path;
@@ -23,7 +23,7 @@ namespace RoslynPad.UI
         }
         public DocumentFileChangeType Type { get; }
         public string Path { get; }
-        public string NewPath { get; }
+        public string? NewPath { get; }
     }
 
     [Export]

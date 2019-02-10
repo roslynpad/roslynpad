@@ -12,10 +12,10 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
     {
         private readonly ParameterConfiguration _originalParameterConfiguration;
 
-        private readonly ParameterViewModel _thisParameter;
+        private readonly ParameterViewModel? _thisParameter;
         private readonly List<ParameterViewModel> _parameterGroup1;
         private readonly List<ParameterViewModel> _parameterGroup2;
-        private readonly ParameterViewModel _paramsParameter;
+        private readonly ParameterViewModel? _paramsParameter;
         private readonly HashSet<IParameterSymbol> _disabledParameters = new HashSet<IParameterSymbol>();
         private readonly ImmutableArray<SymbolDisplayPart> _declarationParts;
 
@@ -98,6 +98,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         internal void Remove()
         {
+            if (_selectedIndex == null) return;
             AllParameters[_selectedIndex.Value].IsRemoved = true;
             OnPropertyChanged(nameof(AllParameters));
             OnPropertyChanged(nameof(SignatureDisplay));
@@ -108,6 +109,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         internal void Restore()
         {
+            if (_selectedIndex == null) return;
             AllParameters[_selectedIndex.Value].IsRemoved = false;
             OnPropertyChanged(nameof(AllParameters));
             OnPropertyChanged(nameof(SignatureDisplay));
@@ -250,6 +252,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         internal void MoveUp()
         {
             Debug.Assert(CanMoveUp);
+            if (SelectedIndex == null) return;
 
             var index = SelectedIndex.Value;
             index = _thisParameter == null ? index : index - 1;
@@ -259,6 +262,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         internal void MoveDown()
         {
             Debug.Assert(CanMoveDown);
+            if (SelectedIndex == null) return;
 
             var index = SelectedIndex.Value;
             index = _thisParameter == null ? index : index - 1;

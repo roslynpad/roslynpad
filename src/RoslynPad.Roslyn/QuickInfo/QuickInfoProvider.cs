@@ -28,7 +28,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             _contentProvider = contentProvider;
         }
 
-        public async Task<QuickInfoItem> GetItemAsync(
+        public async Task<QuickInfoItem?> GetItemAsync(
             Document document,
             int position,
             CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             return !token.Parent.IsKind(SyntaxKind.XmlCrefAttribute);
         }
 
-        private async Task<QuickInfoItem> GetQuickInfoItemAsync(
+        private async Task<QuickInfoItem?> GetQuickInfoItemAsync(
             Document document,
             SyntaxToken token,
             int position,
@@ -79,7 +79,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             return null;
         }
 
-        private async Task<IDeferredQuickInfoContent> BuildContentAsync(
+        private async Task<IDeferredQuickInfoContent?> BuildContentAsync(
             Document document,
             SyntaxToken token,
             CancellationToken cancellationToken)
@@ -189,7 +189,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             SyntaxToken token,
             SemanticModel semanticModel,
             IEnumerable<ISymbol> symbols,
-            SupportedPlatformData supportedPlatforms,
+            SupportedPlatformData? supportedPlatforms,
             CancellationToken cancellationToken)
         {
             var descriptionService = workspace.Services.GetLanguageServices(token.Language).GetService<ISymbolDisplayService>();
@@ -468,7 +468,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             IList<TaggedText> usageText,
             IList<TaggedText> exceptionText);
 
-        IDeferredQuickInfoContent CreateDocumentationCommentDeferredContent(string documentationComment);
+        IDeferredQuickInfoContent CreateDocumentationCommentDeferredContent(string? documentationComment);
 
         IDeferredQuickInfoContent CreateClassifiableDeferredContent(IList<TaggedText> content);
     }

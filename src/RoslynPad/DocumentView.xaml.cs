@@ -22,9 +22,11 @@ namespace RoslynPad
         private readonly SynchronizationContext _syncContext;
         private readonly ErrorMargin _errorMargin;
         private OpenDocumentViewModel _viewModel;
-        private IResultObject _contextMenuResultObject;
+        private IResultObject? _contextMenuResultObject;
 
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public DocumentView()
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             InitializeComponent();
 
@@ -88,7 +90,7 @@ namespace RoslynPad
             _syncContext.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
         }
 
-        private void OnError(ExceptionResultObject e)
+        private void OnError(ExceptionResultObject? e)
         {
             if (e != null)
             {

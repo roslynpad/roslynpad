@@ -24,6 +24,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Diagnostics;
 #if AVALONIA
 using Avalonia;
 using Avalonia.Controls;
@@ -47,9 +48,9 @@ namespace RoslynPad.Editor
         private readonly TextMarkerService _textMarkerService;
         private readonly DispatcherTimer _delayMoveTimer;
 
-        private ContextActionsBulbPopup _popup;
-        private CancellationTokenSource _cancellationTokenSource;
-        private IEnumerable<object> _actions;
+        private ContextActionsBulbPopup? _popup;
+        private CancellationTokenSource? _cancellationTokenSource;
+        private IEnumerable<object>? _actions;
 
         public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
         {
@@ -70,7 +71,7 @@ namespace RoslynPad.Editor
             editor.HookupLoadedUnloadedAction(HookupWindowMove);
         }
 
-        public ImageSource IconImage { get; set; }
+        public ImageSource? IconImage { get; set; }
 
         private void HookupWindowMove(bool enable)
         {
@@ -87,7 +88,7 @@ namespace RoslynPad.Editor
         
         private void WindowOnLocationChanged(object sender, EventArgs eventArgs)
         {
-            if (_popup?.IsOpen == true)
+            if (_popup != null && _popup.IsOpen)
             {
                 _popup.HorizontalOffset += double.Epsilon;
                 _popup.HorizontalOffset -= double.Epsilon;
@@ -123,6 +124,8 @@ namespace RoslynPad.Editor
                 ) return;
 
             CreatePopup();
+            Debug.Assert(_popup != null);
+
             if (_popup.IsOpen && _popup.ItemsSource != null)
             {
                 _popup.IsMenuOpen = true;
@@ -155,9 +158,10 @@ namespace RoslynPad.Editor
                 // TODO: workaround to refresh menu with latest document
                 _popup.MenuOpened += async (sender, args) =>
                 {
+                    var popup = (ContextActionsBulbPopup)sender;
                     if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
                     {
-                        _popup.ItemsSource = _actions;
+                        popup.ItemsSource = _actions;
                     }
                 };
 
@@ -188,7 +192,7 @@ namespace RoslynPad.Editor
             return false;
         }
 
-        private ICommand GetActionCommand(object action)
+        private ICommand? GetActionCommand(object action)
         {
             return _providers.Select(provider => provider.GetActionCommand(action))
                 .FirstOrDefault(command => command != null);
@@ -239,6 +243,8 @@ namespace RoslynPad.Editor
             if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
 
             CreatePopup();
+            Debug.Assert(_popup != null);
+
             _popup.ItemsSource = _actions;
             if (_popup.HasItems)
             {

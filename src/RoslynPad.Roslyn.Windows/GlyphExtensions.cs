@@ -8,7 +8,7 @@ namespace RoslynPad.Roslyn
     {
         private static readonly GlyphService _service = new GlyphService();
 
-        public static ImageSource ToImageSource(this Glyph glyph) => _service.GetGlyphImage(glyph);
+        public static ImageSource? ToImageSource(this Glyph glyph) => _service.GetGlyphImage(glyph);
 
         private class GlyphService
         {
@@ -19,7 +19,7 @@ namespace RoslynPad.Roslyn
                 _glyphs = new Glyphs();
             }
 
-            public ImageSource GetGlyphImage(Glyph glyph) => _glyphs[glyph] as ImageSource;
+            public ImageSource? GetGlyphImage(Glyph glyph) => _glyphs[glyph] as ImageSource;
         }
     }
 }
