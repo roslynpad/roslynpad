@@ -141,12 +141,20 @@ namespace RoslynPad.UI
             document = project.GetDocument(DocumentId);
 
             host.UpdateDocument(document);
+            OnDocumentUpdated();
 
             _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host, useDesktopReferences);
             _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences);
 
             var task = _executionHost.Update(_executionHostParameters);
         }
+
+        private void OnDocumentUpdated()
+        {
+            DocumentUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public event EventHandler DocumentUpdated;
 
         private string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host, bool useDesktopReferences)
         {

@@ -110,14 +110,14 @@ namespace RoslynPad.Editor
             OnCreatingDocument(creatingDocumentArgs);
 
             _documentId = creatingDocumentArgs.DocumentId ??
-                roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory, 
+                roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory,
                     args => ProcessDiagnostics(args), text => avalonEditTextContainer.UpdateText(text)));
 
             AppendText(documentText);
             Document.UndoStack.ClearAll();
             AsyncToolTipRequest = OnAsyncToolTipRequest;
 
-            TextArea.TextView.LineTransformers.Insert(0, new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors));
+            RefreshHighlighting();
 
             _contextActionsRenderer = new ContextActionsRenderer(this, _textMarkerService) { IconImage = ContextActionsIcon };
             _contextActionsRenderer.Providers.Add(new RoslynContextActionProvider(_documentId, _roslynHost));
@@ -128,6 +128,18 @@ namespace RoslynPad.Editor
             CompletionProvider = completionProvider;
 
             return _documentId;
+        }
+
+        public void RefreshHighlighting()
+        {
+            if (TextArea.TextView.LineTransformers.Count > 0 &&
+                TextArea.TextView.LineTransformers[0] is RoslynHighlightingColorizer)
+            {
+                TextArea.TextView.LineTransformers.RemoveAt(0);
+            }
+
+            var colorizer = new RoslynHighlightingColorizer(_documentId, _roslynHost, _classificationHighlightColors);
+            TextArea.TextView.LineTransformers.Insert(0, colorizer);
         }
 
         private async void CaretOnPositionChanged(object sender, EventArgs eventArgs)

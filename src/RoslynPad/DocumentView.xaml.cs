@@ -64,6 +64,7 @@ namespace RoslynPad
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
             _viewModel.EditorFocus += (o, e) => Editor.Focus();
+            _viewModel.DocumentUpdated += (o, e) => Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
 
             _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
             Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;

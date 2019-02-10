@@ -79,7 +79,7 @@ namespace RoslynPad.Editor
             _changes = new List<(HighlightedLine line, List<HighlightedSection> sections)>();
             _syncContext = SynchronizationContext.Current;
         }
-
+        
         public void Dispose()
         {
             _subject.Dispose();
@@ -256,7 +256,8 @@ namespace RoslynPad.Editor
             var sections = new List<HighlightedSection>();
             foreach (var classifiedSpan in spans)
             {
-                if (IsOutsideLine(classifiedSpan, documentLine))
+                var textSpan = AdjustTextSpan(classifiedSpan, documentLine);
+                if (textSpan == null)
                 {
                     continue;
                 }
@@ -264,8 +265,8 @@ namespace RoslynPad.Editor
                 sections.Add(new HighlightedSection
                 {
                     Color = _highlightColors.GetBrush(classifiedSpan.ClassificationType),
-                    Offset = classifiedSpan.TextSpan.Start,
-                    Length = classifiedSpan.TextSpan.Length
+                    Offset = textSpan.Value.Start,
+                    Length = textSpan.Value.Length
                 });
             }
 
@@ -274,11 +275,16 @@ namespace RoslynPad.Editor
             return null;
         }
 
-        private static bool IsOutsideLine(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
+        private static TextSpan? AdjustTextSpan(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
         {
-            return classifiedSpan.TextSpan.Start < documentLine.Offset ||
-                   classifiedSpan.TextSpan.Start > documentLine.EndOffset ||
-                   classifiedSpan.TextSpan.End > documentLine.EndOffset;
+            if (classifiedSpan.TextSpan.Start > documentLine.EndOffset)
+            {
+                return null;
+            }
+
+            return new TextSpan(
+                Math.Max(classifiedSpan.TextSpan.Start, documentLine.Offset),
+                Math.Min(classifiedSpan.TextSpan.Length, documentLine.Length));
         }
 
         private void CacheLine(HighlightedLine line)
