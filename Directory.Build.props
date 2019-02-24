@@ -12,5 +12,10 @@
         <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/aelij/RoslynPad/blob/master/LICENSE</PackageLicenseUrl>
         <PackageTags>Roslyn;RoslynPad</PackageTags>
+        <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Net.Compilers" Version="3.0.0-beta3-final" />
+    </ItemGroup>
 </Project>

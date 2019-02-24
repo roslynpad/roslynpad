@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="MSBuild.Sdk.Extras/1.6.61">
+  <!-- workaround for NuGet packages not working in WPF -->
+  <Import Project="$(MSBuildProjectDirectory)\obj\*.props" Condition=" '$(NuGetPackageRoot)' == '' and $(MSBuildProjectFile.Contains('wpftmp')) " />
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <OutputType>WinExe</OutputType>
