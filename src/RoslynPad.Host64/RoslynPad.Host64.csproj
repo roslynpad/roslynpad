@@ -5,6 +5,7 @@
     <OutputType>WinExe</OutputType>
     <Platforms>x64</Platforms>
     <TargetPlatform>x64</TargetPlatform>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Prefer32Bit>false</Prefer32Bit>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
