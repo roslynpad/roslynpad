@@ -9,7 +9,16 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: msbuild /t:restore '$(solution)'
+  - task: MSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArguments: '/t:Restore'
   displayName: Restore
-- script: msbuild /m /bl /p:Configuration=$(buildConfiguration '$(solution)'
+
+- task: MSBuild@1
+  inputs:
+    configuration: '$(buildConfiguration)'
+    solution: '$(solution)'
+    msbuildArguments: '/bl'
   displayName: Build
+
