@@ -10,15 +10,15 @@ variables:
 
 steps:
   - task: MSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArguments: '/t:Restore'
-  displayName: Restore
+    inputs:
+      solution: '$(solution)'
+      msbuildArguments: '/t:Restore'
+    displayName: Restore
 
-- task: MSBuild@1
-  inputs:
-    configuration: '$(buildConfiguration)'
-    solution: '$(solution)'
-    msbuildArguments: '/bl'
-  displayName: Build
+  - task: MSBuild@1
+    inputs:
+      configuration: '$(buildConfiguration)'
+      solution: '$(solution)'
+      msbuildArguments: '/bl'
+    displayName: Build
 
