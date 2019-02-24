@@ -1,6 +1,3 @@
-# .NET Core
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
 trigger:
 - master
 
@@ -8,8 +5,19 @@ pool:
   vmImage: 'vs2017-win2016'
 
 variables:
+  solution: 'src/RoslynPad.sln'
+  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration) src/RoslynPad.sln
-  displayName: 'dotnet build $(buildConfiguration)'
+- task: NuGetToolInstaller@0
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
