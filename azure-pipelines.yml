@@ -1,0 +1,15 @@
+# .NET Core
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- script: dotnet build --configuration $(buildConfiguration) src/RoslynPad.sln
+  displayName: 'dotnet build $(buildConfiguration)'
