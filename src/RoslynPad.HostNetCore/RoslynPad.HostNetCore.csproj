@@ -13,4 +13,6 @@
     <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
   </ItemGroup>
 
+  <!-- workaround to referencing it from a netfx project -->
+  <Target Name="GetTargetPath" />
 </Project>

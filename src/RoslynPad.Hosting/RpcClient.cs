@@ -17,7 +17,7 @@ namespace RoslynPad.Hosting
             _pipeName = pipeName;
         }
 
-        public async Task Connect(TimeSpan timeout)
+        public async Task ConnectAsync(TimeSpan timeout)
         {
             var stream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try

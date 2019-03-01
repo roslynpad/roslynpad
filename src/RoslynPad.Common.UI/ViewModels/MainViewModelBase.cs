@@ -393,7 +393,11 @@ namespace RoslynPad.UI
                 return;
             }
 
-            RoslynHost.CloseDocument(document.DocumentId);
+            if (document.DocumentId != null)
+            {
+                RoslynHost.CloseDocument(document.DocumentId);
+            }
+
             OpenDocuments.Remove(document);
             document.Close();
         }

@@ -25,15 +25,15 @@ namespace RoslynPad.Roslyn
         internal static readonly ImmutableArray<Assembly> DefaultCompositionAssemblies =
             ImmutableArray.Create(
                 // Microsoft.CodeAnalysis.Workspaces
-                typeof(WorkspacesResources).GetTypeInfo().Assembly,
+                typeof(WorkspacesResources).Assembly,
                 // Microsoft.CodeAnalysis.CSharp.Workspaces
-                typeof(CSharpWorkspaceResources).GetTypeInfo().Assembly,
+                typeof(CSharpWorkspaceResources).Assembly,
                 // Microsoft.CodeAnalysis.Features
-                typeof(FeaturesResources).GetTypeInfo().Assembly,
+                typeof(FeaturesResources).Assembly,
                 // Microsoft.CodeAnalysis.CSharp.Features
-                typeof(CSharpFeaturesResources).GetTypeInfo().Assembly,
+                typeof(CSharpFeaturesResources).Assembly,
                 // RoslynPad.Roslyn
-                typeof(RoslynHost).GetTypeInfo().Assembly);
+                typeof(RoslynHost).Assembly);
 
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
@@ -51,22 +51,6 @@ namespace RoslynPad.Roslyn
         #endregion
 
         #region Constructors
-
-        static RoslynHost()
-        {
-            WorkaroundForDesktopShim(typeof(Compilation));
-            WorkaroundForDesktopShim(typeof(TaggedText));
-        }
-
-        private static void WorkaroundForDesktopShim(Type typeInAssembly)
-        {
-            // DesktopShim doesn't work on Linux, so we hack around it
-
-            typeInAssembly.GetTypeInfo().Assembly
-                .GetType("Roslyn.Utilities.DesktopShim+FileNotFoundException")
-                ?.GetRuntimeFields().FirstOrDefault(f => f.Name == "s_fusionLog")
-                ?.SetValue(null, typeof(Exception).GetRuntimeProperty(nameof(Exception.InnerException)));
-        }
 
         public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
             RoslynHostReferences? references = null)

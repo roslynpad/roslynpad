@@ -23,6 +23,10 @@
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Host64\RoslynPad.Host64.csproj" />
     <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj" />
+    <ProjectReference Include="..\RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>

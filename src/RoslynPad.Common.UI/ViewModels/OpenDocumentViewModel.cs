@@ -28,7 +28,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
-        private ExecutionHost? _executionHost;
+        private IExecutionHost? _executionHost;
         private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
@@ -186,7 +186,7 @@ namespace RoslynPad.UI
             });
         }
 
-        private void ExecutionHostOnCompilationErrors(List<CompilationErrorResultObject> errors)
+        private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors)
         {
             _dispatcher.InvokeAsync(() =>
             {
@@ -216,7 +216,7 @@ namespace RoslynPad.UI
                 Array.Empty<string>(), // will be updated during NuGet restore
                 Array.Empty<string>(),
                 roslynHost.DefaultImports, WorkingDirectory);
-            _executionHost = new ExecutionHost(_executionHostParameters);
+            _executionHost = new AssemblyExecutionHost(_executionHostParameters);
 
             _executionHost.Error += ExecutionHostOnError;
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
@@ -616,7 +616,7 @@ namespace RoslynPad.UI
             foreach (var directive in compilation.GetReferenceDirectives())
             {
                 var value = directive.File.ValueText;
-                string id, version;
+                string? id, version;
 
                 if (HasPrefix(NuGetPrefix, value))
                 {

@@ -3,10 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -24,7 +23,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Hosting
 {
-    internal class ExecutionHost : IDisposable
+    internal class ExecutionHost : IExecutionHost
     {
         private readonly InitializationParameters _initializationParameters;
         private const int MaxAttemptsToCreateProcess = 2;
@@ -41,12 +40,8 @@ namespace RoslynPad.Hosting
 
         public static void RunServer(string serverPort, string semaphoreName, int clientProcessId)
         {
-            if (!AttachToClientProcess(clientProcessId))
-            {
-                return;
-            }
-
-            DisableWer();
+            RuntimeInitializer.AttachToClientProcess(clientProcessId);
+            RuntimeInitializer.DisableWer();
 
             ServerImpl? server = null;
             try
@@ -114,47 +109,7 @@ namespace RoslynPad.Hosting
 #endif
         }
 
-        /// <summary>
-        /// Disables Windows Error Reporting for the process, so that the process fails fast.
-        /// </summary>
-        private static void DisableWer()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                try
-                {
-                    SetErrorMode(GetErrorMode() | ErrorMode.SEM_FAILCRITICALERRORS | ErrorMode.SEM_NOOPENFILEERRORBOX |
-                                 ErrorMode.SEM_NOGPFAULTERRORBOX);
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
-        }
-
-        private static bool AttachToClientProcess(int clientProcessId)
-        {
-            Process clientProcess;
-            try
-            {
-                clientProcess = Process.GetProcessById(clientProcessId);
-            }
-            catch (ArgumentException)
-            {
-                return false;
-            }
-
-            clientProcess.EnableRaisingEvents = true;
-            clientProcess.Exited += (o, e) =>
-            {
-                _clientExited.Set();
-            };
-
-            return clientProcess.IsAlive();
-        }
-
-        private static DelegatingTextWriter CreateConsoleWriter()
+        internal static DelegatingTextWriter CreateConsoleWriter()
         {
             return new DelegatingTextWriter(line => line.Dump());
         }
@@ -176,7 +131,7 @@ namespace RoslynPad.Hosting
 
         private void OnError(ExceptionResultObject error) => Error?.Invoke(error);
 
-        public event Action<List<CompilationErrorResultObject>> CompilationErrors;
+        public event Action<IList<CompilationErrorResultObject>> CompilationErrors;
 
         private void OnCompilationErrors(List<CompilationErrorResultObject> errors) => CompilationErrors?.Invoke(errors);
 
@@ -230,7 +185,7 @@ namespace RoslynPad.Hosting
                     cancellationToken.ThrowIfCancellationRequested();
 
                     client = new ClientImpl(remotePort, this);
-                    await client.Connect(TimeSpan.FromSeconds(4)).ConfigureAwait(false);
+                    await client.ConnectAsync(TimeSpan.FromSeconds(4)).ConfigureAwait(false);
                     await client.Initialize(new InitializationMessage { Parameters = _initializationParameters })
                         .ConfigureAwait(false);
                 }
@@ -442,8 +397,15 @@ namespace RoslynPad.Hosting
             {
                 var paths = new List<string>
                 {
-                    Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location)
+                    Path.GetDirectoryName(typeof(object).Assembly.Location),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
                 };
+
+                var nugetPackagesEnv = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+                if (!string.IsNullOrEmpty(nugetPackagesEnv))
+                {
+                    paths.Add(nugetPackagesEnv);
+                }
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
@@ -539,25 +501,25 @@ namespace RoslynPad.Hosting
 
             private void LoadReferences(IEnumerable<string> referencePaths)
             {
-                foreach (var referencePath in referencePaths)
-                {
-                    AssemblyName name;
-                    try
-                    {
-                        name = AssemblyName.GetAssemblyName(referencePath);
-                    }
-                    catch
-                    {
-                        // TODO: log
-                        continue;
-                    }
+                //foreach (var referencePath in referencePaths)
+                //{
+                //    AssemblyName name;
+                //    try
+                //    {
+                //        name = AssemblyName.GetAssemblyName(referencePath);
+                //    }
+                //    catch
+                //    {
+                //        // TODO: log
+                //        continue;
+                //    }
 
-                    var id = new AssemblyIdentity(name.Name, name.Version, name.CultureName, name.GetPublicKeyToken().ToImmutableArray());
-                    if (_assemblyLoader != null)
-                    {
-                        _assemblyLoader.RegisterDependency(id, referencePath);
-                    }
-                }
+                //    var id = new AssemblyIdentity(name.Name, name.Version, name.CultureName, name.GetPublicKeyToken().ToImmutableArray());
+                //    if (_assemblyLoader != null)
+                //    {
+                //        _assemblyLoader.RegisterDependency(id, referencePath);
+                //    }
+                //}
             }
 
             private void OnDumped(DumpData data)
@@ -741,13 +703,14 @@ namespace RoslynPad.Hosting
 
             private ScriptRunner CreateScript(string code, OptimizationLevel? optimizationLevel, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
             {
-                var script = new ScriptRunner(code, _parseOptions, outputKind, platform,
+                var script = new ScriptRunner(code, syntaxTree: null, _parseOptions, outputKind, platform,
                     options.MetadataReferences, options.Imports,
                     options.FilePath, _workingDirectory, options.MetadataResolver,
                     assemblyLoader: _assemblyLoader,
                     optimizationLevel: optimizationLevel ?? _optimizationLevel,
                     checkOverflow: _checkOverflow,
-                    allowUnsafe: _allowUnsafe
+                    allowUnsafe: _allowUnsafe,
+                    registerDependencies: true
                 );
 
                 return script;
@@ -927,28 +890,5 @@ namespace RoslynPad.Hosting
                 return Task.Run(() => _host.TryStartProcess(cancellationToken), cancellationToken);
             }
         }
-
-        #region Win32 API
-
-        [DllImport("kernel32", PreserveSig = true)]
-        internal static extern ErrorMode SetErrorMode(ErrorMode mode);
-
-        [DllImport("kernel32", PreserveSig = true)]
-        internal static extern ErrorMode GetErrorMode();
-
-        [Flags]
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        internal enum ErrorMode
-        {
-            SEM_FAILCRITICALERRORS = 0x0001,
-
-            SEM_NOGPFAULTERRORBOX = 0x0002,
-
-            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
-
-            SEM_NOOPENFILEERRORBOX = 0x8000,
-        }
-
-        #endregion
     }
 }

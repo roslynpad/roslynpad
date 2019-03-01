@@ -32,7 +32,7 @@ namespace RoslynPad.Roslyn.Scripting
         private Func<object[], Task<object>>? _lazyExecutor;
         private Compilation? _lazyCompilation;
 
-        public ScriptRunner(string code, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        public ScriptRunner(string? code, SyntaxTree? syntaxTree = null, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
             IEnumerable<string>? usings = null, string? filePath = null, string? workingDirectory = null,
             MetadataReferenceResolver? metadataResolver = null, SourceReferenceResolver? sourceResolver = null,
@@ -45,6 +45,7 @@ namespace RoslynPad.Roslyn.Scripting
             _allowUnsafe = allowUnsafe;
             _registerDependencies = registerDependencies;
             Code = code;
+            SyntaxTree = syntaxTree;
             OutputKind = outputKind;
             Platform = platform;
             _assemblyLoader = assemblyLoader ?? new InteractiveAssemblyLoader();
@@ -61,8 +62,8 @@ namespace RoslynPad.Roslyn.Scripting
                                  : SourceFileResolver.Default);
         }
 
-        public string Code { get; }
-
+        public string? Code { get; }
+        public SyntaxTree? SyntaxTree { get; }
         public OutputKind OutputKind { get; }
         public Platform Platform { get; }
 
@@ -236,8 +237,8 @@ namespace RoslynPad.Roslyn.Scripting
             var entryPointTypeName = BuildQualifiedName(entryPoint.ContainingNamespace.MetadataName, entryPoint.ContainingType.MetadataName);
             var entryPointMethodName = entryPoint.MetadataName;
 
-            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false).GetTypeInfo();
-            return entryPointType.GetDeclaredMethod(entryPointMethodName);
+            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false);
+            return entryPointType.GetTypeInfo().GetDeclaredMethod(entryPointMethodName);
         }
 
         private static string BuildQualifiedName(
@@ -254,7 +255,7 @@ namespace RoslynPad.Roslyn.Scripting
         {
             if (_lazyCompilation == null)
             {
-                var compilation = GetCompilationFromCode(Code);
+                var compilation = GetCompilationFromCode();
                 Interlocked.CompareExchange(ref _lazyCompilation, compilation, null);
             }
 
@@ -263,9 +264,9 @@ namespace RoslynPad.Roslyn.Scripting
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
-        private Compilation GetCompilationFromCode(string code)
+        private Compilation GetCompilationFromCode()
         {
-            var tree = SyntaxFactory.ParseSyntaxTree(code, ParseOptions, FilePath);
+            var tree = SyntaxTree ?? SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath);
 
             var references = GetReferences();
 

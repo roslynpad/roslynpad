@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -21,18 +20,32 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract]
+    [KnownType(typeof(ExceptionResultObject))]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
-        private static readonly ImmutableHashSet<string> _irrelevantEnumerableProperties = ImmutableHashSet<string>.Empty
-            .Add("Count").Add("Length").Add("Key");
+        private static readonly HashSet<string> _irrelevantEnumerableProperties = new HashSet<string>
+            { "Count", "Length", "Key" };
 
-        private static readonly ImmutableHashSet<string> _doNotTreatAsEnumerableTypeNames = ImmutableHashSet<string>.Empty
-            .Add("JObject").Add("JProperty");
+        private static readonly HashSet<string> _doNotTreatAsEnumerableTypeNames = new HashSet<string>
+            { "JObject", "JProperty" };
 
-        private static readonly ImmutableDictionary<string, string> _toStringAlternatives = ImmutableDictionary<string, string>.Empty
-            .Add("JArray", "[...]")
-            .Add("JObject", "{...}");
+        private static readonly Dictionary<string, string> _toStringAlternatives = new Dictionary<string, string>
+        {
+            ["JArray"] = "[...]",
+            ["JObject"] = "{...}"
+        };
+
+        [DataMember(Name = "$type")]
+        public string DataType
+        {
+            get
+            {
+                var type = GetType();
+                return $"{type.FullName}, {type.Assembly.GetName().Name}";
+            }
+            set { }
+        }
 
         private readonly DumpQuotas _quotas;
         private readonly MemberInfo? _member;
@@ -178,12 +191,12 @@ namespace RoslynPad.Runtime
             PopulateChildren(o, targetQuotas, GetMembers(type), headerPrefix);
         }
 
-        private static ImmutableArray<MemberInfo> GetMembers(Type type)
+        private static MemberInfo[] GetMembers(Type type)
         {
             return ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
                     .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
                 .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
-                .ToImmutableArray();
+                .ToArray();
         }
 
         private IEnumerable? GetEnumerable(object o, Type type)
@@ -351,7 +364,7 @@ namespace RoslynPad.Runtime
 
         protected static bool IsScriptMethod(StackFrame stackFrame)
         {
-            return stackFrame.GetMethod()?.DeclaringType?.GetTypeInfo().
+            return stackFrame.GetMethod()?.DeclaringType?.
                    Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
         }
 
@@ -430,7 +443,7 @@ namespace RoslynPad.Runtime
         private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members)
         {
             return members.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
-                   && !typeof(IEnumerator).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                   && !typeof(IEnumerator).IsAssignableFrom(t)
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
                    && t.Namespace?.StartsWith("System.Linq", StringComparison.Ordinal) != true

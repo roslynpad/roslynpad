@@ -13,17 +13,21 @@ namespace RoslynPad.Hosting
     {
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly NamedPipeServerStream _stream;
-        private readonly Lazy<Task<JsonRpc>> _connectTask;
+        private readonly Lazy<Task> _connectTask;
+        private JsonRpc? _rpc;
 
         protected RpcServer(string pipeName)
         {
             _stream = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            _connectTask = new Lazy<Task<JsonRpc>>(async () =>
+            _connectTask = new Lazy<Task>(async () =>
             {
-                await _stream.WaitForConnectionAsync(_cts.Token).ConfigureAwait(false);
-                var rpc = JsonRpc.Attach(_stream, this);
-                ChangeSerializationSettings(rpc);
-                return rpc;
+                while (true)
+                {
+                    await _stream.WaitForConnectionAsync(_cts.Token).ConfigureAwait(false);
+                    var rpc = JsonRpc.Attach(_stream, this);
+                    ChangeSerializationSettings(rpc);
+                    _rpc = rpc;
+                }
             });
         }
 
@@ -48,33 +52,40 @@ namespace RoslynPad.Hosting
             var task = _connectTask.Value;
         }
 
-        protected async Task InvokeAsync(string targetName, object argument) =>
-            await (await _connectTask.Value.ConfigureAwait(false)).InvokeAsync(targetName, argument).ConfigureAwait(false);
-
-        protected async Task<TResult> InvokeAsync<TResult>(string targetName, object argument) =>
-            await (await _connectTask.Value.ConfigureAwait(false)).InvokeAsync<TResult>(targetName, argument).ConfigureAwait(false);
-
-
-        public async Task StopAsync()
+        protected async Task InvokeAsync(string targetName, object argument)
         {
-            if (_cts.IsCancellationRequested) return;
-
-            _cts.Cancel();
-
-            if (_connectTask.IsValueCreated)
+            await _connectTask.Value.ConfigureAwait(false);
+            var rpc = _rpc;
+            if (rpc != null)
             {
-                var value = await _connectTask.Value.ConfigureAwait(false);
-                value.Dispose();
+                await rpc.InvokeAsync(targetName, argument).ConfigureAwait(false);
+                return;
             }
 
-            _stream.Disconnect();
+            throw new InvalidOperationException("Not connected");
+        }
+
+        protected async Task<TResult> InvokeAsync<TResult>(string targetName, object argument)
+        {
+            await _connectTask.Value.ConfigureAwait(false);
+            var rpc = _rpc;
+            if (rpc != null)
+            {
+                return await rpc.InvokeAsync<TResult>(targetName, argument).ConfigureAwait(false);
+            }
+
+            throw new InvalidOperationException("Not connected");
         }
 
         public virtual void Dispose()
         {
             _cts.Cancel();
-            // ReSharper disable once UnusedVariable
-            var task = StopAsync();
+            if (_cts.IsCancellationRequested) return;
+
+            _cts.Cancel();
+            _rpc?.Dispose();
+
+            _stream.Disconnect();
             _cts.Dispose();
             _stream.Dispose();
         }
