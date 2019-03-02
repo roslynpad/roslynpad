@@ -11,9 +11,11 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Scripting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
+using RoslynPad.Utilities;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace RoslynPad.Hosting
@@ -31,21 +33,54 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 #line default
 ", _parseOptions).GetRoot()).Members;
 
+        public static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
+
         private InitializationParameters _parameters;
         private ScriptOptions _scriptOptions;
 
         private CancellationTokenSource? _executeCts;
+        private ExecutionPlatform? _platform;
 
-        public string? HostArguments { get; set; }
-        public string? HostPath { get; set; }
-        public int CurrentPid { get; }
+        public ExecutionPlatform Platform
+        {
+            get => _platform ?? throw new InvalidOperationException("No platform selected");
+            set => _platform = value;
+        }
+
+        private readonly JsonSerializer _jsonSerializer;
+
+        public string BuildPath { get; }
+        public string Name { get; }
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
-        public AssemblyExecutionHost(InitializationParameters parameters)
+        public AssemblyExecutionHost(InitializationParameters parameters, string buildPath, string name)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
-            CurrentPid = Process.GetCurrentProcess().Id;
+            _jsonSerializer = new JsonSerializer { TypeNameHandling = TypeNameHandling.Objects };
+
+            BuildPath = buildPath;
+            Name = name;
             Initialize(parameters);
+            CreateRuntimeConfig();
+        }
+
+        private void CreateRuntimeConfig()
+        {
+            var config = new JObject(
+                new JProperty("runtimeOptions", new JObject(
+                    new JProperty("tfm", "netcoreapp2.2"),
+                    new JProperty("framework", new JObject(
+                        new JProperty("name", "Microsoft.NETCore.App"),
+                        new JProperty("version", "2.2.0"))))));
+
+            File.WriteAllText(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.json"), config.ToString());
+
+            var devConfig = new JObject(
+                new JProperty("runtimeOptions", new JObject(
+                    new JProperty("additionalProbingPaths", new JArray(
+                        _parameters.GlobalPackageFolder)))));
+
+            File.WriteAllText(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.dev.json"), devConfig.ToString());
         }
 
         private void Initialize(InitializationParameters parameters)
@@ -73,29 +108,16 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
-            await Task.Run(() => { });
+            await new NoContextYieldAwaitable();
 
             using var executeCts = new CancellationTokenSource();
             var cancellationToken = executeCts.Token;
-            _executeCts = executeCts;
 
-            var script = new ScriptRunner(code: null, ParseCode(code), _parseOptions, OutputKind.ConsoleApplication, Platform.AnyCpu,
-                _scriptOptions.MetadataReferences, _scriptOptions.Imports,
-                _scriptOptions.FilePath, _parameters.WorkingDirectory, _scriptOptions.MetadataResolver,
-                optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
-                checkOverflow: _parameters.CheckOverflow,
-                allowUnsafe: _parameters.AllowUnsafe);
+            CopyDependencies();
 
-            var path = Path.GetTempPath();
+            var script = CreateScriptRunner(code, optimizationLevel);
 
-            var initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
-            var initAssemblyPath = Path.Combine(path, Path.GetFileName(initAssemblySourcePath));
-            if (!File.Exists(initAssemblyPath))
-            {
-                File.Copy(initAssemblySourcePath, initAssemblyPath);
-            }
-
-            var assemblyPath = Path.Combine(path, "RP-" + Guid.NewGuid().ToString() + ".exe");
+            var assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
 
             var diagnostics = await script.SaveAssembly(assemblyPath, cancellationToken).ConfigureAwait(false);
             SendDiagnostics(diagnostics);
@@ -112,27 +134,9 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             try
             {
-                using (var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo(assemblyPath)
-                    {
-                        Arguments = CurrentPid.ToString(),
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                    }
-                })
-                {
-                    using var registration = cancellationToken.Register(() =>
-                    {
-                        try { process.Kill(); } catch { }
-                    });
+                _executeCts = executeCts;
 
-                    if (process.Start())
-                    {
-                        await Task.Run(() => ReadProcessStream(process.StandardOutput, cancellationToken), cancellationToken);
-                    }
-                }
+                await StartProcess(assemblyPath, cancellationToken);
             }
             finally
             {
@@ -140,21 +144,96 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             }
         }
 
-        private void ReadProcessStream(StreamReader reader, CancellationToken cancellationToken)
+        private string AssemblyExtension => Platform.IsCore ? "dll" : "exe";
+
+        private void CopyDependencies()
         {
-            var jsonSerializer = new JsonSerializer { TypeNameHandling = TypeNameHandling.Objects };
+            var initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
+            var initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(initAssemblySourcePath));
+            if (!File.Exists(initAssemblyPath))
+            {
+                File.Copy(initAssemblySourcePath, initAssemblyPath);
+            }
+        }
+
+        private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
+        {
+            return new ScriptRunner(code: null, ParseCode(code), _parseOptions,
+                            OutputKind.ConsoleApplication, Microsoft.CodeAnalysis.Platform.AnyCpu,
+                            _scriptOptions.MetadataReferences, _scriptOptions.Imports,
+                            _scriptOptions.FilePath, _parameters.WorkingDirectory, _scriptOptions.MetadataResolver,
+                            optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
+                            checkOverflow: _parameters.CheckOverflow,
+                            allowUnsafe: _parameters.AllowUnsafe);
+        }
+
+        private async Task StartProcess(string assemblyPath, CancellationToken cancellationToken)
+        {
+            using (var process = new Process
+            {
+                StartInfo = GetProcessStartInfo(assemblyPath)
+            })
+            using (cancellationToken.Register(() =>
+            {
+                try { process.Kill(); } catch { }
+            }))
+            {
+                if (process.Start())
+                {
+                    await Task.WhenAll(
+                        Task.Run(() => ReadObjectProcessStream(process.StandardOutput)),
+                        Task.Run(() => ReadProcessStream(process.StandardError)));
+                }
+            }
+        }
+
+        private ProcessStartInfo GetProcessStartInfo(string assemblyPath)
+        {
+            return new ProcessStartInfo
+            {
+                FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
+                Arguments = $"exec --depsfile project.assets.json \"{assemblyPath}\" --pid {CurrentPid.Value}",
+                WorkingDirectory = BuildPath,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+        }
+
+        private async Task ReadProcessStream(StreamReader reader)
+        {
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync().ConfigureAwait(false);
+                if (line != null)
+                {
+                    Dumped?.Invoke(new[] { ResultObject.Create(line, DumpQuotas.Default) });
+                }
+            }
+        }
+
+        private void ReadObjectProcessStream(StreamReader reader)
+        {
             using (var jsonReader = new JsonTextReader(reader) { SupportMultipleContent = true })
             {
-                while (jsonReader.Read() && !cancellationToken.IsCancellationRequested)
+                while (!reader.EndOfStream && jsonReader.Read())
                 {
-                    var result = jsonSerializer.Deserialize<ResultObject>(jsonReader);
-                    if (result is ExceptionResultObject exceptionResult)
+                    try
                     {
-                        Error?.Invoke(exceptionResult);
+                        var result = _jsonSerializer.Deserialize<ResultObject>(jsonReader);
+                        if (result is ExceptionResultObject exceptionResult)
+                        {
+                            Error?.Invoke(exceptionResult);
+                        }
+                        else
+                        {
+                            Dumped?.Invoke(new[] { result });
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Dumped?.Invoke(new[] { result });
+                        Dumped?.Invoke(new[] { ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default) });
                     }
                 }
             }
@@ -192,11 +271,6 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             }
 
             return tree.WithRootAndOptions(root, _parseOptions);
-        }
-
-        private void SendError(Exception ex)
-        {
-            Error?.Invoke(ExceptionResultObject.Create(ex));
         }
 
         private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)

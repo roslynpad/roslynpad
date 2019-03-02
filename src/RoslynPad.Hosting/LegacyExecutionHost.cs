@@ -23,7 +23,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.Hosting
 {
-    internal class ExecutionHost : IExecutionHost
+    internal class LegacyExecutionHost : IExecutionHost
     {
         private readonly InitializationParameters _initializationParameters;
         private const int MaxAttemptsToCreateProcess = 2;
@@ -35,12 +35,13 @@ namespace RoslynPad.Hosting
 
         private LazyRemoteService? _lazyRemoteService;
         private bool _disposed;
+        private ExecutionPlatform? _platform;
 
         private static bool Is64BitProcess => IntPtr.Size == 8;
 
         public static void RunServer(string serverPort, string semaphoreName, int clientProcessId)
         {
-            RuntimeInitializer.AttachToClientProcess(clientProcessId);
+            RuntimeInitializer.AttachToParentProcess(clientProcessId);
             RuntimeInitializer.DisableWer();
 
             ServerImpl? server = null;
@@ -114,14 +115,16 @@ namespace RoslynPad.Hosting
             return new DelegatingTextWriter(line => line.Dump());
         }
 
-        public ExecutionHost(InitializationParameters initializationParameters)
+        public LegacyExecutionHost(InitializationParameters initializationParameters)
         {
             _initializationParameters = initializationParameters;
         }
 
-        public string? HostPath { get; set; }
-
-        public string? HostArguments { get; set; }
+        public ExecutionPlatform Platform
+        {
+            get => _platform ?? throw new InvalidOperationException("No platform selected");
+            set => _platform = value;
+        }
 
         public event Action<IList<ResultObject>> Dumped;
 
@@ -149,9 +152,9 @@ namespace RoslynPad.Hosting
 
                 var remotePort = "RoslynPad-" + Guid.NewGuid();
 
-                var processInfo = new ProcessStartInfo(HostPath)
+                var processInfo = new ProcessStartInfo(Platform?.HostPath)
                 {
-                    Arguments = $"{HostArguments} {remotePort} 0 {currentProcessId}",
+                    Arguments = $"{Platform?.HostArguments} {remotePort} 0 {currentProcessId}",
                     WorkingDirectory = _initializationParameters.WorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false
@@ -212,7 +215,7 @@ namespace RoslynPad.Hosting
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(nameof(ExecutionHost));
+                throw new ObjectDisposedException(nameof(LegacyExecutionHost));
             }
         }
 
@@ -611,8 +614,8 @@ namespace RoslynPad.Hosting
                 var platform = !Is64BitProcess &&
                                (outputKind == OutputKind.ConsoleApplication ||
                                 outputKind == OutputKind.WindowsApplication)
-                    ? Platform.AnyCpu32BitPreferred
-                    : Platform.AnyCpu;
+                    ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
+                    : Microsoft.CodeAnalysis.Platform.AnyCpu;
 
                 try
                 {
@@ -701,7 +704,7 @@ namespace RoslynPad.Hosting
                 }
             }
 
-            private ScriptRunner CreateScript(string code, OptimizationLevel? optimizationLevel, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Platform.AnyCpu)
+            private ScriptRunner CreateScript(string code, OptimizationLevel? optimizationLevel, ScriptOptions options, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, Platform platform = Microsoft.CodeAnalysis.Platform.AnyCpu)
             {
                 var script = new ScriptRunner(code, syntaxTree: null, _parseOptions, outputKind, platform,
                     options.MetadataReferences, options.Imports,
@@ -772,9 +775,9 @@ namespace RoslynPad.Hosting
 
         private class ClientImpl : RpcClient, IService, IServiceCallback
         {
-            private readonly ExecutionHost _host;
+            private readonly LegacyExecutionHost _host;
 
-            public ClientImpl(string pipeName, ExecutionHost host) : base(pipeName)
+            public ClientImpl(string pipeName, LegacyExecutionHost host) : base(pipeName)
             {
                 _host = host;
             }
@@ -862,9 +865,9 @@ namespace RoslynPad.Hosting
         {
             public readonly Lazy<Task<RemoteService?>> InitializedService;
             private readonly CancellationTokenSource _cancellationSource;
-            private readonly ExecutionHost _host;
+            private readonly LegacyExecutionHost _host;
 
-            public LazyRemoteService(ExecutionHost host)
+            public LazyRemoteService(LegacyExecutionHost host)
             {
                 _cancellationSource = new CancellationTokenSource();
                 InitializedService = new Lazy<Task<RemoteService?>>(TryStartAndInitializeProcessAsync);

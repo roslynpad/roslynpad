@@ -36,17 +36,6 @@ namespace RoslynPad.Runtime
             ["JObject"] = "{...}"
         };
 
-        [DataMember(Name = "$type")]
-        public string DataType
-        {
-            get
-            {
-                var type = GetType();
-                return $"{type.FullName}, {type.Assembly.GetName().Name}";
-            }
-            set { }
-        }
-
         private readonly DumpQuotas _quotas;
         private readonly MemberInfo? _member;
 
@@ -485,6 +474,17 @@ namespace RoslynPad.Runtime
         private ExceptionResultObject()
         {
             Message = string.Empty;
+        }
+
+        [DataMember(Name = "$type")]
+        public string DataType
+        {
+            get
+            {
+                var type = GetType();
+                return $"{type.FullName}, {type.Assembly.GetName().Name}";
+            }
+            set { }
         }
 
         private ExceptionResultObject(Exception exception, DumpQuotas quotas) : base(exception, quotas)

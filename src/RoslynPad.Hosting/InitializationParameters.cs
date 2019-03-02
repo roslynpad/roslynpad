@@ -9,7 +9,7 @@ namespace RoslynPad.Hosting
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class InitializationParameters
     {
-        public InitializationParameters(IList<string> compileReferences, IList<string> runtimeReferences, IList<string> imports, string workingDirectory, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
+        public InitializationParameters(IList<string> compileReferences, IList<string> runtimeReferences, IList<string> imports, string workingDirectory, string globalPackageFolder, bool shadowCopyAssemblies = true, OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
         {
             CompileReferences = compileReferences;
             RuntimeReferences = runtimeReferences;
@@ -19,6 +19,7 @@ namespace RoslynPad.Hosting
             OptimizationLevel = optimizationLevel;
             CheckOverflow = checkOverflow;
             AllowUnsafe = allowUnsafe;
+            GlobalPackageFolder = globalPackageFolder;
         }
 
         [DataMember]
@@ -37,5 +38,7 @@ namespace RoslynPad.Hosting
         public bool CheckOverflow { get; private set; }
         [DataMember]
         public bool AllowUnsafe { get; private set; }
+        [DataMember]
+        public string GlobalPackageFolder { get; set; }
     }
 }

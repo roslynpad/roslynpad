@@ -7,7 +7,7 @@ namespace RoslynPad.Host
         private static void Main(string[] args)
         {
             if (args.Length != 3) return;
-            ExecutionHost.RunServer(args[0], args[1], int.Parse(args[2]));
+            LegacyExecutionHost.RunServer(args[0], args[1], int.Parse(args[2]));
         }
     }
 }

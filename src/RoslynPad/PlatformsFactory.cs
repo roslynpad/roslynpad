@@ -16,22 +16,13 @@ namespace RoslynPad
             var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
             var targetFrameworkName = GetTargetFrameworkName();
-            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host32.exe"), string.Empty, useDesktopReferences: true);
-            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host64.exe"), string.Empty, useDesktopReferences: true);
+            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host32.exe"), string.Empty, isDesktop: true);
+            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host64.exe"), string.Empty, isDesktop: true);
 
-            var netCoreHost = Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.exe");
-            // requires .NET Core 3 SDK which produces an EXE
-            if (File.Exists(netCoreHost))
+            var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
+            if (File.Exists(dotnetExe))
             {
-                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", netCoreHost, string.Empty);
-            }
-            else
-            {
-                var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
-                if (File.Exists(dotnetExe))
-                {
-                    yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
-                }
+                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
             }
         }
 
@@ -53,6 +44,8 @@ namespace RoslynPad
 
         private static string GetTargetFrameworkName(int releaseKey)
         {
+            if (releaseKey >= 461808)
+                return "net472";
             if (releaseKey >= 461308)
                 return "net471";
             if (releaseKey >= 460798)

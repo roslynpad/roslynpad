@@ -103,9 +103,8 @@ namespace RoslynPad.UI
             return Array.Empty<PackageData>();
         }
 
-        internal static (List<string> compile, List<string> runtime) ReadProjectLockJson(string packagesDirectory, TextReader reader, string framework)
+        internal static (List<string> compile, List<string> runtime) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
         {
-            var obj = LoadJson(reader);
             var compile = new List<string>();
             var runtime = new List<string>();
 
@@ -120,6 +119,7 @@ namespace RoslynPad.UI
                         ReadLockFileSection(packageRoot, package.Value, compile, nameof(compile));
                         ReadLockFileSection(packageRoot, package.Value, runtime, nameof(runtime));
                     }
+
                     break;
                 }
             }
@@ -139,8 +139,7 @@ namespace RoslynPad.UI
             {
                 var relativePath = item.Key;
                 // Ignore placeholder "_._" files.
-                var name = Path.GetFileName(relativePath);
-                if (string.Equals(name, "_._", StringComparison.InvariantCulture))
+                if (IsPlaceholder(relativePath))
                 {
                     continue;
                 }
@@ -149,7 +148,14 @@ namespace RoslynPad.UI
             }
         }
 
-        private static JObject LoadJson(TextReader reader)
+        internal static bool IsPlaceholder(string relativePath)
+        {
+            var name = Path.GetFileName(relativePath);
+            bool isPlacehlder = string.Equals(name, "_._", StringComparison.InvariantCulture);
+            return isPlacehlder;
+        }
+
+        internal static JObject LoadJson(TextReader reader)
         {
             JObject obj;
 
@@ -366,8 +372,6 @@ namespace RoslynPad.UI
         private IReadOnlyList<PackageData> _packages;
         private bool _isPackagesMenuOpen;
         private bool _prerelease;
-        private string _buildPath;
-        private string _projectId;
         private bool _restoreFailed;
         private NuGetFramework _targetFramework;
         private IReadOnlyList<string> _restoreErrors;
@@ -384,23 +388,6 @@ namespace RoslynPad.UI
             _packages = Array.Empty<PackageData>();
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
-
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            _projectId = Guid.NewGuid().ToString();
-            var buildPath = Path.Combine(Path.GetTempPath(), "RoslynPad", "Build", _projectId);
-            try
-            {
-                Directory.CreateDirectory(buildPath);
-                _buildPath = buildPath;
-            }
-            catch (Exception ex)
-            {
-                _telemetryProvider.ReportError(ex);
-            }
         }
 
         private void InstallPackage(PackageData package)
@@ -483,6 +470,10 @@ namespace RoslynPad.UI
                 RefreshPackages();
             }
         }
+
+        public string Id { get; set; }
+
+        public string BuildPath { get; set; }
 
         public bool IsPackagesMenuOpen
         {
@@ -567,7 +558,7 @@ namespace RoslynPad.UI
 
         private void RefreshPackages()
         {
-            if (_buildPath == null || _targetFramework == null) return;
+            if (BuildPath == null || _targetFramework == null) return;
 
             _restoreCts?.Cancel();
 
@@ -587,10 +578,13 @@ namespace RoslynPad.UI
             try
             {
                 var restoreParams = _nuGetViewModel.CreateRestoreParams();
-                restoreParams.ProjectName = _projectId;
-                restoreParams.OutputPath = _buildPath;
+                restoreParams.ProjectName = Id;
+                restoreParams.OutputPath = BuildPath;
                 restoreParams.Packages = packages;
                 restoreParams.TargetFramework = _targetFramework;
+
+                var lockFilePath = Path.Combine(BuildPath, "project.assets.json");
+                IOUtilities.PerformIO(() => File.Delete(lockFilePath));
 
                 var result = await NuGetViewModel.RestoreAsync(restoreParams, NullLogger.Instance, cancellationToken).ConfigureAwait(false);
 
@@ -611,7 +605,7 @@ namespace RoslynPad.UI
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                ParseLockFile(cancellationToken);
+                ParseLockFile(lockFilePath, cancellationToken);
             }
             catch (Exception e) when (!(e is OperationCanceledException))
             {
@@ -624,19 +618,75 @@ namespace RoslynPad.UI
             }
         }
 
-        private void ParseLockFile(CancellationToken cancellationToken)
+        private void ParseLockFile(string lockFilePath, CancellationToken cancellationToken)
         {
-            var lockFilePath = Path.Combine(_buildPath, "project.assets.json");
-
             List<string> compile, runtime;
+            JObject obj;
             using (var reader = File.OpenText(lockFilePath))
             {
-                (compile, runtime) = NuGetViewModel.ReadProjectLockJson(_nuGetViewModel.GlobalPackageFolder, reader, _targetFramework.DotNetFrameworkName);
+                obj = NuGetViewModel.LoadJson(reader);
+            }
+
+            (compile, runtime) = NuGetViewModel.ReadProjectLockJson(obj,
+                                                                    _nuGetViewModel.GlobalPackageFolder,
+                                                                    _targetFramework.DotNetFrameworkName);
+
+            TransformLockFileToDepsFile(obj, _targetFramework.DotNetFrameworkName);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using (var writer = new JsonTextWriter(File.CreateText(lockFilePath)) { Formatting = Formatting.Indented })
+            {
+                obj.WriteTo(writer);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
 
             RestoreCompleted?.Invoke(new NuGetRestoreResult(compile, runtime));
+        }
+
+        private static void TransformLockFileToDepsFile(JObject obj, string targetFramework)
+        {
+            foreach (var p in obj.Properties().Where(p => p.Name != "targets" && p.Name != "libraries").ToArray())
+            {
+                p.Remove();
+            }
+
+            obj.AddFirst(new JProperty("runtimeTarget", new JObject(new JProperty("name", targetFramework))));
+
+            var libraries = (JObject)obj["libraries"];
+
+            foreach (var fx in ((JObject)obj["targets"]).Properties())
+            {
+                foreach (var p in fx.Value.Children<JProperty>().Where(p => IsRuntimeEmptyOrPlaceholder(p)).ToArray())
+                {
+                    p.Remove();
+                    libraries.Remove(p.Name);
+                }
+
+                ((JObject)fx.Value).Add(new JProperty("RoslynPad.Common/1.0.0", new JObject(
+                    new JProperty("type", "project"),
+                    new JProperty("runtime", new JObject(
+                        new JProperty("RoslynPad.Common.dll", new JObject()))))));
+            }
+
+            foreach (var p in libraries.Properties())
+            {
+                p.Value["serviceable"] = true;
+                ((JObject)p.Value).Remove("files");
+            }
+
+            libraries.Add(new JProperty("RoslynPad.Common/1.0.0", new JObject(
+                new JProperty("type", "project"),
+                new JProperty("serviceable", false),
+                new JProperty("sha512", ""))));
+
+            bool IsRuntimeEmptyOrPlaceholder(JProperty p)
+            {
+                var runtime = p.Value["runtime"] as JObject;
+                return runtime == null ||
+                       runtime.Properties().All(pp => NuGetViewModel.IsPlaceholder(pp.Name));
+            }
         }
     }
 

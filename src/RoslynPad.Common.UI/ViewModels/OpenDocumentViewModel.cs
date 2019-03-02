@@ -45,6 +45,9 @@ namespace RoslynPad.UI
         private Timer _liveModeTimer;
         private InitializationParameters _executionHostParameters;
 
+        public string Id { get; }
+        public string BuildPath { get; }
+
         public string WorkingDirectory => Document != null
             ? Path.GetDirectoryName(Document.Path)
             : MainViewModel.DocumentRoot.Path;
@@ -102,15 +105,30 @@ namespace RoslynPad.UI
         public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
+            Id = Guid.NewGuid().ToString();
+            BuildPath = Path.Combine(Path.GetTempPath(), "RoslynPad", "Build", Id);
+
+            _telemetryProvider = telemetryProvider;
+
+            try
+            {
+                Directory.CreateDirectory(BuildPath);
+            }
+            catch (Exception ex)
+            {
+                _telemetryProvider.ReportError(ex);
+            }
+
             _serviceProvider = serviceProvider;
             MainViewModel = mainViewModel;
             CommandProvider = commands;
 
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
+            NuGet.Id = Id;
+            NuGet.BuildPath = BuildPath;
             NuGet.RestoreCompleted += OnNuGetRestoreCompleted;
 
             _dispatcher = appDispatcher;
-            _telemetryProvider = telemetryProvider;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
 
@@ -138,7 +156,7 @@ namespace RoslynPad.UI
 
             var project = document.Project;
 
-            bool useDesktopReferences = Platform?.UseDesktopReferences == true;
+            bool useDesktopReferences = Platform?.IsDesktop == true;
 
             var nugetReferences = restoreResult.CompileReferences.Select(x => host.CreateMetadataReference(x));
             var references = useDesktopReferences ? MainViewModel.DesktopReferences.AddRange(nugetReferences) : nugetReferences;
@@ -215,8 +233,10 @@ namespace RoslynPad.UI
             _executionHostParameters = new InitializationParameters(
                 Array.Empty<string>(), // will be updated during NuGet restore
                 Array.Empty<string>(),
-                roslynHost.DefaultImports, WorkingDirectory);
-            _executionHost = new AssemblyExecutionHost(_executionHostParameters);
+                roslynHost.DefaultImports,
+                WorkingDirectory,
+                MainViewModel.NuGet.GlobalPackageFolder);
+            _executionHost = new AssemblyExecutionHost(_executionHostParameters, BuildPath, Document?.Name ?? Id);
 
             _executionHost.Error += ExecutionHostOnError;
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
@@ -328,8 +348,7 @@ namespace RoslynPad.UI
 
                 if (SetProperty(ref _platform, value))
                 {
-                    _executionHost.HostPath = value.HostPath;
-                    _executionHost.HostArguments = value.HostArguments;
+                    _executionHost.Platform = value;
 
                     if (_isInitialized)
                     {
