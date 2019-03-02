@@ -1,14 +1,8 @@
 ﻿using RoslynPad.Utilities;
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Json;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace RoslynPad.Runtime
 {
@@ -28,7 +22,6 @@ namespace RoslynPad.Runtime
 
             AttachToParentProcess();
             DisableWer();
-            ApplyDepsFile();
             AttachConsole();
         }
 
@@ -48,16 +41,6 @@ namespace RoslynPad.Runtime
             if (ParseCommandLine("pid", @"\d+", out var parentProcessId))
             {
                 AttachToParentProcess(int.Parse(parentProcessId));
-            }
-        }
-
-        private static void ApplyDepsFile()
-        {
-            if (RuntimeInformation.FrameworkDescription.IndexOf(".NET Framework", StringComparison.Ordinal) >= 0 &&
-                ParseCommandLine("depsfile", @"[^\s""]+", out var depsFile))
-            {
-                var depsLoader = new DepsLoader(depsFile);
-                AppDomain.CurrentDomain.AssemblyResolve += (o, e) => depsLoader.TryLoadAssembly(e.Name);
             }
         }
 

@@ -4,8 +4,10 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -40,11 +42,17 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         private CancellationTokenSource? _executeCts;
         private ExecutionPlatform? _platform;
+        private string _assemblyPath;
+        private string _depsFile;
 
         public ExecutionPlatform Platform
         {
             get => _platform ?? throw new InvalidOperationException("No platform selected");
-            set => _platform = value;
+            set
+            {
+                _platform = value;
+                CleanupBuildPath();
+            }
         }
 
         private readonly JsonSerializer _jsonSerializer;
@@ -60,6 +68,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             BuildPath = buildPath;
             Name = name;
+
             Initialize(parameters);
             CreateRuntimeConfig();
         }
@@ -106,6 +115,21 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         {
         }
 
+        private void CleanupBuildPath()
+        {
+            StopProcess();
+            
+            var files = IOUtilities.EnumerateFiles(BuildPath, "*.dll").Concat(
+                        IOUtilities.EnumerateFiles(BuildPath, "*.exe")).Concat(
+                        IOUtilities.EnumerateFiles(BuildPath, "*.deps.json")).Concat(
+                        IOUtilities.EnumerateFiles(BuildPath, "*.config"));
+
+            foreach (var file in files)
+            {
+                IOUtilities.PerformIO(() => File.Delete(file));
+            }
+        }
+
         public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
             await new NoContextYieldAwaitable();
@@ -113,13 +137,15 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             using var executeCts = new CancellationTokenSource();
             var cancellationToken = executeCts.Token;
 
-            CopyDependencies();
-
             var script = CreateScriptRunner(code, optimizationLevel);
 
-            var assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
+            _assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
+            _depsFile = Path.ChangeExtension(_assemblyPath, ".deps.json");
+            CopyIfNewer(Path.Combine(BuildPath, "project.assets.json"), _depsFile);
 
-            var diagnostics = await script.SaveAssembly(assemblyPath, cancellationToken).ConfigureAwait(false);
+            CopyDependencies();
+
+            var diagnostics = await script.SaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
             SendDiagnostics(diagnostics);
 
             if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
@@ -136,7 +162,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             {
                 _executeCts = executeCts;
 
-                await StartProcess(assemblyPath, cancellationToken);
+                await StartProcess(_assemblyPath, cancellationToken);
             }
             finally
             {
@@ -148,12 +174,88 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         private void CopyDependencies()
         {
-            var initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
-            var initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(initAssemblySourcePath));
-            if (!File.Exists(initAssemblyPath))
+            CopyCommonAssembly();
+
+            if (!Platform.IsDesktop)
             {
-                File.Copy(initAssemblySourcePath, initAssemblyPath);
+                return;
             }
+
+            if (CopyReferences())
+            {
+                CreateAppConfig();
+            }
+
+            void CopyCommonAssembly()
+            {
+                var initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
+                var initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(initAssemblySourcePath));
+                CopyIfNewer(initAssemblySourcePath, initAssemblyPath);
+            }
+
+            bool CopyReferences()
+            {
+                var copied = false;
+
+                foreach (var file in _parameters.RuntimeReferences)
+                {
+                    if (CopyIfNewer(file, Path.Combine(BuildPath, Path.GetFileName(file))))
+                    {
+                        copied = true;
+                    }
+                }
+
+                return copied;
+            }
+
+            void CreateAppConfig()
+            {
+                var runtime = new XElement("runtime");
+                XNamespace ns = "urn:schemas-microsoft-com:asm.v1";
+
+                foreach (var file in _parameters.RuntimeReferences)
+                {
+                    using (var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(file))
+                    {
+                        var publicKeyToken = assembly.Name.PublicKeyToken;
+                        var publicKeyTokenString = publicKeyToken == null || publicKeyToken.Length == 0
+                            ? string.Empty
+                            : string.Join("", publicKeyToken.Select(t => t.ToString("x2")));
+
+                        var element = new XElement(ns + "assemblyBinding",
+                            new XElement(ns + "dependentAssembly",
+                                new XElement(ns + "assemblyIdentity",
+                                    new XAttribute("name", assembly.Name.Name),
+                                    new XAttribute("publicKeyToken", publicKeyTokenString),
+                                    new XAttribute("culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture)),
+                                new XElement(ns + "bindingRedirect",
+                                    new XAttribute("oldVersion", "0.0.0.0-9999.9999.9999.9999"),
+                                    new XAttribute("newVersion", assembly.Name.Version))));
+
+                        runtime.Add(element);
+                    }
+                }
+
+                var doc = new XDocument(
+                    new XElement("configuration",
+                        new XElement(runtime)));
+
+                doc.Save(Path.ChangeExtension(_assemblyPath, ".exe.config"));
+            }
+        }
+
+        private static bool CopyIfNewer(string source, string destination)
+        {
+            var sourceInfo = new FileInfo(source);
+            var destinationInfo = new FileInfo(destination);
+
+            if (!destinationInfo.Exists || destinationInfo.CreationTimeUtc < sourceInfo.CreationTimeUtc)
+            {
+                sourceInfo.CopyTo(destination, overwrite: true);
+                return true;
+            }
+
+            return false;
         }
 
         private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
@@ -192,7 +294,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             return new ProcessStartInfo
             {
                 FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
-                Arguments = $"exec --depsfile project.assets.json \"{assemblyPath}\" --pid {CurrentPid.Value}",
+                Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
                 WorkingDirectory = BuildPath,
                 CreateNoWindow = true,
                 UseShellExecute = false,
@@ -293,8 +395,13 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         public Task ResetAsync()
         {
-            _executeCts?.Cancel();
+            StopProcess();
             return Task.CompletedTask;
+        }
+
+        private void StopProcess()
+        {
+            _executeCts?.Cancel();
         }
 
         public Task Update(InitializationParameters parameters)

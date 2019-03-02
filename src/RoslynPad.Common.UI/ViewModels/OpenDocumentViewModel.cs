@@ -169,9 +169,16 @@ namespace RoslynPad.UI
             OnDocumentUpdated();
 
             _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host, useDesktopReferences);
-            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences);
+            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences: false);
 
             var task = _executionHost?.Update(_executionHostParameters);
+
+            string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host, bool useDesktopReferences)
+            {
+                return useDesktopReferences
+                    ? GetReferencePaths(host.DefaultReferences.Concat(MainViewModel.DesktopReferences)).Concat(references).ToArray()
+                    : GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
+            }
         }
 
         private void OnDocumentUpdated()
@@ -180,13 +187,6 @@ namespace RoslynPad.UI
         }
 
         public event EventHandler DocumentUpdated;
-
-        private string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host, bool useDesktopReferences)
-        {
-            return useDesktopReferences
-                ? GetReferencePaths(host.DefaultReferences.Concat(MainViewModel.DesktopReferences)).Concat(references).ToArray()
-                : GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
-        }
 
         public event Action ResultsAvailable;
 
