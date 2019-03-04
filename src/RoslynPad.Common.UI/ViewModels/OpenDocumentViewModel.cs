@@ -32,7 +32,6 @@ namespace RoslynPad.UI
         private ObservableCollection<IResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
-        private Action<object> _executionHostOnDumped;
         private bool _isDirty;
         private ExecutionPlatform _platform;
         private bool _isSaving;
@@ -190,6 +189,26 @@ namespace RoslynPad.UI
 
         public event Action ResultsAvailable;
 
+        private void AddResult(object o)
+        {
+            AddResult(ResultObject.Create(o, DumpQuotas.Default));
+        }
+
+        private void AddResult(IResultObject o)
+        {
+            _dispatcher.InvokeAsync(() =>
+            {
+                ResultsInternal?.Add(o);
+
+            }, AppDispatcherPriority.Low);
+        }
+
+        private void ExecutionHostOnDump(ResultObject result)
+        {
+            AddResult(result);
+            ResultsAvailable?.Invoke();
+        }
+
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
         {
             _dispatcher.InvokeAsync(() =>
@@ -197,7 +216,7 @@ namespace RoslynPad.UI
                 _onError?.Invoke(errorResult);
                 if (errorResult != null)
                 {
-                    ResultsInternal?.Add(errorResult);
+                    ResultsInternal.Add(errorResult);
 
                     ResultsAvailable?.Invoke();
                 }
@@ -210,7 +229,7 @@ namespace RoslynPad.UI
             {
                 foreach (var error in errors)
                 {
-                    ResultsInternal?.Add(error);
+                    ResultsInternal.Add(error);
                 }
 
                 ResultsAvailable?.Invoke();
@@ -238,6 +257,7 @@ namespace RoslynPad.UI
                 MainViewModel.NuGet.GlobalPackageFolder);
             _executionHost = new AssemblyExecutionHost(_executionHostParameters, BuildPath, Document?.Name ?? Id);
 
+            _executionHost.Dumped += ExecutionHostOnDump;
             _executionHost.Error += ExecutionHostOnError;
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
@@ -537,10 +557,7 @@ namespace RoslynPad.UI
 
             var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
 
-            var results = new ObservableCollection<IResultObject>();
-            ResultsInternal = results;
-
-            HookDumped(results, CancellationToken.None);
+            StartExec();
 
             try
             {
@@ -550,12 +567,12 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
+                    ResultsInternal?.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
                 }
             }
             catch (Exception ex)
             {
-                AddResult(ex, results, CancellationToken.None);
+                AddResult(ex);
             }
         }
 
@@ -569,8 +586,7 @@ namespace RoslynPad.UI
 
             SetIsRunning(true);
 
-            var results = new ObservableCollection<IResultObject>();
-            ResultsInternal = results;
+            StartExec();
 
             if (!ShowIL)
             {
@@ -578,7 +594,6 @@ namespace RoslynPad.UI
             }
 
             var cancellationToken = _cts.Token;
-            HookDumped(results, cancellationToken);
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
@@ -591,17 +606,23 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
+                    ResultsInternal?.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
                 }
             }
             catch (Exception ex)
             {
-                AddResult(ex, results, cancellationToken);
+                AddResult(ex);
             }
             finally
             {
                 SetIsRunning(false);
             }
+        }
+
+        private void StartExec()
+        {
+            ResultsInternal = new ObservableCollection<IResultObject>();
+            _onError?.Invoke(null);
         }
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
@@ -707,25 +728,6 @@ namespace RoslynPad.UI
                    value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private void HookDumped(ObservableCollection<IResultObject> results, CancellationToken cancellationToken)
-        {
-            _onError?.Invoke(null);
-            if (_executionHost == null) return;
-
-            if (_executionHostOnDumped != null)
-            {
-                _executionHost.Dumped -= _executionHostOnDumped;
-            }
-
-            _executionHostOnDumped = o =>
-            {
-                AddResult(o, results, cancellationToken);
-                ResultsAvailable?.Invoke();
-            };
-
-            _executionHost.Dumped += _executionHostOnDumped;
-        }
-
         private async Task<string> GetCode(CancellationToken cancellationToken)
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
@@ -746,24 +748,6 @@ namespace RoslynPad.UI
                 _cts.Dispose();
             }
             _cts = new CancellationTokenSource();
-        }
-
-        private void AddResult(object o, ObservableCollection<IResultObject> results, CancellationToken cancellationToken)
-        {
-            _dispatcher.InvokeAsync(() =>
-            {
-                if (o is IEnumerable<ResultObject> list)
-                {
-                    foreach (var resultObject in list)
-                    {
-                        results.Add(resultObject);
-                    }
-                }
-                else
-                {
-                    results.Add(ResultObject.Create(o, DumpQuotas.Default));
-                }
-            }, AppDispatcherPriority.Low, cancellationToken);
         }
 
         public async Task<string> LoadText()

@@ -11,8 +11,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Scripting;
+using Mono.Cecil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RoslynPad.Hosting.ILDecompiler;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
@@ -102,7 +104,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         public event Action<IList<CompilationErrorResultObject>> CompilationErrors;
         public event Action<string> Disassembled;
-        public event Action<IList<ResultObject>> Dumped;
+        public event Action<ResultObject> Dumped;
         public event Action<ExceptionResultObject> Error;
 
         public Task CompileAndSave(string code, string assemblyPath, OptimizationLevel? optimizationLevel)
@@ -154,7 +156,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             if (disassemble)
             {
-                Disassembled?.Invoke(string.Empty);
+                Disassemble();
             }
 
             try
@@ -166,6 +168,17 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             finally
             {
                 _executeCts = null;
+            }
+        }
+
+        private void Disassemble()
+        {
+            using (var assembly = AssemblyDefinition.ReadAssembly(_assemblyPath))
+            {
+                var output = new PlainTextOutput();
+                var disassembler = new ReflectionDisassembler(output, false, CancellationToken.None);
+                disassembler.WriteModuleContents(assembly.MainModule);
+                Disassembled?.Invoke(output.ToString());
             }
         }
 
@@ -228,7 +241,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
                                     new XAttribute("publicKeyToken", publicKeyTokenString),
                                     new XAttribute("culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture)),
                                 new XElement(ns + "bindingRedirect",
-                                    new XAttribute("oldVersion", "0.0.0.0-9999.9999.9999.9999"),
+                                    new XAttribute("oldVersion", "0.0.0.0-" + assembly.Name.Version),
                                     new XAttribute("newVersion", assembly.Name.Version))));
 
                         runtime.Add(element);
@@ -309,7 +322,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
                 var line = await reader.ReadLineAsync().ConfigureAwait(false);
                 if (line != null)
                 {
-                    Dumped?.Invoke(new[] { ResultObject.Create(line, DumpQuotas.Default) });
+                    Dumped?.Invoke(ResultObject.Create(line, DumpQuotas.Default));
                 }
             }
         }
@@ -329,12 +342,12 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
                         }
                         else
                         {
-                            Dumped?.Invoke(new[] { result });
+                            Dumped?.Invoke(result);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Dumped?.Invoke(new[] { ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default) });
+                        Dumped?.Invoke(ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default));
                     }
                 }
             }

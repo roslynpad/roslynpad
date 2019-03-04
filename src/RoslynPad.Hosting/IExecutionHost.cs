@@ -12,7 +12,7 @@ namespace RoslynPad.Hosting
 
         event Action<IList<CompilationErrorResultObject>> CompilationErrors;
         event Action<string> Disassembled;
-        event Action<IList<ResultObject>> Dumped;
+        event Action<ResultObject> Dumped;
         event Action<ExceptionResultObject> Error;
 
         Task CompileAndSave(string code, string assemblyPath, OptimizationLevel? optimizationLevel);
