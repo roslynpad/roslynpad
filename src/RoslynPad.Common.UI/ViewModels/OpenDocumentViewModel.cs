@@ -265,7 +265,8 @@ namespace RoslynPad.UI
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
-            Platform = AvailablePlatforms.FirstOrDefault();
+            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ?? 
+                       AvailablePlatforms.FirstOrDefault();
         }
 
         private IEnumerable<string> GetReferencePaths(IEnumerable<MetadataReference> references)

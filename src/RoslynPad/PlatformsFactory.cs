@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using RoslynPad.UI;
 using System.IO;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace RoslynPad
 {
@@ -15,15 +16,15 @@ namespace RoslynPad
         {
             var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
-            var targetFrameworkName = GetTargetFrameworkName();
-            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host32.exe"), string.Empty, isDesktop: true);
-            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host64.exe"), string.Empty, isDesktop: true);
-
             var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
             if (File.Exists(dotnetExe))
             {
-                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
+                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", Architecture.X64, dotnetExe, string.Empty);
             }
+
+            var targetFrameworkName = GetTargetFrameworkName();
+            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Architecture.X86, string.Empty, string.Empty, isDesktop: true);
+            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Architecture.X64, string.Empty, string.Empty, isDesktop: true);
         }
 
         private static string GetTargetFrameworkName()

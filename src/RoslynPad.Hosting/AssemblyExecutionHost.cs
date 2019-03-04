@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -276,8 +277,12 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
         {
+            Platform platform = Platform.Architecture == Architecture.X86 
+                ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
+                : Microsoft.CodeAnalysis.Platform.AnyCpu;
+
             return new ScriptRunner(code: null, ParseCode(code), _parseOptions,
-                            OutputKind.ConsoleApplication, Microsoft.CodeAnalysis.Platform.AnyCpu,
+                            OutputKind.ConsoleApplication, platform,
                             _scriptOptions.MetadataReferences, _scriptOptions.Imports,
                             _scriptOptions.FilePath, _parameters.WorkingDirectory, _scriptOptions.MetadataResolver,
                             optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
