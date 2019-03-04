@@ -53,6 +53,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             {
                 _platform = value;
                 CleanupBuildPath();
+                CreateRuntimeConfig();
             }
         }
 
@@ -71,11 +72,15 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             Name = name;
 
             Initialize(parameters);
-            CreateRuntimeConfig();
         }
 
         private void CreateRuntimeConfig()
         {
+            if (!Platform.IsCore)
+            {
+                return;
+            }
+
             var config = new JObject(
                 new JProperty("runtimeOptions", new JObject(
                     new JProperty("tfm", "netcoreapp2.2"),
@@ -119,13 +124,8 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         private void CleanupBuildPath()
         {
             StopProcess();
-            
-            var files = IOUtilities.EnumerateFiles(BuildPath, "*.dll").Concat(
-                        IOUtilities.EnumerateFiles(BuildPath, "*.exe")).Concat(
-                        IOUtilities.EnumerateFiles(BuildPath, "*.deps.json")).Concat(
-                        IOUtilities.EnumerateFiles(BuildPath, "*.config"));
 
-            foreach (var file in files)
+            foreach (var file in IOUtilities.EnumerateFiles(BuildPath))
             {
                 IOUtilities.PerformIO(() => File.Delete(file));
             }
@@ -142,7 +142,6 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             _assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
             _depsFile = Path.ChangeExtension(_assemblyPath, ".deps.json");
-            CopyIfNewer(Path.Combine(BuildPath, "project.assets.json"), _depsFile);
 
             CopyDependencies();
 
@@ -187,6 +186,11 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         private void CopyDependencies()
         {
             CopyCommonAssembly();
+
+            if (Platform.IsCore)
+            {
+                CopyIfNewer(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile);
+            }
 
             if (!Platform.IsDesktop)
             {

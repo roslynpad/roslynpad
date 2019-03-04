@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -106,12 +107,13 @@ namespace RoslynPad.UI
         {
             Id = Guid.NewGuid().ToString();
             BuildPath = Path.Combine(Path.GetTempPath(), "RoslynPad", "Build", Id);
+            var nuGetBuildPath = Path.Combine(BuildPath, "nuget");
 
             _telemetryProvider = telemetryProvider;
 
             try
             {
-                Directory.CreateDirectory(BuildPath);
+                Directory.CreateDirectory(nuGetBuildPath);
             }
             catch (Exception ex)
             {
@@ -124,13 +126,14 @@ namespace RoslynPad.UI
 
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
             NuGet.Id = Id;
-            NuGet.BuildPath = BuildPath;
+            NuGet.BuildPath = nuGetBuildPath;
             NuGet.RestoreCompleted += OnNuGetRestoreCompleted;
 
             _dispatcher = appDispatcher;
             AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
                 .GetExecutionPlatforms().ToImmutableArray();
 
+            OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
             CompileAndSaveCommand = commands.CreateAsync(CompileAndSave, () => Platform != null);
@@ -419,6 +422,11 @@ namespace RoslynPad.UI
             await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);
         }
 
+        public void OpenBuildPath()
+        {
+            Task.Run(() => Process.Start(BuildPath));
+        }
+
         public async Task<SaveResult> Save(bool promptSave)
         {
             if (_isSaving) return SaveResult.Cancel;
@@ -517,6 +525,8 @@ namespace RoslynPad.UI
         public NuGetDocumentViewModel NuGet { get; }
 
         public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : "New";
+
+        public IDelegateCommand OpenBuildPathCommand { get; }
 
         public IDelegateCommand SaveCommand { get; }
 

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad", "RoslynPad\Rosl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{AC9F325F-A3FF-4561-941E-49CE4736CBD0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common", "RoslynPad.Common\RoslynPad.Common.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Runtime", "RoslynPad.Runtime\RoslynPad.Runtime.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
 EndProject

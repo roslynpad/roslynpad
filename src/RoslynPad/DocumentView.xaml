@@ -109,6 +109,9 @@
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
                         Content="{StaticResource Save}" />
+                <Button Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
+                        ToolTip="Open Build Folder"
+                        Content="{StaticResource PackageFolder}" />
                 <Separator />
                 <Menu Background="Transparent"
                       Name="RootMenu">

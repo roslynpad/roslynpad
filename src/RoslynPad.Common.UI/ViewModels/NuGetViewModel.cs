@@ -664,10 +664,10 @@ namespace RoslynPad.UI
                     libraries.Remove(p.Name);
                 }
 
-                ((JObject)fx.Value).Add(new JProperty("RoslynPad.Common/1.0.0", new JObject(
+                ((JObject)fx.Value).Add(new JProperty("RoslynPad.Runtime/1.0.0", new JObject(
                     new JProperty("type", "project"),
                     new JProperty("runtime", new JObject(
-                        new JProperty("RoslynPad.Common.dll", new JObject()))))));
+                        new JProperty("RoslynPad.Runtime.dll", new JObject()))))));
             }
 
             foreach (var p in libraries.Properties())
@@ -676,7 +676,7 @@ namespace RoslynPad.UI
                 ((JObject)p.Value).Remove("files");
             }
 
-            libraries.Add(new JProperty("RoslynPad.Common/1.0.0", new JObject(
+            libraries.Add(new JProperty("RoslynPad.Runtime/1.0.0", new JObject(
                 new JProperty("type", "project"),
                 new JProperty("serviceable", false),
                 new JProperty("sha512", ""))));

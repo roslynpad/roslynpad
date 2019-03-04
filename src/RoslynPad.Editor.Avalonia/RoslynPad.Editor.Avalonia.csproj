@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <Compile Include="..\RoslynPad.Common\Utilities\ReflectionUtil.cs" Link="ReflectionUtil.cs" />
+    <Compile Include="..\RoslynPad.Runtime\Utilities\ReflectionUtil.cs" Link="ReflectionUtil.cs" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
