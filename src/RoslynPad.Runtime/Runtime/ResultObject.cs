@@ -91,21 +91,21 @@ namespace RoslynPad.Runtime
             }
         }
 
-        [DataMember]
+        [DataMember(Name = "h")]
         public string? Header { get; private set; }
 
-        [DataMember]
+        [DataMember(Name = "v")]
         public string? Value { get; protected set; }
 
-        [DataMember]
+        [DataMember(Name = "t")]
         public string? Type { get; private set; }
 
-        [DataMember]
+        [DataMember(Name = "c")]
         public IList<ResultObject>? Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
-        [DataMember]
+        [DataMember(Name = "x")]
         public bool IsExpanded { get; private set; }
 
         private void Initialize(object? o, string? headerPrefix)
@@ -504,10 +504,10 @@ namespace RoslynPad.Runtime
 
         public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new ExceptionResultObject(exception, quotas ?? DumpQuotas.Default);
 
-        [DataMember]
+        [DataMember(Name = "l")]
         public int LineNumber { get; private set; }
 
-        [DataMember]
+        [DataMember(Name = "m")]
         public string Message { get; private set; }
     }
 
@@ -524,15 +524,15 @@ namespace RoslynPad.Runtime
             Message = string.Empty;
         }
 
-        [DataMember]
+        [DataMember(Name = "ec")]
         public string ErrorCode { get; private set; }
-        [DataMember]
+        [DataMember(Name = "sev")]
         public string Severity { get; private set; }
-        [DataMember]
+        [DataMember(Name = "l")]
         public int Line { get; private set; }
-        [DataMember]
+        [DataMember(Name = "col")]
         public int Column { get; private set; }
-        [DataMember]
+        [DataMember(Name = "m")]
         public string Message { get; private set; }
 
         public static CompilationErrorResultObject Create(string severity, string errorCode, string message, int line, int column)

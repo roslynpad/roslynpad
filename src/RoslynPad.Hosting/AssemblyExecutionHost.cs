@@ -113,11 +113,6 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         public event Action<ResultObject> Dumped;
         public event Action<ExceptionResultObject> Error;
 
-        public Task CompileAndSave(string code, string assemblyPath, OptimizationLevel? optimizationLevel)
-        {
-            return Task.CompletedTask;
-        }
-
         public void Dispose()
         {
         }

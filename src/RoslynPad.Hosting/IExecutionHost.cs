@@ -15,7 +15,6 @@ namespace RoslynPad.Hosting
         event Action<ResultObject> Dumped;
         event Action<ExceptionResultObject> Error;
 
-        Task CompileAndSave(string code, string assemblyPath, OptimizationLevel? optimizationLevel);
         Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);
         Task ResetAsync();
         Task Update(InitializationParameters parameters);

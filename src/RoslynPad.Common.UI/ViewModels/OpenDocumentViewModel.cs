@@ -136,7 +136,6 @@ namespace RoslynPad.UI
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
-            CompileAndSaveCommand = commands.CreateAsync(CompileAndSave, () => Platform != null);
             RestartHostCommand = commands.CreateAsync(RestartHost, () => Platform != null);
             FormatDocumentCommand = commands.CreateAsync(FormatDocument);
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
@@ -533,8 +532,6 @@ namespace RoslynPad.UI
 
         public IDelegateCommand RunCommand { get; }
 
-        public IDelegateCommand CompileAndSaveCommand { get; }
-
         public IDelegateCommand RestartHostCommand { get; }
 
         public IDelegateCommand FormatDocumentCommand { get; }
@@ -553,37 +550,6 @@ namespace RoslynPad.UI
                 {
                     _dispatcher.InvokeAsync(() => RunCommand.RaiseCanExecuteChanged());
                 }
-            }
-        }
-
-        private async Task CompileAndSave()
-        {
-            var saveDialog = _serviceProvider.GetService<ISaveFileDialog>();
-            saveDialog.OverwritePrompt = true;
-            saveDialog.AddExtension = true;
-            saveDialog.Filter = new FileDialogFilter("Libraries", "*.dll", "*.exe");
-            saveDialog.DefaultExt = "dll";
-            var fileName = await saveDialog.ShowAsync().ConfigureAwait(true);
-            if (fileName == null) return;
-
-            var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
-
-            StartExec();
-
-            try
-            {
-                await Task.Run(() => _executionHost?.CompileAndSave(code, fileName, OptimizationLevel)).ConfigureAwait(true);
-            }
-            catch (CompilationErrorException ex)
-            {
-                foreach (var diagnostic in ex.Diagnostics)
-                {
-                    ResultsInternal?.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
-                }
-            }
-            catch (Exception ex)
-            {
-                AddResult(ex);
             }
         }
 

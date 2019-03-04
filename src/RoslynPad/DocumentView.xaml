@@ -102,9 +102,6 @@
                         Content="{StaticResource Restart}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                           SelectedItem="{Binding Platform}" />
-                <Button Content="{StaticResource BuildSolution}"
-                        Command="{Binding CompileAndSaveCommand, Mode=OneTime}"
-                        ToolTip="Compile and save assembly" />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
