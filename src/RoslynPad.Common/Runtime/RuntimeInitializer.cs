@@ -20,28 +20,36 @@ namespace RoslynPad.Runtime
             if (_initialized) return;
             _initialized = true;
 
-            AttachToParentProcess();
+            var isAttachedToParent = TryAttachToParentProcess();
             DisableWer();
-            AttachConsole();
+            AttachConsole(isAttachedToParent);
         }
 
-        private static void AttachConsole()
+        private static void AttachConsole(bool isAttachedToParent)
         {
-            var consoleDumper = new ConsoleDumper();
-            Console.SetOut(consoleDumper.CreateWriter());
-            Console.SetError(consoleDumper.CreateWriter("Error"));
+            var consoleDumper = isAttachedToParent ? (IConsoleDumper)new JsonConsoleDumper() : new DirectConsoleDumper();
+            if (consoleDumper.SupportsRedirect)
+            {
+                Console.SetOut(consoleDumper.CreateWriter());
+                Console.SetError(consoleDumper.CreateWriter("Error"));
+            }
+
             ObjectExtensions.Dumped += data => consoleDumper.Dump(data);
             AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();
             AppDomain.CurrentDomain.UnhandledException += (o, e) =>
                 ExceptionResultObject.Create((Exception)e.ExceptionObject).Dump();
         }
 
-        private static void AttachToParentProcess()
+        private static bool TryAttachToParentProcess()
         {
             if (ParseCommandLine("pid", @"\d+", out var parentProcessId))
             {
                 AttachToParentProcess(int.Parse(parentProcessId));
+
+                return true;
             }
+
+            return false;
         }
 
         internal static void AttachToParentProcess(int parentProcessId)

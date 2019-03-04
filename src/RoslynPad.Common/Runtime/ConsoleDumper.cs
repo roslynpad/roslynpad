@@ -6,7 +6,78 @@ using System.Threading;
 
 namespace RoslynPad.Runtime
 {
-    internal class ConsoleDumper : IDisposable
+    internal interface IConsoleDumper
+    {
+        bool SupportsRedirect { get; }
+        TextWriter CreateWriter(string? header = null);
+        void Dump(DumpData data);
+        void Flush();
+    }
+
+    internal class DirectConsoleDumper : IConsoleDumper
+    {
+        public bool SupportsRedirect => false;
+
+        public TextWriter CreateWriter(string? header = null)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Dump(DumpData data)
+        {
+            try
+            {
+                DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    Console.WriteLine("Error during Dump: " + ex.Message);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+        }
+
+        private void DumpResultObject(ResultObject resultObject, int indent = 0)
+        {
+            if (indent > 0)
+            {
+                Console.Write("".PadLeft(indent));
+            }
+
+            Console.Write(resultObject.HasChildren ? "+ " : "  ");
+
+            if (resultObject.Header != null)
+            {
+                Console.Write($"[{resultObject.Header}]: ");
+            }
+
+            Console.WriteLine(resultObject.Value);
+
+            if (resultObject.Children != null)
+            {
+                foreach (var child in resultObject.Children)
+                {
+                    DumpResultObject(child, indent + 2);
+                }
+            }
+
+            if (indent == 0)
+            {
+                Console.WriteLine();
+            }
+        }
+
+        public void Flush()
+        {
+        }
+    }
+
+    internal class JsonConsoleDumper : IDisposable, IConsoleDumper
     {
         private const int MaxDumpsPerSession = 100000;
 
@@ -17,13 +88,15 @@ namespace RoslynPad.Runtime
 
         private int _dumpCount;
 
-        public ConsoleDumper()
+        public JsonConsoleDumper()
         {
             // this assembly shouldn't have any external dependencies, so using this legacy serializer
             _serializer = new DataContractJsonSerializer(typeof(ResultObject));
 
             _stream = Console.OpenStandardOutput();
         }
+
+        public bool SupportsRedirect => true;
 
         public TextWriter CreateWriter(string? header = null)
         {
@@ -41,7 +114,7 @@ namespace RoslynPad.Runtime
             {
                 return;
             }
-            
+
             try
             {
                 DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
@@ -80,7 +153,7 @@ namespace RoslynPad.Runtime
             return true;
         }
 
-        private void DumpMessage(string message)
+        protected void DumpMessage(string message)
         {
             using (var writer = JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false))
             {
@@ -102,12 +175,12 @@ namespace RoslynPad.Runtime
         /// </summary>
         private class ConsoleRedirectWriter : TextWriter
         {
-            private readonly ConsoleDumper _dumper;
+            private readonly JsonConsoleDumper _dumper;
             private readonly string? _header;
 
             public override Encoding Encoding => Encoding.UTF8;
 
-            public ConsoleRedirectWriter(ConsoleDumper dumper, string? header = null)
+            public ConsoleRedirectWriter(JsonConsoleDumper dumper, string? header = null)
             {
                 _dumper = dumper;
                 _header = header;

@@ -21,12 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
-    <ProjectReference Include="..\RoslynPad.Host64\RoslynPad.Host64.csproj" />
-    <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj" />
-    <ProjectReference Include="..\RoslynPad.HostNetCore\RoslynPad.HostNetCore.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
-    </ProjectReference>
+    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -37,10 +32,4 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
-  <Target Name="CopyNetCoreHost" AfterTargets="Build">
-    <ItemGroup>
-      <NetCoreHostFile Include="..\RoslynPad.HostNetCore\bin\$(Configuration)\netcoreapp2.2\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NetCoreHostFile)" DestinationFolder="$(OutDir)\NetCoreHost" />
-  </Target>
 </Project>
