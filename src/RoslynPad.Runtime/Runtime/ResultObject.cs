@@ -101,7 +101,7 @@ namespace RoslynPad.Runtime
         public string? Type { get; private set; }
 
         [DataMember(Name = "c")]
-        public IList<ResultObject>? Children { get; private set; }
+        public List<ResultObject>? Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
@@ -160,7 +160,7 @@ namespace RoslynPad.Runtime
                         PopulateChildren(o, targetQuotas, members, headerPrefix);
                         var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                         enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
-                        Children = Children.Concat(new[] { enumerable }).ToArray();
+                        Children = Children.Concat(new[] { enumerable }).ToList();
                     }
                     else
                     {
@@ -234,7 +234,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return true;
             }
 
@@ -258,16 +258,23 @@ namespace RoslynPad.Runtime
         {
             object? value = null;
 
-            if (_member is PropertyInfo propertyInfo)
+            try
             {
-                if (propertyInfo.GetIndexParameters().Length == 0)
+                if (_member is PropertyInfo propertyInfo)
                 {
-                    value = propertyInfo.GetValue(o);
+                    if (propertyInfo.GetIndexParameters().Length == 0)
+                    {
+                        value = propertyInfo.GetValue(o);
+                    }
+                }
+                else if (_member is FieldInfo fieldInfo)
+                {
+                    value = fieldInfo.GetValue(o);
                 }
             }
-            else if (_member is FieldInfo fieldInfo)
+            catch (Exception ex)
             {
-                value = fieldInfo.GetValue(o);
+                return ex is TargetInvocationException tiex ? tiex.InnerException : ex;
             }
 
             return value;
@@ -325,7 +332,7 @@ namespace RoslynPad.Runtime
 
             var children = properties
                 .Select(p => new ResultObject(o, targetQuotas, member: p));
-            Children = children.ToArray();
+            Children = children.ToList();
         }
 
         protected static string GetStackTrace(Exception exception)
@@ -354,7 +361,7 @@ namespace RoslynPad.Runtime
         protected static bool IsScriptMethod(StackFrame stackFrame)
         {
             return stackFrame.GetMethod()?.DeclaringType?.
-                   Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
+                   Assembly.FullName.StartsWith("RoslynPad-", StringComparison.Ordinal) == true;
         }
 
         private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
@@ -377,7 +384,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -425,7 +432,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -474,17 +481,6 @@ namespace RoslynPad.Runtime
         private ExceptionResultObject()
         {
             Message = string.Empty;
-        }
-
-        [DataMember(Name = "$type")]
-        public string DataType
-        {
-            get
-            {
-                var type = GetType();
-                return $"{type.FullName}, {type.Assembly.GetName().Name}";
-            }
-            set { }
         }
 
         private ExceptionResultObject(Exception exception, DumpQuotas quotas) : base(exception, quotas)

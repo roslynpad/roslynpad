@@ -28,16 +28,21 @@ namespace RoslynPad.Runtime
         private static void AttachConsole(bool isAttachedToParent)
         {
             var consoleDumper = isAttachedToParent ? (IConsoleDumper)new JsonConsoleDumper() : new DirectConsoleDumper();
+
             if (consoleDumper.SupportsRedirect)
             {
                 Console.SetOut(consoleDumper.CreateWriter());
                 Console.SetError(consoleDumper.CreateWriter("Error"));
+
+                AppDomain.CurrentDomain.UnhandledException += (o, e) =>
+                {
+                    consoleDumper.DumpException((Exception)e.ExceptionObject);
+                    Environment.Exit(1);
+                };
             }
 
             ObjectExtensions.Dumped += data => consoleDumper.Dump(data);
             AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();
-            AppDomain.CurrentDomain.UnhandledException += (o, e) =>
-                ExceptionResultObject.Create((Exception)e.ExceptionObject).Dump();
         }
 
         private static bool TryAttachToParentProcess()

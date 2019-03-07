@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading;
+using System.Xml;
 
 namespace RoslynPad.Runtime
 {
@@ -11,6 +12,7 @@ namespace RoslynPad.Runtime
         bool SupportsRedirect { get; }
         TextWriter CreateWriter(string? header = null);
         void Dump(DumpData data);
+        void DumpException(Exception exception);
         void Flush();
     }
 
@@ -40,6 +42,11 @@ namespace RoslynPad.Runtime
                     // ignore
                 }
             }
+        }
+
+        public void DumpException(Exception exception)
+        {
+            throw new NotSupportedException();
         }
 
         private void DumpResultObject(ResultObject resultObject, int indent = 0)
@@ -77,23 +84,26 @@ namespace RoslynPad.Runtime
         }
     }
 
-    internal class JsonConsoleDumper : IDisposable, IConsoleDumper
+    internal class JsonConsoleDumper : IConsoleDumper, IDisposable
     {
         private const int MaxDumpsPerSession = 100000;
 
         private static readonly byte[] NewLine = Encoding.Default.GetBytes(Environment.NewLine);
 
-        private readonly DataContractJsonSerializer _serializer;
+        private readonly string _exceptionResultTypeName;
         private readonly Stream _stream;
+        private readonly XmlDictionaryWriter _jsonWriter;
 
         private int _dumpCount;
 
         public JsonConsoleDumper()
         {
-            // this assembly shouldn't have any external dependencies, so using this legacy serializer
-            _serializer = new DataContractJsonSerializer(typeof(ResultObject));
-
             _stream = Console.OpenStandardOutput();
+
+            // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
+            _jsonWriter = JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
+
+            _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {typeof(ExceptionResultObject).Assembly.GetName().Name}";
         }
 
         public bool SupportsRedirect => true;
@@ -105,6 +115,7 @@ namespace RoslynPad.Runtime
 
         public void Dispose()
         {
+            _jsonWriter.Dispose();
             _stream.Dispose();
         }
 
@@ -118,6 +129,30 @@ namespace RoslynPad.Runtime
             try
             {
                 DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    DumpMessage("Error during Dump: " + ex.Message);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+        }
+
+        public void DumpException(Exception exception)
+        {
+            if (!CanDump())
+            {
+                return;
+            }
+
+            try
+            {
+                DumpExceptionResultObject(ExceptionResultObject.Create(exception));
             }
             catch (Exception ex)
             {
@@ -155,19 +190,73 @@ namespace RoslynPad.Runtime
 
         protected void DumpMessage(string message)
         {
-            using (var writer = JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false))
-            {
-                writer.WriteStartElement("root", "");
-                writer.WriteAttributeString("type", "object");
-                writer.WriteElementString(nameof(ResultObject.Value), message);
-                writer.WriteEndElement();
-            }
+            _jsonWriter.WriteStartElement("root", "");
+            _jsonWriter.WriteAttributeString("type", "object");
+            _jsonWriter.WriteElementString("v", message);
+            _jsonWriter.WriteEndElement();
+            _jsonWriter.Flush();
+
+            DumpNewLine();
+        }
+
+        private void DumpExceptionResultObject(ExceptionResultObject result)
+        {
+            _jsonWriter.WriteStartElement("root", "");
+            _jsonWriter.WriteAttributeString("type", "object");
+            _jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
+            _jsonWriter.WriteElementString("m", result.Message);
+            _jsonWriter.WriteStartElement("l");
+            _jsonWriter.WriteValue(result.LineNumber);
+            _jsonWriter.WriteEndElement();
+            WriteResultObjectContent(result);
+            _jsonWriter.WriteEndElement();
+            _jsonWriter.Flush();
+
+            DumpNewLine();
         }
 
         private void DumpResultObject(ResultObject result)
         {
-            _serializer.WriteObject(_stream, result);
+            WriteResultObject(result, isRoot: true);
+            _jsonWriter.Flush();
+
+            DumpNewLine();
+        }
+
+        private void DumpNewLine()
+        {
             _stream.Write(NewLine, 0, NewLine.Length);
+        }
+
+        private void WriteResultObject(ResultObject result, bool isRoot)
+        {
+            _jsonWriter.WriteStartElement(isRoot ? "root" : "item", "");
+            _jsonWriter.WriteAttributeString("type", "object");
+            WriteResultObjectContent(result);
+            _jsonWriter.WriteEndElement();
+        }
+
+        private void WriteResultObjectContent(ResultObject result)
+        {
+            _jsonWriter.WriteElementString("t", result.Type);
+            _jsonWriter.WriteElementString("h", result.Header);
+            _jsonWriter.WriteElementString("v", result.Value);
+            _jsonWriter.WriteStartElement("x");
+            _jsonWriter.WriteValue(result.IsExpanded);
+            _jsonWriter.WriteEndElement();
+
+            if (result.Children != null)
+            {
+                _jsonWriter.WriteStartElement("c");
+                _jsonWriter.WriteAttributeString("type", "array");
+
+                foreach (var child in result.Children)
+                {
+                    WriteResultObject(child, isRoot: false);
+                }
+
+                _jsonWriter.WriteEndElement();
+            }
         }
 
         /// <summary>

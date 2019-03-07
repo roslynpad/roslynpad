@@ -31,17 +31,21 @@ namespace RoslynPad.Hosting
     {
         private static readonly CSharpParseOptions _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.CSharp8, kind: SourceCodeKind.Script);
 
+        private static readonly XNamespace AsmNs = "urn:schemas-microsoft-com:asm.v1";
+
         private static readonly SyntaxList<MemberDeclarationSyntax> InitHostSyntax = ((CompilationUnitSyntax)ParseSyntaxTree(
 @"#line hidden
 RoslynPad.Runtime.RuntimeInitializer.Initialize();
 #line default
 ", _parseOptions).GetRoot()).Members;
 
-        public static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
+        private static readonly string _initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
+
+        private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
 
         private InitializationParameters _parameters;
         private ScriptOptions _scriptOptions;
-
+        private string _initAssemblyPath;
         private CancellationTokenSource? _executeCts;
         private ExecutionPlatform? _platform;
         private string _assemblyPath;
@@ -67,7 +71,11 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         public AssemblyExecutionHost(InitializationParameters parameters, string buildPath, string name)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
-            _jsonSerializer = new JsonSerializer { TypeNameHandling = TypeNameHandling.Objects };
+            _jsonSerializer = new JsonSerializer
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
+            };
 
             BuildPath = buildPath;
             Name = name;
@@ -106,6 +114,8 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
                    .WithReferences(parameters.CompileReferences.Select(p => MetadataReference.CreateFromFile(p)))
                    .WithImports(parameters.Imports)
                    .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
+
+            _initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(_initAssemblySourcePath));
         }
 
         public event Action<IList<CompilationErrorResultObject>> CompilationErrors;
@@ -186,10 +196,6 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             if (Platform.IsCore)
             {
                 CopyIfNewer(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile);
-            }
-
-            if (!Platform.IsDesktop)
-            {
                 return;
             }
 
@@ -200,9 +206,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             void CopyCommonAssembly()
             {
-                var initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
-                var initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(initAssemblySourcePath));
-                CopyIfNewer(initAssemblySourcePath, initAssemblyPath);
+                CopyIfNewer(_initAssemblySourcePath, _initAssemblyPath);
             }
 
             bool CopyReferences()
@@ -223,24 +227,23 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             void CreateAppConfig()
             {
                 var runtime = new XElement("runtime");
-                XNamespace ns = "urn:schemas-microsoft-com:asm.v1";
 
                 foreach (var file in _parameters.RuntimeReferences)
                 {
-                    using (var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(file))
+                    using (var assembly = AssemblyDefinition.ReadAssembly(file))
                     {
                         var publicKeyToken = assembly.Name.PublicKeyToken;
                         var publicKeyTokenString = publicKeyToken == null || publicKeyToken.Length == 0
                             ? string.Empty
                             : string.Join("", publicKeyToken.Select(t => t.ToString("x2")));
 
-                        var element = new XElement(ns + "assemblyBinding",
-                            new XElement(ns + "dependentAssembly",
-                                new XElement(ns + "assemblyIdentity",
+                        var element = new XElement(AsmNs + "assemblyBinding",
+                            new XElement(AsmNs + "dependentAssembly",
+                                new XElement(AsmNs + "assemblyIdentity",
                                     new XAttribute("name", assembly.Name.Name),
                                     new XAttribute("publicKeyToken", publicKeyTokenString),
                                     new XAttribute("culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture)),
-                                new XElement(ns + "bindingRedirect",
+                                new XElement(AsmNs + "bindingRedirect",
                                     new XAttribute("oldVersion", "0.0.0.0-" + assembly.Name.Version),
                                     new XAttribute("newVersion", assembly.Name.Version))));
 
@@ -272,7 +275,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
         private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
         {
-            Platform platform = Platform.Architecture == Architecture.X86 
+            Platform platform = Platform.Architecture == Architecture.X86
                 ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
                 : Microsoft.CodeAnalysis.Platform.AnyCpu;
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Security;
 using System.Text;
 
@@ -41,7 +42,7 @@ namespace RoslynPad.Utilities
                 if (method == null) continue;
                 var declaringType = method.DeclaringType;
                 // skip awaiters
-                if (declaringType != null && typeof(INotifyCompletion).IsAssignableFrom(declaringType)) continue;
+                if (declaringType != null && (declaringType == typeof(ExceptionDispatchInfo) || typeof(INotifyCompletion).IsAssignableFrom(declaringType))) continue;
 
                 if (firstFrame)
                 {
