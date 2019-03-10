@@ -17,6 +17,6 @@ namespace RoslynPad.Hosting
 
         Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);
         Task ResetAsync();
-        Task Update(InitializationParameters parameters);
+        Task Update(ExecutionHostParameters parameters);
     }
 }

@@ -43,7 +43,7 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private bool _isLiveMode;
         private Timer _liveModeTimer;
-        private InitializationParameters _executionHostParameters;
+        private ExecutionHostParameters _executionHostParameters;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -169,16 +169,15 @@ namespace RoslynPad.UI
             host.UpdateDocument(document);
             OnDocumentUpdated();
 
-            _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host, useDesktopReferences);
-            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host, useDesktopReferences: false);
+            _executionHostParameters.FrameworkReferences = useDesktopReferences ? MainViewModel.DesktopReferences : ImmutableArray<MetadataReference>.Empty;
+            _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host);
+            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host);
 
             var task = _executionHost?.Update(_executionHostParameters);
 
-            string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host, bool useDesktopReferences)
+            string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host)
             {
-                return useDesktopReferences
-                    ? GetReferencePaths(host.DefaultReferences.Concat(MainViewModel.DesktopReferences)).Concat(references).ToArray()
-                    : GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
+                return GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
             }
         }
 
@@ -251,9 +250,10 @@ namespace RoslynPad.UI
 
             var roslynHost = MainViewModel.RoslynHost;
 
-            _executionHostParameters = new InitializationParameters(
+            _executionHostParameters = new ExecutionHostParameters(
                 Array.Empty<string>(), // will be updated during NuGet restore
                 Array.Empty<string>(),
+                Array.Empty<MetadataReference>(),
                 roslynHost.DefaultImports,
                 WorkingDirectory,
                 MainViewModel.NuGet.GlobalPackageFolder);

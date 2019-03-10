@@ -31,19 +31,14 @@ namespace RoslynPad.Hosting
     {
         private static readonly CSharpParseOptions _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.CSharp8, kind: SourceCodeKind.Script);
 
-        private static readonly XNamespace AsmNs = "urn:schemas-microsoft-com:asm.v1";
-
         private static readonly SyntaxList<MemberDeclarationSyntax> InitHostSyntax = ((CompilationUnitSyntax)ParseSyntaxTree(
-@"#line hidden
-RoslynPad.Runtime.RuntimeInitializer.Initialize();
-#line default
-", _parseOptions).GetRoot()).Members;
+            @"RoslynPad.Runtime.RuntimeInitializer.Initialize();", _parseOptions).GetRoot()).Members;
 
         private static readonly string _initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
 
         private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
 
-        private InitializationParameters _parameters;
+        private ExecutionHostParameters _parameters;
         private ScriptOptions _scriptOptions;
         private string _initAssemblyPath;
         private CancellationTokenSource? _executeCts;
@@ -68,7 +63,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
         public string Name { get; }
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
-        public AssemblyExecutionHost(InitializationParameters parameters, string buildPath, string name)
+        public AssemblyExecutionHost(ExecutionHostParameters parameters, string buildPath, string name)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             _jsonSerializer = new JsonSerializer
@@ -90,28 +85,27 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
                 return;
             }
 
-            var config = new JObject(
-                new JProperty("runtimeOptions", new JObject(
-                    new JProperty("tfm", "netcoreapp2.2"),
-                    new JProperty("framework", new JObject(
-                        new JProperty("name", "Microsoft.NETCore.App"),
-                        new JProperty("version", "2.2.0"))))));
+            var config = DotNetConfigHelper.CreateNetCoreRuntimeOptions();
+            WriteJson(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.json"), config);
 
-            File.WriteAllText(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.json"), config.ToString());
-
-            var devConfig = new JObject(
-                new JProperty("runtimeOptions", new JObject(
-                    new JProperty("additionalProbingPaths", new JArray(
-                        _parameters.GlobalPackageFolder)))));
-
-            File.WriteAllText(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.dev.json"), devConfig.ToString());
+            var devConfig = DotNetConfigHelper.CreateNetCoreDevRuntimeOptions(_parameters.GlobalPackageFolder);
+            WriteJson(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.dev.json"), devConfig);
         }
 
-        private void Initialize(InitializationParameters parameters)
+        private static void WriteJson(string path, JToken token)
+        {
+            using (var file = File.CreateText(path))
+            using (var writer = new JsonTextWriter(file))
+            {
+                token.WriteTo(writer);
+            }
+        }
+
+        private void Initialize(ExecutionHostParameters parameters)
         {
             _parameters = parameters;
             _scriptOptions = ScriptOptions.Default
-                   .WithReferences(parameters.CompileReferences.Select(p => MetadataReference.CreateFromFile(p)))
+                   .WithReferences(parameters.CompileReferences.Select(p => MetadataReference.CreateFromFile(p)).Concat(parameters.FrameworkReferences))
                    .WithImports(parameters.Imports)
                    .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
 
@@ -226,36 +220,8 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
 
             void CreateAppConfig()
             {
-                var runtime = new XElement("runtime");
-
-                foreach (var file in _parameters.RuntimeReferences)
-                {
-                    using (var assembly = AssemblyDefinition.ReadAssembly(file))
-                    {
-                        var publicKeyToken = assembly.Name.PublicKeyToken;
-                        var publicKeyTokenString = publicKeyToken == null || publicKeyToken.Length == 0
-                            ? string.Empty
-                            : string.Join("", publicKeyToken.Select(t => t.ToString("x2")));
-
-                        var element = new XElement(AsmNs + "assemblyBinding",
-                            new XElement(AsmNs + "dependentAssembly",
-                                new XElement(AsmNs + "assemblyIdentity",
-                                    new XAttribute("name", assembly.Name.Name),
-                                    new XAttribute("publicKeyToken", publicKeyTokenString),
-                                    new XAttribute("culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture)),
-                                new XElement(AsmNs + "bindingRedirect",
-                                    new XAttribute("oldVersion", "0.0.0.0-" + assembly.Name.Version),
-                                    new XAttribute("newVersion", assembly.Name.Version))));
-
-                        runtime.Add(element);
-                    }
-                }
-
-                var doc = new XDocument(
-                    new XElement("configuration",
-                        new XElement(runtime)));
-
-                doc.Save(Path.ChangeExtension(_assemblyPath, ".exe.config"));
+                var appConfig = DotNetConfigHelper.CreateNetFxAppConfig(_parameters.RuntimeReferences);
+                appConfig.Save(Path.ChangeExtension(_assemblyPath, ".exe.config"));
             }
         }
 
@@ -423,7 +389,7 @@ RoslynPad.Runtime.RuntimeInitializer.Initialize();
             _executeCts?.Cancel();
         }
 
-        public Task Update(InitializationParameters parameters)
+        public Task Update(ExecutionHostParameters parameters)
         {
             Initialize(parameters);
             return Task.CompletedTask;
