@@ -34,13 +34,10 @@ namespace RoslynPad.Hosting
         private static readonly SyntaxList<MemberDeclarationSyntax> InitHostSyntax = ((CompilationUnitSyntax)ParseSyntaxTree(
             @"RoslynPad.Runtime.RuntimeInitializer.Initialize();", _parseOptions).GetRoot()).Members;
 
-        private static readonly string _initAssemblySourcePath = typeof(RuntimeInitializer).Assembly.Location;
-
         private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
 
         private ExecutionHostParameters _parameters;
         private ScriptOptions _scriptOptions;
-        private string _initAssemblyPath;
         private CancellationTokenSource? _executeCts;
         private ExecutionPlatform? _platform;
         private string _assemblyPath;
@@ -105,11 +102,9 @@ namespace RoslynPad.Hosting
         {
             _parameters = parameters;
             _scriptOptions = ScriptOptions.Default
-                   .WithReferences(parameters.CompileReferences.Select(p => MetadataReference.CreateFromFile(p)).Concat(parameters.FrameworkReferences))
+                   .WithReferences(parameters.NuGetCompileReferences.Select(p => MetadataReference.CreateFromFile(p)).Concat(parameters.FrameworkReferences))
                    .WithImports(parameters.Imports)
                    .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
-
-            _initAssemblyPath = Path.Combine(BuildPath, Path.GetFileName(_initAssemblySourcePath));
         }
 
         public event Action<IList<CompilationErrorResultObject>> CompilationErrors;
@@ -185,7 +180,7 @@ namespace RoslynPad.Hosting
 
         private void CopyDependencies()
         {
-            CopyCommonAssembly();
+            var referencesChanged = CopyReferences(_parameters.DirectReferences);
 
             if (Platform.IsCore)
             {
@@ -193,21 +188,22 @@ namespace RoslynPad.Hosting
                 return;
             }
 
-            if (CopyReferences())
+            // Platform.IsDesktop
+
+            referencesChanged |= CopyReferences(_parameters.NuGetRuntimeReferences);
+
+            if (referencesChanged)
             {
                 CreateAppConfig();
             }
 
-            void CopyCommonAssembly()
-            {
-                CopyIfNewer(_initAssemblySourcePath, _initAssemblyPath);
-            }
+            // local functions
 
-            bool CopyReferences()
+            bool CopyReferences(IEnumerable<string> references)
             {
                 var copied = false;
 
-                foreach (var file in _parameters.RuntimeReferences)
+                foreach (var file in references)
                 {
                     if (CopyIfNewer(file, Path.Combine(BuildPath, Path.GetFileName(file))))
                     {
@@ -220,7 +216,7 @@ namespace RoslynPad.Hosting
 
             void CreateAppConfig()
             {
-                var appConfig = DotNetConfigHelper.CreateNetFxAppConfig(_parameters.RuntimeReferences);
+                var appConfig = DotNetConfigHelper.CreateNetFxAppConfig(_parameters.NuGetRuntimeReferences);
                 appConfig.Save(Path.ChangeExtension(_assemblyPath, ".exe.config"));
             }
         }

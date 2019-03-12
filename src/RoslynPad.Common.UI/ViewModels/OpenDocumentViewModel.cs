@@ -169,9 +169,14 @@ namespace RoslynPad.UI
             host.UpdateDocument(document);
             OnDocumentUpdated();
 
+            // for desktop, add System*, including facade assemblies
             _executionHostParameters.FrameworkReferences = useDesktopReferences ? MainViewModel.DesktopReferences : ImmutableArray<MetadataReference>.Empty;
-            _executionHostParameters.CompileReferences = GetReferences(restoreResult.CompileReferences, host);
-            _executionHostParameters.RuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host);
+            // compile-time references from NuGet
+            _executionHostParameters.NuGetCompileReferences = GetReferences(restoreResult.CompileReferences, host);
+            // runtime references from NuGet
+            _executionHostParameters.NuGetRuntimeReferences = GetReferences(restoreResult.RuntimeReferences, host);
+            // reference directives & default references
+            _executionHostParameters.DirectReferences = NuGet.LocalLibraryPaths;
 
             var task = _executionHost?.Update(_executionHostParameters);
 
@@ -200,14 +205,13 @@ namespace RoslynPad.UI
             _dispatcher.InvokeAsync(() =>
             {
                 ResultsInternal?.Add(o);
-
+                ResultsAvailable?.Invoke();
             }, AppDispatcherPriority.Low);
         }
 
         private void ExecutionHostOnDump(ResultObject result)
         {
             AddResult(result);
-            ResultsAvailable?.Invoke();
         }
 
         private void ExecutionHostOnError(ExceptionResultObject errorResult)
@@ -221,7 +225,7 @@ namespace RoslynPad.UI
 
                     ResultsAvailable?.Invoke();
                 }
-            });
+            }, AppDispatcherPriority.Low);
         }
 
         private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors)
@@ -253,6 +257,7 @@ namespace RoslynPad.UI
             _executionHostParameters = new ExecutionHostParameters(
                 Array.Empty<string>(), // will be updated during NuGet restore
                 Array.Empty<string>(),
+                Array.Empty<string>(),
                 Array.Empty<MetadataReference>(),
                 roslynHost.DefaultImports,
                 WorkingDirectory,
@@ -264,7 +269,7 @@ namespace RoslynPad.UI
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
-            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ?? 
+            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
                        AvailablePlatforms.FirstOrDefault();
         }
 
@@ -613,22 +618,33 @@ namespace RoslynPad.UI
             }
 
             var syntaxRoot = await document.GetSyntaxRootAsync().ConfigureAwait(true);
-            var packages = GetNuGetPackageReferences(syntaxRoot);
+            var libraries = ParseReferences(syntaxRoot);
 
-            NuGet.UpdatePackageReferences(packages);
+            var defaultReferences = MainViewModel.RoslynHost.DefaultReferences;
+            if (defaultReferences.Length > 0)
+            {
+                if (libraries == null)
+                {
+                    libraries = new List<LibraryRef>();
+                }
+
+                libraries.AddRange(GetReferencePaths(defaultReferences).Select(p => new LibraryRef(p)));
+            }
+
+            NuGet.UpdateLibraries((IReadOnlyList<LibraryRef>?)libraries ?? Array.Empty<LibraryRef>());
         }
 
-        private IReadOnlyList<PackageRef> GetNuGetPackageReferences(SyntaxNode syntaxRoot)
+        private List<LibraryRef>? ParseReferences(SyntaxNode syntaxRoot)
         {
             const string NuGetPrefix = "nuget:";
-            const string OldNuGetPrefix = "$NuGet\\";
+            const string LegacyNuGetPrefix = "$NuGet\\";
 
             if (!(syntaxRoot is Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax compilation))
             {
-                return Array.Empty<PackageRef>();
+                return null;
             }
 
-            List<PackageRef>? packages = null;
+            List<LibraryRef>? libraries = null;
 
             foreach (var directive in compilation.GetReferenceDirectives())
             {
@@ -639,9 +655,9 @@ namespace RoslynPad.UI
                 {
                     (id, version) = ParseNuGetReference(NuGetPrefix, value);
                 }
-                else if (HasPrefix(OldNuGetPrefix, value))
+                else if (HasPrefix(LegacyNuGetPrefix, value))
                 {
-                    (id, version) = GetOldNuGetReference(value);
+                    (id, version) = ParseLegacyNuGetReference(value);
                     if (id == null)
                     {
                         continue;
@@ -649,6 +665,12 @@ namespace RoslynPad.UI
                 }
                 else
                 {
+                    if (IsLocalReference(value))
+                    {
+                        if (libraries == null) libraries = new List<LibraryRef>();
+                        libraries.Add(new LibraryRef(value));
+                    }
+
                     continue;
                 }
 
@@ -662,47 +684,63 @@ namespace RoslynPad.UI
                     continue;
                 }
 
-                if (packages == null) packages = new List<PackageRef>();
-                packages.Add(new PackageRef(id, versionRange));
+                if (libraries == null) libraries = new List<LibraryRef>();
+                libraries.Add(new LibraryRef(id, versionRange));
             }
 
-            return packages ?? (IReadOnlyList<PackageRef>)Array.Empty<PackageRef>();
-        }
+            return libraries;
 
-        private static (string? id, string? version) GetOldNuGetReference(string value)
-        {
-            var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            if (split.Length >= 3)
+            // local functions
+
+            bool HasPrefix(string prefix, string value)
             {
-                return (split[1], split[2]);
+                return value.Length > prefix.Length &&
+                       value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
             }
 
-            return (null, null);
-        }
-
-        private static (string id, string version) ParseNuGetReference(string prefix, string value)
-        {
-            string id, version;
-
-            var indexOfSlash = value.IndexOf('/');
-            if (indexOfSlash >= 0)
+            (string id, string version) ParseNuGetReference(string prefix, string value)
             {
-                id = value.Substring(prefix.Length, indexOfSlash - prefix.Length);
-                version = indexOfSlash != value.Length - 1 ? value.Substring(indexOfSlash + 1) : string.Empty;
+                string id, version;
+
+                var indexOfSlash = value.IndexOf('/');
+                if (indexOfSlash >= 0)
+                {
+                    id = value.Substring(prefix.Length, indexOfSlash - prefix.Length);
+                    version = indexOfSlash != value.Length - 1 ? value.Substring(indexOfSlash + 1) : string.Empty;
+                }
+                else
+                {
+                    id = value.Substring(prefix.Length);
+                    version = string.Empty;
+                }
+
+                return (id, version);
             }
-            else
+
+            (string? id, string? version) ParseLegacyNuGetReference(string value)
             {
-                id = value.Substring(prefix.Length);
-                version = string.Empty;
+                var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                if (split.Length >= 3)
+                {
+                    return (split[1], split[2]);
+                }
+
+                return (null, null);
             }
 
-            return (id, version);
-        }
+            bool IsLocalReference(string path)
+            {
+                switch (Path.GetExtension(path)?.ToLowerInvariant())
+                {
+                    // add a "project" reference if it's not a GAC reference
+                    case ".dll":
+                    case ".exe":
+                    case ".winmd":
+                        return true;
+                }
 
-        private static bool HasPrefix(string prefix, string value)
-        {
-            return value.Length > prefix.Length &&
-                   value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
+                return false;
+            }
         }
 
         private async Task<string> GetCode(CancellationToken cancellationToken)

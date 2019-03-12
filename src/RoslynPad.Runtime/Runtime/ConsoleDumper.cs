@@ -92,18 +92,19 @@ namespace RoslynPad.Runtime
 
         private readonly string _exceptionResultTypeName;
         private readonly Stream _stream;
-        private readonly XmlDictionaryWriter _jsonWriter;
 
         private int _dumpCount;
 
         public JsonConsoleDumper()
         {
             _stream = Console.OpenStandardOutput();
-
-            // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
-            _jsonWriter = JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
-
             _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {typeof(ExceptionResultObject).Assembly.GetName().Name}";
+        }
+
+        private XmlDictionaryWriter CreateJsonWriter()
+        {
+            // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
+            return JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
         }
 
         public bool SupportsRedirect => true;
@@ -115,7 +116,6 @@ namespace RoslynPad.Runtime
 
         public void Dispose()
         {
-            _jsonWriter.Dispose();
             _stream.Dispose();
         }
 
@@ -190,35 +190,41 @@ namespace RoslynPad.Runtime
 
         protected void DumpMessage(string message)
         {
-            _jsonWriter.WriteStartElement("root", "");
-            _jsonWriter.WriteAttributeString("type", "object");
-            _jsonWriter.WriteElementString("v", message);
-            _jsonWriter.WriteEndElement();
-            _jsonWriter.Flush();
+            using (var jsonWriter = CreateJsonWriter())
+            {
+                jsonWriter.WriteStartElement("root", "");
+                jsonWriter.WriteAttributeString("type", "object");
+                jsonWriter.WriteElementString("v", message);
+                jsonWriter.WriteEndElement();
+            }
 
             DumpNewLine();
         }
 
         private void DumpExceptionResultObject(ExceptionResultObject result)
         {
-            _jsonWriter.WriteStartElement("root", "");
-            _jsonWriter.WriteAttributeString("type", "object");
-            _jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
-            _jsonWriter.WriteElementString("m", result.Message);
-            _jsonWriter.WriteStartElement("l");
-            _jsonWriter.WriteValue(result.LineNumber);
-            _jsonWriter.WriteEndElement();
-            WriteResultObjectContent(result);
-            _jsonWriter.WriteEndElement();
-            _jsonWriter.Flush();
+            using (var jsonWriter = CreateJsonWriter())
+            {
+                jsonWriter.WriteStartElement("root", "");
+                jsonWriter.WriteAttributeString("type", "object");
+                jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
+                jsonWriter.WriteElementString("m", result.Message);
+                jsonWriter.WriteStartElement("l");
+                jsonWriter.WriteValue(result.LineNumber);
+                jsonWriter.WriteEndElement();
+                WriteResultObjectContent(jsonWriter, result);
+                jsonWriter.WriteEndElement();
+            }
 
             DumpNewLine();
         }
 
         private void DumpResultObject(ResultObject result)
         {
-            WriteResultObject(result, isRoot: true);
-            _jsonWriter.Flush();
+            using (var jsonWriter = CreateJsonWriter())
+            {
+                WriteResultObject(jsonWriter, result, isRoot: true);
+            }
 
             DumpNewLine();
         }
@@ -228,34 +234,34 @@ namespace RoslynPad.Runtime
             _stream.Write(NewLine, 0, NewLine.Length);
         }
 
-        private void WriteResultObject(ResultObject result, bool isRoot)
+        private void WriteResultObject(XmlDictionaryWriter jsonWriter, ResultObject result, bool isRoot)
         {
-            _jsonWriter.WriteStartElement(isRoot ? "root" : "item", "");
-            _jsonWriter.WriteAttributeString("type", "object");
-            WriteResultObjectContent(result);
-            _jsonWriter.WriteEndElement();
+            jsonWriter.WriteStartElement(isRoot ? "root" : "item", "");
+            jsonWriter.WriteAttributeString("type", "object");
+            WriteResultObjectContent(jsonWriter, result);
+            jsonWriter.WriteEndElement();
         }
 
-        private void WriteResultObjectContent(ResultObject result)
+        private void WriteResultObjectContent(XmlDictionaryWriter jsonWriter, ResultObject result)
         {
-            _jsonWriter.WriteElementString("t", result.Type);
-            _jsonWriter.WriteElementString("h", result.Header);
-            _jsonWriter.WriteElementString("v", result.Value);
-            _jsonWriter.WriteStartElement("x");
-            _jsonWriter.WriteValue(result.IsExpanded);
-            _jsonWriter.WriteEndElement();
+            jsonWriter.WriteElementString("t", result.Type);
+            jsonWriter.WriteElementString("h", result.Header);
+            jsonWriter.WriteElementString("v", result.Value);
+            jsonWriter.WriteStartElement("x");
+            jsonWriter.WriteValue(result.IsExpanded);
+            jsonWriter.WriteEndElement();
 
             if (result.Children != null)
             {
-                _jsonWriter.WriteStartElement("c");
-                _jsonWriter.WriteAttributeString("type", "array");
+                jsonWriter.WriteStartElement("c");
+                jsonWriter.WriteAttributeString("type", "array");
 
                 foreach (var child in result.Children)
                 {
-                    WriteResultObject(child, isRoot: false);
+                    WriteResultObject(jsonWriter, child, isRoot: false);
                 }
 
-                _jsonWriter.WriteEndElement();
+                jsonWriter.WriteEndElement();
             }
         }
 

@@ -21,6 +21,7 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using RoslynPad.Roslyn.Completion.Providers;
+using RoslynPad.UI.Utilities;
 using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
 using PackageSource = NuGet.Configuration.PackageSource;
@@ -106,7 +107,9 @@ namespace RoslynPad.UI
         internal static (List<string> compile, List<string> runtime) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
         {
             var compile = new List<string>();
+            var compileAssemblies = new HashSet<string>();
             var runtime = new List<string>();
+            var runtimeAssemblies = new HashSet<string>();
 
             var targets = (JObject)obj["targets"];
             foreach (var target in targets)
@@ -116,8 +119,10 @@ namespace RoslynPad.UI
                     foreach (var package in (JObject)target.Value)
                     {
                         var packageRoot = Path.Combine(packagesDirectory, package.Key);
-                        ReadLockFileSection(packageRoot, package.Value, compile, nameof(compile));
-                        ReadLockFileSection(packageRoot, package.Value, runtime, nameof(runtime));
+                        if (ReadLockFileSection(packageRoot, package.Value, compile, compileAssemblies, nameof(compile)))
+                        {
+                            ReadLockFileSection(packageRoot, package.Value, runtime, runtimeAssemblies, nameof(runtime));
+                        }
                     }
 
                     break;
@@ -127,12 +132,12 @@ namespace RoslynPad.UI
             return (compile, runtime);
         }
 
-        private static void ReadLockFileSection(string packageRoot, JToken root, List<string> items, string sectionName)
+        private static bool ReadLockFileSection(string packageRoot, JToken root, List<string> items, HashSet<string> names, string sectionName)
         {
             var section = (JObject)((JObject)root)[sectionName];
             if (section == null)
             {
-                return;
+                return false;
             }
 
             foreach (var item in section)
@@ -141,11 +146,18 @@ namespace RoslynPad.UI
                 // Ignore placeholder "_._" files.
                 if (IsPlaceholder(relativePath))
                 {
-                    continue;
+                    return false;
                 }
 
-                items.Add(Path.Combine(packageRoot, relativePath));
+                var name = Path.GetFileNameWithoutExtension(relativePath);
+                // poor man's conflict resolution ;) take the first one
+                if (names.Add(name))
+                {
+                    items.Add(Path.Combine(packageRoot, relativePath));
+                }
             }
+
+            return true;
         }
 
         internal static bool IsPlaceholder(string relativePath)
@@ -278,18 +290,28 @@ namespace RoslynPad.UI
                     autoReferenced: true));
             }
 
-            if (restoreParameters.Packages != null)
+            if (restoreParameters.Libraries != null)
             {
-                foreach (var package in restoreParameters.Packages)
+                foreach (var package in restoreParameters.Libraries)
                 {
-                    targetFramework.Dependencies.Add(new LibraryDependency
-                    {
-                        LibraryRange = new LibraryRange(package.Id, package.VersionRange, LibraryDependencyTarget.Package)
-                    });
+                    AddPackageToFramework(targetFramework, package);
                 }
             }
 
             return targetFramework;
+        }
+
+        private static void AddPackageToFramework(TargetFrameworkInformation targetFramework, LibraryRef library)
+        {
+            if (library.Path != null)
+            {
+                return;
+            }
+
+            targetFramework.Dependencies.Add(new LibraryDependency
+            {
+                LibraryRange = new LibraryRange(library.Id, library.VersionRange, LibraryDependencyTarget.Package)
+            });
         }
 
         async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
@@ -362,7 +384,7 @@ namespace RoslynPad.UI
         private readonly NuGetViewModel _nuGetViewModel;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly SemaphoreSlim _restoreLock;
-        private readonly HashSet<PackageRef> _referencedPackages;
+        private readonly HashSet<LibraryRef> _libraries;
 
         private bool _isRestoring;
         private CancellationTokenSource _restoreCts;
@@ -375,6 +397,7 @@ namespace RoslynPad.UI
         private bool _restoreFailed;
         private NuGetFramework _targetFramework;
         private IReadOnlyList<string> _restoreErrors;
+        private ImmutableList<string> _localLibraryPaths;
 
         [ImportingConstructor]
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
@@ -384,11 +407,14 @@ namespace RoslynPad.UI
             _nuGetViewModel = nuGetViewModel;
             _telemetryProvider = telemetryProvider;
             _restoreLock = new SemaphoreSlim(1, 1);
-            _referencedPackages = new HashSet<PackageRef>();
+            _libraries = new HashSet<LibraryRef>();
             _packages = Array.Empty<PackageData>();
+            _localLibraryPaths = ImmutableList<string>.Empty;
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
         }
+
+        public ImmutableList<string> LocalLibraryPaths => _localLibraryPaths;
 
         private void InstallPackage(PackageData package)
         {
@@ -436,29 +462,48 @@ namespace RoslynPad.UI
             private set => SetProperty(ref _packages, value);
         }
 
-        public void UpdatePackageReferences(IReadOnlyList<PackageRef> packages)
+        public void UpdateLibraries(IReadOnlyList<LibraryRef> libraries)
         {
+            DebugEx.AssertIsUiThread();
+
             var changed = false;
 
-            if (_referencedPackages.Count > 0 && (packages == null || packages.Count == 0))
+            if (_libraries.Count > 0 && (libraries == null || libraries.Count == 0))
             {
-                _referencedPackages.Clear();
+                _libraries.Clear();
+                _localLibraryPaths = ImmutableList<string>.Empty;
 
                 changed = true;
             }
             else
             {
-                if (_referencedPackages.RemoveWhere(p => !packages.Contains(p)) > 0)
+                var removed = _libraries.RemoveWhere(p =>
+                {
+                    var remove = !libraries.Contains(p);
+                    if (remove && p.Path != null)
+                    {
+                        _localLibraryPaths = _localLibraryPaths.Remove(p.Path);
+                    }
+
+                    return remove;
+                });
+
+                if (removed > 0)
                 {
                     changed = true;
                 }
 
-                if (packages != null)
+                if (libraries != null)
                 {
-                    foreach (var package in packages)
+                    foreach (var library in libraries)
                     {
-                        if (_referencedPackages.Add(package))
+                        if (_libraries.Add(library))
                         {
+                            if (library.Path != null)
+                            {
+                                _localLibraryPaths =  _localLibraryPaths.Add(library.Path);
+                            }
+
                             changed = true;
                         }
                     }
@@ -562,7 +607,7 @@ namespace RoslynPad.UI
 
             _restoreCts?.Cancel();
 
-            var packages = _referencedPackages?.ToArray();
+            var packages = _libraries?.ToArray();
 
             var restoreCts = new CancellationTokenSource();
             var cancellationToken = restoreCts.Token;
@@ -571,7 +616,7 @@ namespace RoslynPad.UI
             Task.Run(() => RefreshPackagesAsync(packages, cancellationToken), cancellationToken);
         }
 
-        private async Task RefreshPackagesAsync(PackageRef[] packages, CancellationToken cancellationToken)
+        private async Task RefreshPackagesAsync(LibraryRef[] libraries, CancellationToken cancellationToken)
         {
             await _restoreLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             IsRestoring = true;
@@ -580,7 +625,7 @@ namespace RoslynPad.UI
                 var restoreParams = _nuGetViewModel.CreateRestoreParams();
                 restoreParams.ProjectName = Id;
                 restoreParams.OutputPath = BuildPath;
-                restoreParams.Packages = packages;
+                restoreParams.Libraries = libraries;
                 restoreParams.TargetFramework = _targetFramework;
 
                 var lockFilePath = Path.Combine(BuildPath, "project.assets.json");
@@ -645,7 +690,7 @@ namespace RoslynPad.UI
             RestoreCompleted?.Invoke(new NuGetRestoreResult(compile, runtime));
         }
 
-        private static void TransformLockFileToDepsFile(JObject obj, string targetFramework)
+        private void TransformLockFileToDepsFile(JObject obj, string targetFramework)
         {
             foreach (var p in obj.Properties().Where(p => p.Name != "targets" && p.Name != "libraries").ToArray())
             {
@@ -664,10 +709,16 @@ namespace RoslynPad.UI
                     libraries.Remove(p.Name);
                 }
 
-                ((JObject)fx.Value).Add(new JProperty("RoslynPad.Runtime/1.0.0", new JObject(
-                    new JProperty("type", "project"),
-                    new JProperty("runtime", new JObject(
-                        new JProperty("RoslynPad.Runtime.dll", new JObject()))))));
+                foreach (var library in _libraries)
+                {
+                    if (library.Path != null)
+                    {
+                        ((JObject)fx.Value).Add(new JProperty(library.AssemblyName + "/0.0.0", new JObject(
+                            new JProperty("type", "project"),
+                            new JProperty("runtime", new JObject(
+                                new JProperty(library.AssemblyName + ".dll", new JObject()))))));
+                    }
+                }
             }
 
             foreach (var p in libraries.Properties())
@@ -676,10 +727,16 @@ namespace RoslynPad.UI
                 ((JObject)p.Value).Remove("files");
             }
 
-            libraries.Add(new JProperty("RoslynPad.Runtime/1.0.0", new JObject(
-                new JProperty("type", "project"),
-                new JProperty("serviceable", false),
-                new JProperty("sha512", ""))));
+            foreach (var library in _libraries)
+            {
+                if (library.Path != null)
+                {
+                    libraries.Add(new JProperty(library.AssemblyName + "/0.0.0", new JObject(
+                        new JProperty("type", "project"),
+                        new JProperty("serviceable", false),
+                        new JProperty("sha512", ""))));
+                }
+            }
 
             bool IsRuntimeEmptyOrPlaceholder(JProperty p)
             {
@@ -700,28 +757,35 @@ namespace RoslynPad.UI
         public string PackagesPath { get; set; }
         public IList<string> ConfigFilePaths { get; set; } = new List<string>();
         public IList<PackageSource> Sources { get; set; } = new List<PackageSource>();
-        public IList<PackageRef> Packages { get; set; } = new List<PackageRef>();
+        public IList<LibraryRef> Libraries { get; set; } = new List<LibraryRef>();
     }
 
-    public class PackageRef : IEquatable<PackageRef?>
+    public class LibraryRef : IEquatable<LibraryRef?>
     {
-        public PackageRef(string id, VersionRange versionRange)
+        public LibraryRef(string id, VersionRange versionRange)
         {
             Id = id;
             VersionRange = versionRange;
         }
 
-        public string Id { get; }
-        public VersionRange VersionRange { get; }
-
-        public bool Equals(PackageRef? other)
+        public LibraryRef(string path) : this(string.Empty, VersionRange.All)
         {
-            return other == null
-                ? false
-                : Id == other.Id && VersionRange.Equals(other.VersionRange);
+            Path = path;
+            AssemblyName = System.IO.Path.GetFileNameWithoutExtension(path);
         }
 
-        public override bool Equals(object obj) => Equals(obj as PackageRef);
+        public string Id { get; }
+        public VersionRange VersionRange { get; }
+        public string? Path { get; }
+        public string? AssemblyName { get; }
+
+        public bool Equals(LibraryRef? other)
+        {
+            return other != null &&
+                (Id, VersionRange, Path).Equals((other.Id, other.VersionRange, other.Path));
+        }
+
+        public override bool Equals(object obj) => Equals(obj as LibraryRef);
 
         public override int GetHashCode()
         {

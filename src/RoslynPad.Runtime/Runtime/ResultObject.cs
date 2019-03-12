@@ -185,6 +185,7 @@ namespace RoslynPad.Runtime
             return ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
                     .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
                 .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
+                .OrderBy(m => m.Name)
                 .ToArray();
         }
 

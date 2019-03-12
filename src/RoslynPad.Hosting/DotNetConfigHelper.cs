@@ -10,22 +10,21 @@ namespace RoslynPad.Hosting
     {
         private static readonly XNamespace AsmNs = "urn:schemas-microsoft-com:asm.v1";
 
-        public static JObject CreateNetCoreRuntimeOptions()
+        public static JObject CreateNetCoreRuntimeOptions(string frameworkVersion = "2.2", string packageVersion = "2.2.0")
         {
             return new JObject(
-                            new JProperty("runtimeOptions", new JObject(
-                                new JProperty("tfm", "netcoreapp2.2"),
-                                new JProperty("framework", new JObject(
-                                    new JProperty("name", "Microsoft.NETCore.App"),
-                                    new JProperty("version", "2.2.0"))))));
+                new JProperty("runtimeOptions", new JObject(
+                    new JProperty("tfm", "netcoreapp" + frameworkVersion),
+                    new JProperty("framework", new JObject(
+                        new JProperty("name", "Microsoft.NETCore.App"),
+                        new JProperty("version", packageVersion))))));
         }
 
         public static JObject CreateNetCoreDevRuntimeOptions(string packageFolder)
         {
             return new JObject(
-                            new JProperty("runtimeOptions", new JObject(
-                                new JProperty("additionalProbingPaths", new JArray(
-                                    packageFolder)))));
+                new JProperty("runtimeOptions", new JObject(
+                    new JProperty("additionalProbingPaths", new JArray(packageFolder)))));
         }
 
         public static XDocument CreateNetFxAppConfig(IList<string> references)
