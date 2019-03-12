@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 
@@ -11,17 +11,17 @@ namespace RoslynPad.Editor
 {
     public class ErrorMargin : AbstractMargin
     {
-        private readonly Ellipse _marker;
+        private readonly FrameworkElement _marker;
 
         public ErrorMargin()
         {
             _marker = CreateMarker();
         }
 
-        private Ellipse CreateMarker()
+        private FrameworkElement CreateMarker()
         {
-            var marker = new Ellipse();
-            marker.SetBinding(Shape.FillProperty, new Binding { Source = this, Path = new PropertyPath(nameof(MarkerBrush)) });
+            var marker = new Image();
+            marker.SetBinding(Image.SourceProperty, new Binding { Source = this, Path = new PropertyPath(nameof(MarkerImage)) });
             marker.SetBinding(ToolTipProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Message)) });
             AddLogicalChild(marker);
             AddVisualChild(marker);
@@ -59,13 +59,13 @@ namespace RoslynPad.Editor
             set => SetValue(MessageProperty, value);
         }
 
-        public static readonly DependencyProperty MarkerBrushProperty = DependencyProperty.Register(
-            nameof(MarkerBrush), typeof(Brush?), typeof(ErrorMargin), new FrameworkPropertyMetadata());
+        public static readonly DependencyProperty MarkerImageProperty = DependencyProperty.Register(
+            nameof(MarkerImage), typeof(ImageSource?), typeof(ErrorMargin), new FrameworkPropertyMetadata());
 
-        public Brush? MarkerBrush
+        public ImageSource? MarkerImage
         {
-            get => (Brush?)GetValue(MarkerBrushProperty);
-            set => SetValue(MarkerBrushProperty, value);
+            get => (ImageSource?)GetValue(MarkerImageProperty);
+            set => SetValue(MarkerImageProperty, value);
         }
 
         protected override void OnTextViewChanged(TextView oldTextView, TextView newTextView)

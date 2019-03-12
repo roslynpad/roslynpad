@@ -4,7 +4,11 @@ using System.Collections.Generic;
 using Microsoft.Win32;
 using RoslynPad.UI;
 using System.IO;
-using System.Diagnostics;
+using System.Runtime.InteropServices;
+using RoslynPad.Utilities;
+using NuGet.Versioning;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace RoslynPad
 {
@@ -13,26 +17,36 @@ namespace RoslynPad
     {
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
-            var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            var dotnetPath = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet");
+            var dotnetExe = Path.Combine(dotnetPath, "dotnet.exe");
+            if (File.Exists(dotnetExe))
+            {
+                yield return new ExecutionPlatform("Core x64", "", GetCoreVersions(dotnetPath), Architecture.X64, dotnetExe, string.Empty);
+            }
 
             var targetFrameworkName = GetTargetFrameworkName();
-            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host32.exe"), string.Empty, useDesktopReferences: true);
-            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Path.Combine(basePath, "RoslynPad.Host64.exe"), string.Empty, useDesktopReferences: true);
+            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X86, string.Empty, string.Empty, isDesktop: true);
+            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X64, string.Empty, string.Empty, isDesktop: true);
+        }
 
-            var netCoreHost = Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.exe");
-            // requires .NET Core 3 SDK which produces an EXE
-            if (File.Exists(netCoreHost))
+        private IReadOnlyList<PlatformVersion> GetCoreVersions(string dotnetPath)
+        {
+            const string frameworkName = "Microsoft.NETCore.App";
+
+            var path = Path.Combine(dotnetPath, "shared", frameworkName);
+
+            var sortedDictionary = new SortedDictionary<NuGetVersion, PlatformVersion>();
+
+            foreach (var directory in IOUtilities.EnumerateDirectories(path))
             {
-                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", netCoreHost, string.Empty);
-            }
-            else
-            {
-                var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
-                if (File.Exists(dotnetExe))
+                var versionName = Path.GetFileName(directory);
+                if (NuGetVersion.TryParse(versionName, out var version))
                 {
-                    yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", dotnetExe, Path.Combine(basePath, "NetCoreHost", "RoslynPad.HostNetCore.dll"));
+                    sortedDictionary.Add(version, new PlatformVersion($"netcoreapp{version.Major}.{version.Minor}", frameworkName, versionName));
                 }
             }
+
+            return sortedDictionary.Values.Reverse().ToImmutableArray();
         }
 
         private static string GetTargetFrameworkName()
@@ -53,6 +67,8 @@ namespace RoslynPad
 
         private static string GetTargetFrameworkName(int releaseKey)
         {
+            if (releaseKey >= 461808)
+                return "net472";
             if (releaseKey >= 461308)
                 return "net471";
             if (releaseKey >= 460798)

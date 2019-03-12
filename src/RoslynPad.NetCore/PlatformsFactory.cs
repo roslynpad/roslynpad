@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using RoslynPad.UI;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Collections.Immutable;
 
 namespace RoslynPad
 {
@@ -15,27 +15,17 @@ namespace RoslynPad
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
             var platform = IntPtr.Size == 8 ? "x64" : "x86";
+            var architecture = IntPtr.Size == 8 ? Architecture.X64 : Architecture.X86;
 
-            var exeNoExt = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "RoslynPad.HostNetCore");
-            var exe = exeNoExt;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            var processExe = Process.GetCurrentProcess().MainModule.FileName;
+            if (Path.GetFileNameWithoutExtension(processExe).Equals("dotnet", StringComparison.InvariantCultureIgnoreCase))
             {
-                exe += ".exe";
-            }
-
-            if (File.Exists(exe))
-            {
-                yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.2", exe, string.Empty);
-            }
-            else
-            {
-                var processExe = Process.GetCurrentProcess().MainModule.FileName;
-                if (Path.GetFileNameWithoutExtension(processExe).Equals("dotnet", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.2",
-                        processExe,
-                        exeNoExt + ".dll");
-                }
+                // TODO: get all versions on non-Windows platforms
+                yield return new ExecutionPlatform("Core " + platform, "netcoreapp", ImmutableArray.Create(
+                    new PlatformVersion("netcoreapp2.2", "Microsoft.NETCore.App", "2.2.0")),
+                    architecture,
+                    processExe,
+                    hostArguments: string.Empty);
             }
         }
     }

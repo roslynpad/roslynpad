@@ -21,13 +21,13 @@ namespace RoslynPad.Roslyn.Diagnostics
                 new HostDiagnosticAnalyzerPackage(LanguageNames.CSharp,
                     ImmutableArray.Create(
                         // Microsoft.CodeAnalysis
-                        typeof(Compilation).GetTypeInfo().Assembly.Location,
+                        typeof(Compilation).Assembly.Location,
                         // Microsoft.CodeAnalysis.CSharp
-                        typeof(CSharpResources).GetTypeInfo().Assembly.Location,
+                        typeof(CSharpResources).Assembly.Location,
                         // Microsoft.CodeAnalysis.Features
-                        typeof(FeaturesResources).GetTypeInfo().Assembly.Location,
+                        typeof(FeaturesResources).Assembly.Location,
                         // Microsoft.CodeAnalysis.CSharp.Features
-                        typeof(CSharpFeaturesResources).GetTypeInfo().Assembly.Location))  
+                        typeof(CSharpFeaturesResources).Assembly.Location))  
             };
         }
 

@@ -23,6 +23,7 @@ namespace RoslynPad.UI
         bool OptimizeCompilation { get; set; }
         int LiveModeDelayMs { get; set; }
         bool SearchWhileTyping { get; set; }
+        string DefaultPlatformName { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -47,11 +48,13 @@ namespace RoslynPad.UI
         private int _liveModeDelayMs = LiveModeDelayMsDefault;
         private bool _searchWhileTyping;
         private bool _enableBraceCompletion = true;
+        private string _defaultPlatformName;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
         {
             _telemetryProvider = telemetryProvider;
+            _defaultPlatformName = string.Empty;
         }
 
         public void LoadFrom(string path)
@@ -139,6 +142,12 @@ namespace RoslynPad.UI
         {
             get => _searchWhileTyping;
             set => SetProperty(ref _searchWhileTyping, value);
+        }
+
+        public string DefaultPlatformName
+        {
+            get => _defaultPlatformName;
+            set => SetProperty(ref _defaultPlatformName, value);
         }
 
         protected override void OnPropertyChanged(string? propertyName = null)

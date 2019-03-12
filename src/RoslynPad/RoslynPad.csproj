@@ -11,6 +11,7 @@
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
     <NoWarn>1701;1702</NoWarn>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="**\*.xshd" />
@@ -21,8 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
-    <ProjectReference Include="..\RoslynPad.Host64\RoslynPad.Host64.csproj" />
-    <ProjectReference Include="..\RoslynPad.Host\RoslynPad.Host32.csproj" />
+    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -32,11 +32,6 @@
     <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
   </ItemGroup>
-  <Target Name="CopyNetCoreHost" AfterTargets="Build">
-    <ItemGroup>
-      <NetCoreHostFile Include="..\RoslynPad.HostNetCore\bin\$(Configuration)\netcoreapp2.2\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NetCoreHostFile)" DestinationFolder="$(OutDir)\NetCoreHost" />
-  </Target>
 </Project>

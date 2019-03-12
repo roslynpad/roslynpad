@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -21,18 +20,21 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract]
+    [KnownType(typeof(ExceptionResultObject))]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
-        private static readonly ImmutableHashSet<string> _irrelevantEnumerableProperties = ImmutableHashSet<string>.Empty
-            .Add("Count").Add("Length").Add("Key");
+        private static readonly HashSet<string> _irrelevantEnumerableProperties = new HashSet<string>
+            { "Count", "Length", "Key" };
 
-        private static readonly ImmutableHashSet<string> _doNotTreatAsEnumerableTypeNames = ImmutableHashSet<string>.Empty
-            .Add("JObject").Add("JProperty");
+        private static readonly HashSet<string> _doNotTreatAsEnumerableTypeNames = new HashSet<string>
+            { "JObject", "JProperty" };
 
-        private static readonly ImmutableDictionary<string, string> _toStringAlternatives = ImmutableDictionary<string, string>.Empty
-            .Add("JArray", "[...]")
-            .Add("JObject", "{...}");
+        private static readonly Dictionary<string, string> _toStringAlternatives = new Dictionary<string, string>
+        {
+            ["JArray"] = "[...]",
+            ["JObject"] = "{...}"
+        };
 
         private readonly DumpQuotas _quotas;
         private readonly MemberInfo? _member;
@@ -89,21 +91,21 @@ namespace RoslynPad.Runtime
             }
         }
 
-        [DataMember]
+        [DataMember(Name = "h")]
         public string? Header { get; private set; }
 
-        [DataMember]
+        [DataMember(Name = "v")]
         public string? Value { get; protected set; }
 
-        [DataMember]
+        [DataMember(Name = "t")]
         public string? Type { get; private set; }
 
-        [DataMember]
-        public IList<ResultObject>? Children { get; private set; }
+        [DataMember(Name = "c")]
+        public List<ResultObject>? Children { get; private set; }
 
         public bool HasChildren => Children?.Count > 0;
 
-        [DataMember]
+        [DataMember(Name = "x")]
         public bool IsExpanded { get; private set; }
 
         private void Initialize(object? o, string? headerPrefix)
@@ -158,7 +160,7 @@ namespace RoslynPad.Runtime
                         PopulateChildren(o, targetQuotas, members, headerPrefix);
                         var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                         enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
-                        Children = Children.Concat(new[] { enumerable }).ToArray();
+                        Children = Children.Concat(new[] { enumerable }).ToList();
                     }
                     else
                     {
@@ -178,12 +180,13 @@ namespace RoslynPad.Runtime
             PopulateChildren(o, targetQuotas, GetMembers(type), headerPrefix);
         }
 
-        private static ImmutableArray<MemberInfo> GetMembers(Type type)
+        private static MemberInfo[] GetMembers(Type type)
         {
             return ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
                     .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
                 .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
-                .ToImmutableArray();
+                .OrderBy(m => m.Name)
+                .ToArray();
         }
 
         private IEnumerable? GetEnumerable(object o, Type type)
@@ -232,7 +235,7 @@ namespace RoslynPad.Runtime
                 Header = _member.Name;
                 // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception.InnerException, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return true;
             }
 
@@ -256,16 +259,23 @@ namespace RoslynPad.Runtime
         {
             object? value = null;
 
-            if (_member is PropertyInfo propertyInfo)
+            try
             {
-                if (propertyInfo.GetIndexParameters().Length == 0)
+                if (_member is PropertyInfo propertyInfo)
                 {
-                    value = propertyInfo.GetValue(o);
+                    if (propertyInfo.GetIndexParameters().Length == 0)
+                    {
+                        value = propertyInfo.GetValue(o);
+                    }
+                }
+                else if (_member is FieldInfo fieldInfo)
+                {
+                    value = fieldInfo.GetValue(o);
                 }
             }
-            else if (_member is FieldInfo fieldInfo)
+            catch (Exception ex)
             {
-                value = fieldInfo.GetValue(o);
+                return ex is TargetInvocationException tiex ? tiex.InnerException : ex;
             }
 
             return value;
@@ -323,7 +333,7 @@ namespace RoslynPad.Runtime
 
             var children = properties
                 .Select(p => new ResultObject(o, targetQuotas, member: p));
-            Children = children.ToArray();
+            Children = children.ToList();
         }
 
         protected static string GetStackTrace(Exception exception)
@@ -351,8 +361,8 @@ namespace RoslynPad.Runtime
 
         protected static bool IsScriptMethod(StackFrame stackFrame)
         {
-            return stackFrame.GetMethod()?.DeclaringType?.GetTypeInfo().
-                   Assembly.FullName.StartsWith("\u211B", StringComparison.Ordinal) == true;
+            return stackFrame.GetMethod()?.DeclaringType?.
+                   Assembly.FullName.StartsWith("RoslynPad-", StringComparison.Ordinal) == true;
         }
 
         private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
@@ -375,7 +385,7 @@ namespace RoslynPad.Runtime
             {
                 Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
@@ -423,14 +433,14 @@ namespace RoslynPad.Runtime
             {
                 Header = _member?.Name;
                 Value = $"Threw {exception.GetType().Name}";
-                Children = new ResultObject[] { ExceptionResultObject.Create(exception, _quotas) };
+                Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
             }
         }
 
         private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members)
         {
             return members.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
-                   && !typeof(IEnumerator).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                   && !typeof(IEnumerator).IsAssignableFrom(t)
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
                    && t.Namespace?.StartsWith("System.Linq", StringComparison.Ordinal) != true
@@ -491,10 +501,10 @@ namespace RoslynPad.Runtime
 
         public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new ExceptionResultObject(exception, quotas ?? DumpQuotas.Default);
 
-        [DataMember]
+        [DataMember(Name = "l")]
         public int LineNumber { get; private set; }
 
-        [DataMember]
+        [DataMember(Name = "m")]
         public string Message { get; private set; }
     }
 
@@ -511,15 +521,15 @@ namespace RoslynPad.Runtime
             Message = string.Empty;
         }
 
-        [DataMember]
+        [DataMember(Name = "ec")]
         public string ErrorCode { get; private set; }
-        [DataMember]
+        [DataMember(Name = "sev")]
         public string Severity { get; private set; }
-        [DataMember]
+        [DataMember(Name = "l")]
         public int Line { get; private set; }
-        [DataMember]
+        [DataMember(Name = "col")]
         public int Column { get; private set; }
-        [DataMember]
+        [DataMember(Name = "m")]
         public string Message { get; private set; }
 
         public static CompilationErrorResultObject Create(string severity, string errorCode, string message, int line, int column)

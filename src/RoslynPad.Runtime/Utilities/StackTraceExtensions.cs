@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Security;
 using System.Text;
 
@@ -39,9 +40,9 @@ namespace RoslynPad.Utilities
                 var method = frame.GetMethod();
 
                 if (method == null) continue;
-                var declaringType = method.DeclaringType?.GetTypeInfo();
+                var declaringType = method.DeclaringType;
                 // skip awaiters
-                if (declaringType != null && typeof(INotifyCompletion).GetTypeInfo().IsAssignableFrom(declaringType)) continue;
+                if (declaringType != null && (declaringType == typeof(ExceptionDispatchInfo) || typeof(INotifyCompletion).IsAssignableFrom(declaringType))) continue;
 
                 if (firstFrame)
                 {
@@ -82,12 +83,12 @@ namespace RoslynPad.Utilities
             return stringBuilder.ToString();
         }
 
-        private static bool FormatMethodName(StringBuilder stringBuilder, TypeInfo declaringType)
+        private static bool FormatMethodName(StringBuilder stringBuilder, Type declaringType)
         {
             if (declaringType == null) return false;
             var isAsync = false;
             var fullName = declaringType.FullName.Replace('+', '.');
-            if (typeof(IAsyncStateMachine).GetTypeInfo().IsAssignableFrom(declaringType))
+            if (typeof(IAsyncStateMachine).IsAssignableFrom(declaringType))
             {
                 isAsync = true;
                 stringBuilder.Append(AsyncMethodPrefix);

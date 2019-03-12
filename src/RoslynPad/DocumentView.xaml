@@ -102,13 +102,16 @@
                         Content="{StaticResource Restart}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                           SelectedItem="{Binding Platform}" />
-                <Button Content="{StaticResource BuildSolution}"
-                        Command="{Binding CompileAndSaveCommand, Mode=OneTime}"
-                        ToolTip="Compile and save assembly" />
+                <ComboBox ItemsSource="{Binding Platform.Versions}"
+                          Visibility="{Binding Platform.HasVersions, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          SelectedItem="{Binding PlatformVersion}" />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
                         Content="{StaticResource Save}" />
+                <Button Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
+                        ToolTip="Open Build Folder"
+                        Content="{StaticResource PackageFolder}" />
                 <Separator />
                 <Menu Background="Transparent"
                       Name="RootMenu">

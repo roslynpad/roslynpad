@@ -38,10 +38,10 @@ namespace RoslynPad.Roslyn
                 typeof(Assembly)
             }, assemblyReferences: new[]
             {
-                typeof(Microsoft.CSharp.RuntimeBinder.Binder).GetTypeInfo().Assembly
+                typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly
             });
 
-            var objectAssemblyPath = typeof(object).GetTypeInfo().Assembly.Location;
+            var objectAssemblyPath = typeof(object).Assembly.Location;
             var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), "mscorlib.dll");
             if (File.Exists(mscorlibPath))
             {
@@ -111,7 +111,7 @@ namespace RoslynPad.Roslyn
             foreach (var type in typeNamespaceImports.WhereNotNull())
             {
                 importsArray = importsArray.Add(type.Namespace);
-                var location = type.GetTypeInfo().Assembly.Location;
+                var location = type.Assembly.Location;
                 referenceLocations = referenceLocations.SetItem(location, string.Empty);
             }
 

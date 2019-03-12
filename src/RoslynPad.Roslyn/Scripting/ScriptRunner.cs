@@ -32,7 +32,7 @@ namespace RoslynPad.Roslyn.Scripting
         private Func<object[], Task<object>>? _lazyExecutor;
         private Compilation? _lazyCompilation;
 
-        public ScriptRunner(string code, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        public ScriptRunner(string? code, SyntaxTree? syntaxTree = null, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
             IEnumerable<string>? usings = null, string? filePath = null, string? workingDirectory = null,
             MetadataReferenceResolver? metadataResolver = null, SourceReferenceResolver? sourceResolver = null,
@@ -45,6 +45,7 @@ namespace RoslynPad.Roslyn.Scripting
             _allowUnsafe = allowUnsafe;
             _registerDependencies = registerDependencies;
             Code = code;
+            SyntaxTree = syntaxTree;
             OutputKind = outputKind;
             Platform = platform;
             _assemblyLoader = assemblyLoader ?? new InteractiveAssemblyLoader();
@@ -61,8 +62,8 @@ namespace RoslynPad.Roslyn.Scripting
                                  : SourceFileResolver.Default);
         }
 
-        public string Code { get; }
-
+        public string? Code { get; }
+        public SyntaxTree? SyntaxTree { get; }
         public OutputKind OutputKind { get; }
         public Platform Platform { get; }
 
@@ -84,7 +85,7 @@ namespace RoslynPad.Roslyn.Scripting
             {
                 GetExecutor(peStreamAction, cancellationToken);
 
-                return ImmutableArray.CreateRange(GetCompilation().GetDiagnostics(cancellationToken).Where(d => d.Severity == DiagnosticSeverity.Warning));
+                return ImmutableArray.CreateRange(GetCompilation(GetScriptAssemblyName()).GetDiagnostics(cancellationToken).Where(d => d.Severity == DiagnosticSeverity.Warning));
             }
             catch (CompilationErrorException e)
             {
@@ -107,7 +108,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         public async Task<ImmutableArray<Diagnostic>> SaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
         {
-            var compilation = GetCompilation().WithAssemblyName(Path.GetFileNameWithoutExtension(assemblyPath));
+            var compilation = GetCompilation(Path.GetFileNameWithoutExtension(assemblyPath));
 
             var diagnostics = compilation.GetParseDiagnostics(cancellationToken);
             if (!diagnostics.IsEmpty)
@@ -130,9 +131,11 @@ namespace RoslynPad.Roslyn.Scripting
             return _lazyExecutor;
         }
 
+        private static string GetScriptAssemblyName() => _globalAssemblyNamePrefix + Interlocked.Increment(ref _assemblyNumber);
+
         private Func<object[], Task<object>>? CreateExecutor(Action<Stream>? peStreamAction, CancellationToken cancellationToken)
         {
-            var compilation = GetCompilation();
+            var compilation = GetCompilation(GetScriptAssemblyName());
 
             var diagnosticFormatter = CSharpDiagnosticFormatter.Instance;
             var diagnostics = DiagnoseCompilation(compilation, diagnosticFormatter);
@@ -236,8 +239,8 @@ namespace RoslynPad.Roslyn.Scripting
             var entryPointTypeName = BuildQualifiedName(entryPoint.ContainingNamespace.MetadataName, entryPoint.ContainingType.MetadataName);
             var entryPointMethodName = entryPoint.MetadataName;
 
-            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false).GetTypeInfo();
-            return entryPointType.GetDeclaredMethod(entryPointMethodName);
+            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false);
+            return entryPointType.GetTypeInfo().GetDeclaredMethod(entryPointMethodName);
         }
 
         private static string BuildQualifiedName(
@@ -250,11 +253,11 @@ namespace RoslynPad.Roslyn.Scripting
         // TODO:
         //public bool HasSubmissionResult => GetCompilation().HasSubmissionResult;
 
-        private Compilation GetCompilation()
+        private Compilation GetCompilation(string assemblyName)
         {
             if (_lazyCompilation == null)
             {
-                var compilation = GetCompilationFromCode(Code);
+                var compilation = GetCompilationFromCode(assemblyName);
                 Interlocked.CompareExchange(ref _lazyCompilation, compilation, null);
             }
 
@@ -263,9 +266,9 @@ namespace RoslynPad.Roslyn.Scripting
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
-        private Compilation GetCompilationFromCode(string code)
+        private Compilation GetCompilationFromCode(string assemblyName)
         {
-            var tree = SyntaxFactory.ParseSyntaxTree(code, ParseOptions, FilePath);
+            var tree = SyntaxTree ?? SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath);
 
             var references = GetReferences();
 
@@ -279,6 +282,7 @@ namespace RoslynPad.Roslyn.Scripting
                 allowUnsafe: _allowUnsafe,
                 platform: Platform,
                 warningLevel: 4,
+                deterministic: true,
                 xmlReferenceResolver: null,
                 sourceReferenceResolver: SourceResolver,
                 metadataReferenceResolver: MetadataResolver,
@@ -287,19 +291,17 @@ namespace RoslynPad.Roslyn.Scripting
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
 
-            var assemblyNumber = Interlocked.Increment(ref _assemblyNumber);
-
             if (OutputKind == OutputKind.ConsoleApplication || OutputKind == OutputKind.WindowsApplication)
             {
                 return CSharpCompilation.Create(
-                 _globalAssemblyNamePrefix + assemblyNumber,
+                 assemblyName,
                  new[] { tree },
                  references,
                  compilationOptions);
             }
 
             return CSharpCompilation.CreateScriptCompilation(
-                    _globalAssemblyNamePrefix + assemblyNumber,
+                    assemblyName,
                     tree,
                     references,
                     compilationOptions);

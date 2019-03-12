@@ -8,7 +8,7 @@
     <None Remove="RoslynPad.Common.UI.csproj.DotSettings" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj" />
+    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
     <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>

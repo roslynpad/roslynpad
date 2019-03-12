@@ -136,8 +136,6 @@ namespace RoslynPad.UI
 
         private void OpenDocumentFromCommandLine()
         {
-            var openDocument = GetOpenDocumentViewModel(null);
-
             string[] args = Environment.GetCommandLineArgs();
 
             if (args.Length > 1)
@@ -393,7 +391,11 @@ namespace RoslynPad.UI
                 return;
             }
 
-            RoslynHost.CloseDocument(document.DocumentId);
+            if (document.DocumentId != null)
+            {
+                RoslynHost.CloseDocument(document.DocumentId);
+            }
+
             OpenDocuments.Remove(document);
             document.Close();
         }
