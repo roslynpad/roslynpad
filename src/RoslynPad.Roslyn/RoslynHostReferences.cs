@@ -18,8 +18,8 @@ namespace RoslynPad.Roslyn
 {
     public class RoslynHostReferences
     {
-        private static readonly Lazy<(string assemblyPath, string docPath)> _referenceAssembliesPath =
-            new Lazy<(string, string)>(GetReferenceAssembliesPath);
+        private static readonly Lazy<(string? assemblyPath, string? docPath)> _referenceAssembliesPath =
+            new Lazy<(string?, string?)>(GetReferenceAssembliesPath);
 
         private static readonly Lazy<RoslynHostReferences> _desktopDefault = new Lazy<RoslynHostReferences>(() =>
         {
@@ -91,7 +91,7 @@ namespace RoslynPad.Roslyn
             "System.Reflection",
         });
 
-        internal static (string assemblyPath, string docPath) ReferenceAssembliesPath => _referenceAssembliesPath.Value;
+        internal static (string? assemblyPath, string? docPath) ReferenceAssembliesPath => _referenceAssembliesPath.Value;
 
         public RoslynHostReferences With(IEnumerable<MetadataReference>? references = null, IEnumerable<string>? imports = null,
             IEnumerable<Assembly>? assemblyReferences = null, IEnumerable<string>? assemblyPathReferences = null, IEnumerable<Type>? typeNamespaceImports = null)
@@ -218,7 +218,7 @@ namespace RoslynPad.Roslyn
             return new Version(0, 0);
         }
 
-        private static IEnumerable<string>? TryGetFacadeAssemblies(string referenceAssembliesPath)
+        private static IEnumerable<string>? TryGetFacadeAssemblies(string? referenceAssembliesPath)
         {
             if (referenceAssembliesPath != null)
             {

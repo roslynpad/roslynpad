@@ -4,7 +4,7 @@ if ($telemetryKey -eq $null)
     throw "Missing RoslynPadTelemetryKey environment variable"
 }
 
-$binPath = "..\src\RoslynPad\bin\Release\net462"
+$binPath = "..\src\RoslynPad\bin\Release\net462\win"
 $exclude =
 @(
 	"Xceed.Wpf.AvalonDock.Themes.Aero.dll",

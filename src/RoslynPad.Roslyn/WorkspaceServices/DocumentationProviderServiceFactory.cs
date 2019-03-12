@@ -41,7 +41,7 @@ namespace RoslynPad.Roslyn.WorkspaceServices
                 });
         }
 
-        private static string? GetFilePath(string path, string location)
+        private static string? GetFilePath(string? path, string location)
         {
             if (path != null)
             {
