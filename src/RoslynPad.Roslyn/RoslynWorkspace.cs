@@ -37,6 +37,8 @@ namespace RoslynPad.Roslyn
                 case ApplyChangesKind.ChangeDocumentInfo:
                 case ApplyChangesKind.AddMetadataReference:
                 case ApplyChangesKind.RemoveMetadataReference:
+                case ApplyChangesKind.AddAnalyzerReference:
+                case ApplyChangesKind.RemoveAnalyzerReference:
                     return true;
                 default:
                     return false;

@@ -13,7 +13,6 @@ namespace RoslynPad.Hosting
             IList<string> imports,
             string workingDirectory,
             string globalPackageFolder,
-            bool shadowCopyAssemblies = true,
             OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
             bool checkOverflow = false,
             bool allowUnsafe = true)
@@ -24,7 +23,6 @@ namespace RoslynPad.Hosting
             FrameworkReferences = frameworkReferences;
             Imports = imports;
             WorkingDirectory = workingDirectory;
-            ShadowCopyAssemblies = shadowCopyAssemblies;
             OptimizationLevel = optimizationLevel;
             CheckOverflow = checkOverflow;
             AllowUnsafe = allowUnsafe;
@@ -37,7 +35,6 @@ namespace RoslynPad.Hosting
         public IList<MetadataReference> FrameworkReferences { get; set; }
         public IList<string> Imports { get; set; }
         public string WorkingDirectory { get; }
-        public bool ShadowCopyAssemblies { get; }
         public OptimizationLevel OptimizationLevel { get; }
         public bool CheckOverflow { get; }
         public bool AllowUnsafe { get; }

@@ -212,7 +212,7 @@
                 </Decorator>
                 <Menu Background="Transparent">
                     <MenuItem Header="{Binding NuGet, Mode=OneTime}"
-                              ItemsSource="{Binding RestoreErrors}"
+                              ItemsSource="{Binding NuGet.RestoreErrors}"
                               ToolTip="NuGet Restore">
                         <MenuItem.HeaderTemplate>
                             <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">

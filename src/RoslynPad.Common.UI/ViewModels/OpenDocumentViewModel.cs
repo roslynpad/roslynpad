@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
@@ -165,6 +166,11 @@ namespace RoslynPad.UI
             references = references.Concat(MainViewModel.RoslynHost.DefaultReferences);
 
             project = project.WithMetadataReferences(references);
+            if (restoreResult.Analyzers.Count > 0)
+            {
+                project = project.WithAnalyzerReferences(GetAnalyzerReferences(restoreResult.Analyzers));
+            }
+
             document = project.GetDocument(DocumentId);
 
             host.UpdateDocument(document);
@@ -185,6 +191,12 @@ namespace RoslynPad.UI
             {
                 return GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
             }
+        }
+
+        private IEnumerable<AnalyzerReference> GetAnalyzerReferences(IList<string> analyzers)
+        {
+            var loader = MainViewModel.RoslynHost.GetService<IAnalyzerAssemblyLoader>();
+            return analyzers.Select(a => new AnalyzerFileReference(a, loader));
         }
 
         private void OnDocumentUpdated()

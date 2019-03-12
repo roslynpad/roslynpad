@@ -46,13 +46,13 @@ namespace RoslynPad.Roslyn.Diagnostics
         }
     }
 
-    internal class SimpleAnalyzerAssemblyLoader : AnalyzerAssemblyLoader
+    internal class SimpleAnalyzerAssemblyLoader : Microsoft.CodeAnalysis.AnalyzerAssemblyLoader
     {
         public static IAnalyzerAssemblyLoader Instance { get; } = new SimpleAnalyzerAssemblyLoader();
 
         protected override Assembly LoadFromPathImpl(string fullPath)
         {
-            return Assembly.Load(new AssemblyName(Path.GetFileNameWithoutExtension(fullPath)));
+            return Assembly.Load(AssemblyName.GetAssemblyName(fullPath));
         }
     }
 }

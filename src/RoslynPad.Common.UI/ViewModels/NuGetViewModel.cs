@@ -104,7 +104,7 @@ namespace RoslynPad.UI
             return Array.Empty<PackageData>();
         }
 
-        internal static (List<string> compile, List<string> runtime) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
+        internal static (List<string> compile, List<string> runtime, List<string> analyzers) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
         {
             var compile = new List<string>();
             var compileAssemblies = new HashSet<string>();
@@ -129,7 +129,23 @@ namespace RoslynPad.UI
                 }
             }
 
-            return (compile, runtime);
+            var analyzers = new List<string>();
+
+            var libraries = (JObject)obj["libraries"];
+            foreach (var library in libraries)
+            {
+                foreach (var item in (JArray)library.Value["files"])
+                {
+                    var file = item.Value<string>();
+                    if (file.StartsWith("analyzers/dotnet/cs/", StringComparison.Ordinal))
+                    {
+                        var path = Path.Combine(packagesDirectory, library.Value["path"].Value<string>(), file);
+                        analyzers.Add(path);
+                    }
+                }
+            }
+
+            return (compile, runtime, analyzers);
         }
 
         private static bool ReadLockFileSection(string packageRoot, JToken root, List<string> items, HashSet<string> names, string sectionName)
@@ -371,14 +387,16 @@ namespace RoslynPad.UI
 
     public class NuGetRestoreResult
     {
-        public NuGetRestoreResult(IList<string> compileReferences, IList<string> runtimeReferences)
+        public NuGetRestoreResult(IList<string> compileReferences, IList<string> runtimeReferences, IList<string> analyzers)
         {
             CompileReferences = compileReferences;
             RuntimeReferences = runtimeReferences;
+            Analyzers = analyzers;
         }
 
         public IList<string> CompileReferences { get; }
         public IList<string> RuntimeReferences { get; }
+        public IList<string> Analyzers { get; }
     }
 
     [Export]
@@ -670,14 +688,13 @@ namespace RoslynPad.UI
 
         private void ParseLockFile(string lockFilePath, CancellationToken cancellationToken)
         {
-            List<string> compile, runtime;
             JObject obj;
             using (var reader = File.OpenText(lockFilePath))
             {
                 obj = NuGetViewModel.LoadJson(reader);
             }
 
-            (compile, runtime) = NuGetViewModel.ReadProjectLockJson(obj,
+            var (compile, runtime, analyzers) = NuGetViewModel.ReadProjectLockJson(obj,
                                                                     _nuGetViewModel.GlobalPackageFolder,
                                                                     _targetFramework.DotNetFrameworkName);
 
@@ -692,7 +709,7 @@ namespace RoslynPad.UI
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            RestoreCompleted?.Invoke(new NuGetRestoreResult(compile, runtime));
+            RestoreCompleted?.Invoke(new NuGetRestoreResult(compile, runtime, analyzers));
         }
 
         private void TransformLockFileToDepsFile(JObject obj, string targetFramework)
