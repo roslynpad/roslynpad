@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -42,6 +41,7 @@ namespace RoslynPad.Hosting
         private ExecutionPlatform? _platform;
         private string _assemblyPath;
         private string _depsFile;
+        private PlatformVersion _platformVersion;
 
         public ExecutionPlatform Platform
         {
@@ -49,6 +49,22 @@ namespace RoslynPad.Hosting
             set
             {
                 _platform = value;
+
+                if (!value.HasVersions)
+                {
+                    CleanupBuildPath();
+                    CreateRuntimeConfig();
+                }
+            }
+        }
+
+        public PlatformVersion PlatformVersion
+        {
+            get => _platformVersion ?? throw new InvalidOperationException("No platform version selected");
+            set
+            {
+                _platformVersion = value;
+
                 CleanupBuildPath();
                 CreateRuntimeConfig();
             }
@@ -82,7 +98,7 @@ namespace RoslynPad.Hosting
                 return;
             }
 
-            var config = DotNetConfigHelper.CreateNetCoreRuntimeOptions();
+            var config = DotNetConfigHelper.CreateNetCoreRuntimeOptions(PlatformVersion);
             WriteJson(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.json"), config);
 
             var devConfig = DotNetConfigHelper.CreateNetCoreDevRuntimeOptions(_parameters.GlobalPackageFolder);

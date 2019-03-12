@@ -136,8 +136,6 @@ namespace RoslynPad.UI
 
         private void OpenDocumentFromCommandLine()
         {
-            var openDocument = GetOpenDocumentViewModel(null);
-
             string[] args = Environment.GetCommandLineArgs();
 
             if (args.Length > 1)

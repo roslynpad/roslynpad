@@ -102,6 +102,9 @@
                         Content="{StaticResource Restart}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                           SelectedItem="{Binding Platform}" />
+                <ComboBox ItemsSource="{Binding Platform.Versions}"
+                          Visibility="{Binding Platform.HasVersions, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          SelectedItem="{Binding PlatformVersion}" />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"

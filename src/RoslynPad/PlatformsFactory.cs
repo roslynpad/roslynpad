@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using Microsoft.Win32;
 using RoslynPad.UI;
 using System.IO;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
+using RoslynPad.Utilities;
+using NuGet.Versioning;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace RoslynPad
 {
@@ -14,17 +17,36 @@ namespace RoslynPad
     {
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
-            var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-
-            var dotnetExe = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet", "dotnet.exe");
+            var dotnetPath = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet");
+            var dotnetExe = Path.Combine(dotnetPath, "dotnet.exe");
             if (File.Exists(dotnetExe))
             {
-                yield return new ExecutionPlatform("Core x64", "netcoreapp2.2", Architecture.X64, dotnetExe, string.Empty);
+                yield return new ExecutionPlatform("Core x64", "", GetCoreVersions(dotnetPath), Architecture.X64, dotnetExe, string.Empty);
             }
 
             var targetFrameworkName = GetTargetFrameworkName();
-            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Architecture.X86, string.Empty, string.Empty, isDesktop: true);
-            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Architecture.X64, string.Empty, string.Empty, isDesktop: true);
+            yield return new ExecutionPlatform("Desktop x86", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X86, string.Empty, string.Empty, isDesktop: true);
+            yield return new ExecutionPlatform("Desktop x64", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X64, string.Empty, string.Empty, isDesktop: true);
+        }
+
+        private IReadOnlyList<PlatformVersion> GetCoreVersions(string dotnetPath)
+        {
+            const string frameworkName = "Microsoft.NETCore.App";
+
+            var path = Path.Combine(dotnetPath, "shared", frameworkName);
+
+            var sortedDictionary = new SortedDictionary<NuGetVersion, PlatformVersion>();
+
+            foreach (var directory in IOUtilities.EnumerateDirectories(path))
+            {
+                var versionName = Path.GetFileName(directory);
+                if (NuGetVersion.TryParse(versionName, out var version))
+                {
+                    sortedDictionary.Add(version, new PlatformVersion($"netcoreapp{version.Major}.{version.Minor}", frameworkName, versionName));
+                }
+            }
+
+            return sortedDictionary.Values.Reverse().ToImmutableArray();
         }
 
         private static string GetTargetFrameworkName()

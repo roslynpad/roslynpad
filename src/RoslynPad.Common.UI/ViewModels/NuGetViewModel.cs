@@ -282,7 +282,10 @@ namespace RoslynPad.UI
             if (restoreParameters.TargetFramework.Framework == ".NETCoreApp")
             {
                 targetFramework.Dependencies.Add(new LibraryDependency(
-                    libraryRange: new LibraryRange("Microsoft.NETCore.App", new VersionRange(new NuGetVersion(restoreParameters.TargetFramework.Version)), LibraryDependencyTarget.Package),
+                    libraryRange: new LibraryRange("Microsoft.NETCore.App",
+                        new VersionRange(restoreParameters.FrameworkVersion != null
+                            ? new NuGetVersion(restoreParameters.FrameworkVersion)
+                            : new NuGetVersion(restoreParameters.TargetFramework.Version)), LibraryDependencyTarget.Package),
                     type: LibraryDependencyType.Platform,
                     includeType: LibraryIncludeFlags.All,
                     suppressParent: LibraryIncludeFlags.All,
@@ -396,8 +399,8 @@ namespace RoslynPad.UI
         private bool _prerelease;
         private bool _restoreFailed;
         private NuGetFramework _targetFramework;
+        private string? _frameworkVersion;
         private IReadOnlyList<string> _restoreErrors;
-        private ImmutableList<string> _localLibraryPaths;
 
         [ImportingConstructor]
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
@@ -409,12 +412,12 @@ namespace RoslynPad.UI
             _restoreLock = new SemaphoreSlim(1, 1);
             _libraries = new HashSet<LibraryRef>();
             _packages = Array.Empty<PackageData>();
-            _localLibraryPaths = ImmutableList<string>.Empty;
+            LocalLibraryPaths = ImmutableList<string>.Empty;
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
         }
 
-        public ImmutableList<string> LocalLibraryPaths => _localLibraryPaths;
+        public ImmutableList<string> LocalLibraryPaths { get; private set; }
 
         private void InstallPackage(PackageData package)
         {
@@ -471,7 +474,7 @@ namespace RoslynPad.UI
             if (_libraries.Count > 0 && (libraries == null || libraries.Count == 0))
             {
                 _libraries.Clear();
-                _localLibraryPaths = ImmutableList<string>.Empty;
+                LocalLibraryPaths = ImmutableList<string>.Empty;
 
                 changed = true;
             }
@@ -482,7 +485,7 @@ namespace RoslynPad.UI
                     var remove = !libraries.Contains(p);
                     if (remove && p.Path != null)
                     {
-                        _localLibraryPaths = _localLibraryPaths.Remove(p.Path);
+                        LocalLibraryPaths = LocalLibraryPaths.Remove(p.Path);
                     }
 
                     return remove;
@@ -501,7 +504,7 @@ namespace RoslynPad.UI
                         {
                             if (library.Path != null)
                             {
-                                _localLibraryPaths =  _localLibraryPaths.Add(library.Path);
+                                LocalLibraryPaths =  LocalLibraryPaths.Add(library.Path);
                             }
 
                             changed = true;
@@ -552,9 +555,10 @@ namespace RoslynPad.UI
             private set { SetProperty(ref _restoreErrors, value); }
         }
 
-        public void SetTargetFramework(string targetFrameworkName)
+        public void SetTargetFramework(string targetFrameworkMoniker, string? frameworkVersion = null)
         {
-            _targetFramework = NuGetFramework.Parse(targetFrameworkName);
+            _targetFramework = NuGetFramework.ParseFolder(targetFrameworkMoniker);
+            _frameworkVersion = frameworkVersion;
             RefreshPackages();
         }
 
@@ -627,6 +631,7 @@ namespace RoslynPad.UI
                 restoreParams.OutputPath = BuildPath;
                 restoreParams.Libraries = libraries;
                 restoreParams.TargetFramework = _targetFramework;
+                restoreParams.FrameworkVersion = _frameworkVersion;
 
                 var lockFilePath = Path.Combine(BuildPath, "project.assets.json");
                 IOUtilities.PerformIO(() => File.Delete(lockFilePath));
@@ -753,6 +758,7 @@ namespace RoslynPad.UI
     {
         public string ProjectName { get; set; }
         public NuGetFramework TargetFramework { get; set; }
+        public string? FrameworkVersion { get; set; }
         public string OutputPath { get; set; }
         public string PackagesPath { get; set; }
         public IList<string> ConfigFilePaths { get; set; } = new List<string>();

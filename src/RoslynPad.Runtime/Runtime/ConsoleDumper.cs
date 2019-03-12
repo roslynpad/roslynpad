@@ -301,7 +301,10 @@ namespace RoslynPad.Runtime
                         count -= Environment.NewLine.Length;
                     }
 
-                    Dump(new string(buffer, index, count));
+                    if (count > 0)
+                    {
+                        Dump(new string(buffer, index, count));
+                    }
                 }
             }
 

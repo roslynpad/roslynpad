@@ -44,6 +44,7 @@ namespace RoslynPad.UI
         private bool _isLiveMode;
         private Timer _liveModeTimer;
         private ExecutionHostParameters _executionHostParameters;
+        private PlatformVersion _platformVersion;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -377,11 +378,36 @@ namespace RoslynPad.UI
                 if (SetProperty(ref _platform, value))
                 {
                     _executionHost.Platform = value;
+                    PlatformVersion = value.Versions.FirstOrDefault(p => p.FrameworkVersion.IndexOf("-", StringComparison.Ordinal) < 0) ??
+                        value.Versions.FirstOrDefault();
 
-                    if (_isInitialized)
+                    if (_isInitialized && !value.HasVersions)
                     {
-                        NuGet.SetTargetFramework(value.TargetFrameworkName);
+                        NuGet.SetTargetFramework(value.TargetFrameworkMoniker);
                         RestartHostCommand?.Execute();
+                    }
+                }
+            }
+        }
+
+        public PlatformVersion PlatformVersion
+        {
+            get => _platformVersion;
+            set
+            {
+                if (_executionHost == null) throw new InvalidOperationException();
+
+                if (SetProperty(ref _platformVersion, value))
+                {
+                    if (value != null)
+                    {
+                        _executionHost.PlatformVersion = value;
+
+                        if (_isInitialized)
+                        {
+                            NuGet.SetTargetFramework(value.TargetFrameworkMoniker, value.FrameworkVersion);
+                            RestartHostCommand?.Execute();
+                        }
                     }
                 }
             }
@@ -517,7 +543,15 @@ namespace RoslynPad.UI
             DocumentId = documentId;
             _isInitialized = true;
 
-            NuGet.SetTargetFramework(Platform.TargetFrameworkName);
+            if (PlatformVersion != null)
+            {
+                NuGet.SetTargetFramework(PlatformVersion.TargetFrameworkMoniker, PlatformVersion.FrameworkVersion);
+            }
+            else
+            {
+                NuGet.SetTargetFramework(Platform.TargetFrameworkMoniker);
+            }
+
             var task = UpdatePackages();
             RestartHostCommand?.Execute();
         }

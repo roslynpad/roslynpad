@@ -9,6 +9,7 @@ namespace RoslynPad.Hosting
     internal interface IExecutionHost : IDisposable
     {
         ExecutionPlatform Platform { get; set; }
+        PlatformVersion PlatformVersion { get; set; }
 
         event Action<IList<CompilationErrorResultObject>> CompilationErrors;
         event Action<string> Disassembled;
