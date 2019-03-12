@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Collections.Immutable;
 
 namespace RoslynPad
 {
@@ -19,8 +20,12 @@ namespace RoslynPad
             var processExe = Process.GetCurrentProcess().MainModule.FileName;
             if (Path.GetFileNameWithoutExtension(processExe).Equals("dotnet", StringComparison.InvariantCultureIgnoreCase))
             {
-                yield return new ExecutionPlatform("Core " + platform, "netcoreapp2.2", architecture,
-                    processExe, string.Empty);
+                // TODO: get all versions on non-Windows platforms
+                yield return new ExecutionPlatform("Core " + platform, "netcoreapp", ImmutableArray.Create(
+                    new PlatformVersion("netcoreapp2.2", "Microsoft.NETCore.App", "2.2.0")),
+                    architecture,
+                    processExe,
+                    hostArguments: string.Empty);
             }
         }
     }
