@@ -430,12 +430,12 @@ namespace RoslynPad.UI
             _restoreLock = new SemaphoreSlim(1, 1);
             _libraries = new HashSet<LibraryRef>();
             _packages = Array.Empty<PackageData>();
-            LocalLibraryPaths = ImmutableList<string>.Empty;
+            LocalLibraryPaths = ImmutableArray<string>.Empty;
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
         }
 
-        public ImmutableList<string> LocalLibraryPaths { get; private set; }
+        public ImmutableArray<string> LocalLibraryPaths { get; private set; }
 
         private void InstallPackage(PackageData package)
         {
@@ -492,7 +492,7 @@ namespace RoslynPad.UI
             if (_libraries.Count > 0 && (libraries == null || libraries.Count == 0))
             {
                 _libraries.Clear();
-                LocalLibraryPaths = ImmutableList<string>.Empty;
+                LocalLibraryPaths = ImmutableArray<string>.Empty;
 
                 changed = true;
             }
@@ -522,7 +522,7 @@ namespace RoslynPad.UI
                         {
                             if (library.Path != null)
                             {
-                                LocalLibraryPaths =  LocalLibraryPaths.Add(library.Path);
+                                LocalLibraryPaths = LocalLibraryPaths.Add(library.Path);
                             }
 
                             changed = true;

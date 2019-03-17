@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Hosting
@@ -6,11 +7,12 @@ namespace RoslynPad.Hosting
     internal class ExecutionHostParameters
     {
         public ExecutionHostParameters(
-            IList<string> compileReferences,
-            IList<string> runtimeReferences,
-            IList<string> directReferences,
-            IList<MetadataReference> frameworkReferences,
-            IList<string> imports,
+            ImmutableArray<string> compileReferences,
+            ImmutableArray<string> runtimeReferences,
+            ImmutableArray<string> directReferences,
+            ImmutableArray<MetadataReference> frameworkReferences,
+            ImmutableArray<string> imports,
+            ImmutableArray<string> disabledDiagnostics,
             string workingDirectory,
             string globalPackageFolder,
             OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
@@ -22,6 +24,7 @@ namespace RoslynPad.Hosting
             DirectReferences = directReferences;
             FrameworkReferences = frameworkReferences;
             Imports = imports;
+            DisabledDiagnostics = disabledDiagnostics;
             WorkingDirectory = workingDirectory;
             OptimizationLevel = optimizationLevel;
             CheckOverflow = checkOverflow;
@@ -29,11 +32,12 @@ namespace RoslynPad.Hosting
             GlobalPackageFolder = globalPackageFolder;
         }
 
-        public IList<string> NuGetCompileReferences { get; set; }
-        public IList<string> NuGetRuntimeReferences { get; set; }
-        public IList<string> DirectReferences { get; set; }
-        public IList<MetadataReference> FrameworkReferences { get; set; }
-        public IList<string> Imports { get; set; }
+        public ImmutableArray<string> NuGetCompileReferences { get; set; }
+        public ImmutableArray<string> NuGetRuntimeReferences { get; set; }
+        public ImmutableArray<string> DirectReferences { get; set; }
+        public ImmutableArray<MetadataReference> FrameworkReferences { get; set; }
+        public ImmutableArray<string> Imports { get; set; }
+        public ImmutableArray<string> DisabledDiagnostics { get; }
         public string WorkingDirectory { get; }
         public OptimizationLevel OptimizationLevel { get; }
         public bool CheckOverflow { get; }

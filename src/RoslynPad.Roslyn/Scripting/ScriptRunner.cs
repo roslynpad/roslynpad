@@ -32,7 +32,7 @@ namespace RoslynPad.Roslyn.Scripting
         private Func<object[], Task<object>>? _lazyExecutor;
         private Compilation? _lazyCompilation;
 
-        public ScriptRunner(string? code, SyntaxTree? syntaxTree = null, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        public ScriptRunner(string? code, ImmutableList<SyntaxTree>? syntaxTrees = null, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
             IEnumerable<string>? usings = null, string? filePath = null, string? workingDirectory = null,
             MetadataReferenceResolver? metadataResolver = null, SourceReferenceResolver? sourceResolver = null,
@@ -45,7 +45,7 @@ namespace RoslynPad.Roslyn.Scripting
             _allowUnsafe = allowUnsafe;
             _registerDependencies = registerDependencies;
             Code = code;
-            SyntaxTree = syntaxTree;
+            SyntaxTrees = syntaxTrees;
             OutputKind = outputKind;
             Platform = platform;
             _assemblyLoader = assemblyLoader ?? new InteractiveAssemblyLoader();
@@ -63,7 +63,7 @@ namespace RoslynPad.Roslyn.Scripting
         }
 
         public string? Code { get; }
-        public SyntaxTree? SyntaxTree { get; }
+        public ImmutableList<SyntaxTree>? SyntaxTrees { get; }
         public OutputKind OutputKind { get; }
         public Platform Platform { get; }
 
@@ -118,7 +118,7 @@ namespace RoslynPad.Roslyn.Scripting
 
             var diagnosticsBag = new DiagnosticBag();
             await SaveAssembly(assemblyPath, compilation, diagnosticsBag, cancellationToken).ConfigureAwait(false);
-            return GetDiagnostics(diagnosticsBag);
+            return GetDiagnostics(diagnosticsBag, includeWarnings: true);
         }
 
         private Func<object[], Task<object>>? GetExecutor(Action<Stream>? peStreamAction, CancellationToken cancellationToken)
@@ -268,7 +268,11 @@ namespace RoslynPad.Roslyn.Scripting
 
         private Compilation GetCompilationFromCode(string assemblyName)
         {
-            var tree = SyntaxTree ?? SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath);
+            var trees = SyntaxTrees;
+            if (trees == null)
+            {
+                trees = ImmutableList.Create(SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath));
+            }
 
             var references = GetReferences();
 
@@ -291,20 +295,11 @@ namespace RoslynPad.Roslyn.Scripting
             );
             //.WithTopLevelBinderFlags(BinderFlags.IgnoreCorLibraryDuplicatedTypes),
 
-            if (OutputKind == OutputKind.ConsoleApplication || OutputKind == OutputKind.WindowsApplication)
-            {
-                return CSharpCompilation.Create(
+            return CSharpCompilation.Create(
                  assemblyName,
-                 new[] { tree },
+                 trees,
                  references,
                  compilationOptions);
-            }
-
-            return CSharpCompilation.CreateScriptCompilation(
-                    assemblyName,
-                    tree,
-                    references,
-                    compilationOptions);
         }
 
         private IEnumerable<MetadataReference> GetReferences()
@@ -330,7 +325,7 @@ namespace RoslynPad.Roslyn.Scripting
 
         private static void ThrowIfAnyCompilationErrors(DiagnosticBag diagnostics, DiagnosticFormatter formatter)
         {
-            var filtered = GetDiagnostics(diagnostics);
+            var filtered = GetDiagnostics(diagnostics, includeWarnings: false);
             if (!filtered.IsEmpty)
             {
                 throw new CompilationErrorException(
@@ -339,13 +334,15 @@ namespace RoslynPad.Roslyn.Scripting
             }
         }
 
-        private static ImmutableArray<Diagnostic> GetDiagnostics(DiagnosticBag diagnostics)
+        private static ImmutableArray<Diagnostic> GetDiagnostics(DiagnosticBag diagnostics, bool includeWarnings)
         {
             if (diagnostics.IsEmptyWithoutResolution)
             {
                 return ImmutableArray<Diagnostic>.Empty;
             }
-            return diagnostics.AsEnumerable().Where(d => d.Severity == DiagnosticSeverity.Error).AsImmutable();
+
+            return diagnostics.AsEnumerable().Where(d =>
+                d.Severity == DiagnosticSeverity.Error || (includeWarnings && d.Severity == DiagnosticSeverity.Warning)).AsImmutable();
         }
 
         private class DiagnosticBag

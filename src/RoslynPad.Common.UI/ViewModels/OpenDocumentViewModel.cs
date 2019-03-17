@@ -187,9 +187,9 @@ namespace RoslynPad.UI
 
             var task = _executionHost?.Update(_executionHostParameters);
 
-            string[] GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host)
+            ImmutableArray<string> GetReferences(IEnumerable<string> references, Roslyn.RoslynHost host)
             {
-                return GetReferencePaths(host.DefaultReferences).Concat(references).ToArray();
+                return GetReferencePaths(host.DefaultReferences).Concat(references).ToImmutableArray();
             }
         }
 
@@ -268,11 +268,12 @@ namespace RoslynPad.UI
             var roslynHost = MainViewModel.RoslynHost;
 
             _executionHostParameters = new ExecutionHostParameters(
-                Array.Empty<string>(), // will be updated during NuGet restore
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                Array.Empty<MetadataReference>(),
+                ImmutableArray<string>.Empty, // will be updated during NuGet restore
+                ImmutableArray<string>.Empty,
+                ImmutableArray<string>.Empty,
+                ImmutableArray<MetadataReference>.Empty,
                 roslynHost.DefaultImports,
+                roslynHost.DisabledDiagnostics,
                 WorkingDirectory,
                 MainViewModel.NuGet.GlobalPackageFolder);
             _executionHost = new AssemblyExecutionHost(_executionHostParameters, BuildPath, Document?.Name ?? Id);

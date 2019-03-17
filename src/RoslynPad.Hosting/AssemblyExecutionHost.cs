@@ -30,8 +30,8 @@ namespace RoslynPad.Hosting
     {
         private static readonly CSharpParseOptions _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.CSharp8, kind: SourceCodeKind.Script);
 
-        private static readonly SyntaxList<MemberDeclarationSyntax> InitHostSyntax = ((CompilationUnitSyntax)ParseSyntaxTree(
-            @"RoslynPad.Runtime.RuntimeInitializer.Initialize();", _parseOptions).GetRoot()).Members;
+        private static readonly SyntaxTree InitHostSyntax = ParseSyntaxTree(
+            @"RoslynPad.Runtime.RuntimeInitializer.Initialize();", _parseOptions);
 
         private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
 
@@ -257,13 +257,19 @@ namespace RoslynPad.Hosting
                 ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
                 : Microsoft.CodeAnalysis.Platform.AnyCpu;
 
-            return new ScriptRunner(code: null, ParseCode(code), _parseOptions,
-                            OutputKind.ConsoleApplication, platform,
-                            _scriptOptions.MetadataReferences, _scriptOptions.Imports,
-                            _scriptOptions.FilePath, _parameters.WorkingDirectory, _scriptOptions.MetadataResolver,
-                            optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
-                            checkOverflow: _parameters.CheckOverflow,
-                            allowUnsafe: _parameters.AllowUnsafe);
+            return new ScriptRunner(code: null,
+                                    syntaxTrees: ImmutableList.Create(InitHostSyntax, ParseCode(code)),
+                                    _parseOptions,
+                                    OutputKind.ConsoleApplication,
+                                    platform,
+                                    _scriptOptions.MetadataReferences,
+                                    _scriptOptions.Imports,
+                                    _scriptOptions.FilePath,
+                                    _parameters.WorkingDirectory,
+                                    _scriptOptions.MetadataResolver,
+                                    optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
+                                    checkOverflow: _parameters.CheckOverflow,
+                                    allowUnsafe: _parameters.AllowUnsafe);
         }
 
         private async Task StartProcess(string assemblyPath, CancellationToken cancellationToken)
@@ -342,6 +348,7 @@ namespace RoslynPad.Hosting
         {
             var tree = ParseSyntaxTree(code, _parseOptions);
             var root = tree.GetRoot();
+
             if (root is CompilationUnitSyntax c)
             {
                 var members = c.Members;
@@ -363,9 +370,6 @@ namespace RoslynPad.Hosting
                                     IdentifierName(nameof(ObjectExtensions.Dump)))))));
                 }
 
-                // add host initialization code
-                members = members.InsertRange(0, InitHostSyntax);
-
                 root = c.WithMembers(members);
             }
 
@@ -376,7 +380,8 @@ namespace RoslynPad.Hosting
         {
             if (diagnostics.Length > 0)
             {
-                CompilationErrors?.Invoke(diagnostics.Select(d => GetCompilationErrorResultObject(d)).ToImmutableArray());
+                CompilationErrors?.Invoke(diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Id))
+                    .Select(d => GetCompilationErrorResultObject(d)).ToImmutableArray());
             }
         }
 

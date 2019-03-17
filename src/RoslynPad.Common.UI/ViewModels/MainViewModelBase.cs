@@ -117,7 +117,8 @@ namespace RoslynPad.UI
         private async Task InitializeInternal()
         {
             RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
-                RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
+                RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }),
+                disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702")))
                 .ConfigureAwait(true);
 
             OpenDocumentFromCommandLine();

@@ -48,12 +48,15 @@ namespace RoslynPad.Roslyn
 
         public ImmutableArray<string> DefaultImports { get; }
 
+        public ImmutableArray<string> DisabledDiagnostics { get; }
+
         #endregion
 
         #region Constructors
 
         public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
-            RoslynHostReferences? references = null)
+            RoslynHostReferences? references = null,
+            ImmutableArray<string>? disabledDiagnostics = null)
         {
             if (references == null) references = RoslynHostReferences.Empty;
 
@@ -86,6 +89,7 @@ namespace RoslynPad.Roslyn
             DefaultReferences = references.GetReferences(DocumentationProviderFactory);
             DefaultImports = references.Imports;
 
+            DisabledDiagnostics = disabledDiagnostics ?? ImmutableArray<string>.Empty;
             GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
 
@@ -115,6 +119,15 @@ namespace RoslynPad.Roslyn
 
             if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out var notifier))
             {
+                if (diagnosticsUpdatedArgs.Kind == DiagnosticsUpdatedKind.DiagnosticsCreated)
+                {
+                    var remove = diagnosticsUpdatedArgs.Diagnostics.RemoveAll(d => DisabledDiagnostics.Contains(d.Id));
+                    if (remove.Length != diagnosticsUpdatedArgs.Diagnostics.Length)
+                    {
+                        diagnosticsUpdatedArgs = diagnosticsUpdatedArgs.WithDiagnostics(remove);
+                    }
+                }
+
                 notifier(diagnosticsUpdatedArgs);
             }
         }
