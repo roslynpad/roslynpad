@@ -44,24 +44,45 @@
                            Text="{Binding LastError.Message}" />
             </DockPanel>
         </Border>
-        <TabControl Items="{Binding OpenDocuments}"
-                    SelectedItem="{Binding CurrentOpenDocument}">
-            <Templates.HeaderTemplate>
-                <DataTemplate>
-                    <DockPanel>
-                        <Button Command="{Binding RelativeSource={RelativeSource AncestorType=TabControl}, Path=DataContext.CloseDocumentCommand}"
-                                CommandParameter="{Binding}"
-                                DockPanel.Dock="Right"
-                                Content="X" />
-                        <TextBlock Text="{Binding Title}" />
-                    </DockPanel>
-                </DataTemplate>
-            </Templates.HeaderTemplate>
-            <TabControl.ItemTemplate>
-                <DataTemplate>
-                    <local:DocumentView />
-                </DataTemplate>
-            </TabControl.ItemTemplate>
-        </TabControl>
+
+        <Grid>
+            <TabControl Items="{Binding OpenDocuments}"
+                        SelectedItem="{Binding CurrentOpenDocument}">
+                <Templates.HeaderTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <Button Command="{Binding RelativeSource={RelativeSource AncestorType=TabControl}, Path=DataContext.CloseDocumentCommand}"
+                                    CommandParameter="{Binding}"
+                                    FontSize="10"
+                                    Padding="2"
+                                    Margin="10 2"
+                                    DockPanel.Dock="Right"
+                                    Content="X" />
+                            <TextBlock Text="{Binding Title}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </Templates.HeaderTemplate>
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <local:DocumentView />
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+            </TabControl>
+
+            <Button HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="5"
+                    Background="Transparent"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    IsVisible="{Binding HasNoOpenDocuments}">
+                <StackPanel>
+                    <DrawingPresenter Drawing="{StaticResource CsFile}"
+                                      Width="64"
+                                      Height="64" />
+                    <TextBlock Text="New (Ctrl+N)"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
     </DockPanel>
 </Window>

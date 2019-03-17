@@ -6,6 +6,7 @@ using System.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -468,7 +469,7 @@ namespace RoslynPad.UI
 
         public void OpenBuildPath()
         {
-            Task.Run(() => Process.Start(BuildPath));
+            Task.Run(() => Process.Start(new ProcessStartInfo(new Uri(BuildPath).ToString()) { UseShellExecute = true }));
         }
 
         public async Task<SaveResult> Save(bool promptSave)
