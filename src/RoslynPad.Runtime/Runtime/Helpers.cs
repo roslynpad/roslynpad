@@ -7,10 +7,17 @@ using System.Threading.Tasks;
 
 namespace RoslynPad.Runtime
 {
+    /// <summary>
+    /// RoslynPad runtime helpers.
+    /// </summary>
     public static class Helpers
     {
         private static readonly Lazy<Task<SynchronizationContext>> _dispatcherTask = new Lazy<Task<SynchronizationContext>>(CreateWpfDispatcherAsync);
 
+        /// <summary>
+        /// Creates a new thread running a WPF Dispatcher and returns a <see cref="SynchronizationContext"/> for that dispatcher.
+        /// </summary>
+        /// <returns></returns>
         public static async Task<SynchronizationContext> CreateWpfDispatcherAsync()
         {
             // TODO: Make this work with WPF on Core
@@ -39,6 +46,11 @@ namespace RoslynPad.Runtime
             return (SynchronizationContext)dispatcherSyncContextCtor.Invoke(new[] { dispatcher });
         }
 
+        /// <summary>
+        /// Await this method to yield to a default WPF Dispatcher thread.
+        /// A Dispatcher creates a message pump that can be used with most Windows UI frameworks (e.g. WPF, Windows Forms).
+        /// Lazily creates a Dispatcher using <see cref="CreateWpfDispatcherAsync"/>).
+        /// </summary>
         public static SynchronizationContextAwaitable RunWpfAsync()
         {
             return new SynchronizationContextAwaitable(_dispatcherTask.Value);
