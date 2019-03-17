@@ -1,11 +1,25 @@
+PARAM
+(
+    [Switch]
+    $NetCore
+)
 Add-Type -A 'System.IO.Compression'
 Add-Type -A 'System.IO.Compression.FileSystem'
 
-$location = Get-Location
-$archiveFile = "$location\RoslynPad.zip"
-Remove-Item $archiveFile -ErrorAction Ignore
+$location = $PSScriptRoot
 
-. .\GetFiles.ps1
+if ($NetCore)
+{
+    . .\GetFilesNetCore.ps1
+    $archiveFile = "$location\RoslynPadNetCore.zip"
+}
+else
+{
+    . .\GetFiles.ps1
+    $archiveFile = "$location\RoslynPad.zip"
+}
+
+Remove-Item $archiveFile -ErrorAction Ignore
 
 try
 {

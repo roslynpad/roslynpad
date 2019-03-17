@@ -1,15 +1,15 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
-             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad.NetCore"
-             xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad.NetCore"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="resm:RoslynPad.Resources.Icons.xaml?assembly=RoslynPad.NetCore" />
+                <ResourceInclude Source="resm:RoslynPad.Resources.Icons.xaml?assembly=RoslynPad" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
