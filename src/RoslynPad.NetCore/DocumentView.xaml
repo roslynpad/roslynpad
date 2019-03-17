@@ -84,21 +84,21 @@
                           Header="{Binding NuGet, Mode=OneTime}"
                           ToolTip.Tip="NuGet Packages">
                     <MenuItem.Styles>
-                        <Style Selector="MenuItem">
+                        <Style Selector="MenuItem > MenuItem">
                             <Setter Property="Command"
                                     Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
                             <Setter Property="CommandParameter"
                                     Value="{Binding Mode=OneTime}" />
-                            <Setter Property="Icon"
-                                    Value="{Binding Mode=OneTime}" />
+                            <!--<Setter Property="Icon"
+                                    Value="{Binding Mode=OneTime}" />-->
                         </Style>
                     </MenuItem.Styles>
                     <MenuItem.DataTemplates>
                         <DataTemplate DataType="{x:Type ui:PackageData}">
-                            <TextBlock>
-                                    <Run Text="{Binding Id, Mode=OneTime}" />
-                                    <Run Text="{Binding Version, Mode=OneTime}" />
-                            </TextBlock>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Id, Mode=OneTime}" />
+                                <TextBlock Text="{Binding Version, Mode=OneTime}" />
+                            </StackPanel>
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
                             <Grid>
@@ -112,7 +112,7 @@
                                              IsVisible="{Binding IsSearching}" />
                             </Grid>
                         </DataTemplate>
-                        <DataTemplate DataType="{x:Type ui:PackageData}">
+                        <!--<DataTemplate DataType="{x:Type ui:PackageData}">
                             <Menu Background="Transparent"
                                   ToolTip.Tip="Other versions">
                                 <MenuItem ItemsSource="{Binding OtherVersions, Mode=OneTime}"
@@ -129,12 +129,12 @@
                                             <Setter Property="Command"
                                                     Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
                                             <Setter Property="CommandParameter"
-                                                    Value="{Binding Mode=OneTime}" />
+                                                    Value="{Binding Path='.', Mode=OneTime}" />
                                         </Style>
                                     </MenuItem.Styles>
                                 </MenuItem>
                             </Menu>
-                        </DataTemplate>
+                        </DataTemplate>-->
                     </MenuItem.DataTemplates>
                 </MenuItem>
             </Menu>

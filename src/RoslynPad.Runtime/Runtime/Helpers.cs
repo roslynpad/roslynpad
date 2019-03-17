@@ -88,14 +88,24 @@ namespace RoslynPad.Runtime
                 if (_task.Status == TaskStatus.RanToCompletion)
                 {
                     _task.Result.Post(_postCallback, continuation);
+                    return;
                 }
-                else
+
+                _task.ContinueWith(t =>
                 {
-                    _task.ContinueWith(t => t.Result.Post(_postCallback, continuation));
-                }
+                    if (t.Status == TaskStatus.RanToCompletion)
+                    {
+                        t.Result.Post(_postCallback, continuation);
+                    }
+                    else
+                    {
+                        // GetResult will throw
+                        continuation();
+                    }
+                });
             }
 
-            public void GetResult() { }
+            public void GetResult() => _task.GetAwaiter().GetResult();
         }
     }
 }
