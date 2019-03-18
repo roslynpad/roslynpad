@@ -282,9 +282,11 @@ namespace RoslynPad.Editor
                 return null;
             }
 
-            return new TextSpan(
+            var result = TextSpan.FromBounds(
                 Math.Max(classifiedSpan.TextSpan.Start, documentLine.Offset),
-                Math.Min(classifiedSpan.TextSpan.Length, documentLine.Length));
+                Math.Min(classifiedSpan.TextSpan.End, documentLine.EndOffset));
+
+            return result;
         }
 
         private void CacheLine(HighlightedLine line)

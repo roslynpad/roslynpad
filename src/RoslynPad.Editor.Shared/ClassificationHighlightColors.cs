@@ -56,6 +56,7 @@ namespace RoslynPad.Editor
                 [ClassificationTypeNames.XmlDocCommentProcessingInstruction] = AsFrozen(XmlCommentBrush),
                 [ClassificationTypeNames.XmlDocCommentText] = AsFrozen(CommentBrush),
                 [ClassificationTypeNames.Keyword] = AsFrozen(KeywordBrush),
+                [ClassificationTypeNames.ControlKeyword] = AsFrozen(KeywordBrush),
                 [ClassificationTypeNames.PreprocessorKeyword] = AsFrozen(PreprocessorKeywordBrush),
                 [ClassificationTypeNames.StringLiteral] = AsFrozen(StringBrush),
                 [ClassificationTypeNames.VerbatimStringLiteral] = AsFrozen(StringBrush),
