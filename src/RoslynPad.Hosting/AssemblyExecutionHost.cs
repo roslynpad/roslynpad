@@ -298,7 +298,7 @@ namespace RoslynPad.Hosting
             {
                 FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
                 Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
-                WorkingDirectory = BuildPath,
+                WorkingDirectory = _parameters.WorkingDirectory,
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
