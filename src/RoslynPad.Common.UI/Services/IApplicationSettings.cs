@@ -167,7 +167,7 @@ namespace RoslynPad.UI
 
             try
             {
-                var serializer = new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Ignore };
+                var serializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
                 using (var reader = File.OpenText(path))
                 {
                     serializer.Populate(reader, this);

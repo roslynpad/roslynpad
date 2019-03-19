@@ -104,6 +104,33 @@ namespace RoslynPad.UI
             return Array.Empty<PackageData>();
         }
 
+        internal RestoreParams CreateRestoreParams()
+        {
+            _initializationException?.Throw();
+
+            var restoreParams = new RestoreParams();
+
+            foreach (var packageSource in _packageSources)
+            {
+                restoreParams.Sources.Add(packageSource);
+            }
+
+            foreach (var configFile in _configFilePaths)
+            {
+                restoreParams.ConfigFilePaths.Add(configFile);
+            }
+
+            restoreParams.PackagesPath = GlobalPackageFolder;
+
+            return restoreParams;
+        }
+
+        async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
+        {
+            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
+            return packages;
+        }
+
         internal static (List<string> compile, List<string> runtime, List<string> analyzers) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
         {
             var compile = new List<string>();
@@ -193,25 +220,6 @@ namespace RoslynPad.UI
             }
 
             return obj;
-        }
-
-        internal RestoreParams CreateRestoreParams()
-        {
-            var restoreParams = new RestoreParams();
-
-            foreach (var packageSource in _packageSources)
-            {
-                restoreParams.Sources.Add(packageSource);
-            }
-
-            foreach (var configFile in _configFilePaths)
-            {
-                restoreParams.ConfigFilePaths.Add(configFile);
-            }
-
-            restoreParams.PackagesPath = GlobalPackageFolder;
-
-            return restoreParams;
         }
 
         internal static async Task<RestoreResult> RestoreAsync(RestoreParams restoreParameters, ILogger logger, CancellationToken cancellationToken = default)
@@ -333,12 +341,6 @@ namespace RoslynPad.UI
             });
         }
 
-        async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
-        {
-            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
-            return packages;
-        }
-
         #region Inner Classes
 
         private class CommandLineSourceRepositoryProvider : ISourceRepositoryProvider
@@ -431,11 +433,14 @@ namespace RoslynPad.UI
             _libraries = new HashSet<LibraryRef>();
             _packages = Array.Empty<PackageData>();
             LocalLibraryPaths = ImmutableArray<string>.Empty;
+            RestoreTask = Task.CompletedTask;
 
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
         }
 
         public ImmutableArray<string> LocalLibraryPaths { get; private set; }
+
+        public Task RestoreTask { get; private set; }
 
         private void InstallPackage(PackageData package)
         {
@@ -635,7 +640,7 @@ namespace RoslynPad.UI
             var cancellationToken = restoreCts.Token;
             _restoreCts = restoreCts;
 
-            Task.Run(() => RefreshPackagesAsync(packages, cancellationToken), cancellationToken);
+            RestoreTask = Task.Run(() => RefreshPackagesAsync(packages, cancellationToken), cancellationToken);
         }
 
         private async Task RefreshPackagesAsync(LibraryRef[] libraries, CancellationToken cancellationToken)

@@ -47,6 +47,7 @@ namespace RoslynPad.UI
         private Timer _liveModeTimer;
         private ExecutionHostParameters _executionHostParameters;
         private PlatformVersion _platformVersion;
+        private DocumentViewModel? _document;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -95,7 +96,22 @@ namespace RoslynPad.UI
             }
         }
 
-        public DocumentViewModel? Document { get; private set; }
+        public DocumentViewModel? Document
+        {
+            get => _document;
+            private set
+            {
+                if (_document != value)
+                {
+                    _document = value;
+
+                    if (_executionHost != null && value != null)
+                    {
+                        _executionHost.Name = value.Name;
+                    }
+                }
+            }
+        }
 
         public string ILText
         {
@@ -277,7 +293,7 @@ namespace RoslynPad.UI
                 roslynHost.DisabledDiagnostics,
                 WorkingDirectory,
                 MainViewModel.NuGet.GlobalPackageFolder);
-            _executionHost = new AssemblyExecutionHost(_executionHostParameters, BuildPath, Document?.Name ?? Id);
+            _executionHost = new AssemblyExecutionHost(_executionHostParameters, BuildPath, Document?.Name ?? "Untitled");
 
             _executionHost.Dumped += ExecutionHostOnDump;
             _executionHost.Error += ExecutionHostOnError;
@@ -622,6 +638,8 @@ namespace RoslynPad.UI
             {
                 ILText = DefaultILText;
             }
+
+            await NuGet.RestoreTask.ConfigureAwait(true);
 
             var cancellationToken = _cts.Token;
             try

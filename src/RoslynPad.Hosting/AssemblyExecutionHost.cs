@@ -42,6 +42,9 @@ namespace RoslynPad.Hosting
         private string _assemblyPath;
         private string _depsFile;
         private PlatformVersion _platformVersion;
+        private string _name;
+        private bool _running;
+        private bool _initializeBuildPathAfterRun;
 
         public ExecutionPlatform Platform
         {
@@ -52,8 +55,7 @@ namespace RoslynPad.Hosting
 
                 if (!value.HasVersions)
                 {
-                    CleanupBuildPath();
-                    CreateRuntimeConfig();
+                    InitializeBuildPath(stop: true);
                 }
             }
         }
@@ -64,16 +66,28 @@ namespace RoslynPad.Hosting
             set
             {
                 _platformVersion = value;
+                InitializeBuildPath(stop: true);
+            }
+        }
 
-                CleanupBuildPath();
-                CreateRuntimeConfig();
+        public bool HasPlatform => _platform != null && (!_platform.HasVersions || _platformVersion != null);
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (!string.Equals(_name, value, StringComparison.Ordinal))
+                {
+                    _name = value;
+                    InitializeBuildPath(stop: false);
+                }
             }
         }
 
         private readonly JsonSerializer _jsonSerializer;
 
         public string BuildPath { get; }
-        public string Name { get; }
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public AssemblyExecutionHost(ExecutionHostParameters parameters, string buildPath, string name)
@@ -132,6 +146,27 @@ namespace RoslynPad.Hosting
         {
         }
 
+        private void InitializeBuildPath(bool stop)
+        {
+            if (!HasPlatform)
+            {
+                return;
+            }
+
+            if (stop)
+            {
+                StopProcess();
+            }
+            else if (_running)
+            {
+                _initializeBuildPathAfterRun = true;
+                return;
+            }
+
+            CleanupBuildPath();
+            CreateRuntimeConfig();
+        }
+
         private void CleanupBuildPath()
         {
             StopProcess();
@@ -146,38 +181,47 @@ namespace RoslynPad.Hosting
         {
             await new NoContextYieldAwaitable();
 
-            using var executeCts = new CancellationTokenSource();
-            var cancellationToken = executeCts.Token;
-
-            var script = CreateScriptRunner(code, optimizationLevel);
-
-            _assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
-            _depsFile = Path.ChangeExtension(_assemblyPath, ".deps.json");
-
-            CopyDependencies();
-
-            var diagnostics = await script.SaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
-            SendDiagnostics(diagnostics);
-
-            if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-            {
-                return;
-            }
-
-            if (disassemble)
-            {
-                Disassemble();
-            }
-
             try
             {
+                _running = true;
+
+                using var executeCts = new CancellationTokenSource();
+                var cancellationToken = executeCts.Token;
+
+                var script = CreateScriptRunner(code, optimizationLevel);
+
+                _assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
+                _depsFile = Path.ChangeExtension(_assemblyPath, ".deps.json");
+
+                CopyDependencies();
+
+                var diagnostics = await script.SaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                SendDiagnostics(diagnostics);
+
+                if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+                {
+                    return;
+                }
+
+                if (disassemble)
+                {
+                    Disassemble();
+                }
+
                 _executeCts = executeCts;
 
-                await StartProcess(_assemblyPath, cancellationToken);
+                await RunProcess(_assemblyPath, cancellationToken);
             }
             finally
             {
                 _executeCts = null;
+                _running = false;
+
+                if (_initializeBuildPathAfterRun)
+                {
+                    _initializeBuildPathAfterRun = false;
+                    InitializeBuildPath(stop: false);
+                }
             }
         }
 
@@ -272,7 +316,7 @@ namespace RoslynPad.Hosting
                                     allowUnsafe: _parameters.AllowUnsafe);
         }
 
-        private async Task StartProcess(string assemblyPath, CancellationToken cancellationToken)
+        private async Task RunProcess(string assemblyPath, CancellationToken cancellationToken)
         {
             using (var process = new Process
             {

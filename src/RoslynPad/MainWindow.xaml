@@ -34,8 +34,7 @@
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
-    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}"
-                             IsEnabled="{Binding IsInitialized}">
+    <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
@@ -58,7 +57,7 @@
                                Text="{Binding LastError.Message}" />
                 </DockPanel>
             </Border>
-            <Grid>
+            <Grid IsEnabled="{Binding IsInitialized}">
                 <dock:DockingManager Name="DockingManager"
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
@@ -221,7 +220,6 @@
                         </MenuItem>
                     </Menu>
                 </StackPanel>
-
             </Grid>
         </DockPanel>
     </av:InlineModalDecorator>

@@ -10,6 +10,7 @@ namespace RoslynPad.Hosting
     {
         ExecutionPlatform Platform { get; set; }
         PlatformVersion PlatformVersion { get; set; }
+        string Name { get; set; }
 
         event Action<IList<CompilationErrorResultObject>> CompilationErrors;
         event Action<string> Disassembled;

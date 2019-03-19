@@ -40,7 +40,7 @@ namespace RoslynPad
             foreach (var directory in IOUtilities.EnumerateDirectories(path))
             {
                 var versionName = Path.GetFileName(directory);
-                if (NuGetVersion.TryParse(versionName, out var version))
+                if (NuGetVersion.TryParse(versionName, out var version) && version.Major > 1)
                 {
                     sortedDictionary.Add(version, new PlatformVersion($"netcoreapp{version.Major}.{version.Minor}", frameworkName, versionName));
                 }
