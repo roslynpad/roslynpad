@@ -11,6 +11,7 @@ namespace RoslynPad.Runtime
     {
         bool SupportsRedirect { get; }
         TextWriter CreateWriter(string? header = null);
+        TextReader CreateReader();
         void Dump(DumpData data);
         void DumpException(Exception exception);
         void Flush();
@@ -45,6 +46,11 @@ namespace RoslynPad.Runtime
         }
 
         public void DumpException(Exception exception)
+        {
+            throw new NotSupportedException();
+        }
+
+        public TextReader CreateReader()
         {
             throw new NotSupportedException();
         }
@@ -91,6 +97,8 @@ namespace RoslynPad.Runtime
         private static readonly byte[] NewLine = Encoding.Default.GetBytes(Environment.NewLine);
 
         private readonly string _exceptionResultTypeName;
+        private readonly string _inputReadRequestTypeName;
+
         private readonly Stream _stream;
 
         private int _dumpCount;
@@ -98,7 +106,10 @@ namespace RoslynPad.Runtime
         public JsonConsoleDumper()
         {
             _stream = Console.OpenStandardOutput();
-            _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {typeof(ExceptionResultObject).Assembly.GetName().Name}";
+
+            var assemblyName = typeof(ExceptionResultObject).Assembly.GetName().Name;
+            _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {assemblyName}";
+            _inputReadRequestTypeName = $"{typeof(InputReadRequest).FullName}, {assemblyName}";
         }
 
         private XmlDictionaryWriter CreateJsonWriter()
@@ -112,6 +123,11 @@ namespace RoslynPad.Runtime
         public TextWriter CreateWriter(string? header = null)
         {
             return new ConsoleRedirectWriter(this, header);
+        }
+
+        public TextReader CreateReader()
+        {
+            return new ConsoleReader(this);
         }
 
         public void Dispose()
@@ -188,7 +204,7 @@ namespace RoslynPad.Runtime
             return true;
         }
 
-        protected void DumpMessage(string message)
+        private void DumpMessage(string message)
         {
             using (var jsonWriter = CreateJsonWriter())
             {
@@ -199,6 +215,26 @@ namespace RoslynPad.Runtime
             }
 
             DumpNewLine();
+        }
+
+        private void DumpInputReadRequest()
+        {
+            try
+            {
+                using (var jsonWriter = CreateJsonWriter())
+                {
+                    jsonWriter.WriteStartElement("root", "");
+                    jsonWriter.WriteAttributeString("type", "object");
+                    jsonWriter.WriteElementString("$type", _inputReadRequestTypeName);
+                    jsonWriter.WriteEndElement();
+                }
+
+                DumpNewLine();
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
         private void DumpExceptionResultObject(ExceptionResultObject result)
@@ -331,6 +367,44 @@ namespace RoslynPad.Runtime
             private void Dump(object value)
             {
                 _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
+            }
+        }
+
+        private class ConsoleReader : TextReader
+        {
+            private readonly TextReader _reader;
+            private readonly JsonConsoleDumper _dumper;
+
+            private string? _readString;
+            private int _readPosition;
+
+            public ConsoleReader(JsonConsoleDumper dumper)
+            {
+                _dumper = dumper;
+                _reader = new StreamReader(Console.OpenStandardInput());
+            }
+
+            public override int Read()
+            {
+                if (_readString == null || _readPosition >= _readString.Length - 1)
+                {
+                    _dumper.DumpInputReadRequest();
+
+                    _readString = _reader.ReadLine() + Environment.NewLine;
+                    _readPosition = 0;
+                }
+
+                return _readString[_readPosition++];
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+
+                if (disposing)
+                {
+                    _reader.Dispose();
+                }
             }
         }
     }

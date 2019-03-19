@@ -21,6 +21,7 @@ namespace RoslynPad.Runtime
 
     [DataContract]
     [KnownType(typeof(ExceptionResultObject))]
+    [KnownType(typeof(InputReadRequest))]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
@@ -506,6 +507,14 @@ namespace RoslynPad.Runtime
 
         [DataMember(Name = "m")]
         public string Message { get; private set; }
+    }
+
+    [DataContract]
+    internal class InputReadRequest : ResultObject
+    {
+        public InputReadRequest()
+        {
+        }
     }
 
     [DataContract]

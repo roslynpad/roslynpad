@@ -6,7 +6,6 @@ using System.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -223,6 +222,8 @@ namespace RoslynPad.UI
 
         public event EventHandler DocumentUpdated;
 
+        public event Action ReadInput;
+
         public event Action ResultsAvailable;
 
         private void AddResult(object o)
@@ -236,6 +237,14 @@ namespace RoslynPad.UI
             {
                 ResultsInternal?.Add(o);
                 ResultsAvailable?.Invoke();
+            }, AppDispatcherPriority.Low);
+        }
+
+        private void ExecutionHostOnInputRequest()
+        {
+            _dispatcher.InvokeAsync(() =>
+            {
+                ReadInput?.Invoke();
             }, AppDispatcherPriority.Low);
         }
 
@@ -297,11 +306,17 @@ namespace RoslynPad.UI
 
             _executionHost.Dumped += ExecutionHostOnDump;
             _executionHost.Error += ExecutionHostOnError;
+            _executionHost.ReadInput += ExecutionHostOnInputRequest;
             _executionHost.CompilationErrors += ExecutionHostOnCompilationErrors;
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
 
             Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
                        AvailablePlatforms.FirstOrDefault();
+        }
+
+        public void SendInput(string input)
+        {
+            var task = _executionHost?.SendInput(input);
         }
 
         private IEnumerable<string> GetReferencePaths(IEnumerable<MetadataReference> references)

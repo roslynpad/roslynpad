@@ -16,7 +16,9 @@ namespace RoslynPad.Hosting
         event Action<string> Disassembled;
         event Action<ResultObject> Dumped;
         event Action<ExceptionResultObject> Error;
+        event Action ReadInput;
 
+        Task SendInput(string input);
         Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);
         Task ResetAsync();
         Task Update(ExecutionHostParameters parameters);

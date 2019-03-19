@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -63,6 +64,7 @@ namespace RoslynPad
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
             _viewModel.ResultsAvailable += ResultsAvailable;
+            _viewModel.ReadInput += OnReadInput;
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
             _viewModel.EditorFocus += (o, e) => Editor.Focus();
@@ -81,6 +83,32 @@ namespace RoslynPad
                 this);
 
             Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+        }
+
+        private void OnReadInput()
+        {
+            var textBox = new TextBox();
+
+            var dialog = new TaskDialog
+            {
+                Header = "Console Input",
+                Content = textBox,
+                Background = Brushes.White,
+            };
+
+            textBox.Loaded += (o, e) => textBox.Focus();
+
+            textBox.KeyDown += (o, e) =>
+            {
+                if (e.Key == Key.Enter)
+                {
+                    TaskDialog.CancelCommand.Execute(null, dialog);
+                }
+            };
+
+            dialog.ShowInline(this);
+
+            _viewModel.SendInput(textBox.Text);
         }
 
         private void ResultsAvailable()

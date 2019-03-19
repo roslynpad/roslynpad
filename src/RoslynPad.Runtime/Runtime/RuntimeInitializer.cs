@@ -33,6 +33,7 @@ namespace RoslynPad.Runtime
             {
                 Console.SetOut(consoleDumper.CreateWriter());
                 Console.SetError(consoleDumper.CreateWriter("Error"));
+                Console.SetIn(consoleDumper.CreateReader());
 
                 AppDomain.CurrentDomain.UnhandledException += (o, e) =>
                 {

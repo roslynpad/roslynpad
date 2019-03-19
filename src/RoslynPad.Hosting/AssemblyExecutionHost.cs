@@ -45,6 +45,7 @@ namespace RoslynPad.Hosting
         private string _name;
         private bool _running;
         private bool _initializeBuildPathAfterRun;
+        private TextWriter? _processInputStream;
 
         public ExecutionPlatform Platform
         {
@@ -141,6 +142,7 @@ namespace RoslynPad.Hosting
         public event Action<string> Disassembled;
         public event Action<ResultObject> Dumped;
         public event Action<ExceptionResultObject> Error;
+        public event Action ReadInput;
 
         public void Dispose()
         {
@@ -324,15 +326,32 @@ namespace RoslynPad.Hosting
             })
             using (cancellationToken.Register(() =>
             {
-                try { process.Kill(); } catch { }
+                try
+                {
+                    _processInputStream = null;
+                    process.Kill();
+                }
+                catch { }
             }))
             {
                 if (process.Start())
                 {
+                    _processInputStream = process.StandardInput;
+
                     await Task.WhenAll(
                         Task.Run(() => ReadObjectProcessStream(process.StandardOutput)),
                         Task.Run(() => ReadProcessStream(process.StandardError)));
                 }
+            }
+        }
+
+        public async Task SendInput(string message)
+        {
+            var stream = _processInputStream;
+            if (stream != null)
+            {
+                await stream.WriteLineAsync(message).ConfigureAwait(false);
+                await stream.FlushAsync().ConfigureAwait(false);
             }
         }
 
@@ -347,6 +366,7 @@ namespace RoslynPad.Hosting
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
             };
         }
 
@@ -374,6 +394,10 @@ namespace RoslynPad.Hosting
                         if (result is ExceptionResultObject exceptionResult)
                         {
                             Error?.Invoke(exceptionResult);
+                        }
+                        else if (result is InputReadRequest)
+                        {
+                            ReadInput?.Invoke();
                         }
                         else
                         {
