@@ -30,6 +30,6 @@ foreach ($file in Get-ChildItem *.pri)
 	$file
 }
 
-MakeAppx.exe pack /f $mapping /l /p RoslynPad.msix
+MakeAppx.exe pack /f $mapping /l /p RoslynPad.appx
 
 ./SignAppx.ps1
