@@ -145,7 +145,8 @@ namespace RoslynPad.UI
                 {
                     foreach (var package in (JObject)target.Value)
                     {
-                        var packageRoot = Path.Combine(packagesDirectory, package.Key);
+                        var path = obj["libraries"][package.Key]["path"].Value<string>();
+                        var packageRoot = Path.Combine(packagesDirectory, path);
                         if (ReadLockFileSection(packageRoot, package.Value, compile, compileAssemblies, nameof(compile)))
                         {
                             ReadLockFileSection(packageRoot, package.Value, runtime, runtimeAssemblies, nameof(runtime));
