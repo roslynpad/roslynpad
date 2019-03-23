@@ -246,7 +246,7 @@ namespace RoslynPad.Hosting
 
             if (Platform.IsCore)
             {
-                CopyIfNewer(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile);
+                File.Copy(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile, overwrite: true);
                 return;
             }
 
