@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace RoslynPad.Runtime
@@ -27,6 +28,9 @@ namespace RoslynPad.Runtime
 
         private static void AttachConsole(bool isAttachedToParent)
         {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+
             var consoleDumper = isAttachedToParent ? (IConsoleDumper)new JsonConsoleDumper() : new DirectConsoleDumper();
 
             if (consoleDumper.SupportsRedirect)

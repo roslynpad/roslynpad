@@ -331,8 +331,7 @@ namespace RoslynPad.Runtime
             {
                 if (buffer != null)
                 {
-                    if (count >= Environment.NewLine.Length &&
-                        EndsWithNewLine(buffer, index, count))
+                    if (EndsWithNewLine(buffer, index, count))
                     {
                         count -= Environment.NewLine.Length;
                     }
@@ -347,6 +346,11 @@ namespace RoslynPad.Runtime
             private bool EndsWithNewLine(char[] buffer, int index, int count)
             {
                 var nl = Environment.NewLine;
+
+                if (count < nl.Length)
+                {
+                    return false;
+                }
 
                 for (int i = nl.Length; i >= 1; --i)
                 {
