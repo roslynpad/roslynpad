@@ -19,9 +19,10 @@ namespace RoslynPad
         {
             var dotnetPath = Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432"), "dotnet");
             var dotnetExe = Path.Combine(dotnetPath, "dotnet.exe");
-            if (File.Exists(dotnetExe))
+            if (File.Exists(dotnetExe) &&
+                GetCoreVersions(dotnetPath) is var coreVersions && coreVersions.Count > 0)
             {
-                yield return new ExecutionPlatform("Core x64", "", GetCoreVersions(dotnetPath), Architecture.X64, dotnetExe, string.Empty);
+                yield return new ExecutionPlatform("Core x64", "", coreVersions, Architecture.X64, dotnetExe, string.Empty);
             }
 
             var targetFrameworkName = GetTargetFrameworkName();
