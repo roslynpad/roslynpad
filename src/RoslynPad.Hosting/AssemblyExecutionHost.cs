@@ -386,22 +386,23 @@ namespace RoslynPad.Hosting
         {
             using (var jsonReader = new JsonTextReader(reader) { SupportMultipleContent = true })
             {
-                while (!reader.EndOfStream && jsonReader.Read())
+                while (jsonReader.Read())
                 {
                     try
                     {
                         var result = _jsonSerializer.Deserialize<ResultObject>(jsonReader);
-                        if (result is ExceptionResultObject exceptionResult)
+
+                        switch (result)
                         {
-                            Error?.Invoke(exceptionResult);
-                        }
-                        else if (result is InputReadRequest)
-                        {
-                            ReadInput?.Invoke();
-                        }
-                        else
-                        {
-                            Dumped?.Invoke(result);
+                            case ExceptionResultObject exceptionResult:
+                                Error?.Invoke(exceptionResult);
+                                break;
+                            case InputReadRequest _:
+                                ReadInput?.Invoke();
+                                break;
+                            default:
+                                Dumped?.Invoke(result);
+                                break;
                         }
                     }
                     catch (Exception ex)
