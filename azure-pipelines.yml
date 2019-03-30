@@ -2,7 +2,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'vs2017-win2016'
+  vmImage: 'windows-2019'
 
 container: 'mcr.microsoft.com/dotnet/core/sdk:3.0'
 
