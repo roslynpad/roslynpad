@@ -1,17 +1,17 @@
 PARAM
 (
     [Switch]
-    $NetCore
+    $Avalonia
 )
 Add-Type -A 'System.IO.Compression'
 Add-Type -A 'System.IO.Compression.FileSystem'
 
 $location = $PSScriptRoot
 
-if ($NetCore)
+if ($Avalonia)
 {
-    . .\GetFilesNetCore.ps1
-    $archiveFile = "$location\RoslynPadNetCore.zip"
+    . .\GetFilesAvalonia.ps1
+    $archiveFile = "$location\RoslynPadAvalonia.zip"
 }
 else
 {

@@ -4,7 +4,7 @@ if ($telemetryKey -eq $null)
     throw "Missing RoslynPadTelemetryKey environment variable"
 }
 
-$binPath = "..\src\RoslynPad\bin\Release\net462\win"
+$binPath = "..\src\RoslynPad\bin\Release\netcoreapp3.0\win"
 $exclude =
 @(
 	"Xceed.Wpf.AvalonDock.Themes.Aero.dll",
@@ -15,10 +15,8 @@ $exclude =
 
 $rootPath = [IO.Path]::GetFullPath("$location\$binPath\")
 
-$files = get-childitem "$rootPath\*.dll" | where { $exclude -notcontains $_.Name } | select -ExpandProperty FullName
-$files += get-childitem "$rootPath\*.exe" | select -ExpandProperty FullName
-$files += get-childitem "$rootPath\*.pdb" | select -ExpandProperty FullName
-$files += get-childitem "$rootPath\*.config" | select -ExpandProperty FullName
+$files = get-childitem "$rootPath\*.*" -file | where { $exclude -notcontains $_.Name } | select -ExpandProperty FullName
+$files += get-childitem "$rootPath\runtimes\*.*" -recurse -file | select -ExpandProperty FullName
 
 $configFile = "$location\$binPath\RoslynPad.exe.config"
 $config = get-content $configFile

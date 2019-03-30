@@ -4,7 +4,7 @@ if ($telemetryKey -eq $null)
     throw "Missing RoslynPadTelemetryKey environment variable"
 }
 
-$binPath = "$PSScriptRoot\..\src\RoslynPad.NetCore\bin\Release\netcoreapp2.2\publish"
+$binPath = "$PSScriptRoot\..\src\RoslynPad.Avalonia\bin\Release\netcoreapp2.2\publish"
 $exclude =
 @(
 );
