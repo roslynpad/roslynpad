@@ -11,5 +11,6 @@ variables:
   buildConfiguration: Release
 
 steps:
-  - script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
-    displayName: Build
+  - script: set
+  #- script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
+  #  displayName: Build
