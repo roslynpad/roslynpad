@@ -43,15 +43,28 @@ namespace RoslynPad.UI
         public string GlobalPackageFolder { get; }
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
-        public NuGetViewModel()
+        [ImportingConstructor]
+        public NuGetViewModel(ITelemetryProvider telemetryProvider)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             try
             {
-                var settings = Settings.LoadDefaultSettings(
-                    root: null,
-                    configFileName: null,
-                    machineWideSettings: new XPlatMachineWideSetting());
+                ISettings settings;
+
+                try
+                {
+                    settings = Settings.LoadDefaultSettings(
+                        root: null,
+                        configFileName: null,
+                        machineWideSettings: new XPlatMachineWideSetting());
+                }
+                catch (NuGetConfigurationException ex)
+                {
+                    telemetryProvider.ReportError(ex);
+
+                    // create default settings using a non-existent config file
+                    settings = new Settings(Guid.NewGuid().ToString());
+                }
 
                 GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
                 _configFilePaths = SettingsUtility.GetConfigFilePaths(settings);

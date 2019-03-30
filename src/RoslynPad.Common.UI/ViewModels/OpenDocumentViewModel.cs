@@ -484,14 +484,18 @@ namespace RoslynPad.UI
         public async Task AutoSave()
         {
             if (!IsDirty) return;
+
             if (Document == null)
             {
                 var index = 1;
                 string path;
+
                 do
                 {
                     path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
-                } while (File.Exists(path));
+                }
+                while (File.Exists(path));
+
                 Document = DocumentViewModel.FromPath(path);
             }
 
@@ -500,7 +504,17 @@ namespace RoslynPad.UI
 
         public void OpenBuildPath()
         {
-            Task.Run(() => Process.Start(new ProcessStartInfo(new Uri(BuildPath).ToString()) { UseShellExecute = true }));
+            Task.Run(() =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(new Uri("file://" + BuildPath).ToString()) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    _telemetryProvider.ReportError(ex);
+                }
+            });
         }
 
         public async Task<SaveResult> Save(bool promptSave)
