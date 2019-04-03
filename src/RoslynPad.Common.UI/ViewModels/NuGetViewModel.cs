@@ -63,7 +63,7 @@ namespace RoslynPad.UI
                     telemetryProvider.ReportError(ex);
 
                     // create default settings using a non-existent config file
-                    settings = new Settings(Guid.NewGuid().ToString());
+                    settings = new Settings(nameof(RoslynPad));
                 }
 
                 GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
