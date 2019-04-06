@@ -27,7 +27,7 @@ try
 
 	foreach ($file in $files)
 	{
-		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file, $file.Substring($rootPath.Length)) | Out-Null
+		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file, $file.Substring($rootPath.Length).Replace("\", "/")) | Out-Null
 		$file
 	}
 }
