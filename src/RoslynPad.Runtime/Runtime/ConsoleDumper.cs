@@ -19,6 +19,8 @@ namespace RoslynPad.Runtime
 
     internal class DirectConsoleDumper : IConsoleDumper
     {
+        private readonly object _lock = new object();
+
         public bool SupportsRedirect => false;
 
         public TextWriter CreateWriter(string? header = null)
@@ -57,31 +59,34 @@ namespace RoslynPad.Runtime
 
         private void DumpResultObject(ResultObject resultObject, int indent = 0)
         {
-            if (indent > 0)
+            lock (_lock)
             {
-                Console.Write("".PadLeft(indent));
-            }
-
-            Console.Write(resultObject.HasChildren ? "+ " : "  ");
-
-            if (resultObject.Header != null)
-            {
-                Console.Write($"[{resultObject.Header}]: ");
-            }
-
-            Console.WriteLine(resultObject.Value);
-
-            if (resultObject.Children != null)
-            {
-                foreach (var child in resultObject.Children)
+                if (indent > 0)
                 {
-                    DumpResultObject(child, indent + 2);
+                    Console.Write("".PadLeft(indent));
                 }
-            }
 
-            if (indent == 0)
-            {
-                Console.WriteLine();
+                Console.Write(resultObject.HasChildren ? "+ " : "  ");
+
+                if (resultObject.Header != null)
+                {
+                    Console.Write($"[{resultObject.Header}]: ");
+                }
+
+                Console.WriteLine(resultObject.Value);
+
+                if (resultObject.Children != null)
+                {
+                    foreach (var child in resultObject.Children)
+                    {
+                        DumpResultObject(child, indent + 2);
+                    }
+                }
+
+                if (indent == 0)
+                {
+                    Console.WriteLine();
+                }
             }
         }
 
@@ -101,11 +106,15 @@ namespace RoslynPad.Runtime
 
         private readonly Stream _stream;
 
+        private readonly object _lock;
+
         private int _dumpCount;
 
         public JsonConsoleDumper()
         {
             _stream = Console.OpenStandardOutput();
+
+            _lock = new object();
 
             var assemblyName = typeof(ExceptionResultObject).Assembly.GetName().Name;
             _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {assemblyName}";
@@ -206,30 +215,36 @@ namespace RoslynPad.Runtime
 
         private void DumpMessage(string message)
         {
-            using (var jsonWriter = CreateJsonWriter())
+            lock (_lock)
             {
-                jsonWriter.WriteStartElement("root", "");
-                jsonWriter.WriteAttributeString("type", "object");
-                jsonWriter.WriteElementString("v", message);
-                jsonWriter.WriteEndElement();
-            }
+                using (var jsonWriter = CreateJsonWriter())
+                {
+                    jsonWriter.WriteStartElement("root", "");
+                    jsonWriter.WriteAttributeString("type", "object");
+                    jsonWriter.WriteElementString("v", message);
+                    jsonWriter.WriteEndElement();
+                }
 
-            DumpNewLine();
+                DumpNewLine();
+            }
         }
 
         private void DumpInputReadRequest()
         {
             try
             {
-                using (var jsonWriter = CreateJsonWriter())
+                lock (_lock)
                 {
-                    jsonWriter.WriteStartElement("root", "");
-                    jsonWriter.WriteAttributeString("type", "object");
-                    jsonWriter.WriteElementString("$type", _inputReadRequestTypeName);
-                    jsonWriter.WriteEndElement();
-                }
+                    using (var jsonWriter = CreateJsonWriter())
+                    {
+                        jsonWriter.WriteStartElement("root", "");
+                        jsonWriter.WriteAttributeString("type", "object");
+                        jsonWriter.WriteElementString("$type", _inputReadRequestTypeName);
+                        jsonWriter.WriteEndElement();
+                    }
 
-                DumpNewLine();
+                    DumpNewLine();
+                }
             }
             catch
             {
@@ -239,30 +254,36 @@ namespace RoslynPad.Runtime
 
         private void DumpExceptionResultObject(ExceptionResultObject result)
         {
-            using (var jsonWriter = CreateJsonWriter())
+            lock (_lock)
             {
-                jsonWriter.WriteStartElement("root", "");
-                jsonWriter.WriteAttributeString("type", "object");
-                jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
-                jsonWriter.WriteElementString("m", result.Message);
-                jsonWriter.WriteStartElement("l");
-                jsonWriter.WriteValue(result.LineNumber);
-                jsonWriter.WriteEndElement();
-                WriteResultObjectContent(jsonWriter, result);
-                jsonWriter.WriteEndElement();
-            }
+                using (var jsonWriter = CreateJsonWriter())
+                {
+                    jsonWriter.WriteStartElement("root", "");
+                    jsonWriter.WriteAttributeString("type", "object");
+                    jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
+                    jsonWriter.WriteElementString("m", result.Message);
+                    jsonWriter.WriteStartElement("l");
+                    jsonWriter.WriteValue(result.LineNumber);
+                    jsonWriter.WriteEndElement();
+                    WriteResultObjectContent(jsonWriter, result);
+                    jsonWriter.WriteEndElement();
+                }
 
-            DumpNewLine();
+                DumpNewLine();
+            }
         }
 
         private void DumpResultObject(ResultObject result)
         {
-            using (var jsonWriter = CreateJsonWriter())
+            lock (_lock)
             {
-                WriteResultObject(jsonWriter, result, isRoot: true);
-            }
+                using (var jsonWriter = CreateJsonWriter())
+                {
+                    WriteResultObject(jsonWriter, result, isRoot: true);
+                }
 
-            DumpNewLine();
+                DumpNewLine();
+            }
         }
 
         private void DumpNewLine()
