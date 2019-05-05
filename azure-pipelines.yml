@@ -4,12 +4,14 @@ trigger:
 pool:
   vmImage: win1803
 
-container: mcr.microsoft.com/dotnet/core/sdk:3.0
-
 variables:
   solution: src/RoslynPad.sln
   buildConfiguration: Release
+  sdkVersion: 3.0.100-preview5-011323
 
 steps:
+  - task: DotNetCoreInstaller@0
+    inputs:
+    version: $(sdkVersion)
   - script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
     displayName: Build
