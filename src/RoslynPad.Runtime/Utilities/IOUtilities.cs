@@ -132,6 +132,24 @@ namespace RoslynPad.Utilities
             }
         }
 
+        public static void FileCopy(string source, string destination, bool overwrite)
+        {
+            const int ERROR_ENCRYPTION_FAILED = unchecked((int)0x80071770);
+
+            try
+            {
+                File.Copy(source, destination, overwrite);
+            }
+            catch (IOException ex) when (ex.HResult == ERROR_ENCRYPTION_FAILED)
+            {
+                using (var read = File.OpenRead(source))
+                using (var write = new FileStream(destination, overwrite ? FileMode.Create : FileMode.CreateNew))
+                {
+                    read.CopyTo(write);
+                }
+            }
+        }
+
         public static bool IsNormalIOException(Exception e)
         {
             return e is IOException ||

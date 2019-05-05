@@ -247,7 +247,7 @@ namespace RoslynPad.Hosting
 
             if (Platform.IsCore)
             {
-                File.Copy(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile, overwrite: true);
+                IOUtilities.FileCopy(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile, overwrite: true);
                 return;
             }
 
@@ -291,7 +291,7 @@ namespace RoslynPad.Hosting
 
             if (!destinationInfo.Exists || destinationInfo.CreationTimeUtc < sourceInfo.CreationTimeUtc)
             {
-                sourceInfo.CopyTo(destination, overwrite: true);
+                IOUtilities.FileCopy(source, destination, overwrite: true);
                 return true;
             }
 
