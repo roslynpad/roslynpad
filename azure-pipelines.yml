@@ -12,6 +12,6 @@ variables:
 steps:
   - task: DotNetCoreInstaller@0
     inputs:
-    version: $(sdkVersion)
+      version: $(sdkVersion)
   - script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
     displayName: Build
