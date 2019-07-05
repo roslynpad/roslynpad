@@ -114,12 +114,12 @@ namespace RoslynPad.Utilities
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference or unconstrained type parameter.
         void IDelegateCommand.Execute()
         {
-            Execute(default);
+            Execute(default!);
         }
 
         bool IDelegateCommand.CanExecute()
         {
-            return CanExecute(default);
+            return CanExecute(default!);
         }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference or unconstrained type parameter.
     }

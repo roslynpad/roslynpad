@@ -19,10 +19,10 @@ namespace RoslynPad.Editor
                 control = control.Parent;
             }
 
-            return (T)control;
+            return (T)control!;
         }
 
-        public static Window GetWindow(this Control c) => c.FindAncestorByType<Window>();
+        public static Window? GetWindow(this Control c) => c.FindAncestorByType<Window>();
 
         public static Dispatcher GetDispatcher(this IControl o) => Dispatcher.UIThread;
 

@@ -131,17 +131,6 @@
                     <ToggleButton Margin="20 0 0 0"
                                   BorderThickness="0"
                                   Background="Transparent"
-                                  IsChecked="{Binding Settings.EnableBraceCompletion}"
-                                  ToolTipService.Placement="Top"
-                                  ToolTip="Enable brace completion">
-                        <Image Source="{StaticResource MatchBrace}"
-                               Width="16"
-                               Height="16" />
-                    </ToggleButton>
-
-                    <ToggleButton Margin="20 0 0 0"
-                                  BorderThickness="0"
-                                  Background="Transparent"
                                   IsChecked="{Binding Settings.OptimizeCompilation}"
                                   ToolTipService.Placement="Top">
                         <ToggleButton.Style>

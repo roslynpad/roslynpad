@@ -2,23 +2,16 @@ trigger:
 - master
 
 pool:
-  vmImage: 'vs2017-win2016'
+  vmImage: win1803
 
 variables:
-  solution: 'src/RoslynPad.sln'
-  buildConfiguration: 'Release'
+  solution: src/RoslynPad.sln
+  buildConfiguration: Release
+  sdkVersion: 3.0.100-preview6-012264
 
 steps:
-  - task: MSBuild@1
+  - task: DotNetCoreInstaller@0
     inputs:
-      solution: '$(solution)'
-      msbuildArguments: '/t:Restore'
-    displayName: Restore
-
-  - task: MSBuild@1
-    inputs:
-      configuration: '$(buildConfiguration)'
-      solution: '$(solution)'
-      msbuildArguments: '/bl'
+      version: $(sdkVersion)
+  - script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
     displayName: Build
-

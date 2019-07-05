@@ -163,7 +163,7 @@ namespace RoslynPad.Editor
                     }
                 }
 
-                if (cachedLine != null && cachedLine.IsValid && newVersion.CompareAge(cachedLine.OldVersion) == 0 &&
+                if (cachedLine != null && cachedLine.IsValid && newVersion?.CompareAge(cachedLine.OldVersion) == 0 &&
                     cachedLine.DocumentLine.Length == documentLine.Length)
                 {
                     // the file hasn't changed since the cache was created, so just reuse the old highlighted line

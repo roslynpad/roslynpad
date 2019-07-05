@@ -124,7 +124,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 _originalParameterConfiguration.ThisParameter,
                 _parameterGroup1.Where(p => !p.IsRemoved).Select(p => p.ParameterSymbol).ToList(),
                 _parameterGroup2.Where(p => !p.IsRemoved).Select(p => p.ParameterSymbol).ToList(),
-                (_paramsParameter == null || _paramsParameter.IsRemoved) ? null : _paramsParameter.ParameterSymbol);
+                (_paramsParameter == null || _paramsParameter.IsRemoved) ? null : _paramsParameter.ParameterSymbol,
+                selectedIndex: -1);
         }
 
         private static readonly SymbolDisplayFormat _symbolDeclarationDisplayFormat = new SymbolDisplayFormat(

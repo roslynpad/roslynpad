@@ -49,7 +49,7 @@ namespace RoslynPad
         {
             if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
             {
-                return Task.FromResult(_dialog.FileName);
+                return Task.FromResult<string?>(_dialog.FileName);
             }
 
             return Task.FromResult<string?>(null);

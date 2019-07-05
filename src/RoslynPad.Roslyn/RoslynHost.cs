@@ -114,7 +114,7 @@ namespace RoslynPad.Roslyn
 
         private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
-            var documentId = diagnosticsUpdatedArgs?.DocumentId;
+            var documentId = diagnosticsUpdatedArgs.DocumentId;
             if (documentId == null) return;
 
             if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out var notifier))

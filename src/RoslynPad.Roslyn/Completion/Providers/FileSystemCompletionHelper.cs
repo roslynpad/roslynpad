@@ -43,7 +43,7 @@ namespace RoslynPad.Roslyn
             Debug.Assert(baseDirectoryOpt == null || PathUtilities.IsAbsolute(baseDirectoryOpt));
 
             _searchPaths = searchPaths;
-            _baseDirectoryOpt = baseDirectoryOpt;
+            _baseDirectoryOpt = baseDirectoryOpt!;
             _allowableExtensions = allowableExtensions;
             _folderGlyph = folderGlyph;
             _fileGlyph = fileGlyph;

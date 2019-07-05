@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn.BraceMatching
     internal class CSharpDirectiveTriviaBraceMatcher : AbstractDirectiveTriviaBraceMatcher<DirectiveTriviaSyntax, IfDirectiveTriviaSyntax, ElifDirectiveTriviaSyntax, ElseDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>
     {
         internal override List<DirectiveTriviaSyntax> GetMatchingConditionalDirectives(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
-                => directive.GetMatchingConditionalDirectives(cancellationToken)?.ToList();
+                => directive.GetMatchingConditionalDirectives(cancellationToken)?.ToList()!;
 
         internal override DirectiveTriviaSyntax GetMatchingDirective(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
                 => directive.GetMatchingDirective(cancellationToken);

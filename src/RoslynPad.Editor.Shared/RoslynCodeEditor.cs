@@ -6,7 +6,6 @@ using RoslynPad.Roslyn.QuickInfo;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using RoslynPad.Roslyn.AutomaticCompletion;
 #if AVALONIA
 using Avalonia;
 using Avalonia.Interactivity;
@@ -34,7 +33,6 @@ namespace RoslynPad.Editor
         private DocumentId? _documentId;
         private IQuickInfoProvider? _quickInfoProvider;
         private IBraceMatchingService? _braceMatchingService;
-        private IBraceCompletionProvider? _braceCompletionProvider;
         private CancellationTokenSource? _braceMatchingCts;
         private RoslynHighlightingColorizer? _colorizer;
 
@@ -44,7 +42,6 @@ namespace RoslynPad.Editor
             TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
             TextArea.TextView.LineTransformers.Add(_textMarkerService);
             TextArea.Caret.PositionChanged += CaretOnPositionChanged;
-            TextArea.TextEntered += OnTextEntered;
         }
 
         public bool IsBraceCompletionEnabled
@@ -86,15 +83,6 @@ namespace RoslynPad.Editor
             RaiseEvent(e);
         }
 
-        private void OnTextEntered(object sender, TextCompositionEventArgs e)
-        {
-            if (IsBraceCompletionEnabled && e.Text.Length == 1 && _braceCompletionProvider != null && _roslynHost != null &&
-                _documentId != null && _roslynHost.GetDocument(_documentId) is Document document)
-            {
-                _braceCompletionProvider.TryComplete(document, CaretOffset);
-            }
-        }
-
         public DocumentId Initialize(IRoslynHost roslynHost, IClassificationHighlightColors highlightColors, string workingDirectory, string documentText)
         {
             _roslynHost = roslynHost ?? throw new ArgumentNullException(nameof(roslynHost));
@@ -104,7 +92,6 @@ namespace RoslynPad.Editor
 
             _quickInfoProvider = _roslynHost.GetService<IQuickInfoProvider>();
             _braceMatchingService = _roslynHost.GetService<IBraceMatchingService>();
-            _braceCompletionProvider = _roslynHost.GetService<IBraceCompletionProvider>();
 
             var avalonEditTextContainer = new AvalonEditTextContainer(Document) { Editor = this };
 

@@ -1,24 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="MSBuild.Sdk.Extras/1.6.61">
-  <!-- workaround for NuGet packages not working in WPF -->
-  <Import Project="$(MSBuildProjectDirectory)\obj\*.props" Condition=" '$(NuGetPackageRoot)' == '' and $(MSBuildProjectFile.Contains('wpftmp')) " />
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Keys\RoslynInternalKey.Private.snk</AssemblyOriginatorKeyFile>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
     <NoWarn>1701;1702</NoWarn>
-    <RuntimeIdentifier>win</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="**\*.xshd" />
     <EmbeddedResource Include="**\*.xshd" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
@@ -26,8 +21,8 @@
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AvalonLibrary" Version="2.3.0" />
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" />
+    <PackageReference Include="AvalonLibrary" Version="2.4.0" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" NoWarn="NU1701" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.1" />
     <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />

@@ -156,8 +156,9 @@ namespace RoslynPad.Editor
             // if results are found by the next run, the message will be hidden inside DoSearch ...
             if (_renderer.CurrentResults.Any())
                 _messageView.IsOpen = false;
-            _strategy = SearchStrategyFactory.Create(SearchPattern ?? "", !MatchCase, WholeWords, UseRegex ? SearchMode.RegEx : SearchMode.Normal);
-            OnSearchOptionsChanged(new SearchOptionsChangedEventArgs(SearchPattern, MatchCase, UseRegex, WholeWords));
+            var searchPattern = SearchPattern ?? "";
+            _strategy = SearchStrategyFactory.Create(searchPattern, !MatchCase, WholeWords, UseRegex ? SearchMode.RegEx : SearchMode.Normal);
+            OnSearchOptionsChanged(new SearchOptionsChangedEventArgs(searchPattern, MatchCase, UseRegex, WholeWords));
             DoSearch(true);
         }
 

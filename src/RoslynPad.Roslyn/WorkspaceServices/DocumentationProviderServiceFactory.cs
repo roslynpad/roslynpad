@@ -26,7 +26,7 @@ namespace RoslynPad.Roslyn.WorkspaceServices
 
         public DocumentationProvider? GetDocumentationProvider(string location)
         {
-            var finalPath = Path.ChangeExtension(location, "xml");
+            string? finalPath = Path.ChangeExtension(location, "xml");
 
             return _assemblyPathToDocumentationProviderMap.GetOrAdd(location,
                 _ =>
