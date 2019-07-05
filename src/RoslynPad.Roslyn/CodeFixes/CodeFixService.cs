@@ -336,7 +336,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 }
 
                 // If the fix provider supports fix all occurrences, then get the corresponding FixAllProviderInfo and fix all context.
-                var fixAllProviderInfo = extensionManager.PerformFunction(fixer, () => ImmutableInterlocked.GetOrAdd(ref _fixAllProviderMap, fixer, FixAllProviderInfo.Create), defaultValue: null);
+                var fixAllProviderInfo = extensionManager.PerformFunction(fixer, () => ImmutableInterlocked.GetOrAdd(ref _fixAllProviderMap, fixer, FixAllProviderInfo.Create), defaultValue: default);
 
                 FixAllState? fixAllState = null;
                 var supportedScopes = ImmutableArray<FixAllScope>.Empty;
@@ -462,7 +462,7 @@ namespace RoslynPad.Roslyn.CodeFixes
 
                 var dx = await diagnostic.ToDiagnosticAsync(document.Project, cancellationToken).ConfigureAwait(false);
 
-                if (hasSuppressionFixer && lazySuppressionProvider?.Value.CanBeSuppressedOrUnsuppressed(dx) == true)
+                if (hasSuppressionFixer && lazySuppressionProvider?.Value?.CanBeSuppressedOrUnsuppressed(dx) == true)
                 {
                     return true;
                 }

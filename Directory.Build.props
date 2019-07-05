@@ -1,17 +1,18 @@
 <Project>
-    <PropertyGroup>
-        <Features>strict</Features>
-        <Deterministic>True</Deterministic>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-        <EditorPackageVersion>1.1.0</EditorPackageVersion>
-        <RoslynPackageVersion>3.0.0</RoslynPackageVersion>
-        <RoslynAssemblyVersion>3.0.0.0</RoslynAssemblyVersion>
-        <LangVersion>8.0</LangVersion>
-        <NullableContextOptions>Enable</NullableContextOptions>
-        <Authors>Eli Arbel</Authors>
-        <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
-        <PackageLicenseUrl>https://github.com/aelij/RoslynPad/blob/master/LICENSE</PackageLicenseUrl>
-        <PackageTags>Roslyn;RoslynPad</PackageTags>
-        <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    </PropertyGroup>
+  <PropertyGroup>
+    <Features>strict</Features>
+    <Deterministic>True</Deterministic>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <EditorPackageVersion>1.1.0</EditorPackageVersion>
+    <RoslynPackageVersion>3.1.0</RoslynPackageVersion>
+    <RoslynAssemblyVersion>3.0.0.0</RoslynAssemblyVersion>
+    <LangVersion>8.0</LangVersion>
+    <NullableContextOptions>Enable</NullableContextOptions>
+    <Nullable>Enable</Nullable>
+    <Authors>Eli Arbel</Authors>
+    <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/aelij/RoslynPad/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>Roslyn;RoslynPad</PackageTags>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+  </PropertyGroup>
 </Project>

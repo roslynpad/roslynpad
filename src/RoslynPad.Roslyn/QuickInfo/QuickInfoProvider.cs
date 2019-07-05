@@ -97,7 +97,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 return await CreateContentAsync(document.Project.Solution.Workspace,
                     token,
                     modelAndSymbols.Item1,
-                    modelAndSymbols.Item2,
+                    modelAndSymbols.Item2!,
                     supportedPlatforms: null,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
             }
@@ -117,7 +117,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             var candidateResults = new List<Tuple<DocumentId, SemanticModel, IList<ISymbol>>>
             {
-                Tuple.Create(document.Id, modelAndSymbols.Item1, modelAndSymbols.Item2)
+                Tuple.Create(document.Id, modelAndSymbols.Item1, modelAndSymbols.Item2!)
             };
 
             foreach (var link in linkedDocumentIds)

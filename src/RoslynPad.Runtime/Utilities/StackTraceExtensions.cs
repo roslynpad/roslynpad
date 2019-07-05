@@ -83,7 +83,7 @@ namespace RoslynPad.Utilities
             return stringBuilder.ToString();
         }
 
-        private static bool FormatMethodName(StringBuilder stringBuilder, Type declaringType)
+        private static bool FormatMethodName(StringBuilder stringBuilder, Type? declaringType)
         {
             if (declaringType == null) return false;
             var isAsync = false;

@@ -657,7 +657,7 @@ namespace RoslynPad.UI
             RestoreTask = Task.Run(() => RefreshPackagesAsync(packages, cancellationToken), cancellationToken);
         }
 
-        private async Task RefreshPackagesAsync(LibraryRef[] libraries, CancellationToken cancellationToken)
+        private async Task RefreshPackagesAsync(LibraryRef[]? libraries, CancellationToken cancellationToken)
         {
             await _restoreLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             IsRestoring = true;
@@ -790,7 +790,6 @@ namespace RoslynPad.UI
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public class RestoreParams
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         public string ProjectName { get; set; }
         public NuGetFramework TargetFramework { get; set; }
@@ -799,8 +798,9 @@ namespace RoslynPad.UI
         public string PackagesPath { get; set; }
         public IList<string> ConfigFilePaths { get; set; } = new List<string>();
         public IList<PackageSource> Sources { get; set; } = new List<PackageSource>();
-        public IList<LibraryRef> Libraries { get; set; } = new List<LibraryRef>();
+        public IList<LibraryRef>? Libraries { get; set; } = new List<LibraryRef>();
     }
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
 
     public class LibraryRef : IEquatable<LibraryRef?>
     {
