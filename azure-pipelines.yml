@@ -7,7 +7,7 @@ pool:
 variables:
   solution: src/RoslynPad.sln
   buildConfiguration: Release
-  sdkVersion: 3.0.100-preview5-011323
+  sdkVersion: 3.0.100-preview6-012264
 
 steps:
   - task: DotNetCoreInstaller@0
