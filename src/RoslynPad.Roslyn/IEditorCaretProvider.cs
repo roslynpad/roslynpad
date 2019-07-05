@@ -1,4 +1,4 @@
-namespace RoslynPad.Roslyn
+﻿namespace RoslynPad.Roslyn
 {
     public interface IEditorCaretProvider
     {
