@@ -57,6 +57,7 @@ namespace RoslynPad.Editor
                 }
             };
             var contentPanel = new StackPanel();
+
             var docText = _item.DocumentationFactory(CancellationToken.None).ToTextBlock();
             if (HasContent(docText))
             {
@@ -73,6 +74,7 @@ namespace RoslynPad.Editor
             headerPanel.Children.Add(_item.SuffixDisplayParts.ToTextBlock());
             CurrentHeader = headerPanel;
             CurrentContent = contentPanel;
+            CurrentIndexText = $" {_selectedIndex + 1} of {_items.Count} ";
         }
 
 #if AVALONIA
