@@ -148,12 +148,12 @@ namespace RoslynPad.Editor
             remove => RemoveHandler(ToolTipRequestEvent, value);
         }
 
-        private void OnVisualLinesChanged(object sender, EventArgs e)
+        private void OnVisualLinesChanged(object? sender, EventArgs e)
         {
             _toolTip?.Close(this);
         }
 
-        private void OnMouseHoverStopped(object sender, MouseEventArgs e)
+        private void OnMouseHoverStopped(object? sender, MouseEventArgs e)
         {
             if (_toolTip != null)
             {

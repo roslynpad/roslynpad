@@ -22,7 +22,7 @@ namespace RoslynPad.Editor
             Length = length;
         }
 
-        public event EventHandler Deleted;
+        public event EventHandler? Deleted;
 
         public bool IsDeleted => !IsConnectedToCollection;
 

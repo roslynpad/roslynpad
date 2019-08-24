@@ -20,7 +20,7 @@ namespace RoslynPad
 {
     public partial class DocumentView : IDisposable
     {
-        private readonly SynchronizationContext _syncContext;
+        private readonly SynchronizationContext? _syncContext;
         private readonly ErrorMargin _errorMargin;
         private OpenDocumentViewModel _viewModel;
         private IResultObject? _contextMenuResultObject;
@@ -41,7 +41,7 @@ namespace RoslynPad
             DataContextChanged += OnDataContextChanged;
         }
 
-        private void CaretOnPositionChanged(object sender, EventArgs eventArgs)
+        private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
         {
             Ln.Text = Editor.TextArea.Caret.Line.ToString();
             Col.Text = Editor.TextArea.Caret.Column.ToString();
@@ -115,7 +115,7 @@ namespace RoslynPad
         {
             _viewModel.ResultsAvailable -= ResultsAvailable;
 
-            _syncContext.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
+            _syncContext?.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
         }
 
         private void OnError(ExceptionResultObject? e)

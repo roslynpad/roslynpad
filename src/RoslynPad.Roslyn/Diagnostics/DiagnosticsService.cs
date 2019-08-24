@@ -25,7 +25,7 @@ namespace RoslynPad.Roslyn.Diagnostics
             DiagnosticsUpdated?.Invoke(this, new DiagnosticsUpdatedArgs(e));
         }
 
-        public event EventHandler<DiagnosticsUpdatedArgs> DiagnosticsUpdated;
+        public event EventHandler<DiagnosticsUpdatedArgs>? DiagnosticsUpdated;
 
         public IEnumerable<DiagnosticData> GetDiagnostics(Workspace workspace, ProjectId projectId, DocumentId documentId, object id,
             bool includeSuppressedDiagnostics, CancellationToken cancellationToken)

@@ -7,7 +7,7 @@ namespace RoslynPad.Utilities
 {
     internal abstract class NotificationObject : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

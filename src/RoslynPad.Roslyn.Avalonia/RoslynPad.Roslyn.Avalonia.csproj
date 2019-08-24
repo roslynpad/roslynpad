@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Resources\Glyphs\Glyphs.xaml.cs">
-      <SubType>Designer</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
   </ItemGroup>

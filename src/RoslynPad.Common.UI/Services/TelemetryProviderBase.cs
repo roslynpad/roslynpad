@@ -74,7 +74,7 @@ namespace RoslynPad.UI
             }
         }
 
-        public event Action LastErrorChanged;
+        public event Action? LastErrorChanged;
 
         public void ClearLastError()
         {

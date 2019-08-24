@@ -43,7 +43,7 @@ namespace RoslynPad.Runtime
             return enumerable;
         }
 
-        internal static event Action<DumpData> Dumped;
+        internal static event Action<DumpData>? Dumped;
     }
 
     internal struct DumpData

@@ -43,7 +43,7 @@ namespace RoslynPad.Editor
             Document.Changed -= DocumentOnChanged;
         }
 
-        private void DocumentOnChanged(object sender, DocumentChangeEventArgs e)
+        private void DocumentOnChanged(object? sender, DocumentChangeEventArgs e)
         {
             if (_updatding) return;
 
@@ -56,7 +56,7 @@ namespace RoslynPad.Editor
             TextChanged?.Invoke(this, new TextChangeEventArgs(oldText, _currentText, textChangeRange));
         }
 
-        public override event EventHandler<TextChangeEventArgs> TextChanged;
+        public override event EventHandler<TextChangeEventArgs>? TextChanged;
 
         public void UpdateText(SourceText newText)
         {
@@ -165,7 +165,7 @@ namespace RoslynPad.Editor
 
             public override SourceTextContainer Container => _container ?? _sourceText.Container;
 
-            public override bool Equals(object obj) => _sourceText.Equals(obj);
+            public override bool Equals(object? obj) => _sourceText.Equals(obj);
 
             public override int GetHashCode() => _sourceText.GetHashCode();
 

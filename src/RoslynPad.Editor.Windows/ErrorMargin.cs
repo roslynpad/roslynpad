@@ -60,7 +60,7 @@ namespace RoslynPad.Editor
         }
 
         public static readonly DependencyProperty MarkerImageProperty = DependencyProperty.Register(
-            nameof(MarkerImage), typeof(ImageSource?), typeof(ErrorMargin), new FrameworkPropertyMetadata());
+            nameof(MarkerImage), typeof(ImageSource), typeof(ErrorMargin), new FrameworkPropertyMetadata());
 
         public ImageSource? MarkerImage
         {
@@ -83,7 +83,7 @@ namespace RoslynPad.Editor
             InvalidateArrange();
         }
 
-        private void TextViewVisualLinesChanged(object sender, EventArgs e)
+        private void TextViewVisualLinesChanged(object? sender, EventArgs e)
         {
             InvalidateArrange();
         }

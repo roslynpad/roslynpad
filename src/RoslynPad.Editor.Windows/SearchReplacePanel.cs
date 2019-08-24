@@ -214,7 +214,7 @@ namespace RoslynPad.Editor
             IsClosed = true;
         }
 
-        void TextArea_DocumentChanged(object sender, EventArgs e)
+        void TextArea_DocumentChanged(object? sender, EventArgs e)
         {
             if (_currentDocument != null)
                 _currentDocument.TextChanged -= TextArea_Document_TextChanged;
@@ -226,7 +226,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        void TextArea_Document_TextChanged(object sender, EventArgs e)
+        void TextArea_Document_TextChanged(object? sender, EventArgs e)
         {
             DoSearch(false);
         }

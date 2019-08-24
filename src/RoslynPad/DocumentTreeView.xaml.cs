@@ -85,7 +85,7 @@ namespace RoslynPad
     {
         public string? FilterProperty { get; set; }
 
-        public event Predicate<object> Filter;
+        public event Predicate<object>? Filter;
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

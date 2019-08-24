@@ -37,7 +37,7 @@ namespace RoslynPad
                 name = "Untitled";
             }
 
-            _saveFileDialog.FileName = FilePathFactory.Invoke(name);
+            _saveFileDialog.FileName = FilePathFactory.Invoke(name!);
             if (await _saveFileDialog.ShowAsync().ConfigureAwait(true) != null)
             {
                 Result = SaveResult.Save;

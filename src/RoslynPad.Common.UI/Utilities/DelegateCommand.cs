@@ -57,7 +57,7 @@ namespace RoslynPad.Utilities
 
         void ICommand.Execute(object parameter) => Execute();
 
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged;
 
         public void RaiseCanExecuteChanged()
         {
@@ -104,7 +104,7 @@ namespace RoslynPad.Utilities
 
         void ICommand.Execute(object parameter) => Execute((T)parameter);
 
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged;
 
         public void RaiseCanExecuteChanged()
         {

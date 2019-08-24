@@ -53,7 +53,7 @@ namespace RoslynPad.Editor
         private readonly List<CachedLine>? _cachedLines;
         private readonly Subject<HighlightedLine> _subject;
         private List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
-        private readonly SynchronizationContext _syncContext;
+        private readonly SynchronizationContext? _syncContext;
 
         private volatile bool _inHighlightingGroup;
         private int? _updatedLine;
@@ -85,7 +85,7 @@ namespace RoslynPad.Editor
             _subject.Dispose();
         }
 
-        public event HighlightingStateChangedEventHandler HighlightingStateChanged;
+        public event HighlightingStateChangedEventHandler? HighlightingStateChanged;
 
         private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
         {
@@ -99,7 +99,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            _syncContext.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
+            _syncContext?.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
         }
 
         private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)

@@ -57,7 +57,7 @@ namespace RoslynPad.Editor
             editor.ToolTipRequest += EditorOnToolTipRequest;
         }
 
-        private void EditorOnToolTipRequest(object sender, ToolTipRequestEventArgs args)
+        private void EditorOnToolTipRequest(object? sender, ToolTipRequestEventArgs args)
         {
             var offset = _document.GetOffset(args.LogicalPosition);
 
@@ -145,7 +145,7 @@ namespace RoslynPad.Editor
             RedrawRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        public event EventHandler RedrawRequested;
+        public event EventHandler? RedrawRequested;
 
         #endregion
 

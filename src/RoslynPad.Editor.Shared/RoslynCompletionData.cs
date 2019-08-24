@@ -93,19 +93,23 @@ namespace RoslynPad.Editor
             if (completionChar == '\t')
             {
                 var snippet = _snippetManager.FindSnippet(_item.DisplayText);
-                Debug.Assert(snippet != null, "snippet != null");
-                var editorSnippet = snippet.CreateAvalonEditSnippet();
-                using (textArea.Document.RunUpdate())
+                if (snippet != null)
                 {
-                    textArea.Document.Remove(completionSegment.Offset, completionSegment.Length);
-                    editorSnippet.Insert(textArea);
+                    var editorSnippet = snippet.CreateAvalonEditSnippet();
+                    using (textArea.Document.RunUpdate())
+                    {
+                        textArea.Document.Remove(completionSegment.Offset, completionSegment.Length);
+                        editorSnippet.Insert(textArea);
+                    }
+                    if (txea != null)
+                    {
+                        txea.Handled = true;
+                    }
+
+                    return true;
                 }
-                if (txea != null)
-                {
-                    txea.Handled = true;
-                }
-                return true;
             }
+
             return false;
         }
 
@@ -154,7 +158,7 @@ namespace RoslynPad.Editor
 
         public string SortText => _item.SortText;
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {

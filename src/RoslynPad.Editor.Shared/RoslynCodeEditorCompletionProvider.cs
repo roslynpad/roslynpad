@@ -124,8 +124,7 @@ namespace RoslynPad.Editor
         private static string GetFilterText(CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)
         {
             var textSpan = item.Span;
-            string filterText;
-            if (!textSpanToText.TryGetValue(textSpan, out filterText))
+            if (!textSpanToText.TryGetValue(textSpan, out var filterText))
             {
                 filterText = text.GetSubText(textSpan).ToString();
                 textSpanToText[textSpan] = filterText;

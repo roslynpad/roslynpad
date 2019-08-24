@@ -191,19 +191,21 @@ namespace RoslynPad.Roslyn
                 workspace.CloseDocument(documentId);
 
                 var document = workspace.CurrentSolution.GetDocument(documentId);
-                Debug.Assert(document != null, "document != null");
 
-                var solution = document.Project.RemoveDocument(documentId).Solution;
-
-                if (!solution.Projects.SelectMany(d => d.DocumentIds).Any())
+                if (document != null)
                 {
-                    _workspaces.TryRemove(documentId, out workspace);
+                    var solution = document.Project.RemoveDocument(documentId).Solution;
 
-                    using (workspace) { }
-                }
-                else
-                {
-                    workspace.SetCurrentSolution(solution);
+                    if (!solution.Projects.SelectMany(d => d.DocumentIds).Any())
+                    {
+                        _workspaces.TryRemove(documentId, out workspace);
+
+                        using (workspace) { }
+                    }
+                    else
+                    {
+                        workspace.SetCurrentSolution(solution);
+                    }
                 }
             }
 

@@ -133,7 +133,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        private async void CaretOnPositionChanged(object sender, EventArgs eventArgs)
+        private async void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
         {
             if (_roslynHost == null || _documentId == null || _braceMatcherHighlighter == null)
             {

@@ -12,7 +12,7 @@ namespace RoslynPad.UI
 {
     public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataErrorInfo
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -83,7 +83,7 @@ namespace RoslynPad.UI
 
         public bool HasErrors => _propertyErrors?.Any(c => c.Value.Any()) == true;
 
-        public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+        public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
         protected virtual void OnErrorsChanged(string propertyName)
         {

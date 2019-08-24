@@ -85,8 +85,8 @@ namespace RoslynPad.Editor
                 }
             }
         }
-        
-        private void WindowOnLocationChanged(object sender, EventArgs eventArgs)
+
+        private void WindowOnLocationChanged(object? sender, EventArgs eventArgs)
         {
             if (_popup != null && _popup.IsOpen)
             {
@@ -124,9 +124,8 @@ namespace RoslynPad.Editor
                 ) return;
 
             CreatePopup();
-            Debug.Assert(_popup != null);
 
-            if (_popup.IsOpen && _popup.ItemsSource != null)
+            if (_popup!.IsOpen && _popup.ItemsSource != null)
             {
                 _popup.IsMenuOpen = true;
                 _popup.Focus();
@@ -158,9 +157,9 @@ namespace RoslynPad.Editor
                 // TODO: workaround to refresh menu with latest document
                 _popup.MenuOpened += async (sender, args) =>
                 {
-                    var popup = (ContextActionsBulbPopup)sender;
                     if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
                     {
+                        var popup = (ContextActionsBulbPopup)sender!;
                         popup.ItemsSource = _actions;
                     }
                 };
@@ -217,12 +216,12 @@ namespace RoslynPad.Editor
             return allActions;
         }
 
-        private void ScrollChanged(object sender, EventArgs e)
+        private void ScrollChanged(object? sender, EventArgs e)
         {
             StartTimer();
         }
 
-        private async void TimerMoveTick(object sender, EventArgs e)
+        private async void TimerMoveTick(object? sender, EventArgs e)
         {
             if (!_delayMoveTimer.IsEnabled)
                 return;
@@ -243,16 +242,15 @@ namespace RoslynPad.Editor
             if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
 
             CreatePopup();
-            Debug.Assert(_popup != null);
 
-            _popup.ItemsSource = _actions;
+            _popup!.ItemsSource = _actions;
             if (_popup.HasItems)
             {
                 _popup.OpenAtLineStart(_editor);
             }
         }
 
-        private void CaretPositionChanged(object sender, EventArgs e)
+        private void CaretPositionChanged(object? sender, EventArgs e)
         {
             StartTimer();
         }

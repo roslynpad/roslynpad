@@ -252,7 +252,7 @@ namespace RoslynPad.UI
 
                 var userDefinedPath = Settings.DocumentPath;
                 _documentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
-                    ? userDefinedPath
+                    ? userDefinedPath!
                     : GetDefaultDocumentPath();
             }
 
@@ -261,7 +261,7 @@ namespace RoslynPad.UI
 
         private string GetDefaultDocumentPath()
         {
-            string? documentsPath = null;
+            string documentsPath;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -737,9 +737,8 @@ namespace RoslynPad.UI
                             var currentPath = isLast && data.Type == DocumentFileChangeType.Renamed
                                 ? data.NewPath
                                 : Path.Combine(_documentRoot.Path, Path.Combine(pathParts.Take(index + 1).ToArray()));
-                            Debug.Assert(currentPath != null);
 
-                            var newDocument = DocumentViewModel.FromPath(currentPath);
+                            var newDocument = DocumentViewModel.FromPath(currentPath!);
                             if (!newDocument.IsAutoSave &&
                                 IsRelevantDocument(newDocument))
                             {
@@ -756,13 +755,15 @@ namespace RoslynPad.UI
                         switch (data.Type)
                         {
                             case DocumentFileChangeType.Renamed:
-                                Debug.Assert(data.NewPath != null);
-                                current.ChangePath(data.NewPath);
-                                // move it to the correct place
-                                parent.InternalChildren.Remove(current);
-                                if (IsRelevantDocument(current))
+                                if (data.NewPath != null)
                                 {
-                                    parent.AddChild(current);
+                                    current.ChangePath(data.NewPath);
+                                    // move it to the correct place
+                                    parent.InternalChildren.Remove(current);
+                                    if (IsRelevantDocument(current))
+                                    {
+                                        parent.AddChild(current);
+                                    }
                                 }
                                 break;
                             case DocumentFileChangeType.Deleted:

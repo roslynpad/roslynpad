@@ -19,7 +19,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
         /// For test purposes only. The integration tests need to know when the dialog is up and
         /// ready for automation.
         /// </summary>
-        internal static event Action TEST_DialogLoaded;
+        internal static event Action? TEST_DialogLoaded;
 
         // Expose localized strings for binding
         public string PickMembersDialogTitle => "Pick members";

@@ -22,7 +22,6 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         public GlobalAssemblyCacheCompletionHelper(CompletionItemRules itemRules)
         {
-            Debug.Assert(itemRules != null);
             _itemRules = itemRules;
         }
 

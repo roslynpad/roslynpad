@@ -87,8 +87,8 @@ namespace RoslynPad.Editor
             set => _headerImage.Source = value;
         }
 
-        public event EventHandler MenuOpened;
-        public event EventHandler MenuClosed;
+        public event EventHandler? MenuOpened;
+        public event EventHandler? MenuClosed;
 
         private Style CreateItemContainerStyle()
         {
