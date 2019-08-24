@@ -2,12 +2,12 @@ trigger:
 - master
 
 pool:
-  vmImage: win1803
+  vmImage: windows-latest
 
 variables:
   solution: src/RoslynPad.sln
   buildConfiguration: Release
-  sdkVersion: 3.0.100-preview6-012264
+  sdkVersion: 3.0.100-preview8-013656
 
 steps:
   - task: DotNetCoreInstaller@0
