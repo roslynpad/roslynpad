@@ -7,15 +7,16 @@
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <EditorPackageVersion>1.1.0</EditorPackageVersion>
-    <RoslynPackageVersion>3.1.0</RoslynPackageVersion>
-    <RoslynAssemblyVersion>3.0.0.0</RoslynAssemblyVersion>
+    <RoslynPackageVersion>3.3.1</RoslynPackageVersion>
+    <RoslynAssemblyVersion>3.3.0.0</RoslynAssemblyVersion>
     <LangVersion>8.0</LangVersion>
     <NullableContextOptions>Enable</NullableContextOptions>
     <Nullable>Enable</Nullable>
     <Authors>Eli Arbel</Authors>
     <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/aelij/RoslynPad/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>Roslyn;RoslynPad</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
 </Project>

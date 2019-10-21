@@ -155,7 +155,8 @@ namespace RoslynPad.Roslyn
                 return false;
             }
 
-            if (workspace.CurrentSolution.GetDocument(documentId).Project.TryGetCompilation(out var compilation))
+            if (workspace.CurrentSolution.GetDocument(documentId) is Document document &&
+                document.Project.TryGetCompilation(out var compilation))
             {
                 return compilation.ReferencedAssemblyNames.Any(a => a.Name == text);
             }
@@ -302,7 +303,7 @@ namespace RoslynPad.Roslyn
         {
             var id = DocumentId.CreateNewId(project.Id);
             var solution = project.Solution.AddDocument(id, args.Name ?? project.Name, args.SourceTextContainer.CurrentText);
-            return solution.GetDocument(id);
+            return solution.GetDocument(id)!;
         }
 
         protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project? previousProject = null)
@@ -331,7 +332,7 @@ namespace RoslynPad.Roslyn
 
             var project = solution.GetProject(id);
 
-            return project;
+            return project!;
         }
 
         #endregion

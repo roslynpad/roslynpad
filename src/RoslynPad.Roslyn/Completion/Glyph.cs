@@ -107,6 +107,7 @@ namespace RoslynPad.Roslyn.Completion
         CompletionWarning,
 
         AddReference,
-        NuGet
+        NuGet,
+        TargetTypeMatch
     }
 }

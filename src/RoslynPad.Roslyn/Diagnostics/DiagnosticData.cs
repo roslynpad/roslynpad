@@ -23,7 +23,6 @@ namespace RoslynPad.Roslyn.Diagnostics
         public IReadOnlyList<string> CustomTags => _inner.CustomTags;
         public ImmutableDictionary<string, string> Properties => _inner.Properties;
         public bool IsSuppressed => _inner.IsSuppressed;
-        public Workspace Workspace => _inner.Workspace;
         public ProjectId ProjectId => _inner.ProjectId;
         public DocumentId DocumentId => _inner.DocumentId;
         public bool HasTextSpan => _inner.HasTextSpan;

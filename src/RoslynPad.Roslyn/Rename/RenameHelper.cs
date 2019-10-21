@@ -24,7 +24,7 @@ namespace RoslynPad.Roslyn.Rename
         public static async Task<ISymbol?> GetRenameSymbol(
             Document document, SyntaxToken triggerToken, CancellationToken cancellationToken)
         {
-            var syntaxFactsService = document.Project.LanguageServices.GetService<ISyntaxFactsService>();
+            var syntaxFactsService = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
             if (syntaxFactsService.IsReservedOrContextualKeyword(triggerToken))
             {
                 return null;
@@ -152,7 +152,7 @@ namespace RoslynPad.Roslyn.Rename
                     if (document.Project.IsSubmission)
                     {
                         var solution = document.Project.Solution;
-                        var projectIdOfLocation = solution.GetDocument(location.SourceTree).Project.Id;
+                        var projectIdOfLocation = solution.GetDocument(location.SourceTree)?.Project.Id;
 
                         if (solution.Projects.Any(p => p.IsSubmission && p.ProjectReferences.Any(r => r.ProjectId == projectIdOfLocation)))
                         {
