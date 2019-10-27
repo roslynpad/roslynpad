@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 #if AVALONIA
@@ -29,11 +30,11 @@ namespace RoslynPad.Editor
 
         public const string BraceMatchingClassificationTypeName = "brace matching";
 
-        private readonly ImmutableDictionary<string, HighlightingColor> _map;
+        private readonly Lazy<ImmutableDictionary<string, HighlightingColor>> _map;
 
         public ClassificationHighlightColors()
         {
-            _map = new Dictionary<string, HighlightingColor>
+            _map = new Lazy<ImmutableDictionary<string, HighlightingColor>>(() => new Dictionary<string, HighlightingColor>
             {
                 [ClassificationTypeNames.ClassName] = AsFrozen(TypeBrush),
                 [ClassificationTypeNames.StructName] = AsFrozen(TypeBrush),
@@ -61,12 +62,12 @@ namespace RoslynPad.Editor
                 [ClassificationTypeNames.StringLiteral] = AsFrozen(StringBrush),
                 [ClassificationTypeNames.VerbatimStringLiteral] = AsFrozen(StringBrush),
                 [BraceMatchingClassificationTypeName] = AsFrozen(BraceMatchingBrush)
-            }.ToImmutableDictionary();
+            }.ToImmutableDictionary());
         }
 
         protected virtual ImmutableDictionary<string, HighlightingColor> GetOrCreateMap()
         {
-            return _map;
+            return _map.Value;
         }
 
         public HighlightingColor GetBrush(string classificationTypeName)
