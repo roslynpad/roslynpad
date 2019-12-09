@@ -456,7 +456,7 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var result = await ProcessUtil.RunProcess("dotnet", $"build -nologo -flp:errorsonly;logfile={errorsPath} {csprojPath}", cancellationToken).ConfigureAwait(false);
+                    var result = await ProcessUtil.RunProcess("dotnet", $"build -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
 
                     if (result.ExitCode != 0)
                     {
