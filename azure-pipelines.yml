@@ -15,3 +15,4 @@ steps:
       version: $(sdkVersion)
   - script: dotnet msbuild /restore /bl /p:Configuration=$(buildConfiguration) $(solution)
     displayName: Build
+
