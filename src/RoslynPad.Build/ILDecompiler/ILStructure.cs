@@ -22,7 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using Mono.Cecil.Cil;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     /// <summary>
     /// Specifies the type of an IL structure.

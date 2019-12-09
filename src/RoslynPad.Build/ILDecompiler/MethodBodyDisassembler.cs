@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using Mono.Cecil.Cil;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     /// <summary>
     /// Disassembles a method body.

@@ -23,7 +23,7 @@ using System.Threading;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     /// <summary>
     /// Disassembles type and member definitions.
@@ -670,7 +670,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             }
             else
             {
-                var typeName = DisassemblerHelpers.PrimitiveTypeName(constant.GetType().FullName);
+                var typeName = DisassemblerHelpers.PrimitiveTypeName(constant.GetType().FullName!);
                 if (typeName != null && typeName != "string")
                 {
                     _output.Write(typeName);

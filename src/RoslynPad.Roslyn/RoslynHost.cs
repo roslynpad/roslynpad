@@ -8,7 +8,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition.Hosting;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -20,7 +19,7 @@ namespace RoslynPad.Roslyn
         #region Fields
 
         internal static readonly ImmutableArray<string> PreprocessorSymbols =
-            ImmutableArray.CreateRange(new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__", "TRACE", "DEBUG" });
+            ImmutableArray.CreateRange(new[] { "TRACE", "DEBUG" });
 
         internal static readonly ImmutableArray<Assembly> DefaultCompositionAssemblies =
             ImmutableArray.Create(
@@ -37,10 +36,11 @@ namespace RoslynPad.Roslyn
 
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
-        private readonly ParseOptions _parseOptions;
         private readonly IDocumentationProviderService _documentationProviderService;
         private readonly CompositionHost _compositionContext;
         private int _documentNumber;
+
+        public ParseOptions ParseOptions { get; }
 
         public HostServices HostServices { get; }
 
@@ -82,7 +82,7 @@ namespace RoslynPad.Roslyn
             HostServices = MefHostServices.Create(_compositionContext);
 
             // ReSharper disable once VirtualMemberCallInConstructor
-            _parseOptions = CreateDefaultParseOptions();
+            ParseOptions = CreateDefaultParseOptions();
 
             _documentationProviderService = GetService<IDocumentationProviderService>();
 
@@ -103,7 +103,7 @@ namespace RoslynPad.Roslyn
         protected virtual ParseOptions CreateDefaultParseOptions()
         {
             return new CSharpParseOptions(kind: SourceCodeKind.Script,
-                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.CSharp8);
+                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Preview);
         }
 
         public MetadataReference CreateMetadataReference(string location)
@@ -311,7 +311,7 @@ namespace RoslynPad.Roslyn
             var name = args.Name ?? "Program" + Interlocked.Increment(ref _documentNumber);
             var id = ProjectId.CreateNewId(name);
 
-            var isScript = _parseOptions.Kind == SourceCodeKind.Script;
+            var isScript = ParseOptions.Kind == SourceCodeKind.Script;
 
             if (isScript)
             {
@@ -325,7 +325,7 @@ namespace RoslynPad.Roslyn
                 name,
                 LanguageNames.CSharp,
                 isSubmission: isScript,
-                parseOptions: _parseOptions,
+                parseOptions: ParseOptions,
                 compilationOptions: compilationOptions,
                 metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences,
                 projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null));

@@ -47,7 +47,7 @@ namespace RoslynPad.UI
             _dictionary.Add(item.OriginalName, item);
         }
 
-        public DocumentViewModel this[string name]
+        public DocumentViewModel? this[string name]
         {
             get
             {

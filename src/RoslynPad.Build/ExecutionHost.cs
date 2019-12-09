@@ -15,34 +15,34 @@ using Microsoft.CodeAnalysis.Scripting;
 using Mono.Cecil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RoslynPad.Hosting.ILDecompiler;
+using RoslynPad.Build.ILDecompiler;
+using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace RoslynPad.Hosting
+namespace RoslynPad.Build
 {
     /// <summary>
     /// An <see cref="IExecutionHost"/> implementation that compiles scripts to disk as EXEs and executes them in their own process.
     /// </summary>
-    internal class AssemblyExecutionHost : IExecutionHost
+    internal class ExecutionHost : IExecutionHost
     {
-        private static readonly CSharpParseOptions _parseOptions = new CSharpParseOptions(preprocessorSymbols: new[] { "__DEMO__", "__DEMO_EXPERIMENTAL__" }, languageVersion: LanguageVersion.CSharp8, kind: SourceCodeKind.Script);
-
-        private static readonly SyntaxTree InitHostSyntax = ParseSyntaxTree(
-            @"RoslynPad.Runtime.RuntimeInitializer.Initialize();", _parseOptions);
-
         private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
 
-        private ExecutionHostParameters _parameters;
+        private readonly ExecutionHostParameters _parameters;
+        private readonly IRoslynHost _roslynHost;
+        private readonly SyntaxTree _initHostSyntax;
+        private readonly HashSet<LibraryRef> _libraries;
         private ScriptOptions _scriptOptions;
         private CancellationTokenSource? _executeCts;
+        private Task? _restoreTask;
+        private CancellationTokenSource? _restoreCts;
         private ExecutionPlatform? _platform;
-        private string _assemblyPath;
-        private string _depsFile;
-        private PlatformVersion _platformVersion;
+        private string? _assemblyPath;
+        private PlatformVersion? _platformVersion;
         private string _name;
         private bool _running;
         private bool _initializeBuildPathAfterRun;
@@ -57,18 +57,21 @@ namespace RoslynPad.Hosting
 
                 if (!value.HasVersions)
                 {
+                    _platformVersion = null;
                     InitializeBuildPath(stop: true);
+                    TryRestore();
                 }
             }
         }
 
-        public PlatformVersion PlatformVersion
+        public PlatformVersion? PlatformVersion
         {
-            get => _platformVersion ?? throw new InvalidOperationException("No platform version selected");
+            get => _platformVersion;
             set
             {
                 _platformVersion = value;
                 InitializeBuildPath(stop: true);
+                TryRestore();
             }
         }
 
@@ -83,17 +86,16 @@ namespace RoslynPad.Hosting
                 {
                     _name = value;
                     InitializeBuildPath(stop: false);
+                    TryRestore();
                 }
             }
         }
 
         private readonly JsonSerializer _jsonSerializer;
 
-        public string BuildPath { get; }
+        private string BuildPath => _parameters.BuildPath;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
-        public AssemblyExecutionHost(ExecutionHostParameters parameters, string buildPath, string name)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
+        public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost)
         {
             _jsonSerializer = new JsonSerializer
             {
@@ -101,49 +103,33 @@ namespace RoslynPad.Hosting
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             };
 
-            BuildPath = buildPath;
-            Name = name;
+            _name = "";
+            _parameters = parameters;
+            _roslynHost = roslynHost;
+            _libraries = new HashSet<LibraryRef>();
+            _scriptOptions = ScriptOptions.Default
+                   .WithImports(parameters.Imports)
+                   .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
 
-            Initialize(parameters);
-        }
+            _initHostSyntax = ParseSyntaxTree(@"RoslynPad.Runtime.RuntimeInitializer.Initialize();", roslynHost.ParseOptions);
 
-        private void CreateRuntimeConfig()
-        {
-            if (!Platform.IsCore)
-            {
-                return;
-            }
-
-            var config = DotNetConfigHelper.CreateNetCoreRuntimeOptions(PlatformVersion);
-            WriteJson(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.json"), config);
-
-            var devConfig = DotNetConfigHelper.CreateNetCoreDevRuntimeOptions(_parameters.GlobalPackageFolder);
-            WriteJson(Path.Combine(BuildPath, $"RoslynPad-{Name}.runtimeconfig.dev.json"), devConfig);
+            MetadataReferences = ImmutableArray<MetadataReference>.Empty;
         }
 
         private static void WriteJson(string path, JToken token)
         {
-            using (var file = File.CreateText(path))
-            using (var writer = new JsonTextWriter(file))
-            {
-                token.WriteTo(writer);
-            }
+            using var file = File.CreateText(path);
+            using var writer = new JsonTextWriter(file);
+            token.WriteTo(writer);
         }
 
-        private void Initialize(ExecutionHostParameters parameters)
-        {
-            _parameters = parameters;
-            _scriptOptions = ScriptOptions.Default
-                   .WithReferences(parameters.NuGetCompileReferences.Select(p => MetadataReference.CreateFromFile(p)).Concat(parameters.FrameworkReferences))
-                   .WithImports(parameters.Imports)
-                   .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
-        }
-
-        public event Action<IList<CompilationErrorResultObject>> CompilationErrors;
-        public event Action<string> Disassembled;
-        public event Action<ResultObject> Dumped;
-        public event Action<ExceptionResultObject> Error;
-        public event Action ReadInput;
+        public event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
+        public event Action<string>? Disassembled;
+        public event Action<ResultObject>? Dumped;
+        public event Action<ExceptionResultObject>? Error;
+        public event Action? ReadInput;
+        public event Action? RestoreStarted;
+        public event Action<RestoreResult>? RestoreCompleted;
 
         public void Dispose()
         {
@@ -167,14 +153,13 @@ namespace RoslynPad.Hosting
             }
 
             CleanupBuildPath();
-            CreateRuntimeConfig();
         }
 
         private void CleanupBuildPath()
         {
             StopProcess();
 
-            foreach (var file in IOUtilities.EnumerateFiles(BuildPath))
+            foreach (var file in IOUtilities.EnumerateFilesRecursive(BuildPath))
             {
                 IOUtilities.PerformIO(() => File.Delete(file));
             }
@@ -183,6 +168,8 @@ namespace RoslynPad.Hosting
         public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
             await new NoContextYieldAwaitable();
+
+            await RestoreTask.ConfigureAwait(false);
 
             try
             {
@@ -193,10 +180,7 @@ namespace RoslynPad.Hosting
 
                 var script = CreateScriptRunner(code, optimizationLevel);
 
-                _assemblyPath = Path.Combine(BuildPath, $"RoslynPad-{Name}.{AssemblyExtension}");
-                _depsFile = Path.ChangeExtension(_assemblyPath, ".deps.json");
-
-                CopyDependencies();
+                _assemblyPath = Path.Combine(BuildPath, "bin", $"rp-{Name}.{AssemblyExtension}");
 
                 var diagnostics = await script.SaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
                 SendDiagnostics(diagnostics);
@@ -230,73 +214,16 @@ namespace RoslynPad.Hosting
 
         private void Disassemble()
         {
-            using (var assembly = AssemblyDefinition.ReadAssembly(_assemblyPath))
-            {
-                var output = new PlainTextOutput();
-                var disassembler = new ReflectionDisassembler(output, false, CancellationToken.None);
-                disassembler.WriteModuleContents(assembly.MainModule);
-                Disassembled?.Invoke(output.ToString());
-            }
+            using var assembly = AssemblyDefinition.ReadAssembly(_assemblyPath);
+            var output = new PlainTextOutput();
+            var disassembler = new ReflectionDisassembler(output, false, CancellationToken.None);
+            disassembler.WriteModuleContents(assembly.MainModule);
+            Disassembled?.Invoke(output.ToString());
         }
 
         private string AssemblyExtension => Platform.IsCore ? "dll" : "exe";
 
-        private void CopyDependencies()
-        {
-            var referencesChanged = CopyReferences(_parameters.DirectReferences);
-
-            if (Platform.IsCore)
-            {
-                IOUtilities.FileCopy(Path.Combine(BuildPath, "nuget", "project.assets.json"), _depsFile, overwrite: true);
-                return;
-            }
-
-            // Platform.IsDesktop
-
-            referencesChanged |= CopyReferences(_parameters.NuGetRuntimeReferences);
-
-            if (referencesChanged)
-            {
-                CreateAppConfig();
-            }
-
-            // local functions
-
-            bool CopyReferences(IEnumerable<string> references)
-            {
-                var copied = false;
-
-                foreach (var file in references)
-                {
-                    if (CopyIfNewer(file, Path.Combine(BuildPath, Path.GetFileName(file))))
-                    {
-                        copied = true;
-                    }
-                }
-
-                return copied;
-            }
-
-            void CreateAppConfig()
-            {
-                var appConfig = DotNetConfigHelper.CreateNetFxAppConfig(_parameters.NuGetRuntimeReferences);
-                appConfig.Save(Path.ChangeExtension(_assemblyPath, ".exe.config"));
-            }
-        }
-
-        private static bool CopyIfNewer(string source, string destination)
-        {
-            var sourceInfo = new FileInfo(source);
-            var destinationInfo = new FileInfo(destination);
-
-            if (!destinationInfo.Exists || destinationInfo.CreationTimeUtc < sourceInfo.CreationTimeUtc)
-            {
-                IOUtilities.FileCopy(source, destination, overwrite: true);
-                return true;
-            }
-
-            return false;
-        }
+        public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
 
         private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
         {
@@ -305,8 +232,8 @@ namespace RoslynPad.Hosting
                 : Microsoft.CodeAnalysis.Platform.AnyCpu;
 
             return new ScriptRunner(code: null,
-                                    syntaxTrees: ImmutableList.Create(InitHostSyntax, ParseCode(code)),
-                                    _parseOptions,
+                                    syntaxTrees: ImmutableList.Create(_initHostSyntax, ParseCode(code)),
+                                    _roslynHost.ParseOptions as CSharpParseOptions,
                                     OutputKind.ConsoleApplication,
                                     platform,
                                     _scriptOptions.MetadataReferences,
@@ -344,9 +271,26 @@ namespace RoslynPad.Hosting
                         Task.Run(() => ReadProcessStream(process.StandardError)));
                 }
             }
+
+            ProcessStartInfo GetProcessStartInfo(string assemblyPath)
+            {
+                return new ProcessStartInfo
+                {
+                    FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
+                    Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
+                    WorkingDirectory = _parameters.WorkingDirectory,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8,
+                };
+            }
         }
 
-        public async Task SendInput(string message)
+        public async Task SendInputAsync(string message)
         {
             var stream = _processInputStream;
             if (stream != null)
@@ -354,23 +298,6 @@ namespace RoslynPad.Hosting
                 await stream.WriteLineAsync(message).ConfigureAwait(false);
                 await stream.FlushAsync().ConfigureAwait(false);
             }
-        }
-
-        private ProcessStartInfo GetProcessStartInfo(string assemblyPath)
-        {
-            return new ProcessStartInfo
-            {
-                FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
-                Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
-                WorkingDirectory = _parameters.WorkingDirectory,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-            };
         }
 
         private async Task ReadProcessStream(StreamReader reader)
@@ -387,38 +314,36 @@ namespace RoslynPad.Hosting
 
         private void ReadObjectProcessStream(StreamReader reader)
         {
-            using (var jsonReader = new JsonTextReader(reader) { SupportMultipleContent = true })
+            using var jsonReader = new JsonTextReader(reader) { SupportMultipleContent = true };
+            while (jsonReader.Read())
             {
-                while (jsonReader.Read())
+                try
                 {
-                    try
-                    {
-                        var result = _jsonSerializer.Deserialize<ResultObject>(jsonReader);
+                    var result = _jsonSerializer.Deserialize<ResultObject>(jsonReader);
 
-                        switch (result)
-                        {
-                            case ExceptionResultObject exceptionResult:
-                                Error?.Invoke(exceptionResult);
-                                break;
-                            case InputReadRequest _:
-                                ReadInput?.Invoke();
-                                break;
-                            default:
-                                Dumped?.Invoke(result);
-                                break;
-                        }
-                    }
-                    catch (Exception ex)
+                    switch (result)
                     {
-                        Dumped?.Invoke(ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default));
+                        case ExceptionResultObject exceptionResult:
+                            Error?.Invoke(exceptionResult);
+                            break;
+                        case InputReadRequest _:
+                            ReadInput?.Invoke();
+                            break;
+                        default:
+                            Dumped?.Invoke(result);
+                            break;
                     }
+                }
+                catch (Exception ex)
+                {
+                    Dumped?.Invoke(ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default));
                 }
             }
         }
 
         private SyntaxTree ParseCode(string code)
         {
-            var tree = ParseSyntaxTree(code, _parseOptions);
+            var tree = ParseSyntaxTree(code, _roslynHost.ParseOptions);
             var root = tree.GetRoot();
 
             if (root is CompilationUnitSyntax c)
@@ -445,7 +370,7 @@ namespace RoslynPad.Hosting
                 root = c.WithMembers(members);
             }
 
-            return tree.WithRootAndOptions(root, _parseOptions);
+            return tree.WithRootAndOptions(root, _roslynHost.ParseOptions);
         }
 
         private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -467,7 +392,7 @@ namespace RoslynPad.Hosting
             return result;
         }
 
-        public Task ResetAsync()
+        public Task TerminateAsync()
         {
             StopProcess();
             return Task.CompletedTask;
@@ -478,10 +403,135 @@ namespace RoslynPad.Hosting
             _executeCts?.Cancel();
         }
 
-        public Task Update(ExecutionHostParameters parameters)
+        public void UpdateLibraries(IList<LibraryRef> libraries)
         {
-            Initialize(parameters);
-            return Task.CompletedTask;
+            lock (_libraries)
+            {
+                if (!_libraries.SetEquals(libraries))
+                {
+                    _libraries.Clear();
+                    _libraries.UnionWith(libraries);
+
+                    TryRestore();
+                }
+            }
+        }
+
+        private Task RestoreTask => _restoreTask ?? Task.CompletedTask;
+
+        public void TryRestore()
+        {
+            if (!HasPlatform || string.IsNullOrEmpty(Name))
+            {
+                return;
+            }
+
+            if (_restoreCts != null)
+            {
+                _restoreCts.Cancel();
+                _restoreCts.Dispose();
+            }
+
+            RestoreStarted?.Invoke();
+
+            var restoreCts = new CancellationTokenSource();
+            _restoreTask = RestoreAsync(RestoreTask, restoreCts.Token);
+            _restoreCts = restoreCts;
+
+            async Task RestoreAsync(Task previousTask, CancellationToken cancellationToken)
+            {
+                try
+                {
+                    await previousTask.ConfigureAwait(false);
+                }
+                catch { }
+
+                try
+                {
+                    await BuildGlobalJson().ConfigureAwait(false);
+                    var csprojPath = await BuildCsproj().ConfigureAwait(false);
+
+                    var errorsPath = Path.Combine(BuildPath, "errors.log");
+                    File.Delete(errorsPath);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var result = await ProcessUtil.RunProcess("dotnet", $"build -nologo -flp:errorsonly;logfile={errorsPath} {csprojPath}", cancellationToken).ConfigureAwait(false);
+
+                    if (result.ExitCode != 0)
+                    {
+                        var error = await GetErrorAsync(errorsPath, result, cancellationToken);
+                        RestoreCompleted?.Invoke(RestoreResult.FromError(error));
+                        return;
+                    }
+
+                    var referencesPath = Path.Combine(BuildPath, "references.txt");
+                    var references = await File.ReadAllLinesAsync(referencesPath, cancellationToken);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    MetadataReferences = references
+                        .Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Select(r => _roslynHost.CreateMetadataReference(r)).ToImmutableArray();
+
+                    _scriptOptions = _scriptOptions.WithReferences(MetadataReferences);
+
+                    RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
+                }
+                catch (Exception ex)
+                {
+                    RestoreCompleted?.Invoke(RestoreResult.FromError(ex.Message));
+                }
+            }
+
+            async Task BuildGlobalJson()
+            {
+                if (Platform?.IsCore == true && PlatformVersion != null)
+                {
+                    var global = new JObject(
+                        new JProperty("sdk", new JObject(
+                            new JProperty("version", PlatformVersion.FrameworkVersion))));
+
+                    await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
+                }
+            }
+
+            async Task<string> BuildCsproj()
+            {
+                var targetFrameworkMoniker = PlatformVersion?.TargetFrameworkMoniker ?? Platform.TargetFrameworkMoniker;
+
+                var csproj = MSBuildHelper.CreateCsproj(
+                    targetFrameworkMoniker,
+                    _libraries);
+                var csprojPath = Path.Combine(BuildPath, $"rp-{Name}.csproj");
+
+                await Task.Run(() => csproj.Save(csprojPath)).ConfigureAwait(false);
+                return csprojPath;
+            }
+
+            static async Task<string> GetErrorAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
+            {
+                string error;
+                try
+                {
+                    error = await File.ReadAllTextAsync(errorsPath, cancellationToken).ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(error))
+                    {
+                        error = ErrorFromResult(result);
+                    }
+                }
+                catch (FileNotFoundException)
+                {
+                    error = ErrorFromResult(result);
+                }
+
+                return error;
+            }
+
+            static string ErrorFromResult(ProcessUtil.ProcessResult result)
+            {
+                return string.Join(Environment.NewLine, result.StandardOutput, result.StandardError);
+            }
         }
     }
 }

@@ -57,7 +57,7 @@ namespace RoslynPad.Roslyn.BraceMatching
             CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-            var token = root.FindToken(position);
+            var token = root!.FindToken(position);
 
             var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             if (position < text.Length && IsBrace(text[position]))

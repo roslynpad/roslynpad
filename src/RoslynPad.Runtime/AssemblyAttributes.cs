@@ -5,4 +5,4 @@
 [assembly: InternalsVisibleTo("RoslynPad.Common.UI")]
 [assembly: InternalsVisibleTo("RoslynPad.Editor.Avalonia")]
 [assembly: InternalsVisibleTo("RoslynPad.Editor.Windows")]
-[assembly: InternalsVisibleTo("RoslynPad.Hosting")]
+[assembly: InternalsVisibleTo("RoslynPad.Build")]

@@ -32,7 +32,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
                 var tree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
 
-                if (!TryGetStringLiteralToken(tree, position, out var stringLiteral, cancellationToken))
+                if (!TryGetStringLiteralToken(tree!, position, out var stringLiteral, cancellationToken))
                 {
                     return;
                 }

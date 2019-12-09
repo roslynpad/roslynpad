@@ -22,7 +22,7 @@ using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     /// <summary>
     /// Cecil helper methods.

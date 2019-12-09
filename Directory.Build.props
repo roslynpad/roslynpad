@@ -6,11 +6,10 @@
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <EditorPackageVersion>1.1.0</EditorPackageVersion>
-    <RoslynPackageVersion>3.3.1</RoslynPackageVersion>
-    <RoslynAssemblyVersion>3.3.0.0</RoslynAssemblyVersion>
+    <EditorPackageVersion>1.2.0</EditorPackageVersion>
+    <RoslynPackageVersion>3.4.0</RoslynPackageVersion>
+    <RoslynAssemblyVersion>3.4.0.0</RoslynAssemblyVersion>
     <LangVersion>8.0</LangVersion>
-    <NullableContextOptions>Enable</NullableContextOptions>
     <Nullable>Enable</Nullable>
     <Authors>Eli Arbel</Authors>
     <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>

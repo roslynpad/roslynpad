@@ -1,15 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
@@ -21,59 +16,10 @@ namespace RoslynPad.Roslyn
         private static readonly Lazy<(string? assemblyPath, string? docPath)> _referenceAssembliesPath =
             new Lazy<(string?, string?)>(GetReferenceAssembliesPath);
 
-        private static readonly Lazy<RoslynHostReferences> _desktopDefault = new Lazy<RoslynHostReferences>(() =>
-        {
-            var result = Empty.With(typeNamespaceImports: new[]
-            {
-                typeof(object),
-                typeof(Thread),
-                typeof(Task),
-                typeof(List<>),
-                typeof(Regex),
-                typeof(StringBuilder),
-                typeof(Uri),
-                typeof(Enumerable),
-                typeof(IEnumerable),
-                typeof(Path),
-                typeof(Assembly)
-            }, assemblyReferences: new[]
-            {
-                typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly
-            });
-
-            var objectAssemblyPath = typeof(object).Assembly.Location;
-            var mscorlibPath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), "mscorlib.dll");
-            if (File.Exists(mscorlibPath))
-            {
-                result = result.With(assemblyPathReferences: new[] { mscorlibPath });
-            }
-
-            var facadeAssemblies = TryGetFacadeAssemblies(_referenceAssembliesPath.Value.assemblyPath);
-            if (facadeAssemblies != null)
-            {
-                result = result.With(assemblyPathReferences: facadeAssemblies);
-            }
-            else
-            {
-                var systemRuntimePath = Path.Combine(Path.GetDirectoryName(objectAssemblyPath), "System.Runtime.dll");
-                if (File.Exists(systemRuntimePath))
-                {
-                    result = result.With(assemblyPathReferences: new[] { systemRuntimePath });
-                }
-            }
-
-            return result;
-        });
-
         public static RoslynHostReferences Empty { get; } = new RoslynHostReferences(
             ImmutableArray<MetadataReference>.Empty,
             ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase),
             ImmutableArray<string>.Empty);
-
-        /// <summary>
-        /// Returns desired defaults for .NET Framework (desktop).
-        /// </summary>
-        public static RoslynHostReferences DesktopDefault => _desktopDefault.Value;
 
         /// <summary>
         /// Returns namespace-only (no assemblies) defaults that fit all frameworks.
@@ -97,18 +43,18 @@ namespace RoslynPad.Roslyn
             IEnumerable<Assembly>? assemblyReferences = null, IEnumerable<string>? assemblyPathReferences = null, IEnumerable<Type>? typeNamespaceImports = null)
         {
             var referenceLocations = _referenceLocations;
-            var importsArray = Imports.AddRange(imports.WhereNotNull());
+            var importsArray = Imports.AddRange(imports!.WhereNotNull());
 
             var locations =
-                assemblyReferences.WhereNotNull().Select(c => c.Location).Concat(
-                assemblyPathReferences.WhereNotNull());
+                assemblyReferences!.WhereNotNull().Select(c => c.Location).Concat(
+                assemblyPathReferences!.WhereNotNull());
 
             foreach (var location in locations)
             {
                 referenceLocations = referenceLocations.SetItem(location, string.Empty);
             }
 
-            foreach (var type in typeNamespaceImports.WhereNotNull())
+            foreach (var type in typeNamespaceImports!.WhereNotNull())
             {
                 importsArray = importsArray.Add(type.Namespace);
                 var location = type.Assembly.Location;
@@ -116,7 +62,7 @@ namespace RoslynPad.Roslyn
             }
 
             return new RoslynHostReferences(
-                _references.AddRange(references.WhereNotNull()),
+                _references.AddRange(references!.WhereNotNull()),
                 referenceLocations,
                 importsArray);
         }
@@ -146,8 +92,7 @@ namespace RoslynPad.Roslyn
             string? assemblyPath = null;
             string? docPath = null;
 
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-                RuntimeInformation.FrameworkDescription.Contains(".NET Core"))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 // all NuGet
                 return (assemblyPath, docPath);

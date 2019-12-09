@@ -19,7 +19,7 @@
 using System;
 using System.IO;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
 	internal interface ITextOutput
 	{
@@ -72,7 +72,7 @@ namespace RoslynPad.Hosting.ILDecompiler
         
         public override string ToString()
         {
-            return _writer.ToString();
+            return _writer.ToString()!;
         }
 
         public void Indent()

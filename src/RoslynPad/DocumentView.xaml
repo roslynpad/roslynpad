@@ -211,11 +211,11 @@
                               Content="Prerelease" />
                 </Decorator>
                 <Menu Background="Transparent">
-                    <MenuItem Header="{Binding NuGet, Mode=OneTime}"
-                              ItemsSource="{Binding NuGet.RestoreErrors}"
+                    <MenuItem Header="{Binding Mode=OneTime}"
+                              ItemsSource="{Binding RestoreErrors}"
                               ToolTip="NuGet Restore">
                         <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
+                            <DataTemplate>
                                 <Grid>
                                     <Image Name="Icon"
                                            Source="{StaticResource NuGet}" />
@@ -224,6 +224,13 @@
                                                  BorderThickness="0"
                                                  IsIndeterminate="{Binding IsRestoring}"
                                                  Visibility="{Binding IsRestoring, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <Image Name="WarnIcon"
+                                           Visibility="{Binding HasRestoreError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Source="{StaticResource WarningMarker}"
+                                           Width="10"
+                                           Height="10"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Bottom" />
                                 </Grid>
                                 <DataTemplate.Triggers>
                                     <DataTrigger Binding="{Binding RestoreFailed}">

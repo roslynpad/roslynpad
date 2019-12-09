@@ -137,7 +137,7 @@ namespace RoslynPad.Editor
                 _sourceText.CopyTo(sourceIndex, destination, destinationIndex, count);
             }
 
-            public override Encoding Encoding => _sourceText.Encoding;
+            public override Encoding? Encoding => _sourceText.Encoding;
 
             public override int Length => _sourceText.Length;
 

@@ -24,7 +24,7 @@ namespace RoslynPad.Roslyn.BraceMatching
         public async Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-            var token = root.FindToken(position, findInsideTrivia: true);
+            var token = root!.FindToken(position, findInsideTrivia: true);
 
             var directive = token.Parent as TDirectiveTriviaSyntax;
             if (directive == null)

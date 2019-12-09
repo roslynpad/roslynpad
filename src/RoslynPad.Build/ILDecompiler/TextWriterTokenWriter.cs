@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     internal static class TextWriterTokenWriter
     {

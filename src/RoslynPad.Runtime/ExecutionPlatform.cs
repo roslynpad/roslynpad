@@ -33,15 +33,13 @@ namespace RoslynPad
     [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
     public class PlatformVersion
     {
-        internal PlatformVersion(string targetFrameworkMoniker, string frameworkName, string frameworkVersion)
+        internal PlatformVersion(string targetFrameworkMoniker, string frameworkVersion)
         {
             TargetFrameworkMoniker = targetFrameworkMoniker;
-            FrameworkName = frameworkName;
             FrameworkVersion = frameworkVersion;
         }
 
         internal string TargetFrameworkMoniker { get; }
-        internal string FrameworkName { get; }
         internal string FrameworkVersion { get; }
 
         public override string ToString() => FrameworkVersion;

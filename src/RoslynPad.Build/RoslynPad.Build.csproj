@@ -2,8 +2,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <RootNamespace>RoslynPad.Hosting</RootNamespace>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>RoslynPad.Build</RootNamespace>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />

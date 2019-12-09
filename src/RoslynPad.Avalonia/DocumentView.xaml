@@ -89,6 +89,9 @@
                           Header="{Binding NuGet, Mode=OneTime}"
                           ToolTip.Tip="NuGet Packages">
                     <MenuItem.Styles>
+                        <Style Selector="MenuItem Popup">
+                            <Setter Property="MaxHeight" Value="400" />
+                        </Style>
                         <Style Selector="MenuItem > MenuItem">
                             <Setter Property="Command"
                                     Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />

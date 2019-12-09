@@ -173,7 +173,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             var root = await linkedDocument.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
             // Don't search trivia because we want to ignore inactive regions
-            var linkedToken = root.FindToken(token.SpanStart);
+            var linkedToken = root!.FindToken(token.SpanStart);
 
             // The new and old tokens should have the same span?
             if (token.Span == linkedToken.Span)
@@ -325,7 +325,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             var overloads = semanticModel.GetMemberGroup(bindableParent, cancellationToken);
 
             symbols = symbols.Where(IsOk)
-                .Where(s => IsAccessible(s, enclosingType))
+                .Where(s => IsAccessible(s, enclosingType!))
                 .Concat(overloads)
                 .Distinct(SymbolEquivalenceComparer.Instance)
                 .ToImmutableArray();
@@ -346,9 +346,9 @@ namespace RoslynPad.Roslyn.QuickInfo
             if (syntaxFacts.IsOperator(token))
             {
                 var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);
-                if (IsOk(typeInfo.Type))
+                if (IsOk(typeInfo.Type!))
                 {
-                    return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, new List<ISymbol>(1) { typeInfo.Type });
+                    return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, new List<ISymbol>(1) { typeInfo.Type! });
                 }
             }
 

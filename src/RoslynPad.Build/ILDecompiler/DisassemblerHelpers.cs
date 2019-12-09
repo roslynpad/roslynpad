@@ -23,7 +23,7 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace RoslynPad.Hosting.ILDecompiler
+namespace RoslynPad.Build.ILDecompiler
 {
     internal enum ILNameSyntax
     {
@@ -110,7 +110,7 @@ namespace RoslynPad.Hosting.ILDecompiler
         private static string ToInvariantCultureString(object value)
         {
             var convertible = value as IConvertible;
-            return convertible?.ToString(CultureInfo.InvariantCulture) ?? value.ToString();
+            return convertible?.ToString(CultureInfo.InvariantCulture) ?? value.ToString()!;
         }
 
         public static void WriteTo(this MethodReference method, ITextOutput writer)
@@ -231,7 +231,7 @@ namespace RoslynPad.Hosting.ILDecompiler
             {
                 if (field.FieldType == typeof(OpCode))
                 {
-                    s.Add(((OpCode)field.GetValue(null)).Name);
+                    s.Add(((OpCode)field.GetValue(null)!).Name);
                 }
             }
             return s;

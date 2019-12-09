@@ -37,9 +37,9 @@ namespace RoslynPad.UI
 
         protected abstract string GetInstrumentationKey();
 
-        private void TaskSchedulerOnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs args)
+        private void TaskSchedulerOnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
         {
-            HandleException(args.Exception.Flatten().InnerException);
+            HandleException(args.Exception!.Flatten().InnerException!);
         }
 
         private void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs args)

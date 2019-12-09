@@ -44,7 +44,7 @@ namespace RoslynPad
             }
         }
 
-        private async void OnDataContextChanged(object sender, EventArgs args)
+        private async void OnDataContextChanged(object? sender, EventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)DataContext;
             if (_viewModel == null) return;

@@ -248,7 +248,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             public async Task<Document> ApplyCodeFixesForSpecificDiagnosticIdAsync(Document document, string diagnosticId, IProgressTracker progressTracker, CancellationToken cancellationToken)
             {
                 var tree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
-                var textSpan = new TextSpan(0, tree.Length);
+                var textSpan = new TextSpan(0, tree!.Length);
 
                 var fixCollection = await GetDocumentFixAllForIdInSpanAsync(
                     document, textSpan, diagnosticId, cancellationToken).ConfigureAwait(false);
@@ -398,8 +398,8 @@ namespace RoslynPad.Roslyn.CodeFixes
                     return;
                 }
 
-                var extensionManager = document.Project.Solution.Workspace.Services.GetService<IExtensionManager>();
-                var fixes = await extensionManager.PerformFunctionAsync(fixer,
+                var extensionManager = document.Project.Solution.Workspace.Services.GetRequiredService<IExtensionManager>();
+                var fixes = await extensionManager.PerformFunctionAsync(fixer!,
                      () => getFixes(diagnostics),
                     defaultValue: ImmutableArray<CodeFix>.Empty).ConfigureAwait(false);
 
@@ -409,7 +409,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 }
 
                 // If the fix provider supports fix all occurrences, then get the corresponding FixAllProviderInfo and fix all context.
-                var fixAllProviderInfo = extensionManager.PerformFunction(fixer, () => ImmutableInterlocked.GetOrAdd(ref _fixAllProviderMap, fixer!, FixAllProviderInfo.Create), defaultValue: null!);
+                var fixAllProviderInfo = extensionManager.PerformFunction(fixer!, () => ImmutableInterlocked.GetOrAdd(ref _fixAllProviderMap, fixer!, FixAllProviderInfo.Create), defaultValue: null!);
 
                 FixAllState? fixAllState = null;
                 var supportedScopes = ImmutableArray<FixAllScope>.Empty;
@@ -545,7 +545,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     verifyArguments: false,
                     cancellationToken: cancellationToken);
 
-                var extensionManager = document.Project.Solution.Workspace.Services.GetService<IExtensionManager>();
+                var extensionManager = document.Project.Solution.Workspace.Services.GetRequiredService<IExtensionManager>();
 
                 // we do have fixer. now let's see whether it actually can fix it
                 foreach (var fixer in allFixers)

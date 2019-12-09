@@ -39,12 +39,12 @@ namespace RoslynPad.Editor
             element.DetachedFromVisualTree += (o, e) => action(false);
         }
 
-        public static void AttachLocationChanged(this Window topLevel, EventHandler<PointEventArgs> handler)
+        public static void AttachLocationChanged(this Window topLevel, EventHandler<PixelPointEventArgs> handler)
         {
             topLevel.PositionChanged += handler;
         }
 
-        public static void DetachLocationChanged(this Window topLevel, EventHandler<PointEventArgs> handler)
+        public static void DetachLocationChanged(this Window topLevel, EventHandler<PixelPointEventArgs> handler)
         {
             topLevel.PositionChanged -= handler;
         }

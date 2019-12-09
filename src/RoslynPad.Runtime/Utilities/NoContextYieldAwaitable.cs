@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 
 namespace RoslynPad.Utilities
@@ -19,15 +15,9 @@ namespace RoslynPad.Utilities
         {
             public bool IsCompleted => Thread.CurrentThread.IsThreadPoolThread;
 
-            public void OnCompleted(Action continuation)
-            {
-                QueueContinuation(continuation, flowContext: false);
-            }
+            public void OnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
 
-            public void UnsafeOnCompleted(Action continuation)
-            {
-                QueueContinuation(continuation, flowContext: false);
-            }
+            public void UnsafeOnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
 
             private static void QueueContinuation(Action continuation, bool flowContext)
             {
@@ -45,7 +35,7 @@ namespace RoslynPad.Utilities
 
             private static readonly WaitCallback s_waitCallbackRunAction = RunAction;
 
-            private static void RunAction(object state) { ((Action)state)(); }
+            private static void RunAction(object state) => ((Action)state)();
 
             public void GetResult() { }
         }

@@ -37,7 +37,6 @@ namespace RoslynPad.UI
         private bool _isInitialized;
         private DocumentViewModel _documentRoot;
         private DocumentWatcher _documentWatcher;
-        private ImmutableArray<MetadataReference> _defaultReferences;
 
         public IApplicationSettings Settings { get; }
         public DocumentViewModel DocumentRoot
@@ -261,7 +260,7 @@ namespace RoslynPad.UI
 
         private string GetDefaultDocumentPath()
         {
-            string documentsPath;
+            string? documentsPath;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -342,6 +341,7 @@ namespace RoslynPad.UI
                 openDocument = GetOpenDocumentViewModel(document);
                 OpenDocuments.Add(openDocument);
             }
+
             CurrentOpenDocument = openDocument;
         }
 
@@ -559,57 +559,57 @@ namespace RoslynPad.UI
                     await SearchInFile(document, regex).ConfigureAwait(false);
                 }
             }
-        }
 
-        private bool SearchDocumentName(DocumentViewModel document)
-        {
-            return document.Name.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private Regex? CreateSearchRegex()
-        {
-            try
+            bool SearchDocumentName(DocumentViewModel document)
             {
-                var regex = new Regex(SearchText, RegexOptions.Multiline | RegexOptions.Singleline | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
-
-                ClearError(nameof(SearchText), "Regex");
-
-                return regex;
+                return document.Name.IndexOf(SearchText!, StringComparison.OrdinalIgnoreCase) >= 0;
             }
-            catch (ArgumentException)
+
+            Regex? CreateSearchRegex()
             {
-                SetError(nameof(SearchText), "Regex", "Invalid regular expression");
-
-                return null;
-            }
-        }
-
-        private async Task SearchInFile(DocumentViewModel document, Regex? regex)
-        {
-            // a regex can span many lines so we need to load the entire file;
-            // otherwise, search line-by-line
-
-            if (regex != null)
-            {
-                var documentText = await IOUtilities.ReadAllTextAsync(document.Path).ConfigureAwait(false);
                 try
                 {
-                    document.IsSearchMatch = regex.IsMatch(documentText);
+                    var regex = new Regex(SearchText, RegexOptions.Multiline | RegexOptions.Singleline | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
+
+                    ClearError(nameof(SearchText), "Regex");
+
+                    return regex;
                 }
-                catch (RegexMatchTimeoutException)
+                catch (ArgumentException)
                 {
-                    document.IsSearchMatch = false;
+                    SetError(nameof(SearchText), "Regex", "Invalid regular expression");
+
+                    return null;
                 }
             }
-            else
+
+            async Task SearchInFile(DocumentViewModel document, Regex? regex)
             {
-                // need IAsyncEnumerable here, but for now just push it to the thread-pool
-                await Task.Run(() =>
+                // a regex can span many lines so we need to load the entire file;
+                // otherwise, search line-by-line
+
+                if (regex != null)
                 {
-                    var lines = IOUtilities.ReadLines(document.Path);
-                    document.IsSearchMatch = lines.Any(line =>
-                        line.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0);
-                }).ConfigureAwait(false);
+                    var documentText = await IOUtilities.ReadAllTextAsync(document.Path).ConfigureAwait(false);
+                    try
+                    {
+                        document.IsSearchMatch = regex.IsMatch(documentText);
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        document.IsSearchMatch = false;
+                    }
+                }
+                else
+                {
+                    // need IAsyncEnumerable here, but for now just push it to the thread-pool
+                    await Task.Run(() =>
+                    {
+                        var lines = IOUtilities.ReadLines(document.Path);
+                        document.IsSearchMatch = lines.Any(line =>
+                            line.IndexOf(SearchText!, StringComparison.OrdinalIgnoreCase) >= 0);
+                    }).ConfigureAwait(false);
+                }
             }
         }
 
@@ -664,19 +664,6 @@ namespace RoslynPad.UI
 
         public IDelegateCommand ClearSearchCommand => _commands.Create(ClearSearch);
 
-        public ImmutableArray<MetadataReference> DesktopReferences
-        {
-            get
-            {
-                if (_defaultReferences.IsDefault)
-                {
-                    _defaultReferences = RoslynHostReferences.DesktopDefault.GetReferences(RoslynHost.DocumentationProviderFactory);
-                }
-
-                return _defaultReferences;
-            }
-        }
-
         private void ClearSearch()
         {
             SearchText = null;
@@ -714,7 +701,7 @@ namespace RoslynPad.UI
                 var pathParts = data.Path.Substring(_documentRoot.Path.Length)
                     .Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
 
-                var current = _documentRoot;
+                DocumentViewModel? current = _documentRoot;
 
                 for (var index = 0; index < pathParts.Length; index++)
                 {
