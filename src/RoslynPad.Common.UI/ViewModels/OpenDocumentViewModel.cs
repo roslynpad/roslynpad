@@ -49,7 +49,6 @@ namespace RoslynPad.UI
         private bool _isLiveMode;
         private Timer _liveModeTimer;
         private ExecutionHostParameters _executionHostParameters;
-        private PlatformVersion _platformVersion;
         private DocumentViewModel? _document;
         private bool _isRestoring;
         private string[]? _restoreErrors;
@@ -146,7 +145,6 @@ namespace RoslynPad.UI
 
             _dispatcher = appDispatcher;
             _platformsFactory.Changed += InitializePlatforms;
-            InitializePlatforms();
 
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
@@ -177,6 +175,8 @@ namespace RoslynPad.UI
             _executionHost.RestoreStarted += OnRestoreStarted;
             _executionHost.RestoreCompleted += OnRestoreCompleted;
 
+            InitializePlatforms();
+
             Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
                        AvailablePlatforms.FirstOrDefault();
         }
@@ -184,6 +184,7 @@ namespace RoslynPad.UI
         private void InitializePlatforms()
         {
             AvailablePlatforms = _platformsFactory.GetExecutionPlatforms().ToImmutableArray();
+            _executionHost.DotNetExecutable = _platformsFactory.DotNetExecutable;
         }
 
         private void OnRestoreStarted()
@@ -434,34 +435,10 @@ namespace RoslynPad.UI
                 if (SetProperty(ref _platform, value))
                 {
                     _executionHost.Platform = value;
-                    PlatformVersion = value.Versions.FirstOrDefault(p => p.FrameworkVersion.IndexOf("-", StringComparison.Ordinal) < 0) ??
-                        value.Versions.FirstOrDefault();
 
-                    if (_isInitialized && !value.HasVersions)
+                    if (_isInitialized)
                     {
                         RestartHostCommand?.Execute();
-                    }
-                }
-            }
-        }
-
-        public PlatformVersion PlatformVersion
-        {
-            get => _platformVersion;
-            set
-            {
-                if (_executionHost == null) throw new InvalidOperationException();
-
-                if (SetProperty(ref _platformVersion, value))
-                {
-                    if (value != null)
-                    {
-                        _executionHost.PlatformVersion = value;
-
-                        if (_isInitialized)
-                        {
-                            RestartHostCommand?.Execute();
-                        }
                     }
                 }
             }

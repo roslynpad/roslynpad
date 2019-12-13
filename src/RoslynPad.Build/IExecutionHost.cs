@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using RoslynPad.NuGet;
@@ -12,8 +11,8 @@ namespace RoslynPad.Build
     internal interface IExecutionHost
     {
         ExecutionPlatform Platform { get; set; }
-        PlatformVersion? PlatformVersion { get; set; }
         string Name { get; set; }
+        string? DotNetExecutable { get; set; }
         ImmutableArray<MetadataReference> MetadataReferences { get; }
 
         event Action<IList<CompilationErrorResultObject>>? CompilationErrors;

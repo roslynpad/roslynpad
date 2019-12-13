@@ -22,35 +22,38 @@ namespace RoslynPad
 
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
-            if (GetCoreVersions() is var core && core.versions.Count > 0)
+            if (GetCoreVersions() is var core)
             {
-                yield return new ExecutionPlatform(".NET Core x64", "", core.versions, Architecture.X64, core.dotnetExe, string.Empty);
+                foreach (var version in core.versions)
+                {
+                    yield return new ExecutionPlatform(".NET Core", version.tfm, version.name, Architecture.X64, isCore: true);
+                }
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var targetFrameworkName = GetNetFrameworkName();
-                yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X86, string.Empty, string.Empty, isDesktop: true);
-                yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, Array.Empty<PlatformVersion>(), Architecture.X64, string.Empty, string.Empty, isDesktop: true);
+                yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, string.Empty, Architecture.X86, isCore: false);
+                yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, string.Empty, Architecture.X64, isCore: false);
             }
         }
 
         public string DotNetExecutable => FindNetCore().dotnetExe;
 
-        private (IReadOnlyList<PlatformVersion> versions, string dotnetExe) GetCoreVersions()
+        private (IReadOnlyList<(string tfm, string name)> versions, string dotnetExe) GetCoreVersions()
         {
             var (dotnetExe, sdkPath) = FindNetCore();
 
             if (!string.IsNullOrEmpty(dotnetExe))
             {
-                var sortedDictionary = new SortedDictionary<NuGetVersion, PlatformVersion>();
+                var sortedDictionary = new SortedDictionary<NuGetVersion, (string tfm, string name)>();
 
                 foreach (var directory in IOUtilities.EnumerateDirectories(sdkPath))
                 {
                     var versionName = Path.GetFileName(directory);
                     if (NuGetVersion.TryParse(versionName, out var version) && version.Major > 1)
                     {
-                        sortedDictionary.Add(version, new PlatformVersion($"netcoreapp{version.Major}.{version.Minor}", versionName));
+                        sortedDictionary.Add(version, ($"netcoreapp{version.Major}.{version.Minor}", versionName));
                     }
                 }
 
@@ -58,7 +61,7 @@ namespace RoslynPad
                         dotnetExe);
             }
 
-            return (ImmutableArray<PlatformVersion>.Empty, string.Empty);
+            return (ImmutableArray<(string, string)>.Empty, string.Empty);
         }
 
         private (string dotnetExe, string sdkPath) FindNetCore()

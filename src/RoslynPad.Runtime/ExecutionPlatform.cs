@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace RoslynPad
 {
@@ -8,40 +7,20 @@ namespace RoslynPad
     {
         internal string Name { get; }
         internal string TargetFrameworkMoniker { get; }
-        public IReadOnlyList<PlatformVersion> Versions { get; }
-        public bool HasVersions => Versions.Count > 0;
+        internal string FrameworkVersion { get; }
         internal Architecture Architecture { get; }
-        internal string HostPath { get; }
-        internal string HostArguments { get; }
-        internal bool IsDesktop { get; }
-        internal bool IsCore => !IsDesktop;
+        internal bool IsCore { get; }
+        internal bool IsFramework => !IsCore;
 
-        internal ExecutionPlatform(string name, string targetFrameworkMoniker, IReadOnlyList<PlatformVersion> versions, Architecture architecture, string hostPath, string hostArguments, bool isDesktop = false)
+        internal ExecutionPlatform(string name, string targetFrameworkMoniker, string frameworkVersion, Architecture architecture, bool isCore)
         {
             Name = name;
             TargetFrameworkMoniker = targetFrameworkMoniker;
-            Versions = versions;
-            Architecture = architecture;
-            HostPath = hostPath;
-            HostArguments = hostArguments;
-            IsDesktop = isDesktop;
-        }
-
-        public override string ToString() => Name;
-    }
-
-    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-    public class PlatformVersion
-    {
-        internal PlatformVersion(string targetFrameworkMoniker, string frameworkVersion)
-        {
-            TargetFrameworkMoniker = targetFrameworkMoniker;
             FrameworkVersion = frameworkVersion;
+            Architecture = architecture;
+            IsCore = isCore;
         }
 
-        internal string TargetFrameworkMoniker { get; }
-        internal string FrameworkVersion { get; }
-
-        public override string ToString() => FrameworkVersion;
+        public override string ToString() => $"{Name} {FrameworkVersion}";
     }
 }

@@ -10,7 +10,6 @@ namespace RoslynPad.Build
             ImmutableArray<string> imports,
             ImmutableArray<string> disabledDiagnostics,
             string workingDirectory,
-            OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
             bool checkOverflow = false,
             bool allowUnsafe = true)
         {
@@ -18,7 +17,6 @@ namespace RoslynPad.Build
             Imports = imports;
             DisabledDiagnostics = disabledDiagnostics;
             WorkingDirectory = workingDirectory;
-            OptimizationLevel = optimizationLevel;
             CheckOverflow = checkOverflow;
             AllowUnsafe = allowUnsafe;
         }
@@ -27,7 +25,6 @@ namespace RoslynPad.Build
         public ImmutableArray<string> Imports { get; set; }
         public ImmutableArray<string> DisabledDiagnostics { get; }
         public string WorkingDirectory { get; }
-        public OptimizationLevel OptimizationLevel { get; }
         public bool CheckOverflow { get; }
         public bool AllowUnsafe { get; }
     }

@@ -42,7 +42,6 @@ namespace RoslynPad.Build
         private CancellationTokenSource? _restoreCts;
         private ExecutionPlatform? _platform;
         private string? _assemblyPath;
-        private PlatformVersion? _platformVersion;
         private string _name;
         private bool _running;
         private bool _initializeBuildPathAfterRun;
@@ -54,28 +53,14 @@ namespace RoslynPad.Build
             set
             {
                 _platform = value;
-
-                if (!value.HasVersions)
-                {
-                    _platformVersion = null;
-                    InitializeBuildPath(stop: true);
-                    TryRestore();
-                }
-            }
-        }
-
-        public PlatformVersion? PlatformVersion
-        {
-            get => _platformVersion;
-            set
-            {
-                _platformVersion = value;
                 InitializeBuildPath(stop: true);
                 TryRestore();
             }
         }
 
-        public bool HasPlatform => _platform != null && (!_platform.HasVersions || _platformVersion != null);
+        public bool HasPlatform => _platform != null;
+
+        public string? DotNetExecutable { get; set; }
 
         public string Name
         {
@@ -241,7 +226,7 @@ namespace RoslynPad.Build
                                     _scriptOptions.FilePath,
                                     _parameters.WorkingDirectory,
                                     _scriptOptions.MetadataResolver,
-                                    optimizationLevel: optimizationLevel ?? _parameters.OptimizationLevel,
+                                    optimizationLevel: optimizationLevel ?? OptimizationLevel.Release,
                                     checkOverflow: _parameters.CheckOverflow,
                                     allowUnsafe: _parameters.AllowUnsafe);
         }
@@ -276,7 +261,7 @@ namespace RoslynPad.Build
             {
                 return new ProcessStartInfo
                 {
-                    FileName = Platform.IsCore ? Platform.HostPath : assemblyPath,
+                    FileName = Platform.IsCore ? DotNetExecutable : assemblyPath,
                     Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
                     WorkingDirectory = _parameters.WorkingDirectory,
                     CreateNoWindow = true,
@@ -440,6 +425,11 @@ namespace RoslynPad.Build
 
             async Task RestoreAsync(Task previousTask, CancellationToken cancellationToken)
             {
+                if (DotNetExecutable == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     await previousTask.ConfigureAwait(false);
@@ -456,7 +446,7 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var result = await ProcessUtil.RunProcess("dotnet", $"build -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
+                    var result = await ProcessUtil.RunProcess(DotNetExecutable, $"build -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
 
                     if (result.ExitCode != 0)
                     {
@@ -486,11 +476,11 @@ namespace RoslynPad.Build
 
             async Task BuildGlobalJson()
             {
-                if (Platform?.IsCore == true && PlatformVersion != null)
+                if (Platform?.IsCore == true)
                 {
                     var global = new JObject(
                         new JProperty("sdk", new JObject(
-                            new JProperty("version", PlatformVersion.FrameworkVersion))));
+                            new JProperty("version", Platform.FrameworkVersion))));
 
                     await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
                 }
@@ -498,10 +488,8 @@ namespace RoslynPad.Build
 
             async Task<string> BuildCsproj()
             {
-                var targetFrameworkMoniker = PlatformVersion?.TargetFrameworkMoniker ?? Platform.TargetFrameworkMoniker;
-
                 var csproj = MSBuildHelper.CreateCsproj(
-                    targetFrameworkMoniker,
+                    Platform.TargetFrameworkMoniker,
                     _libraries);
                 var csprojPath = Path.Combine(BuildPath, $"rp-{Name}.csproj");
 
