@@ -46,6 +46,7 @@ namespace RoslynPad.Roslyn
         {
             // nuget references will be resolved externally
             if (reference.StartsWith("nuget:", StringComparison.InvariantCultureIgnoreCase) ||
+                reference.StartsWith("framework:", StringComparison.InvariantCultureIgnoreCase) ||
                 reference.StartsWith("$NuGet", StringComparison.InvariantCultureIgnoreCase))
             {
                 return _unresolved;

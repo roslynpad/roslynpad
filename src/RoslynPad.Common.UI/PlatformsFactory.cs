@@ -15,6 +15,11 @@ namespace RoslynPad
     [Export(typeof(IPlatformsFactory))]
     internal class PlatformsFactory : IPlatformsFactory
     {
+        private string? _dotnetExe;
+        private string? _sdkPath;
+
+        public event Action Changed = delegate { };
+
         public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
         {
             if (GetCoreVersions() is var core && core.versions.Count > 0)
@@ -30,29 +35,13 @@ namespace RoslynPad
             }
         }
 
+        public string DotNetExecutable => FindNetCore().dotnetExe;
+
         private (IReadOnlyList<PlatformVersion> versions, string dotnetExe) GetCoreVersions()
         {
-            string[] dotnetPaths;
-            string dotnetExe;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                dotnetPaths = new[] { Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432")!, "dotnet") };
-                dotnetExe = "dotnet.exe";
-            }
-            else
-            {
-                dotnetPaths = new[] { "/usr/share/dotnet", "/usr/local/share/dotnet" };
-                dotnetExe = "dotnet";
-            }
+            var (dotnetExe, sdkPath) = FindNetCore();
 
-            var sdkPath = (from path in dotnetPaths
-                          let fullPath = Path.Combine(path, "sdk")
-                          where Directory.Exists(fullPath)
-                          select fullPath).FirstOrDefault();
-
-            dotnetExe = Path.GetFullPath(Path.Combine(sdkPath, "..", dotnetExe));
-
-            if (sdkPath != null && File.Exists(dotnetExe))
+            if (!string.IsNullOrEmpty(dotnetExe))
             {
                 var sortedDictionary = new SortedDictionary<NuGetVersion, PlatformVersion>();
 
@@ -70,6 +59,48 @@ namespace RoslynPad
             }
 
             return (ImmutableArray<PlatformVersion>.Empty, string.Empty);
+        }
+
+        private (string dotnetExe, string sdkPath) FindNetCore()
+        {
+            if (_dotnetExe != null && _sdkPath != null)
+            {
+                return (_dotnetExe, _sdkPath);
+            }
+
+            string[] dotnetPaths;
+            string dotnetExe;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                dotnetPaths = new[] { Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432")!, "dotnet") };
+                dotnetExe = "dotnet.exe";
+            }
+            else
+            {
+                dotnetPaths = new[] { "/usr/share/dotnet", "/usr/local/share/dotnet" };
+                dotnetExe = "dotnet";
+            }
+
+            var sdkPath = (from path in dotnetPaths
+                       let fullPath = Path.Combine(path, "sdk")
+                       where Directory.Exists(fullPath)
+                       select fullPath).FirstOrDefault();
+
+            if (sdkPath != null)
+            {
+                dotnetExe = Path.GetFullPath(Path.Combine(sdkPath, "..", dotnetExe));
+                if (File.Exists(dotnetExe))
+                {
+                    _dotnetExe = dotnetExe;
+                    _sdkPath = sdkPath;
+                    return (dotnetExe, sdkPath);
+                }
+            }
+
+            _dotnetExe = string.Empty;
+            _sdkPath = string.Empty;
+
+            return (string.Empty, string.Empty);
         }
 
         private static string GetNetFrameworkName()

@@ -31,6 +31,7 @@ namespace RoslynPad.UI
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppDispatcher _dispatcher;
         private readonly ITelemetryProvider _telemetryProvider;
+        private readonly IPlatformsFactory _platformsFactory;
         private readonly IExecutionHost _executionHost;
         private readonly HashSet<LibraryRef> _libraries;
         private ObservableCollection<IResultObject> _results;
@@ -52,6 +53,7 @@ namespace RoslynPad.UI
         private DocumentViewModel? _document;
         private bool _isRestoring;
         private string[]? _restoreErrors;
+        private IReadOnlyList<ExecutionPlatform> _availablePlatforms;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -133,6 +135,7 @@ namespace RoslynPad.UI
             Directory.CreateDirectory(BuildPath);
 
             _telemetryProvider = telemetryProvider;
+            _platformsFactory = serviceProvider.GetService<IPlatformsFactory>();
             _serviceProvider = serviceProvider;
             _libraries = new HashSet<LibraryRef>();
 
@@ -142,8 +145,8 @@ namespace RoslynPad.UI
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
 
             _dispatcher = appDispatcher;
-            AvailablePlatforms = serviceProvider.GetService<IPlatformsFactory>()
-                .GetExecutionPlatforms().ToImmutableArray();
+            _platformsFactory.Changed += InitializePlatforms;
+            InitializePlatforms();
 
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
@@ -176,6 +179,11 @@ namespace RoslynPad.UI
 
             Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
                        AvailablePlatforms.FirstOrDefault();
+        }
+
+        private void InitializePlatforms()
+        {
+            AvailablePlatforms = _platformsFactory.GetExecutionPlatforms().ToImmutableArray();
         }
 
         private void OnRestoreStarted()
@@ -410,7 +418,11 @@ namespace RoslynPad.UI
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
-        public IReadOnlyList<ExecutionPlatform> AvailablePlatforms { get; }
+        public IReadOnlyList<ExecutionPlatform> AvailablePlatforms
+        {
+            get => _availablePlatforms;
+            private set => SetProperty(ref _availablePlatforms, value);
+        }
 
         public ExecutionPlatform Platform
         {
