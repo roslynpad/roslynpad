@@ -523,7 +523,7 @@ namespace RoslynPad.Runtime
     {
         // for serialization
         // ReSharper disable once UnusedMember.Local
-        private CompilationErrorResultObject()
+        protected CompilationErrorResultObject()
         {
             ErrorCode = string.Empty;
             Severity = string.Empty;
@@ -559,5 +559,22 @@ namespace RoslynPad.Runtime
         string? IResultObject.Value => ToString();
 
         public void WriteTo(StringBuilder builder) => builder.Append(ToString());
+    }
+
+    internal class RestoreErrorResultObject : IResultObject
+    {
+        public RestoreErrorResultObject(string error)
+        {
+            Error = error;
+        }
+
+        public string Error { get; }
+
+        string? IResultObject.Value => Error;
+
+        public void WriteTo(StringBuilder builder)
+        {
+            builder.Append(Error);
+        }
     }
 }

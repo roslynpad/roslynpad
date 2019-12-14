@@ -102,9 +102,6 @@
                         Content="{StaticResource Restart}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                           SelectedItem="{Binding Platform}" />
-                <ComboBox ItemsSource="{Binding Platform.Versions}"
-                          Visibility="{Binding Platform.HasVersions, Converter={StaticResource BooleanToVisibilityConverter}}"
-                          SelectedItem="{Binding PlatformVersion}" />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
@@ -118,19 +115,28 @@
                     <MenuItem Name="RootNuGetMenu"
                               IsSubmenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
                               ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet, Mode=OneTime}"
+                              Header="{Binding Mode=OneTime}"
                               ToolTip="NuGet Packages"
                               IsTextSearchEnabled="True">
                         <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
+                            <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
                                 <Grid>
                                     <Image Source="{StaticResource NuGet}" />
-                                    <ProgressBar VerticalAlignment="Bottom"
+                                    <ProgressBar Name="Spinner"
+                                                 VerticalAlignment="Bottom"
                                                  Height="4"
                                                  BorderThickness="0"
-                                                 IsIndeterminate="{Binding IsSearching}"
-                                                 Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                 IsIndeterminate="{Binding NuGet.IsSearching}"
+                                                 Visibility="{Binding NuGet.IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsRestoring}"
+                                                 Value="True">
+                                        <Setter TargetName="Spinner" Property="Foreground" Value="Orange" />
+                                        <Setter TargetName="Spinner" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Spinner" Property="IsIndeterminate" Value="True" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </MenuItem.HeaderTemplate>
                         <ItemsControl.ItemContainerStyle>
@@ -210,39 +216,6 @@
                               ToolTip="Include prerelease packages"
                               Content="Prerelease" />
                 </Decorator>
-                <Menu Background="Transparent">
-                    <MenuItem Header="{Binding Mode=OneTime}"
-                              ItemsSource="{Binding RestoreErrors}"
-                              ToolTip="NuGet Restore">
-                        <MenuItem.HeaderTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Image Name="Icon"
-                                           Source="{StaticResource NuGet}" />
-                                    <ProgressBar VerticalAlignment="Bottom"
-                                                 Height="4"
-                                                 BorderThickness="0"
-                                                 IsIndeterminate="{Binding IsRestoring}"
-                                                 Visibility="{Binding IsRestoring, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <Image Name="WarnIcon"
-                                           Visibility="{Binding HasRestoreError, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           Source="{StaticResource WarningMarker}"
-                                           Width="10"
-                                           Height="10"
-                                           HorizontalAlignment="Left"
-                                           VerticalAlignment="Bottom" />
-                                </Grid>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding RestoreFailed}">
-                                        <Setter TargetName="Icon"
-                                                Property="Source"
-                                                Value="{StaticResource WarningMarker}" />
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </MenuItem.HeaderTemplate>
-                    </MenuItem>
-                </Menu>
                 <Separator />
                 <Button Content="{StaticResource FormatDocument}"
                         ToolTip="Format Document (Ctrl+D)"

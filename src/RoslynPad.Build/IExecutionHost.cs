@@ -32,17 +32,17 @@ namespace RoslynPad.Build
 
     internal class RestoreResult
     {
-        public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, error: null);
+        public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, errors: null);
 
-        public static RestoreResult FromError(string error) => new RestoreResult(success: false, error: error);
+        public static RestoreResult FromErrors(string[] errors) => new RestoreResult(success: false, errors);
 
-        private RestoreResult(bool success, string? error)
+        private RestoreResult(bool success, string[]? errors)
         {
             Success = success;
-            Error = error;
+            Errors = errors ?? Array.Empty<string>();
         }
 
         public bool Success { get; }
-        public string? Error { get; }
+        public string[] Errors { get; }
     }
 }

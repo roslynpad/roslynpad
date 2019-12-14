@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -450,8 +451,8 @@ namespace RoslynPad.Build
 
                     if (result.ExitCode != 0)
                     {
-                        var error = await GetErrorAsync(errorsPath, result, cancellationToken);
-                        RestoreCompleted?.Invoke(RestoreResult.FromError(error));
+                        var errors = await GetErrorsAsync(errorsPath, result, cancellationToken);
+                        RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
                         return;
                     }
 
@@ -468,9 +469,9 @@ namespace RoslynPad.Build
 
                     RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
-                    RestoreCompleted?.Invoke(RestoreResult.FromError(ex.Message));
+                    RestoreCompleted?.Invoke(RestoreResult.FromErrors(new[] { ex.Message }));
                 }
             }
 
@@ -497,28 +498,39 @@ namespace RoslynPad.Build
                 return csprojPath;
             }
 
-            static async Task<string> GetErrorAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
+            static async Task<string[]> GetErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
             {
-                string error;
+                string[] errors;
                 try
                 {
-                    error = await File.ReadAllTextAsync(errorsPath, cancellationToken).ConfigureAwait(false);
-                    if (string.IsNullOrEmpty(error))
+                    errors = await File.ReadAllLinesAsync(errorsPath, cancellationToken).ConfigureAwait(false);
+                    if (errors.Length == 0)
                     {
-                        error = ErrorFromResult(result);
+                        errors = GetErrorsFromResult(result);
+                    }
+                    else
+                    {
+                        for (var i = 0; i < errors.Length; i++)
+                        {
+                            var match = Regex.Match(errors[i], @"(?<=\: error ).+?(?=\[)");
+                            if (match.Success)
+                            {
+                                errors[i] = match.Value;
+                            }
+                        }
                     }
                 }
                 catch (FileNotFoundException)
                 {
-                    error = ErrorFromResult(result);
+                    errors = GetErrorsFromResult(result);
                 }
 
-                return error;
-            }
+                return errors;
 
-            static string ErrorFromResult(ProcessUtil.ProcessResult result)
-            {
-                return string.Join(Environment.NewLine, result.StandardOutput, result.StandardError);
+                static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result)
+                {
+                    return new[] { result.StandardOutput, result.StandardError };
+                }
             }
         }
     }

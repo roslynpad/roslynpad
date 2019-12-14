@@ -33,26 +33,25 @@ namespace RoslynPad.UI
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly IPlatformsFactory _platformsFactory;
         private readonly IExecutionHost _executionHost;
-        private readonly HashSet<LibraryRef> _libraries;
-        private ObservableCollection<IResultObject> _results;
-        private CancellationTokenSource _restoreCts;
-        private CancellationTokenSource _runCts;
+        private readonly ObservableCollection<IResultObject> _results;
+        private readonly ExecutionHostParameters _executionHostParameters;
+        private CancellationTokenSource? _restoreCts;
+        private CancellationTokenSource? _runCts;
         private bool _isRunning;
         private bool _isDirty;
-        private ExecutionPlatform _platform;
+        private ExecutionPlatform? _platform;
         private bool _isSaving;
-        private IDisposable _viewDisposable;
-        private Action<ExceptionResultObject?> _onError;
-        private Func<TextSpan> _getSelection;
-        private string _ilText;
+        private IDisposable? _viewDisposable;
+        private Action<ExceptionResultObject?>? _onError;
+        private Func<TextSpan>? _getSelection;
+        private string? _ilText;
         private bool _isInitialized;
         private bool _isLiveMode;
-        private Timer _liveModeTimer;
-        private ExecutionHostParameters _executionHostParameters;
+        private Timer? _liveModeTimer;
         private DocumentViewModel? _document;
         private bool _isRestoring;
-        private string[]? _restoreErrors;
-        private IReadOnlyList<ExecutionPlatform> _availablePlatforms;
+        private IReadOnlyList<ExecutionPlatform>? _availablePlatforms;
+        private DocumentId? _documentId;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -62,17 +61,7 @@ namespace RoslynPad.UI
             : MainViewModel.DocumentRoot.Path;
 
         public IEnumerable<object> Results => _results;
-
-        internal ObservableCollection<IResultObject> ResultsInternal
-        {
-            // ReSharper disable once UnusedMember.Local
-            get => _results;
-            private set
-            {
-                _results = value;
-                OnPropertyChanged(nameof(Results));
-            }
-        }
+        internal IEnumerable<IResultObject> ResultsInternal => _results;
 
         public IDelegateCommand ToggleLiveModeCommand { get; }
 
@@ -120,14 +109,12 @@ namespace RoslynPad.UI
 
         public string ILText
         {
-            get => _ilText;
+            get => _ilText ?? string.Empty;
             private set => SetProperty(ref _ilText, value);
         }
 
         [ImportingConstructor]
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             Id = Guid.NewGuid().ToString("n");
             BuildPath = Path.Combine(Path.GetTempPath(), "roslynpad", "build", Id);
@@ -136,7 +123,7 @@ namespace RoslynPad.UI
             _telemetryProvider = telemetryProvider;
             _platformsFactory = serviceProvider.GetService<IPlatformsFactory>();
             _serviceProvider = serviceProvider;
-            _libraries = new HashSet<LibraryRef>();
+            _results = new ObservableCollection<IResultObject>();
 
             MainViewModel = mainViewModel;
             CommandProvider = commands;
@@ -195,7 +182,8 @@ namespace RoslynPad.UI
         private void OnRestoreCompleted(RestoreResult restoreResult)
         {
             IsRestoring = false;
-            RestoreErrors = restoreResult.Error != null ? new[] { restoreResult.Error } : null;
+
+            ClearResults(t => t is RestoreErrorResultObject);
 
             if (restoreResult.Success)
             {
@@ -217,6 +205,13 @@ namespace RoslynPad.UI
                 host.UpdateDocument(document!);
                 OnDocumentUpdated();
             }
+            else
+            {
+                foreach (var error in restoreResult.Errors)
+                {
+                    AddResult(new RestoreErrorResultObject(error));
+                }
+            }
         }
 
         public bool IsRestoring
@@ -224,18 +219,6 @@ namespace RoslynPad.UI
             get => _isRestoring;
             private set => SetProperty(ref _isRestoring, value);
         }
-
-        public string[]? RestoreErrors
-        {
-            get => _restoreErrors;
-            private set
-            {
-                SetProperty(ref _restoreErrors, value);
-                OnPropertyChanged(nameof(HasRestoreError));
-            }
-        }
-
-        public bool HasRestoreError => RestoreErrors?.Length > 0;
 
         private IEnumerable<AnalyzerReference> GetAnalyzerReferences(IList<string> analyzers)
         {
@@ -248,11 +231,11 @@ namespace RoslynPad.UI
             DocumentUpdated?.Invoke(this, EventArgs.Empty);
         }
 
-        public event EventHandler DocumentUpdated;
+        public event EventHandler? DocumentUpdated;
 
-        public event Action ReadInput;
+        public event Action? ReadInput;
 
-        public event Action ResultsAvailable;
+        public event Action? ResultsAvailable;
 
         private void AddResult(object o)
         {
@@ -263,7 +246,7 @@ namespace RoslynPad.UI
         {
             _dispatcher.InvokeAsync(() =>
             {
-                ResultsInternal?.Add(o);
+                _results.Add(o);
                 ResultsAvailable?.Invoke();
             }, AppDispatcherPriority.Low);
         }
@@ -288,7 +271,7 @@ namespace RoslynPad.UI
                 _onError?.Invoke(errorResult);
                 if (errorResult != null)
                 {
-                    ResultsInternal.Add(errorResult);
+                    _results.Add(errorResult);
 
                     ResultsAvailable?.Invoke();
                 }
@@ -301,7 +284,7 @@ namespace RoslynPad.UI
             {
                 foreach (var error in errors)
                 {
-                    ResultsInternal.Add(error);
+                    _results.Add(error);
                 }
 
                 ResultsAvailable?.Invoke();
@@ -336,7 +319,7 @@ namespace RoslynPad.UI
         {
             var host = MainViewModel.RoslynHost;
             var document = host.GetDocument(DocumentId);
-            if (document == null)
+            if (document == null || _getSelection == null)
             {
                 return;
             }
@@ -373,7 +356,13 @@ namespace RoslynPad.UI
                 return;
             }
 
+            if (_getSelection == null)
+            {
+                return;
+            }
+
             var selection = _getSelection();
+
             var documentText = await document.GetTextAsync().ConfigureAwait(false);
             var changes = new List<TextChange>();
             var lines = documentText.Lines.SkipWhile(x => !x.Span.IntersectsWith(selection))
@@ -421,11 +410,11 @@ namespace RoslynPad.UI
 
         public IReadOnlyList<ExecutionPlatform> AvailablePlatforms
         {
-            get => _availablePlatforms;
+            get => _availablePlatforms ?? throw new ArgumentNullException(nameof(_availablePlatforms));
             private set => SetProperty(ref _availablePlatforms, value);
         }
 
-        public ExecutionPlatform Platform
+        public ExecutionPlatform? Platform
         {
             get => _platform;
             set
@@ -597,7 +586,11 @@ namespace RoslynPad.UI
             RestartHostCommand?.Execute();
         }
 
-        public DocumentId DocumentId { get; private set; }
+        public DocumentId DocumentId
+        {
+            get => _documentId ?? throw new ArgumentNullException(nameof(_documentId));
+            private set => _documentId = value;
+        }
 
         public MainViewModelBase MainViewModel { get; }
         public ICommandProvider CommandProvider { get; }
@@ -650,7 +643,7 @@ namespace RoslynPad.UI
                 ILText = DefaultILText;
             }
 
-            var cancellationToken = _runCts.Token;
+            var cancellationToken = _runCts!.Token;
             try
             {
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
@@ -663,7 +656,7 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    ResultsInternal?.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
+                    _results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
                 }
             }
             catch (Exception ex)
@@ -678,8 +671,17 @@ namespace RoslynPad.UI
 
         private void StartExec()
         {
-            ResultsInternal = new ObservableCollection<IResultObject>();
+            ClearResults(t => !(t is RestoreErrorResultObject));
+
             _onError?.Invoke(null);
+        }
+
+        private void ClearResults(Func<IResultObject, bool> filter)
+        {
+            foreach (var result in _results.Where(filter).ToArray())
+            {
+                _results.Remove(result);
+            }
         }
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
@@ -872,7 +874,7 @@ namespace RoslynPad.UI
 
         public bool ShowIL { get; set; }
 
-        public event EventHandler EditorFocus;
+        public event EventHandler? EditorFocus;
 
         private void OnEditorFocus()
         {

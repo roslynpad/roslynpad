@@ -295,6 +295,42 @@
                 </Setter>
             </Style>
 
+            <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.RestoreErrorResultObject}}"
+                          DataType="{x:Static rp:XamlTypes.RestoreErrorResultObject}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
+                    </Grid.ColumnDefinitions>
+                    <DockPanel Grid.Column="0">
+                        <Button Command="Copy"
+                                Padding="0"
+                                Margin="2 0 5 0"
+                                VerticalAlignment="Top"
+                                KeyboardNavigation.IsTabStop="False"
+                                Background="Transparent"
+                                BorderBrush="Transparent">
+                            <Image Source="{StaticResource Copy}"
+                                   ToolTip="Copy"
+                                   Height="12" />
+                        </Button>
+                        <Image Name="Icon"
+                               Source="{StaticResource ExceptionMarker}"
+                               VerticalAlignment="Top"
+                               Width="12"
+                               Height="12"
+                               Margin="0 0 5 0" />
+                        <TextBlock Text="Restore Error" />
+                    </DockPanel>
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding Error, Mode=OneTime}"
+                               TextWrapping="Wrap" />
+                </Grid>
+            </DataTemplate>
+            
             <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.CompilationErrorResultObject}}"
                           DataType="{x:Static rp:XamlTypes.CompilationErrorResultObject}">
                 <Grid>
