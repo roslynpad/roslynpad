@@ -354,9 +354,9 @@ namespace RoslynPad.Editor
         {
             if (args.Text.Length > 0 && _completionWindow != null)
             {
-                if (!char.IsLetterOrDigit(args.Text[0]))
+                if (!IsCharIdentifier(args.Text[0]))
                 {
-                    // Whenever a non-letter is typed while the completion window is open,
+                    // Whenever no identifier letter is typed while the completion window is open,
                     // insert the currently selected element.
                     _completionWindow.CompletionList.RequestInsertion(args);
                 }
@@ -364,7 +364,15 @@ namespace RoslynPad.Editor
             // Do not set e.Handled=true.
             // We still want to insert the character that was typed.
         }
-
+        /// <summary>
+        /// Checks if a provided char is a well-known identifier
+        /// </summary>
+        /// <param name="c">The charcater to check</param>
+        /// <returns><c>true</c> if <paramref name="c"/> is a well-known identifier.</returns>
+        private bool IsCharIdentifier(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
+        }
         /// <summary>
         /// Gets the document used for code completion, can be overridden to provide a custom document
         /// </summary>
