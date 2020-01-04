@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using RoslynPad.NuGet;
 using RoslynPad.Runtime;
 
@@ -14,6 +15,7 @@ namespace RoslynPad.Build
         string Name { get; set; }
         string? DotNetExecutable { get; set; }
         ImmutableArray<MetadataReference> MetadataReferences { get; }
+        ImmutableArray<AnalyzerFileReference> Analyzers { get; }
 
         event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
         event Action<string>? Disassembled;

@@ -323,14 +323,15 @@
                                Width="12"
                                Height="12"
                                Margin="0 0 5 0" />
-                        <TextBlock Text="Restore Error" />
+                        <TextBlock Text="Restore Error"
+                                   Margin="0 0 5 0" />
                     </DockPanel>
                     <TextBlock Grid.Column="2"
                                Text="{Binding Error, Mode=OneTime}"
                                TextWrapping="Wrap" />
                 </Grid>
             </DataTemplate>
-            
+
             <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.CompilationErrorResultObject}}"
                           DataType="{x:Static rp:XamlTypes.CompilationErrorResultObject}">
                 <Grid>

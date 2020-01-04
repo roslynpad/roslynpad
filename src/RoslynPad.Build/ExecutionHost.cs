@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Scripting;
 using Mono.Cecil;
 using Newtonsoft.Json;
@@ -35,6 +36,7 @@ namespace RoslynPad.Build
 
         private readonly ExecutionHostParameters _parameters;
         private readonly IRoslynHost _roslynHost;
+        private readonly IAnalyzerAssemblyLoader _analyzerAssemblyLoader;
         private readonly SyntaxTree _initHostSyntax;
         private readonly HashSet<LibraryRef> _libraries;
         private ScriptOptions _scriptOptions;
@@ -92,6 +94,7 @@ namespace RoslynPad.Build
             _name = "";
             _parameters = parameters;
             _roslynHost = roslynHost;
+            _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
             _libraries = new HashSet<LibraryRef>();
             _scriptOptions = ScriptOptions.Default
                    .WithImports(parameters.Imports)
@@ -210,6 +213,7 @@ namespace RoslynPad.Build
         private string AssemblyExtension => Platform.IsCore ? "dll" : "exe";
 
         public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
+        public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
 
         private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
         {
@@ -456,14 +460,20 @@ namespace RoslynPad.Build
                         return;
                     }
 
-                    var referencesPath = Path.Combine(BuildPath, "references.txt");
-                    var references = await File.ReadAllLinesAsync(referencesPath, cancellationToken);
+                    var references = await ReadPathsFile(MSBuildHelper.ReferencesFile, cancellationToken).ConfigureAwait(false);
+                    var analyzers = await ReadPathsFile(MSBuildHelper.AnalyzersFile, cancellationToken).ConfigureAwait(false);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
                     MetadataReferences = references
                         .Where(r => !string.IsNullOrWhiteSpace(r))
-                        .Select(r => _roslynHost.CreateMetadataReference(r)).ToImmutableArray();
+                        .Select(r => _roslynHost.CreateMetadataReference(r))
+                        .ToImmutableArray();
+
+                    Analyzers = analyzers
+                        .Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))
+                        .ToImmutableArray();
 
                     _scriptOptions = _scriptOptions.WithReferences(MetadataReferences);
 
@@ -512,7 +522,7 @@ namespace RoslynPad.Build
                     {
                         for (var i = 0; i < errors.Length; i++)
                         {
-                            var match = Regex.Match(errors[i], @"(?<=\: error ).+?(?=\[)");
+                            var match = Regex.Match(errors[i], @"(?<=\: error )[^\]]+");
                             if (match.Success)
                             {
                                 errors[i] = match.Value;
@@ -531,6 +541,13 @@ namespace RoslynPad.Build
                 {
                     return new[] { result.StandardOutput, result.StandardError };
                 }
+            }
+
+            async Task<string[]> ReadPathsFile(string file, CancellationToken cancellationToken)
+            {
+                var path = Path.Combine(BuildPath, file);
+                var paths = await File.ReadAllLinesAsync(path, cancellationToken).ConfigureAwait(false);
+                return paths;
             }
         }
     }

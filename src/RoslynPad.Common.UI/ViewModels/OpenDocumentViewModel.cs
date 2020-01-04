@@ -52,6 +52,7 @@ namespace RoslynPad.UI
         private bool _isRestoring;
         private IReadOnlyList<ExecutionPlatform>? _availablePlatforms;
         private DocumentId? _documentId;
+        private bool _restoreSuccessful;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -130,12 +131,13 @@ namespace RoslynPad.UI
 
             NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
 
+            _restoreSuccessful = true; // initially set to true so we can immediately start running and wait for restore
             _dispatcher = appDispatcher;
             _platformsFactory.Changed += InitializePlatforms;
 
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
-            RunCommand = commands.CreateAsync(Run, () => !IsRunning && Platform != null);
+            RunCommand = commands.CreateAsync(Run, () => !IsRunning && RestoreSuccessful && Platform != null);
             RestartHostCommand = commands.CreateAsync(RestartHost, () => Platform != null);
             FormatDocumentCommand = commands.CreateAsync(FormatDocument);
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
@@ -196,9 +198,9 @@ namespace RoslynPad.UI
 
                 var project = document.Project;
 
-                project = project.WithMetadataReferences(_executionHost.MetadataReferences);
-                // TODO: analyzers
-                //    project = project.WithAnalyzerReferences(GetAnalyzerReferences(restoreResult.Analyzers));
+                project = project
+                    .WithMetadataReferences(_executionHost.MetadataReferences)
+                    .WithAnalyzerReferences(_executionHost.Analyzers);
 
                 document = project.GetDocument(DocumentId);
 
@@ -212,6 +214,8 @@ namespace RoslynPad.UI
                     AddResult(new RestoreErrorResultObject(error));
                 }
             }
+
+            RestoreSuccessful = restoreResult.Success;
         }
 
         public bool IsRestoring
@@ -220,10 +224,16 @@ namespace RoslynPad.UI
             private set => SetProperty(ref _isRestoring, value);
         }
 
-        private IEnumerable<AnalyzerReference> GetAnalyzerReferences(IList<string> analyzers)
+        public bool RestoreSuccessful
         {
-            var loader = MainViewModel.RoslynHost.GetService<IAnalyzerAssemblyLoader>();
-            return analyzers.Select(a => new AnalyzerFileReference(a, loader));
+            get => _restoreSuccessful;
+            private set
+            {
+                if (SetProperty(ref _restoreSuccessful, value))
+                {
+                    _dispatcher.InvokeAsync(() => RunCommand.RaiseCanExecuteChanged());
+                }
+            }
         }
 
         private void OnDocumentUpdated()
@@ -617,7 +627,8 @@ namespace RoslynPad.UI
 
         public bool IsRunning
         {
-            get => _isRunning; private set
+            get => _isRunning;
+            private set
             {
                 if (SetProperty(ref _isRunning, value))
                 {
@@ -678,10 +689,13 @@ namespace RoslynPad.UI
 
         private void ClearResults(Func<IResultObject, bool> filter)
         {
-            foreach (var result in _results.Where(filter).ToArray())
+            _dispatcher.InvokeAsync(() =>
             {
-                _results.Remove(result);
-            }
+                foreach (var result in _results.Where(filter).ToArray())
+                {
+                    _results.Remove(result);
+                }
+            });
         }
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
@@ -752,10 +766,7 @@ namespace RoslynPad.UI
                 }
                 else
                 {
-                    if (IsLocalReference(value))
-                    {
-                        libraries.Add(LibraryRef.Reference(value));
-                    }
+                    libraries.Add(LibraryRef.Reference(value));
 
                     continue;
                 }
@@ -811,20 +822,6 @@ namespace RoslynPad.UI
                 }
 
                 return (null, null);
-            }
-
-            static bool IsLocalReference(string path)
-            {
-                switch (Path.GetExtension(path)?.ToLowerInvariant())
-                {
-                    // add a "project" reference if it's not a GAC reference
-                    case ".dll":
-                    case ".exe":
-                    case ".winmd":
-                        return true;
-                }
-
-                return false;
             }
         }
 
