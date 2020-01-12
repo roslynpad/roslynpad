@@ -97,6 +97,16 @@
                         </MenuItem>
                     </MenuItem>
                 </Menu>
+                <Grid Visibility="{Binding ReportedProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                      Width="60"
+                      Margin="5, 0" >
+                    <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}" 
+                                 Minimum="0.0"
+                                 Maximum="1.0" />
+                    <TextBlock Text="{Binding ReportedProgress, Mode=OneWay, Converter={StaticResource DoubleToPercentageTextConverter}}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Grid>
                 <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
                         ToolTip="Restart host process (Shift+F5)"
                         Content="{StaticResource Restart}" />

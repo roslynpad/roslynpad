@@ -203,12 +203,16 @@ namespace RoslynPad.Runtime
         {
             lock (_lock)
             {
+                string jsonValue = result.Progress.HasValue
+                    ? result.Progress.Value.ToString(CultureInfo.InvariantCulture)
+                    : "null";
+
                 using (var jsonWriter = CreateJsonWriter())
                 {
                     jsonWriter.WriteStartElement("root", "");
                     jsonWriter.WriteAttributeString("type", "object");
                     jsonWriter.WriteElementString("$type", _progressResultTypeName);
-                    WriteResultObjectContent(jsonWriter, result);
+                    jsonWriter.WriteElementString("p", jsonValue);
                     jsonWriter.WriteEndElement();
                 }
 
