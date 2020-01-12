@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Text;
@@ -15,6 +16,7 @@ namespace RoslynPad.Runtime
         void Dump(DumpData data);
         void DumpException(Exception exception);
         void Flush();
+        void DumpProgress(ProgressResultObject result);
     }
 
     internal class DirectConsoleDumper : IConsoleDumper
@@ -93,6 +95,9 @@ namespace RoslynPad.Runtime
         public void Flush()
         {
         }
+
+        public void DumpProgress(ProgressResultObject result)
+            => throw new NotSupportedException($"Dumping progress is not supported with {nameof(DirectConsoleDumper)}");
     }
 
     internal class JsonConsoleDumper : IConsoleDumper, IDisposable
@@ -103,6 +108,7 @@ namespace RoslynPad.Runtime
 
         private readonly string _exceptionResultTypeName;
         private readonly string _inputReadRequestTypeName;
+        private readonly string _progressResultTypeName;
 
         private readonly Stream _stream;
 
@@ -119,6 +125,7 @@ namespace RoslynPad.Runtime
             var assemblyName = typeof(ExceptionResultObject).Assembly.GetName().Name;
             _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {assemblyName}";
             _inputReadRequestTypeName = $"{typeof(InputReadRequest).FullName}, {assemblyName}";
+            _progressResultTypeName = $"{typeof(ProgressResultObject).FullName}, {assemblyName}";
         }
 
         private XmlDictionaryWriter CreateJsonWriter()
@@ -189,6 +196,23 @@ namespace RoslynPad.Runtime
                 {
                     // ignore
                 }
+            }
+        }
+
+        public void DumpProgress(ProgressResultObject result)
+        {
+            lock (_lock)
+            {
+                using (var jsonWriter = CreateJsonWriter())
+                {
+                    jsonWriter.WriteStartElement("root", "");
+                    jsonWriter.WriteAttributeString("type", "object");
+                    jsonWriter.WriteElementString("$type", _progressResultTypeName);
+                    WriteResultObjectContent(jsonWriter, result);
+                    jsonWriter.WriteEndElement();
+                }
+
+                DumpNewLine();
             }
         }
 

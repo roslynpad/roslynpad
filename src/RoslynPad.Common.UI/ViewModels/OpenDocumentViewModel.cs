@@ -52,6 +52,7 @@ namespace RoslynPad.UI
         private bool _isRestoring;
         private IReadOnlyList<ExecutionPlatform>? _availablePlatforms;
         private DocumentId? _documentId;
+        private double? _reportedProgress;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -161,6 +162,7 @@ namespace RoslynPad.UI
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
             _executionHost.RestoreStarted += OnRestoreStarted;
             _executionHost.RestoreCompleted += OnRestoreCompleted;
+            _executionHost.ProgressChanged += p => ReportedProgress = p.Progress;
 
             InitializePlatforms();
 
@@ -870,6 +872,18 @@ namespace RoslynPad.UI
         {
             get => _isDirty;
             private set => SetProperty(ref _isDirty, value);
+        }
+
+        public double? ReportedProgress
+        {
+            get => _reportedProgress;
+            private set
+            {
+                if (_reportedProgress != value)
+                {
+                    SetProperty(ref _reportedProgress, value);
+                }
+            }
         }
 
         public bool ShowIL { get; set; }
