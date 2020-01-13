@@ -885,12 +885,12 @@ namespace RoslynPad.UI
                 if (_reportedProgress != value)
                 {
                     SetProperty(ref _reportedProgress, value);
-                    OnPropertyChanged(nameof(ReportedProgressVisible));
+                    OnPropertyChanged(nameof(HasReportedProgress));
                 }
             }
         }
 
-        public bool ReportedProgressVisible => ReportedProgress.HasValue;
+        public bool HasReportedProgress => ReportedProgress.HasValue;
 
         public bool ShowIL { get; set; }
 

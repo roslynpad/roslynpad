@@ -97,7 +97,7 @@
                         </MenuItem>
                     </MenuItem>
                 </Menu>
-                <Grid Visibility="{Binding ReportedProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                <Grid Visibility="{Binding HasReportedProgress, Converter={StaticResource BooleanToVisibilityConverter}}"
                       Width="60"
                       Margin="5, 0" >
                     <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}" 
