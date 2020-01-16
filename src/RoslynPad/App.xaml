@@ -8,6 +8,7 @@
              xmlns:cc="clr-namespace:ICSharpCode.AvalonEdit.CodeCompletion;assembly=ICSharpCode.AvalonEdit"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:rp="clr-namespace:RoslynPad"
+             xmlns:converters="clr-namespace:RoslynPad.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -16,6 +17,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
             <formatting:BooleanToVisibilityConverter x:Key="BooleanToVisibilityHiddenConverter"
                                                      FalseValue="Hidden" />
 

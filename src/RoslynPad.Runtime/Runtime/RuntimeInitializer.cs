@@ -44,10 +44,12 @@ namespace RoslynPad.Runtime
                     consoleDumper.DumpException((Exception)e.ExceptionObject);
                     Environment.Exit(1);
                 };
+
+                Helpers.Progress += progress => consoleDumper.DumpProgress(ProgressResultObject.Create(progress));
             }
 
             ObjectExtensions.Dumped += data => consoleDumper.Dump(data);
-            AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();
+            AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();            
         }
 
         private static bool TryAttachToParentProcess()

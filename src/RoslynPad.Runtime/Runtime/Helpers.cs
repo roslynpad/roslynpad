@@ -12,6 +12,8 @@ namespace RoslynPad.Runtime
     /// </summary>
     public static class Helpers
     {
+        internal static event Action<double?>? Progress;
+
         private static readonly Lazy<Task<SynchronizationContext>> _dispatcherTask = new Lazy<Task<SynchronizationContext>>(CreateWpfDispatcherAsync);
 
         /// <summary>
@@ -54,6 +56,21 @@ namespace RoslynPad.Runtime
         public static SynchronizationContextAwaitable RunWpfAsync()
         {
             return new SynchronizationContextAwaitable(_dispatcherTask.Value);
+        }
+
+        /// <summary>
+        /// Reports progress to the UI
+        /// </summary>
+        /// <param name="progress">Progress between 0.0 and 1.0 or null to hide progress report</param>
+        public static void ReportProgress(double? progress)
+        {
+            if (progress.HasValue)
+            {
+                if (progress.Value < 0.0) progress = 0.0;
+                else if (progress.Value > 1.0) progress = 1.0;
+            }
+
+            Progress?.Invoke(progress);
         }
 
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
