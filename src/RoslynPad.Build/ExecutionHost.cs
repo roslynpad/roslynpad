@@ -120,6 +120,7 @@ namespace RoslynPad.Build
         public event Action? RestoreStarted;
         public event Action<RestoreResult>? RestoreCompleted;
         public event Action<RestoreResultObject>? RestoreMessage;
+        public event Action<ProgressResultObject>? ProgressChanged;
 
         public void Dispose()
         {
@@ -319,6 +320,9 @@ namespace RoslynPad.Build
                             break;
                         case InputReadRequest _:
                             ReadInput?.Invoke();
+                            break;
+                        case ProgressResultObject progress:
+                            ProgressChanged?.Invoke(progress);
                             break;
                         default:
                             Dumped?.Invoke(result);

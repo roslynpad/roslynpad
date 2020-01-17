@@ -518,6 +518,26 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract]
+    internal class ProgressResultObject: ResultObject
+    {
+        // for serialization
+        // ReSharper disable once UnusedMember.Local
+        private ProgressResultObject()
+        {
+        }
+
+        private ProgressResultObject(double? progress)
+        {
+            Progress = progress;
+        }
+
+        public static ProgressResultObject Create(double? progress) => new ProgressResultObject(progress);
+
+        [DataMember(Name = "p")]
+        public double? Progress { get; private set; }
+    }
+
+    [DataContract]
     [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class CompilationErrorResultObject : IResultObject
     {

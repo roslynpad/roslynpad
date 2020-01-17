@@ -2,7 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
              xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
-             xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI">
+             xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+             xmlns:converters="clr-namespace:RoslynPad.Converters">
+    <UserControl.Resources>
+        <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
+    </UserControl.Resources>
     <UserControl.KeyBindings>
         <KeyBinding Gesture="F5"
                     Command="{Binding RunCommand, Mode=OneTime}" />
@@ -67,6 +71,15 @@
                                  IsVisible="{Binding IsRunning}" />
                 </Grid>
             </Button>
+            <Grid Margin="5, 0" 
+                  IsVisible="{Binding HasReportedProgress}" >
+                <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}" 
+                             Minimum="0.0"
+                             Maximum="1.0" />
+                <TextBlock Text="{Binding ReportedProgress, Mode=OneWay, Converter={StaticResource DoubleToPercentageTextConverter}}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+            </Grid>
             <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
                     ToolTip.Tip="Restart host process (Shift+F5)"
                     Content="{DynamicResource Restart}" />
