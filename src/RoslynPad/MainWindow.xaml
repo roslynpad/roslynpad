@@ -32,7 +32,6 @@
             <roslynPad:DocumentView />
         </DataTemplate>
 
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>
