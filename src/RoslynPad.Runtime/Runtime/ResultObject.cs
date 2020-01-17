@@ -363,7 +363,7 @@ namespace RoslynPad.Runtime
         protected static bool IsScriptMethod(StackFrame stackFrame)
         {
             return stackFrame.GetMethod()?.DeclaringType?.
-                   Assembly.FullName.StartsWith("RoslynPad-", StringComparison.Ordinal) == true;
+                   Assembly.FullName.StartsWith("rp-", StringComparison.Ordinal) == true;
         }
 
         private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
