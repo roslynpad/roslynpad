@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
@@ -151,6 +150,7 @@ namespace RoslynPad.UI
 
             _executionHostParameters = new ExecutionHostParameters(
                 BuildPath,
+                serviceProvider.GetService<NuGetViewModel>().ConfigPath,
                 roslynHost.DefaultImports,
                 roslynHost.DisabledDiagnostics,
                 WorkingDirectory);
@@ -163,11 +163,9 @@ namespace RoslynPad.UI
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
             _executionHost.RestoreStarted += OnRestoreStarted;
             _executionHost.RestoreCompleted += OnRestoreCompleted;
+            _executionHost.RestoreMessage += AddResult;
 
             InitializePlatforms();
-
-            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
-                       AvailablePlatforms.FirstOrDefault();
         }
 
         private void InitializePlatforms()
@@ -185,7 +183,7 @@ namespace RoslynPad.UI
         {
             IsRestoring = false;
 
-            ClearResults(t => t is RestoreErrorResultObject);
+            ClearResults(t => t is RestoreResultObject);
 
             if (restoreResult.Success)
             {
@@ -211,7 +209,7 @@ namespace RoslynPad.UI
             {
                 foreach (var error in restoreResult.Errors)
                 {
-                    AddResult(new RestoreErrorResultObject(error));
+                    AddResult(new RestoreResultObject(error, "Error"));
                 }
             }
 
@@ -429,15 +427,18 @@ namespace RoslynPad.UI
             get => _platform;
             set
             {
-                if (_executionHost == null || value == null) throw new InvalidOperationException();
+                if (value == null) throw new InvalidOperationException();
 
                 if (SetProperty(ref _platform, value))
                 {
                     _executionHost.Platform = value;
 
+                    RunCommand.RaiseCanExecuteChanged();
+                    RestartHostCommand.RaiseCanExecuteChanged();
+
                     if (_isInitialized)
                     {
-                        RestartHostCommand?.Execute();
+                        RestartHostCommand.Execute();
                     }
                 }
             }
@@ -561,7 +562,7 @@ namespace RoslynPad.UI
 
         private async Task SaveDocument(string path)
         {
-            if (DocumentId == null) return;
+            if (!_isInitialized) return;
 
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
             if (document == null)
@@ -590,6 +591,9 @@ namespace RoslynPad.UI
             _getSelection = getSelection;
             DocumentId = documentId;
             _isInitialized = true;
+
+            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
+                       AvailablePlatforms.FirstOrDefault();
 
             UpdatePackages();
 
@@ -682,7 +686,7 @@ namespace RoslynPad.UI
 
         private void StartExec()
         {
-            ClearResults(t => !(t is RestoreErrorResultObject));
+            ClearResults(t => !(t is RestoreResultObject));
 
             _onError?.Invoke(null);
         }

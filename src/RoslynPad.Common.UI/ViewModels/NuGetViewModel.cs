@@ -8,8 +8,6 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Credentials;
@@ -30,40 +28,20 @@ namespace RoslynPad.UI
     {
         private const int MaxSearchResults = 50;
 
-        private readonly CommandLineSourceRepositoryProvider _sourceRepositoryProvider;
-        private readonly ExceptionDispatchInfo _initializationException;
-        private readonly IEnumerable<string> _configFilePaths;
-        private readonly IEnumerable<PackageSource> _packageSources;
+        private readonly CommandLineSourceRepositoryProvider? _sourceRepositoryProvider;
+        private readonly ExceptionDispatchInfo? _initializationException;
 
+        public string ConfigPath { get; set; }
         public string GlobalPackageFolder { get; }
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         [ImportingConstructor]
-        public NuGetViewModel(ITelemetryProvider telemetryProvider)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
+        public NuGetViewModel(ITelemetryProvider telemetryProvider, IApplicationSettings appSettings)
         {
             try
             {
-                ISettings settings;
-
-                try
-                {
-                    settings = Settings.LoadDefaultSettings(
-                        root: null,
-                        configFileName: null,
-                        machineWideSettings: new XPlatMachineWideSetting());
-                }
-                catch (NuGetConfigurationException ex)
-                {
-                    telemetryProvider.ReportError(ex);
-
-                    // create default settings using a non-existent config file
-                    settings = new Settings(nameof(RoslynPad));
-                }
-
+                var settings = LoadSettings();
+                ConfigPath = settings.ConfigFilePath;
                 GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
-                _configFilePaths = SettingsUtility.GetConfigFilePaths(settings);
-                _packageSources = SettingsUtility.GetEnabledSources(settings);
 
                 DefaultCredentialServiceUtility.SetupDefaultCredentialService(NullLogger.Instance, nonInteractive: false);
 
@@ -73,6 +51,35 @@ namespace RoslynPad.UI
             catch (Exception e)
             {
                 _initializationException = ExceptionDispatchInfo.Capture(e);
+
+                ConfigPath = string.Empty;
+                GlobalPackageFolder = string.Empty;
+            }
+
+            Settings LoadSettings()
+            {
+                Settings? settings = null;
+
+                const int retries = 3;
+
+                for (var i = 1; i <= retries; i++)
+                {
+
+                    try
+                    {
+                        settings = new Settings(appSettings.GetDefaultDocumentPath(), "RoslynPad.nuget.config");
+                    }
+                    catch (NuGetConfigurationException ex)
+                    {
+                        if (i == retries)
+                        {
+                            telemetryProvider.ReportError(ex);
+                            throw;
+                        }
+                    }
+                }
+
+                return settings!;
             }
         }
 
@@ -82,7 +89,7 @@ namespace RoslynPad.UI
 
             var filter = new SearchFilter(includePrerelease);
 
-            foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
+            foreach (var sourceRepository in _sourceRepositoryProvider!.GetRepositories())
             {
                 IPackageSearchMetadata[]? result;
                 try
@@ -116,98 +123,6 @@ namespace RoslynPad.UI
         {
             var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
             return packages;
-        }
-
-        internal static (List<string> compile, List<string> runtime, List<string> analyzers) ReadProjectLockJson(JObject obj, string packagesDirectory, string framework)
-        {
-            var compile = new List<string>();
-            var compileAssemblies = new HashSet<string>();
-            var runtime = new List<string>();
-            var runtimeAssemblies = new HashSet<string>();
-
-            var targets = (JObject)obj["targets"];
-            foreach (var target in targets)
-            {
-                if (target.Key == framework)
-                {
-                    foreach (var package in (JObject)target.Value)
-                    {
-                        var path = obj["libraries"][package.Key]["path"].Value<string>();
-                        var packageRoot = Path.Combine(packagesDirectory, path);
-                        if (ReadLockFileSection(packageRoot, package.Value, compile, compileAssemblies, nameof(compile)))
-                        {
-                            ReadLockFileSection(packageRoot, package.Value, runtime, runtimeAssemblies, nameof(runtime));
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            var analyzers = new List<string>();
-
-            var libraries = (JObject)obj["libraries"];
-            foreach (var library in libraries)
-            {
-                foreach (var item in (JArray)library.Value["files"])
-                {
-                    var file = item.Value<string>();
-                    if (file.StartsWith("analyzers/dotnet/cs/", StringComparison.Ordinal))
-                    {
-                        var path = Path.Combine(packagesDirectory, library.Value["path"].Value<string>(), file);
-                        analyzers.Add(path);
-                    }
-                }
-            }
-
-            return (compile, runtime, analyzers);
-        }
-
-        private static bool ReadLockFileSection(string packageRoot, JToken root, List<string> items, HashSet<string> names, string sectionName)
-        {
-            var section = (JObject)((JObject)root)[sectionName];
-            if (section == null)
-            {
-                return false;
-            }
-
-            foreach (var item in section)
-            {
-                var relativePath = item.Key;
-                // Ignore placeholder "_._" files.
-                if (IsPlaceholder(relativePath))
-                {
-                    return false;
-                }
-
-                var name = Path.GetFileNameWithoutExtension(relativePath);
-                // poor man's conflict resolution ;) take the first one
-                if (names.Add(name))
-                {
-                    items.Add(Path.Combine(packageRoot, relativePath));
-                }
-            }
-
-            return true;
-        }
-
-        internal static bool IsPlaceholder(string relativePath)
-        {
-            var name = Path.GetFileName(relativePath);
-            bool isPlacehlder = string.Equals(name, "_._", StringComparison.InvariantCulture);
-            return isPlacehlder;
-        }
-
-        internal static JObject LoadJson(TextReader reader)
-        {
-            JObject obj;
-
-            using (var jsonReader = new JsonTextReader(reader))
-            {
-                obj = JObject.Load(jsonReader);
-            }
-
-            return obj;
         }
 
         #region Inner Classes

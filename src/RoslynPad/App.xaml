@@ -295,8 +295,8 @@
                 </Setter>
             </Style>
 
-            <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.RestoreErrorResultObject}}"
-                          DataType="{x:Static rp:XamlTypes.RestoreErrorResultObject}">
+            <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.RestoreResultObject}}"
+                          DataType="{x:Static rp:XamlTypes.RestoreResultObject}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
@@ -327,9 +327,17 @@
                                    Margin="0 0 5 0" />
                     </DockPanel>
                     <TextBlock Grid.Column="2"
-                               Text="{Binding Error, Mode=OneTime}"
+                               Text="{Binding Message, Mode=OneTime}"
                                TextWrapping="Wrap" />
                 </Grid>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Severity}"
+                                 Value="Warning">
+                        <Setter TargetName="Icon"
+                                Property="Source"
+                                Value="{StaticResource WarningMarker}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
             </DataTemplate>
 
             <DataTemplate x:Key="{DataTemplateKey {x:Static rp:XamlTypes.CompilationErrorResultObject}}"

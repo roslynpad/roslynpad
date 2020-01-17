@@ -561,20 +561,24 @@ namespace RoslynPad.Runtime
         public void WriteTo(StringBuilder builder) => builder.Append(ToString());
     }
 
-    internal class RestoreErrorResultObject : IResultObject
+    internal class RestoreResultObject : IResultObject
     {
-        public RestoreErrorResultObject(string error)
+        private readonly string? _value;
+
+        public RestoreResultObject(string message, string severity, string? value = null)
         {
-            Error = error;
+            Message = message;
+            Severity = severity;
+            _value = value;
         }
 
-        public string Error { get; }
-
-        string? IResultObject.Value => Error;
+        public string Message { get; }
+        public string Severity { get; }
+        public string Value => _value ?? Message;
 
         public void WriteTo(StringBuilder builder)
         {
-            builder.Append(Error);
+            builder.Append(Value);
         }
     }
 }

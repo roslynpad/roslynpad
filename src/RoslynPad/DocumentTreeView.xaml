@@ -5,8 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
-             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-             xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:roslynPad="clr-namespace:RoslynPad"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:MainViewModel}"
@@ -20,7 +18,8 @@
 
         <HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
                                   ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
-            <DockPanel Margin="0 2 0 2" VerticalAlignment="Center">
+            <DockPanel Margin="0 2 0 2"
+                       VerticalAlignment="Center">
                 <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
 
                 <Image Name="Icon"
@@ -97,11 +96,28 @@
                         ToolTip="Clear search (Esc)"
                         Content="{StaticResource Close}" />
                 <Grid>
-                    <xctk:WatermarkTextBox BorderThickness="0"
-                                           Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
-                                           Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
-                                           KeyDown="Search_OnKeyDown"
-                                           Watermark="Search documents (press Enter)" />
+                    <TextBox Name="SearchText"
+                             BorderThickness="0"
+                             Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                             KeyDown="Search_OnKeyDown" />
+                    <TextBlock Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               Foreground="DarkGray">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=SearchText, Path=Text}"
+                                                 Value="">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Grid>
             </DockPanel>
         </Border>

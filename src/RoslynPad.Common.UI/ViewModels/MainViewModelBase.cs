@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -26,14 +25,12 @@ namespace RoslynPad.UI
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
-        private const string ConfigFileName = "RoslynPad.json";
 
         private OpenDocumentViewModel? _currentOpenDocument;
         private bool _hasUpdate;
         private double _editorFontSize;
         private string? _searchText;
         private bool _isWithinSearchResults;
-        private string _documentPath;
         private bool _isInitialized;
         private DocumentViewModel _documentRoot;
         private DocumentWatcher _documentWatcher;
@@ -65,7 +62,7 @@ namespace RoslynPad.UI
             _commands = commands;
             _documentFileWatcher = documentFileWatcher;
 
-            settings.LoadFrom(Path.Combine(GetDefaultDocumentPath(), ConfigFileName));
+            settings.LoadDefault();
             Settings = settings;
 
             _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
@@ -239,52 +236,16 @@ namespace RoslynPad.UI
         private DocumentViewModel CreateDocumentRoot()
         {
             _documentWatcher?.Dispose();
-            var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
+            var root = DocumentViewModel.CreateRoot(Settings.EffectiveDocumentPath);
             _documentWatcher = new DocumentWatcher(_documentFileWatcher, root);
             return root;
-        }
-
-        private string GetUserDocumentPath()
-        {
-            if (_documentPath == null)
-            {
-
-                var userDefinedPath = Settings.DocumentPath;
-                _documentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
-                    ? userDefinedPath!
-                    : GetDefaultDocumentPath();
-            }
-
-            return _documentPath;
-        }
-
-        private string GetDefaultDocumentPath()
-        {
-            string? documentsPath;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            }
-            else // Unix or Mac
-            {
-                documentsPath = Environment.GetEnvironmentVariable("HOME");
-            }
-
-            if (string.IsNullOrEmpty(documentsPath))
-            {
-                documentsPath = "/";
-                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
-            }
-
-            return Path.Combine(documentsPath, "RoslynPad");
         }
 
         public void EditUserDocumentPath()
         {
             var dialog = _serviceProvider.GetService<IFolderBrowserDialog>();
             dialog.ShowEditBox = true;
-            dialog.SelectedPath = GetUserDocumentPath();
+            dialog.SelectedPath = Settings.EffectiveDocumentPath;
 
             if (dialog.Show() == true)
             {

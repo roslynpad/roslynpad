@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +11,7 @@ namespace RoslynPad.Build
     {
         public static async Task<ProcessResult> RunProcess(string path, string arguments, CancellationToken cancellationToken)
         {
-            using var process = new Process
+            var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
@@ -29,26 +32,51 @@ namespace RoslynPad.Build
 
             await Task.Run(() => process.Start()).ConfigureAwait(false);
 
-            var outputs = await Task.WhenAll(
-                    process.StandardOutput.ReadToEndAsync(),
-                    process.StandardError.ReadToEndAsync())
-                .ConfigureAwait(false);
-
-            return new ProcessResult(process.ExitCode, outputs[0], outputs[1]);
+            return new ProcessResult(process);
         }
 
-        public class ProcessResult
+        public class ProcessResult : IDisposable
         {
-            public ProcessResult(int exitCode, string standardOutput, string standardError)
+            private readonly Process _process;
+            private readonly StringBuilder _standardOutput;
+
+            internal ProcessResult(Process process)
             {
-                ExitCode = exitCode;
-                StandardOutput = standardOutput;
-                StandardError = standardError;
+                _process = process;
+                _standardOutput = new StringBuilder();
+
+                Task.Run(ReadStandardError);
             }
 
-            public int ExitCode { get; }
-            public string StandardOutput { get; }
-            public string StandardError { get; }
+            private async Task ReadStandardError()
+            {
+                StandardError = await _process.StandardError.ReadToEndAsync();
+            }
+
+            public async IAsyncEnumerable<string> GetStandardOutputLines()
+            {
+                var output = _process.StandardOutput;
+                while (true)
+                {
+                    var line = await output.ReadLineAsync().ConfigureAwait(false);
+                    if (line == null)
+                    {
+                        yield break;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        _standardOutput.AppendLine(line);
+                        yield return line;
+                    }
+                }
+            }
+
+            public int ExitCode => _process.ExitCode;
+            public string StandardOutput => _standardOutput.ToString();
+            public string? StandardError { get; private set; }
+
+            public void Dispose() => _process.Dispose();
         }
     }
 }

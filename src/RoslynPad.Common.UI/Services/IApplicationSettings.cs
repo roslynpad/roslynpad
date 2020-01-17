@@ -2,13 +2,16 @@ using System;
 using System.ComponentModel;
 using System.Composition;
 using System.IO;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
 namespace RoslynPad.UI
 {
     public interface IApplicationSettings : INotifyPropertyChanged
     {
+        void LoadDefault();
         void LoadFrom(string path);
+        string GetDefaultDocumentPath();
 
         bool SendErrors { get; set; }
         bool EnableBraceCompletion { get; set; }
@@ -24,6 +27,7 @@ namespace RoslynPad.UI
         int LiveModeDelayMs { get; set; }
         bool SearchWhileTyping { get; set; }
         string DefaultPlatformName { get; set; }
+        string EffectiveDocumentPath { get; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -31,6 +35,7 @@ namespace RoslynPad.UI
     {
         private const int LiveModeDelayMsDefault = 2000;
         private const int EditorFontSizeDefault = 12;
+        private const string DefaultConfigFileName = "RoslynPad.json";
 
         private readonly ITelemetryProvider _telemetryProvider;
         private string? _path;
@@ -42,6 +47,7 @@ namespace RoslynPad.UI
         private string? _windowState;
         private double _editorFontSize = EditorFontSizeDefault;
         private string? _documentPath;
+        private string? _effectiveDocumentPath;
         private bool _searchFileContents;
         private bool _searchUsingRegex;
         private bool _optimizeCompilation;
@@ -55,6 +61,11 @@ namespace RoslynPad.UI
         {
             _telemetryProvider = telemetryProvider;
             _defaultPlatformName = string.Empty;
+        }
+
+        public void LoadDefault()
+        {
+            LoadFrom(Path.Combine(GetDefaultDocumentPath(), DefaultConfigFileName));
         }
 
         public void LoadFrom(string path)
@@ -148,6 +159,45 @@ namespace RoslynPad.UI
         {
             get => _defaultPlatformName;
             set => SetProperty(ref _defaultPlatformName, value);
+        }
+
+        public string EffectiveDocumentPath
+        {
+            get
+            {
+                if (_effectiveDocumentPath == null)
+                {
+
+                    var userDefinedPath = DocumentPath;
+                    _effectiveDocumentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
+                        ? userDefinedPath!
+                        : GetDefaultDocumentPath();
+                }
+
+                return _effectiveDocumentPath;
+            }
+        }
+
+        public string GetDefaultDocumentPath()
+        {
+            string? documentsPath;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            }
+            else // Unix or Mac
+            {
+                documentsPath = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            if (string.IsNullOrEmpty(documentsPath))
+            {
+                documentsPath = "/";
+                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
+            }
+
+            return Path.Combine(documentsPath, "RoslynPad");
         }
 
         protected override void OnPropertyChanged(string? propertyName = null)

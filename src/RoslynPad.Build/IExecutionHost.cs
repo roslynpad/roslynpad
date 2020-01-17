@@ -24,6 +24,7 @@ namespace RoslynPad.Build
         event Action? ReadInput;
         event Action? RestoreStarted;
         event Action<RestoreResult>? RestoreCompleted;
+        event Action<RestoreResultObject>? RestoreMessage;
 
         void UpdateLibraries(IList<LibraryRef> libraries);
 

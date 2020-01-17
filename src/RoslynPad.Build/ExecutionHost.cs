@@ -119,6 +119,7 @@ namespace RoslynPad.Build
         public event Action? ReadInput;
         public event Action? RestoreStarted;
         public event Action<RestoreResult>? RestoreCompleted;
+        public event Action<RestoreResultObject>? RestoreMessage;
 
         public void Dispose()
         {
@@ -443,6 +444,11 @@ namespace RoslynPad.Build
 
                 try
                 {
+                    if (File.Exists(_parameters.NuGetConfigPath))
+                    {
+                        File.Copy(_parameters.NuGetConfigPath, Path.Combine(BuildPath, "nuget.config"), overwrite: true);
+                    }
+
                     await BuildGlobalJson().ConfigureAwait(false);
                     var csprojPath = await BuildCsproj().ConfigureAwait(false);
 
@@ -451,7 +457,17 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var result = await ProcessUtil.RunProcess(DotNetExecutable, $"build -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
+                    using var result = await ProcessUtil.RunProcess(DotNetExecutable, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
+
+                    await foreach (var line in result.GetStandardOutputLines())
+                    {
+                        var trimmed = line.Trim();
+                        var deviceCode = GetDeviceCode(trimmed);
+                        if (deviceCode != null)
+                        {
+                            RestoreMessage?.Invoke(new RestoreResultObject(trimmed, "Warning", deviceCode));
+                        }
+                    }
 
                     if (result.ExitCode != 0)
                     {
@@ -482,6 +498,17 @@ namespace RoslynPad.Build
                 catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
                     RestoreCompleted?.Invoke(RestoreResult.FromErrors(new[] { ex.Message }));
+                }
+
+                static string? GetDeviceCode(string line)
+                {
+                    if (!line.Contains("devicelogin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return null;
+                    }
+
+                    var match = Regex.Match(line, @"[A-Z0-9]{9,}");
+                    return match.Success ? match.Value : null;
                 }
             }
 
@@ -539,7 +566,7 @@ namespace RoslynPad.Build
 
                 static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result)
                 {
-                    return new[] { result.StandardOutput, result.StandardError };
+                    return new[] { result.StandardOutput, result.StandardError! };
                 }
             }
 

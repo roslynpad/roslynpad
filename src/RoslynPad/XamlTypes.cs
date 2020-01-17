@@ -12,6 +12,6 @@ namespace RoslynPad
 
         public static readonly Type CompilationErrorResultObject = typeof(CompilationErrorResultObject);
 
-        public static readonly Type RestoreErrorResultObject = typeof(RestoreErrorResultObject);
+        public static readonly Type RestoreResultObject = typeof(RestoreResultObject);
     }
 }

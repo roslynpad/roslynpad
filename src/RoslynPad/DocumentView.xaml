@@ -132,9 +132,15 @@
                                 <DataTemplate.Triggers>
                                     <DataTrigger Binding="{Binding IsRestoring}"
                                                  Value="True">
-                                        <Setter TargetName="Spinner" Property="Foreground" Value="Orange" />
-                                        <Setter TargetName="Spinner" Property="Visibility" Value="Visible" />
-                                        <Setter TargetName="Spinner" Property="IsIndeterminate" Value="True" />
+                                        <Setter TargetName="Spinner"
+                                                Property="Foreground"
+                                                Value="Orange" />
+                                        <Setter TargetName="Spinner"
+                                                Property="Visibility"
+                                                Value="Visible" />
+                                        <Setter TargetName="Spinner"
+                                                Property="IsIndeterminate"
+                                                Value="True" />
                                     </DataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
