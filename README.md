@@ -4,7 +4,7 @@
 
 A cross-platform C# editor based on Roslyn and AvalonEdit
 
-[![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases) [![Build Status](https://dev.azure.com/arbel/RoslynPad/_apis/build/status/aelij.RoslynPad?branchName=master)](https://dev.azure.com/arbel/RoslynPad/_build/latest?definitionId=5&branchName=master)
+[![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases)
 
 Also available to download in the Microsoft Store:
 
