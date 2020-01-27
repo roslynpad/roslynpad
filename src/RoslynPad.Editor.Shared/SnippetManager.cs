@@ -152,6 +152,13 @@ namespace RoslynPad.Editor
                 "Console.WriteLine",
                 "Console.WriteLine(${Selection})",
                 "if"
+            ),
+            new CodeSnippet
+            (
+                "desktopapp",
+                "#r Framework-include and await Helpers.RunWpfAsync()",
+                "#r \"framework:Microsoft.WindowsDesktop.App\"\nawait Helpers.RunWpfAsync();\n\n${Selection}",
+                "#r"
             )
         }.ToImmutableDictionary(x => x.Name);
 
