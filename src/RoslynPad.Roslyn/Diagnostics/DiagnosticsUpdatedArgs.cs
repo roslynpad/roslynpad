@@ -9,7 +9,7 @@ namespace RoslynPad.Roslyn.Diagnostics
         private readonly Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs _inner;
 
         public DiagnosticsUpdatedKind Kind { get; }
-        public Solution Solution { get; }
+        public Solution? Solution { get; }
         public ImmutableArray<DiagnosticData> Diagnostics { get; private set; }
 
         internal DiagnosticsUpdatedArgs(Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs inner, ImmutableArray<DiagnosticData>? diagnostics = null) : base(inner)

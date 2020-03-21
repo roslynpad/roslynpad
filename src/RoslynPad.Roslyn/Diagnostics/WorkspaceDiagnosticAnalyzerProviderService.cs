@@ -11,13 +11,12 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {
-    [Export(typeof(IWorkspaceDiagnosticAnalyzerProviderService))]
-    internal sealed class WorkspaceDiagnosticAnalyzerProviderService : IWorkspaceDiagnosticAnalyzerProviderService
+    [Export(typeof(IHostDiagnosticAnalyzerPackageProvider))]
+    internal sealed class WorkspaceDiagnosticAnalyzerProviderService : IHostDiagnosticAnalyzerPackageProvider
     {
-        public IEnumerable<HostDiagnosticAnalyzerPackage> GetHostDiagnosticAnalyzerPackages()
+        public ImmutableArray<HostDiagnosticAnalyzerPackage> GetHostDiagnosticAnalyzerPackages()
         {
-            return new[]
-            {
+            return ImmutableArray.Create(
                 new HostDiagnosticAnalyzerPackage(LanguageNames.CSharp,
                     ImmutableArray.Create(
                         // Microsoft.CodeAnalysis
@@ -27,8 +26,7 @@ namespace RoslynPad.Roslyn.Diagnostics
                         // Microsoft.CodeAnalysis.Features
                         typeof(FeaturesResources).Assembly.Location,
                         // Microsoft.CodeAnalysis.CSharp.Features
-                        typeof(CSharpFeaturesResources).Assembly.Location))  
-            };
+                        typeof(CSharpFeaturesResources).Assembly.Location)));
         }
 
         public IAnalyzerAssemblyLoader GetAnalyzerAssemblyLoader()

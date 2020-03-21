@@ -244,7 +244,13 @@ namespace RoslynPad.Editor
                     continue;
                 }
 
-                var marker = _textMarkerService.TryCreate(diagnosticData.TextSpan.Start, diagnosticData.TextSpan.Length);
+                var span = diagnosticData.GetTextSpan();
+                if (span == null)
+                {
+                    continue;
+                }
+
+                var marker = _textMarkerService.TryCreate(span.Value.Start, span.Value.Length);
                 if (marker != null)
                 {
                     marker.Tag = args.Id;

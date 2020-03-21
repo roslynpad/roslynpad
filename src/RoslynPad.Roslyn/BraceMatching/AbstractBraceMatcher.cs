@@ -23,6 +23,11 @@ namespace RoslynPad.Roslyn.BraceMatching
         private bool TryFindMatchingToken(SyntaxToken token, out SyntaxToken match)
         {
             var parent = token.Parent;
+            if (parent == null)
+            {
+                match = default;
+                return false;
+            }
 
             var braceTokens = (from child in parent.ChildNodesAndTokens()
                                where child.IsToken

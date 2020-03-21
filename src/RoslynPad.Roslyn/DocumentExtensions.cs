@@ -18,6 +18,11 @@ namespace RoslynPad.Roslyn
         public static async Task<SyntaxToken> GetTouchingWordAsync(this Document document, int position, CancellationToken cancellationToken, bool findInsideTrivia = false)
         {
             var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
+            if (syntaxTree == null)
+            {
+                return default;
+            }
+
             var syntaxFacts = document.GetLanguageService<ISyntaxFactsService>();
             return await syntaxTree.GetTouchingTokenAsync(position, token => syntaxFacts.IsWord(token), cancellationToken, findInsideTrivia).ConfigureAwait(false);
         }

@@ -31,6 +31,11 @@ namespace RoslynPad.Roslyn.Rename
             }
 
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+            if (semanticModel == null)
+            {
+                return null;
+            }
+
             var semanticFacts = document.GetLanguageService<ISemanticFactsService>();
 
             var tokenRenameInfo = RenameUtilities.GetTokenRenameInfo(semanticFacts, semanticModel, triggerToken, cancellationToken);
@@ -57,7 +62,7 @@ namespace RoslynPad.Roslyn.Rename
             // RenameOverloads option should be forced on.
             var forceRenameOverloads = tokenRenameInfo.IsMemberGroup;
 
-            if (syntaxFactsService.IsTypeNamedVarInVariableOrFieldDeclaration(triggerToken, triggerToken.Parent))
+            if (triggerToken.Parent != null && syntaxFactsService.IsTypeNamedVarInVariableOrFieldDeclaration(triggerToken, triggerToken.Parent))
             {
                 // To check if var in this context is a real type, or the keyword, we need to 
                 // speculatively bind the identifier "var". If it returns a symbol, it's a real type,

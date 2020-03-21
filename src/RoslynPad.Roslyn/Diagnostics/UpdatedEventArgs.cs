@@ -9,9 +9,9 @@ namespace RoslynPad.Roslyn.Diagnostics
 
         public Workspace Workspace { get; }
 
-        public ProjectId ProjectId { get; }
+        public ProjectId? ProjectId { get; }
 
-        public DocumentId DocumentId { get; }
+        public DocumentId? DocumentId { get; }
 
         internal UpdatedEventArgs(Microsoft.CodeAnalysis.Common.UpdatedEventArgs inner)
         {

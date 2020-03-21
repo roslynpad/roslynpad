@@ -188,6 +188,10 @@ namespace RoslynPad.Roslyn.Scripting
         private Func<object[], Task<object>>? Build(Action<Stream>? peStreamAction, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
         {
             var entryPoint = compilation.GetEntryPoint(cancellationToken);
+            if (entryPoint == null)
+            {
+                return null;
+            }
 
             using (var peStream = new MemoryStream())
             using (var pdbStream = new MemoryStream())

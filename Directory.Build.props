@@ -7,8 +7,8 @@
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <EditorPackageVersion>1.2.0</EditorPackageVersion>
-    <RoslynPackageVersion>3.4.0</RoslynPackageVersion>
-    <RoslynAssemblyVersion>3.4.0.0</RoslynAssemblyVersion>
+    <RoslynPackageVersion>3.5.0</RoslynPackageVersion>
+    <RoslynAssemblyVersion>$(RoslynPackageVersion).0</RoslynAssemblyVersion>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>
     <Authors>Eli Arbel</Authors>

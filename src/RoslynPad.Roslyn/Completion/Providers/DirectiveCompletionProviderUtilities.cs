@@ -17,14 +17,14 @@ namespace RoslynPad.Roslyn.Completion.Providers
                     token = token.GetPreviousToken(includeSkipped: true, includeDirectives: true);
                 }
 
-                if (token.Kind() == SyntaxKind.StringLiteralToken && token.Parent.Kind() == directiveKind)
+                if (token.Kind() == SyntaxKind.StringLiteralToken && token.Parent?.Kind() == directiveKind)
                 {
                     stringLiteral = token;
                     return true;
                 }
             }
 
-            stringLiteral = default(SyntaxToken);
+            stringLiteral = default;
             return false;
         }
     }

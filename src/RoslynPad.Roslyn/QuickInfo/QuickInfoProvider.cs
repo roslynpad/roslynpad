@@ -34,6 +34,11 @@ namespace RoslynPad.Roslyn.QuickInfo
             CancellationToken cancellationToken)
         {
             var tree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
+            if (tree == null)
+            {
+                return null;
+            }
+
             var token = await tree.GetTouchingTokenAsync(position, cancellationToken, findInsideTrivia: true).ConfigureAwait(false);
 
             var state = await GetQuickInfoItemAsync(document, token, position, cancellationToken).ConfigureAwait(false);
@@ -343,7 +348,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             // Couldn't bind the token to specific symbols.  If it's an operator, see if we can at
             // least bind it to a type.
             var syntaxFacts = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
-            if (syntaxFacts.IsOperator(token))
+            if (syntaxFacts.IsOperator(token) && token.Parent != null)
             {
                 var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);
                 if (IsOk(typeInfo.Type!))

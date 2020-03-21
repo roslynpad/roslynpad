@@ -148,7 +148,7 @@ namespace RoslynPad.Roslyn.CodeFixes
             {
                 foreach (var diagnostic in severityGroup)
                 {
-                    if (!range.IntersectsWith(diagnostic.TextSpan))
+                    if (!range.IntersectsWith(diagnostic.GetTextSpan()))
                     {
                         continue;
                     }
@@ -179,7 +179,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 // group diagnostics by their diagnostics span
                 // invariant: later code gathers & runs CodeFixProviders for diagnostics with one identical diagnostics span (that gets set later as CodeFixCollection's TextSpan)
                 Dictionary<TextSpan, List<DiagnosticData>>? aggregatedDiagnostics = null;
-                foreach (var diagnostic in await _diagnosticService.GetDiagnosticsForSpanAsync(document, range, diagnosticIdOpt: null, includeConfigurationFixes, cancellationToken).ConfigureAwait(false))
+                foreach (var diagnostic in await _diagnosticService.GetDiagnosticsForSpanAsync(document, range, diagnosticIdOpt: null, includeConfigurationFixes, cancellationToken: cancellationToken).ConfigureAwait(false))
                 {
                     if (diagnostic.IsSuppressed)
                     {
@@ -189,7 +189,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     cancellationToken.ThrowIfCancellationRequested();
 
                     aggregatedDiagnostics ??= new Dictionary<TextSpan, List<DiagnosticData>>();
-                    aggregatedDiagnostics.GetOrAdd(diagnostic.TextSpan, _ => new List<DiagnosticData>()).Add(diagnostic);
+                    aggregatedDiagnostics.GetOrAdd(diagnostic.GetTextSpan(), _ => new List<DiagnosticData>()).Add(diagnostic);
                 }
 
                 if (aggregatedDiagnostics == null)
@@ -213,7 +213,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     result.Sort((d1, d2) => GetValue(d1).CompareTo(GetValue(d2)));
 
                     int GetValue(CodeFixCollection c)
-                        => priorityMap.TryGetValue((CodeFixProvider)c.Provider, out var value) ? value : int.MaxValue;
+                        => priorityMap!.TryGetValue((CodeFixProvider)c.Provider, out var value) ? value : int.MaxValue;
                 }
 
                 if (includeConfigurationFixes)
