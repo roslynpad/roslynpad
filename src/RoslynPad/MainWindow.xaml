@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:roslynPad="clr-namespace:RoslynPad"
-        xmlns:dock="http://schemas.xceed.com/wpf/xaml/avalondock"
+        xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         mc:Ignorable="d"

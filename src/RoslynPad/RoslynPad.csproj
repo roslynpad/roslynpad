@@ -21,7 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonLibrary" Version="2.4.0" />
-    <PackageReference Include="Dirkster.AvalonDock" Version="3.6.2" />
+    <PackageReference Include="Dirkster.AvalonDock" Version="4.0.0" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.1" />
     <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />

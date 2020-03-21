@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
+using AvalonDock;
+using AvalonDock.Layout.Serialization;
 using RoslynPad.UI;
 using RoslynPad.Utilities;
-using Xceed.Wpf.AvalonDock;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace RoslynPad
 {
