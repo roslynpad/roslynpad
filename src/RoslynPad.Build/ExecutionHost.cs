@@ -461,7 +461,7 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    using var result = await ProcessUtil.RunProcess(DotNetExecutable, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
+                    using var result = await ProcessUtil.RunProcess(DotNetExecutable, BuildPath, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
 
                     await foreach (var line in result.GetStandardOutputLines())
                     {

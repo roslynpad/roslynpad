@@ -22,7 +22,6 @@ namespace RoslynPad.Runtime
         /// <returns></returns>
         public static async Task<SynchronizationContext> CreateWpfDispatcherAsync()
         {
-            // TODO: Make this work with WPF on Core
             var windowsBaseAssembly = Assembly.Load("WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
             var dispatcherType = windowsBaseAssembly.GetType("System.Windows.Threading.Dispatcher", throwOnError: true);
             var dispatcherSyncContextCtor = windowsBaseAssembly.GetType("System.Windows.Threading.DispatcherSynchronizationContext", throwOnError: true)

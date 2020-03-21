@@ -9,13 +9,14 @@ namespace RoslynPad.Build
 {
     internal class ProcessUtil
     {
-        public static async Task<ProcessResult> RunProcess(string path, string arguments, CancellationToken cancellationToken)
+        public static async Task<ProcessResult> RunProcess(string path, string workingDirectory, string arguments, CancellationToken cancellationToken)
         {
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = path,
+                    WorkingDirectory = workingDirectory,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
