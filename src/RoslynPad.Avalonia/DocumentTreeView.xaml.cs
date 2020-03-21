@@ -1,6 +1,7 @@
 ﻿using System;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using RoslynPad.UI;
 
@@ -26,7 +27,7 @@ namespace RoslynPad
             {
                 if (item.ContainerControl is TreeViewItem treeViewItem)
                 {
-                    treeViewItem.PointerPressed += OnDocumentClick;
+                    treeViewItem.DoubleTapped += OnDocumentClick;
                     treeViewItem.KeyDown += OnDocumentKeyDown;
                 }
             }
@@ -38,7 +39,7 @@ namespace RoslynPad
             {
                 if (item.ContainerControl is TreeViewItem treeViewItem)
                 {
-                    treeViewItem.PointerPressed -= OnDocumentClick;
+                    treeViewItem.DoubleTapped -= OnDocumentClick;
                     treeViewItem.KeyDown -= OnDocumentKeyDown;
                 }
             }
@@ -50,12 +51,9 @@ namespace RoslynPad
         }
 
 
-        private void OnDocumentClick(object? sender, PointerPressedEventArgs e)
+        private void OnDocumentClick(object? sender, RoutedEventArgs e)
         {
-            if (e.MouseButton == MouseButton.Left && e.ClickCount >= 2)
-            {
-                OpenDocument(e.Source);
-            }
+            OpenDocument(e.Source);
         }
 
         private void OnDocumentKeyDown(object? sender, KeyEventArgs e)

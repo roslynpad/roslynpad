@@ -7,20 +7,14 @@
     <Description>Provides platform-specific (Avalonia) implementations for UI elements required by the RoslynPad.Roslyn package.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="**\*.png" Exclude="obj\**" />
-    <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <None Remove="Resources\Glyphs\Glyphs.xaml" />
+    <AvaloniaResource Include="**\*.png" Exclude="obj\**" />
+    <AvaloniaResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.7.0" />
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="Resources\Glyphs\Glyphs.xaml.cs">
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
   </ItemGroup>
 </Project>

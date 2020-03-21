@@ -1,5 +1,6 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RoslynPad.MainWindow"
         xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"

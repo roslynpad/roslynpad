@@ -5,12 +5,11 @@ namespace RoslynPad
 {
     class Program
     {
+        public static AppBuilder BuildAvaloniaApp()
+          => AppBuilder.Configure<App>().UsePlatformDetect();
+
         [STAThread]
-        static void Main(string[] args)
-        {
-            AppBuilder.Configure<App>()
-                .UsePlatformDetect()
-                .Start<MainWindow>();
-        }
+        public static int Main(string[] args)
+          => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 }

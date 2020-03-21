@@ -17,11 +17,11 @@ using AvaloniaEdit.Editing;
 using AvaloniaEdit.Highlighting;
 using Brush = Avalonia.Media.IBrush;
 using MouseEventArgs = Avalonia.Input.PointerEventArgs;
-using ModifierKeys = Avalonia.Input.InputModifiers;
 using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
 using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;
 using CommandBinding = AvaloniaEdit.RoutedCommandBinding;
 using AvalonEditCommands = AvaloniaEdit.AvaloniaEditCommands;
+using ModifierKeys = Avalonia.Input.KeyModifiers;
 #else
 using System.Windows;
 using System.Windows.Controls;
@@ -297,7 +297,7 @@ namespace RoslynPad.Editor
                     _insightWindow = new OverloadInsightWindow(TextArea)
                     {
                         Provider = results.OverloadProvider,
-                        Background = CompletionBackground,
+                        //Background = CompletionBackground,
                     };
 
                     InitializeInsightWindow();
@@ -339,7 +339,14 @@ namespace RoslynPad.Editor
                     data.Add(completion);
                 }
 
-                _completionWindow.CompletionList.SelectedItem = selected;
+                try
+                {
+                    _completionWindow.CompletionList.SelectedItem = selected;
+                }
+                catch (Exception)
+                {
+                    // TODO-AV: Fix this in AvaloniaEdit
+                }
 
                 _completionWindow.Closed += (o, args) => { _completionWindow = null; };
                 _completionWindow.Show();

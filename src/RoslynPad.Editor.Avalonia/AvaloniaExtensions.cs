@@ -79,8 +79,8 @@ namespace RoslynPad.Editor
 
         public static void Close(this PopupRoot window) => window.Hide();
 
-        public static bool HasModifiers(this KeyEventArgs args, InputModifiers modifier) =>
-            (args.Modifiers & modifier) == modifier;
+        public static bool HasModifiers(this KeyEventArgs args, KeyModifiers modifier) =>
+            (args.KeyModifiers & modifier) == modifier;
 
         public static void Open(this ToolTip toolTip, Control control) => ToolTip.SetIsOpen(control, true);
 

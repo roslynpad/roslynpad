@@ -117,7 +117,7 @@ namespace RoslynPad.Editor
         {
             if (e.Key != Key.OemPeriod ||
 #if AVALONIA
-                e.Modifiers != InputModifiers.Control
+                e.KeyModifiers != KeyModifiers.Control
 #else
                 Keyboard.Modifiers != ModifierKeys.Control
 #endif

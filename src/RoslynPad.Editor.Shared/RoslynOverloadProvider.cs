@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 #if AVALONIA
 using Avalonia.Controls;
+using Avalonia.Layout;
 using CommonFontWeights = Avalonia.Media.FontWeight;
 #else
 using System.Windows;

@@ -18,20 +18,11 @@ namespace RoslynPad.Roslyn
 
         private class GlyphService
         {
-            private readonly ResourceDictionary _glyphs;
-
-            public GlyphService()
-            {
-                var assembly = typeof(Glyphs).Assembly;
-                using (var stream = assembly.GetManifestResourceStream(typeof(Glyphs), $"{nameof(Glyphs)}.{nameof(Glyphs)}.xaml"))
-                {
-                    _glyphs = (ResourceDictionary)new AvaloniaXamlLoader().Load(stream, assembly);
-                }
-            }
+            private readonly Glyphs _glyphs = new Glyphs();
 
             public Drawing? GetGlyphImage(Glyph glyph)
             {
-                if (_glyphs != null && _glyphs.TryGetValue(glyph, out var glyphImage))
+                if (_glyphs != null && _glyphs.TryGetValue(glyph.ToString(), out var glyphImage))
                 {
                     return glyphImage as Drawing;
                 }

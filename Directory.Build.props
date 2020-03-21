@@ -8,6 +8,8 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <EditorPackageVersion>1.2.0</EditorPackageVersion>
     <RoslynPackageVersion>3.5.0</RoslynPackageVersion>
+    <AvaloniaVersion>0.9.4</AvaloniaVersion>
+    <!--<EnableAvaloniaXamlCompilation>false</EnableAvaloniaXamlCompilation>-->
     <RoslynAssemblyVersion>$(RoslynPackageVersion).0</RoslynAssemblyVersion>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>

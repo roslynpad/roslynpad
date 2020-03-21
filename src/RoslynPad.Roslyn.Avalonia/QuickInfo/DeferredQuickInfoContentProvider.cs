@@ -2,6 +2,7 @@
 using System.Composition;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn.Completion;

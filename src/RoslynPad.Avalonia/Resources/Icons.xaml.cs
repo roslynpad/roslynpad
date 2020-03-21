@@ -1,11 +1,11 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace RoslynPad.Roslyn.Resources
+namespace RoslynPad.Resources
 {
-    public class Glyphs : ResourceDictionary
+    public class Icons : ResourceDictionary
     {
-        public Glyphs()
+        public Icons()
         {
             AvaloniaXamlLoader.Load(this);
         }

@@ -1,22 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AssemblyName>RoslynPad</AssemblyName>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <UseAppHost>false</UseAppHost>
     <IsAvaloniaProject>True</IsAvaloniaProject>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <EmbeddedResource Include="..\RoslynPad\Resources\RoslynPad.ico" Link="RoslynPad.ico" />
+    <AvaloniaResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
+    <AvaloniaResource Include="..\RoslynPad\Resources\RoslynPad.ico" Link="RoslynPad.ico" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="0.8.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />

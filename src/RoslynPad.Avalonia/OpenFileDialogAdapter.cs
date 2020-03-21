@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using RoslynPad.UI;
 
 namespace RoslynPad
@@ -43,8 +44,8 @@ namespace RoslynPad
 
         public string InitialDirectory
         {
-            get => _dialog.InitialDirectory;
-            set => _dialog.InitialDirectory = value;
+            get => _dialog.Directory;
+            set => _dialog.Directory = value;
         }
 
         public string FileName
@@ -55,7 +56,8 @@ namespace RoslynPad
 
         public Task<string[]?> ShowAsync()
         {
-            return _dialog.ShowAsync(Application.Current.Windows.First(w => w.IsActive));
+            var active = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.First(w => w.IsActive);
+            return _dialog.ShowAsync(active);
         }
     }
 }
