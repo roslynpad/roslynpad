@@ -46,18 +46,18 @@ namespace RoslynPad
 
             if (!string.IsNullOrEmpty(dotnetExe))
             {
-                var sortedDictionary = new SortedDictionary<NuGetVersion, (string tfm, string name)>();
+                var dictionary = new Dictionary<NuGetVersion, (string tfm, string name)>();
 
                 foreach (var directory in IOUtilities.EnumerateDirectories(sdkPath))
                 {
                     var versionName = Path.GetFileName(directory);
                     if (NuGetVersion.TryParse(versionName, out var version) && version.Major > 1)
                     {
-                        sortedDictionary.Add(version, ($"netcoreapp{version.Major}.{version.Minor}", versionName));
+                        dictionary.Add(version, ($"netcoreapp{version.Major}.{version.Minor}", versionName));
                     }
                 }
 
-                return (sortedDictionary.Values.Reverse().ToImmutableArray(),
+                return (dictionary.OrderBy(c => c.Key.IsPrerelease).ThenByDescending(c => c.Key).Select(c => c.Value).ToImmutableArray(),
                         dotnetExe);
             }
 
