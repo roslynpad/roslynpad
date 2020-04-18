@@ -20,159 +20,122 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Diagnostics;
 #if AVALONIA
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Threading;
 using ImageSource = Avalonia.Media.Drawing;
+using ModifierKeys = Avalonia.Input.KeyModifiers;
 #else
+using System.Windows.Data;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 #endif
 
 namespace RoslynPad.Editor
 {
-    public sealed class ContextActionsRenderer : IDisposable
+    public sealed class ContextActionsRenderer
     {
         private const int DelayMoveMilliseconds = 500;
 
         private readonly ObservableCollection<IContextActionProvider> _providers;
         private readonly CodeTextEditor _editor;
         private readonly TextMarkerService _textMarkerService;
+        private readonly MarkerMargin _bulbMargin;
         private readonly DispatcherTimer _delayMoveTimer;
+        private readonly ContextActionsBulbContextMenu _contextMenu;
 
-        private ContextActionsBulbPopup? _popup;
         private CancellationTokenSource? _cancellationTokenSource;
-        private IEnumerable<object>? _actions;
+        private List<object>? _actions;
+        private ImageSource? _iconImage;
 
         public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
             _textMarkerService = textMarkerService;
 
+            _contextMenu = CreateContextMenu();
+            _bulbMargin = new MarkerMargin { Width = 16, Margin = new Thickness(0, 0, 5, 0) };
+            _bulbMargin.MarkerPointerDown += (o, e) => OpenContextMenu();
+            var index = editor.TextArea.LeftMargins.Count > 0 ? editor.TextArea.LeftMargins.Count - 1 : 0;
+            editor.TextArea.LeftMargins.Insert(index, _bulbMargin);
+
             editor.TextArea.Caret.PositionChanged += CaretPositionChanged;
 
             editor.KeyDown += ContextActionsRenderer_KeyDown;
             _providers = new ObservableCollection<IContextActionProvider>();
-            _providers.CollectionChanged += providers_CollectionChanged;
+            _providers.CollectionChanged += Providers_CollectionChanged;
 
             editor.TextArea.TextView.ScrollOffsetChanged += ScrollChanged;
             _delayMoveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(DelayMoveMilliseconds) };
             _delayMoveTimer.Stop();
             _delayMoveTimer.Tick += TimerMoveTick;
-
-            editor.HookupLoadedUnloadedAction(HookupWindowMove);
         }
 
-        public ImageSource? IconImage { get; set; }
-
-        private void HookupWindowMove(bool enable)
+        public ImageSource? IconImage
         {
-            var window = _editor.GetWindow();
-            if (window != null)
+            get => _iconImage;
+            set
             {
-                window.DetachLocationChanged(WindowOnLocationChanged);
-                if (enable)
-                {
-                    window.AttachLocationChanged(WindowOnLocationChanged);
-                }
+                _bulbMargin.MarkerImage = value;
+                _iconImage = value;
             }
-        }
-
-        private void WindowOnLocationChanged(object? sender, EventArgs eventArgs)
-        {
-            if (_popup != null && _popup.IsOpen)
-            {
-                _popup.HorizontalOffset += double.Epsilon;
-                _popup.HorizontalOffset -= double.Epsilon;
-            }
-        }
-
-        public void Dispose()
-        {
-            var window = _editor.GetWindow();
-            if (window != null)
-            {
-                window.DetachLocationChanged(WindowOnLocationChanged);
-            }
-
-            ClosePopup();
         }
 
         public IList<IContextActionProvider> Providers => _providers;
 
-        private void providers_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void Providers_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             StartTimer();
         }
 
         private async void ContextActionsRenderer_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key != Key.OemPeriod ||
-#if AVALONIA
-                e.KeyModifiers != KeyModifiers.Control
-#else
-                Keyboard.Modifiers != ModifierKeys.Control
-#endif
-                ) return;
+            if (!(e.Key == Key.OemPeriod && e.HasModifiers(ModifierKeys.Control))) return;
 
-            CreatePopup();
+            Cancel();
+            if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) ||
+                _actions?.Count < 1)
+            {
+                HideBulb();
+                return;
+            }
 
-            if (_popup!.IsOpen && _popup.ItemsSource != null)
-            {
-                _popup.IsMenuOpen = true;
-                _popup.Focus();
-            }
-            else
-            {
-                ClosePopup();
-                if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
-                _popup.ItemsSource = _actions;
-                if (_popup.HasItems)
-                {
-                    _popup.IsMenuOpen = true;
-                    _popup.OpenAtLineStart(_editor);
-                    _popup.Focus();
-                }
-            }
+            _contextMenu.SetItems(_actions!);
+            _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
+            OpenContextMenu();
         }
 
-        private void CreatePopup()
+        private void OpenContextMenu()
         {
-            if (_popup == null)
+            _contextMenu.Open(_bulbMargin.Marker);
+            _contextMenu.Focus();
+        }
+
+        private ContextActionsBulbContextMenu CreateContextMenu()
+        {
+            var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
+
+            // TODO: workaround to refresh menu with latest document
+            contextMenu.ContextMenuOpening += async (sender, args) =>
             {
-                _popup = new ContextActionsBulbPopup(_editor.TextArea)
+                if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
                 {
-                    CommandProvider = GetActionCommand,
-                    Icon = IconImage,
-                };
+                    var popup = (ContextActionsBulbContextMenu)sender!;
+                    popup.SetItems(_actions!);
+                }
+            };
 
-                // TODO: workaround to refresh menu with latest document
-                _popup.MenuOpened += async (sender, args) =>
-                {
-                    if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
-                    {
-                        var popup = (ContextActionsBulbPopup)sender!;
-                        popup.ItemsSource = _actions;
-                    }
-                };
-
-                _popup.MenuClosed += (sender, args) =>
-                {
-                    _editor.GetDispatcher().InvokeAsync(() => _editor.Focus(), DispatcherPriority.Background);
-                };
-
-#if AVALONIA
-                ((ISetLogicalParent)_popup).SetParent(_editor.GetWindow());
-#endif
-            }
+            return contextMenu;
         }
 
         private async Task<bool> LoadActionsWithCancellationAsync()
@@ -197,7 +160,7 @@ namespace RoslynPad.Editor
                 .FirstOrDefault(command => command != null);
         }
 
-        private async Task<IEnumerable<object>> LoadActionsAsync(CancellationToken cancellationToken)
+        private async Task<List<object>> LoadActionsAsync(CancellationToken cancellationToken)
         {
             var allActions = new List<object>();
             foreach (var provider in _providers)
@@ -225,29 +188,33 @@ namespace RoslynPad.Editor
         {
             if (!_delayMoveTimer.IsEnabled)
                 return;
-            ClosePopup();
+
+            Cancel();
 
             // Don't show the context action popup when the caret is outside the editor boundaries
             var textView = _editor.TextArea.TextView;
             var editorRect = new Rect((Point)textView.ScrollOffset, textView.GetRenderSize());
             var caretRect = _editor.TextArea.Caret.CalculateCaretRectangle();
             if (!editorRect.Contains(caretRect))
-                return;
-
-#if !AVALONIA
-            // Don't show the context action popup when the text editor is invisible, i.e., the Forms Designer is active.
-            if (PresentationSource.FromVisual(textView) == null) return;
-#endif
-
-            if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true)) return;
-
-            CreatePopup();
-
-            _popup!.ItemsSource = _actions;
-            if (_popup.HasItems)
             {
-                _popup.OpenAtLineStart(_editor);
+                HideBulb();
+                return;
             }
+
+            if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) ||
+                _actions?.Count < 1)
+            {
+                HideBulb();
+                return;
+            }
+
+            //_contextMenu.SetItems(_actions!);
+            _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
+        }
+
+        private void HideBulb()
+        {
+            _bulbMargin.LineNumber = null;
         }
 
         private void CaretPositionChanged(object? sender, EventArgs e)
@@ -257,13 +224,12 @@ namespace RoslynPad.Editor
 
         private void StartTimer()
         {
-            ClosePopup();
             if (_providers.Count == 0)
                 return;
             _delayMoveTimer.Start();
         }
 
-        private void ClosePopup()
+        private void Cancel()
         {
             if (_cancellationTokenSource != null)
             {
@@ -272,12 +238,26 @@ namespace RoslynPad.Editor
             }
 
             _delayMoveTimer.Stop();
-            if (_popup != null)
-            {
-                _popup.Close();
-                _popup.IsMenuOpen = false;
-                _popup.ItemsSource = null;
-            }
+        }
+    }
+
+    internal class ActionCommandConverter : IValueConverter
+    {
+        public ActionCommandConverter(Func<object, ICommand?>? commandProvider)
+        {
+            CommandProvider = commandProvider;
+        }
+
+        public Func<object, ICommand?>? CommandProvider { get; }
+
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return CommandProvider?.Invoke(value);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
         }
     }
 }

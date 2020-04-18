@@ -7,7 +7,7 @@ using System.Windows.Threading;
 
 namespace RoslynPad.Editor
 {
-    public static class WpfExtensions
+    internal static class WpfExtensions
     {
         public static Window GetWindow(this UIElement o) => Window.GetWindow(o);
 
@@ -61,5 +61,21 @@ namespace RoslynPad.Editor
 
         public static void SetItems(this ItemsControl itemsControl, System.Collections.IEnumerable enumerable) => 
             itemsControl.ItemsSource = enumerable;
+
+        public static void Open(this ContextMenu contextMenu, FrameworkElement element)
+        {
+            contextMenu.PlacementTarget = element;
+            contextMenu.IsOpen = true;
+        }
+
+        public static void Open(this ContextMenu contextMenu)
+        {
+            contextMenu.IsOpen = true;
+        }
+
+        public static void Close(this ContextMenu contextMenu)
+        {
+            contextMenu.IsOpen = false;
+        }
     }
 }

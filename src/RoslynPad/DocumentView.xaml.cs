@@ -21,7 +21,7 @@ namespace RoslynPad
     public partial class DocumentView : IDisposable
     {
         private readonly SynchronizationContext? _syncContext;
-        private readonly ErrorMargin _errorMargin;
+        private readonly MarkerMargin _errorMargin;
         private OpenDocumentViewModel _viewModel;
         private IResultObject? _contextMenuResultObject;
 
@@ -31,7 +31,7 @@ namespace RoslynPad
         {
             InitializeComponent();
 
-            _errorMargin = new ErrorMargin { Visibility = Visibility.Collapsed, MarkerImage = TryFindResource("ExceptionMarker") as ImageSource, Width = 10 };
+            _errorMargin = new MarkerMargin { Visibility = Visibility.Collapsed, MarkerImage = TryFindResource("ExceptionMarker") as ImageSource, Width = 10 };
             Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
             Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
             Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;

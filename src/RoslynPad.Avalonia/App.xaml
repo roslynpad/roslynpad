@@ -7,13 +7,6 @@
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn">
-    <!--<Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="resm:RoslynPad.Resources.Icons.xaml?assembly=RoslynPad" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Application.Resources>-->
     <Application.Styles>
         <StyleInclude Source="resm:Avalonia.Themes.Default.DefaultTheme.xaml?assembly=Avalonia.Themes.Default" />
         <StyleInclude Source="resm:Avalonia.Themes.Default.Accents.BaseLight.xaml?assembly=Avalonia.Themes.Default" />

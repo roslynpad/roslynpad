@@ -9,18 +9,17 @@ using ICSharpCode.AvalonEdit.Rendering;
 
 namespace RoslynPad.Editor
 {
-    public class ErrorMargin : AbstractMargin
+    public class MarkerMargin : AbstractMargin
     {
-        private readonly FrameworkElement _marker;
-
-        public ErrorMargin()
+        public MarkerMargin()
         {
-            _marker = CreateMarker();
+            Marker = CreateMarker();
         }
 
         private FrameworkElement CreateMarker()
         {
             var marker = new Image();
+            marker.MouseDown += (o, e) => { e.Handled = true; MarkerPointerDown?.Invoke(o, e); };
             marker.SetBinding(Image.SourceProperty, new Binding { Source = this, Path = new PropertyPath(nameof(MarkerImage)) });
             marker.SetBinding(ToolTipProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Message)) });
             AddLogicalChild(marker);
@@ -28,9 +27,13 @@ namespace RoslynPad.Editor
             return marker;
         }
 
+        public event EventHandler? MarkerPointerDown;
+
+        public FrameworkElement Marker { get; private set; }
+
         protected override IEnumerator LogicalChildren
         {
-            get { yield return _marker; }
+            get { yield return Marker; }
         }
 
         protected override int VisualChildrenCount => 1;
@@ -38,11 +41,11 @@ namespace RoslynPad.Editor
         protected override Visual GetVisualChild(int index)
         {
             if (index != 0) throw new ArgumentOutOfRangeException(nameof(index));
-            return _marker;
+            return Marker;
         }
 
         public static readonly DependencyProperty LineNumberProperty = DependencyProperty.Register(
-            nameof(LineNumber), typeof(int?), typeof(ErrorMargin), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange));
+            nameof(LineNumber), typeof(int?), typeof(MarkerMargin), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange));
 
         public int? LineNumber
         {
@@ -51,7 +54,7 @@ namespace RoslynPad.Editor
         }
 
         public static readonly DependencyProperty MessageProperty = DependencyProperty.Register(
-            nameof(Message), typeof(string), typeof(ErrorMargin), new FrameworkPropertyMetadata());
+            nameof(Message), typeof(string), typeof(MarkerMargin), new FrameworkPropertyMetadata());
 
         public string Message
         {
@@ -60,7 +63,7 @@ namespace RoslynPad.Editor
         }
 
         public static readonly DependencyProperty MarkerImageProperty = DependencyProperty.Register(
-            nameof(MarkerImage), typeof(ImageSource), typeof(ErrorMargin), new FrameworkPropertyMetadata());
+            nameof(MarkerImage), typeof(ImageSource), typeof(MarkerMargin), new FrameworkPropertyMetadata());
 
         public ImageSource? MarkerImage
         {
@@ -74,12 +77,14 @@ namespace RoslynPad.Editor
             {
                 oldTextView.VisualLinesChanged -= TextViewVisualLinesChanged;
             }
+
             base.OnTextViewChanged(oldTextView, newTextView);
+
             if (newTextView != null)
             {
                 newTextView.VisualLinesChanged += TextViewVisualLinesChanged;
             }
-            
+
             InvalidateArrange();
         }
 
@@ -90,7 +95,7 @@ namespace RoslynPad.Editor
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            _marker.Measure(availableSize);
+            Marker.Measure(availableSize);
             return new Size();
         }
 
@@ -98,20 +103,20 @@ namespace RoslynPad.Editor
         {
             var lineNumber = LineNumber;
             var textView = TextView;
-            var visibility = Visibility.Collapsed;
-            if (lineNumber != null && textView != null)
+
+            if (lineNumber != null && textView?.GetVisualLine(lineNumber.Value) is VisualLine line)
             {
-                var line = textView.GetVisualLine(lineNumber.Value);
-                if (line != null)
-                {
-                    visibility = Visibility.Visible;
+                    Marker.Visibility = Visibility.Visible;
                     var visualYPosition = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
-                    _marker.Arrange(new Rect(
+                    Marker.Arrange(new Rect(
                         new Point(0, visualYPosition - textView.VerticalOffset),
                         new Size(finalSize.Width, finalSize.Width)));
-                }
             }
-            _marker.Visibility = visibility;
+            else
+            {
+                Marker.Visibility = Visibility.Collapsed;
+            }
+
             return base.ArrangeOverride(finalSize);
         }
     }

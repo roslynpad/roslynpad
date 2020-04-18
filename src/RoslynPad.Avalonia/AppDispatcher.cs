@@ -24,8 +24,7 @@ namespace RoslynPad
 
         private Task InternalInvoke(Action action, AppDispatcherPriority priority, CancellationToken cancellationToken)
         {
-            Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority));
-            return Task.CompletedTask;
+            return Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority));
         }
 
         private DispatcherPriority ConvertPriority(AppDispatcherPriority priority)

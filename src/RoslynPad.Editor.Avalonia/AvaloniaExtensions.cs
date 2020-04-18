@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace RoslynPad.Editor
 {
-    public static class AvaloniaExtensions
+    internal static class AvaloniaExtensions
     {
         public static T FindAncestorByType<T>(this IControl control)
             where T : IControl
