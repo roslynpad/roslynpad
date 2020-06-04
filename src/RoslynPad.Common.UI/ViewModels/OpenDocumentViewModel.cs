@@ -405,7 +405,7 @@ namespace RoslynPad.UI
             if (changes.Count == 0) return;
 
             MainViewModel.RoslynHost.UpdateDocument(document.WithText(documentText.WithChanges(changes)));
-            if (action == CommentAction.Uncomment)
+            if (action == CommentAction.Uncomment && MainViewModel.Settings.FormatDocumentOnComment)
             {
                 await FormatDocument().ConfigureAwait(false);
             }

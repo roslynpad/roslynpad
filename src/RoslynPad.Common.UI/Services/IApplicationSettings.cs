@@ -29,6 +29,7 @@ namespace RoslynPad.UI
         string DefaultPlatformName { get; set; }
         string EffectiveDocumentPath { get; }
         int? EnvironmentFontSize { get; set; }
+        bool FormatDocumentOnComment { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -57,6 +58,7 @@ namespace RoslynPad.UI
         private bool _enableBraceCompletion = true;
         private string _defaultPlatformName;
         private int? _environmentFontSize;
+        private bool _formatDocumentOnComment = true;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -167,6 +169,12 @@ namespace RoslynPad.UI
         {
             get => _environmentFontSize;
             set => SetProperty(ref _environmentFontSize, value);
+        }
+
+        public bool FormatDocumentOnComment
+        {
+            get => _formatDocumentOnComment;
+            set => SetProperty(ref _formatDocumentOnComment, value);
         }
 
         public string EffectiveDocumentPath
