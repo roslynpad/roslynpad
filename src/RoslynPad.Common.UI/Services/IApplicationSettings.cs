@@ -28,6 +28,7 @@ namespace RoslynPad.UI
         bool SearchWhileTyping { get; set; }
         string DefaultPlatformName { get; set; }
         string EffectiveDocumentPath { get; }
+        int? EnvironmentFontSize { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -55,6 +56,7 @@ namespace RoslynPad.UI
         private bool _searchWhileTyping;
         private bool _enableBraceCompletion = true;
         private string _defaultPlatformName;
+        private int? _environmentFontSize;
 
         [ImportingConstructor]
         public ApplicationSettings(ITelemetryProvider telemetryProvider)
@@ -159,6 +161,12 @@ namespace RoslynPad.UI
         {
             get => _defaultPlatformName;
             set => SetProperty(ref _defaultPlatformName, value);
+        }
+
+        public int? EnvironmentFontSize
+        {
+            get => _environmentFontSize;
+            set => SetProperty(ref _environmentFontSize, value);
         }
 
         public string EffectiveDocumentPath

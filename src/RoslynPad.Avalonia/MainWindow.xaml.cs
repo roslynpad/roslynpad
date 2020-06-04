@@ -24,6 +24,11 @@ namespace RoslynPad
             
             DataContext = _viewModel;
 
+            if (_viewModel.Settings.EnvironmentFontSize.HasValue)
+            {
+                FontSize = _viewModel.Settings.EnvironmentFontSize.Value;
+            }
+
             AvaloniaXamlLoader.Load(this);
 
             this.AttachDevTools();
