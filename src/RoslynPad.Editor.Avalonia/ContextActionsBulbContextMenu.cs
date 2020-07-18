@@ -4,10 +4,11 @@ using System.Linq;
 using Avalonia.Data;
 using Avalonia.Controls.Primitives;
 using System.Reflection;
+using System;
 
 namespace RoslynPad.Editor
 {
-    internal class ContextActionsBulbContextMenu : ContextMenu
+    internal class ContextActionsBulbContextMenu : ContextMenu, IStyleable
     {
         private readonly ActionCommandConverter _converter;
 
@@ -17,8 +18,9 @@ namespace RoslynPad.Editor
         {
             _converter = converter;
             Styles.Add(CreateItemContainerStyle());
-            
         }
+
+        Type IStyleable.StyleKey => typeof(ContextMenu);
 
         private Style CreateItemContainerStyle()
         {
@@ -39,8 +41,11 @@ namespace RoslynPad.Editor
 
                 if (typeof(ContextMenu).GetField("_popup", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(this) is Popup popup)
                 {
-                    popup.PlacementMode = PlacementMode.Bottom;
+                    popup.PlacementMode = PlacementMode.Right;
                 }
+
+                base.Close();
+                base.Open(control);
             }
         }
     }
