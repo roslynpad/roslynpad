@@ -13,6 +13,7 @@
     <RoslynAssemblyVersion>$(RoslynPackageVersion).0</RoslynAssemblyVersion>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>
+    <IsPackable>false</IsPackable>
     <Authors>Eli Arbel</Authors>
     <PackageProjectUrl>https://github.com/aelij/RoslynPad</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
