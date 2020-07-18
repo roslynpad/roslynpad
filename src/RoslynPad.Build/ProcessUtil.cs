@@ -73,7 +73,15 @@ namespace RoslynPad.Build
                 }
             }
 
-            public int ExitCode => _process.ExitCode;
+            public int ExitCode
+            {
+                get
+                {
+                    _process.WaitForExit();
+                    return _process.ExitCode;
+                }
+            }
+
             public string StandardOutput => _standardOutput.ToString();
             public string? StandardError { get; private set; }
 

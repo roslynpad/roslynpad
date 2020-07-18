@@ -214,6 +214,7 @@
                         <TextBlock Text="{Binding Header}"
                                    Width="150" />
                         <TextBlock Text="{Binding Value}" />
+                        <TextBlock Text="{Binding Message}" />
                     </StackPanel>
                 </TreeDataTemplate>
             </TreeView.ItemTemplate>
