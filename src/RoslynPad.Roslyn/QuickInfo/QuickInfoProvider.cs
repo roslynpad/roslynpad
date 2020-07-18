@@ -326,34 +326,37 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             var symbols = semanticModel.GetSemanticInfo(token, document.Project.Solution.Workspace, cancellationToken).GetSymbols(includeType: true);
 
-            var bindableParent = document.GetLanguageService<ISyntaxFactsService>().GetBindableParent(token);
-            var overloads = semanticModel.GetMemberGroup(bindableParent, cancellationToken);
-
-            symbols = symbols.Where(IsOk)
-                .Where(s => IsAccessible(s, enclosingType!))
-                .Concat(overloads)
-                .Distinct(SymbolEquivalenceComparer.Instance)
-                .ToImmutableArray();
-
-            if (symbols.Any())
+            var bindableParent = document.GetLanguageService<ISyntaxFactsService>().TryGetBindableParent(token);
+            if (bindableParent != null)
             {
-                var typeParameter = symbols.First() as ITypeParameterSymbol;
-                return new ValueTuple<SemanticModel, IList<ISymbol>>(
-                    semanticModel,
-                    typeParameter != null && typeParameter.TypeParameterKind == TypeParameterKind.Cref
-                        ? SpecializedCollections.EmptyList<ISymbol>()
-                        : symbols.ToList());
-            }
+                var overloads = semanticModel.GetMemberGroup(bindableParent, cancellationToken);
 
-            // Couldn't bind the token to specific symbols.  If it's an operator, see if we can at
-            // least bind it to a type.
-            var syntaxFacts = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
-            if (syntaxFacts.IsOperator(token) && token.Parent != null)
-            {
-                var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);
-                if (IsOk(typeInfo.Type!))
+                symbols = symbols.Where(IsOk)
+                    .Where(s => IsAccessible(s, enclosingType!))
+                    .Concat(overloads)
+                    .Distinct(SymbolEquivalenceComparer.Instance)
+                    .ToImmutableArray();
+
+                if (symbols.Any())
                 {
-                    return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, new List<ISymbol>(1) { typeInfo.Type! });
+                    var typeParameter = symbols.First() as ITypeParameterSymbol;
+                    return new ValueTuple<SemanticModel, IList<ISymbol>>(
+                        semanticModel,
+                        typeParameter != null && typeParameter.TypeParameterKind == TypeParameterKind.Cref
+                            ? SpecializedCollections.EmptyList<ISymbol>()
+                            : symbols.ToList());
+                }
+
+                // Couldn't bind the token to specific symbols.  If it's an operator, see if we can at
+                // least bind it to a type.
+                var syntaxFacts = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
+                if (syntaxFacts.IsOperator(token) && token.Parent != null)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);
+                    if (IsOk(typeInfo.Type!))
+                    {
+                        return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, new List<ISymbol>(1) { typeInfo.Type! });
+                    }
                 }
             }
 

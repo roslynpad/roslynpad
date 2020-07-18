@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis.ChangeSignature;
 
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 {
@@ -17,7 +17,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             SelectedIndex = inner.SelectedIndex;
         }
 
-        public ParameterConfiguration(IParameterSymbol thisParameter, List<IParameterSymbol> parametersWithoutDefaultValues, List<IParameterSymbol> remainingEditableParameters, IParameterSymbol? paramsParameter, int selectedIndex)
+        public ParameterConfiguration(ExistingParameter? thisParameter, ImmutableArray<Parameter> parametersWithoutDefaultValues, ImmutableArray<Parameter> remainingEditableParameters, ExistingParameter? paramsParameter, int selectedIndex)
         {
             ThisParameter = thisParameter;
             ParametersWithoutDefaultValues = parametersWithoutDefaultValues;
@@ -26,10 +26,10 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             SelectedIndex = selectedIndex;
         }
 
-        public IParameterSymbol ThisParameter { get; }
-        public List<IParameterSymbol> ParametersWithoutDefaultValues { get; }
-        public List<IParameterSymbol> RemainingEditableParameters { get; }
-        public IParameterSymbol? ParamsParameter { get; }
+        public ExistingParameter? ThisParameter { get; }
+        public ImmutableArray<Parameter> ParametersWithoutDefaultValues { get; }
+        public ImmutableArray<Parameter> RemainingEditableParameters { get; }
+        public ExistingParameter? ParamsParameter { get; }
         public int SelectedIndex { get; set; }
 
         internal Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration ToInternal()

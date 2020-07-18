@@ -79,8 +79,7 @@ namespace RoslynPad.Roslyn.Rename
                 }
             }
 
-            var symbolAndProjectId = await RenameLocations.ReferenceProcessing.GetRenamableSymbolAsync(document, triggerToken.SpanStart, cancellationToken: cancellationToken).ConfigureAwait(false);
-            var symbol = symbolAndProjectId.Symbol;
+            var symbol = await RenameLocations.ReferenceProcessing.TryGetRenamableSymbolAsync(document, triggerToken.SpanStart, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbol == null)
             {
                 return null;

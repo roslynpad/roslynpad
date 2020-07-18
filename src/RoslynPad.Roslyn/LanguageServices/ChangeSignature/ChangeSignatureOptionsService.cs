@@ -15,7 +15,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         {
             _dialogFactory = dialogFactory;
         }
-        public ChangeSignatureOptionsResult GetChangeSignatureOptions(ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters)
+        public ChangeSignatureOptionsResult? GetChangeSignatureOptions(Document document, int positionForTypeBinding, ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters)
         {
             var viewModel = new ChangeSignatureDialogViewModel(new ParameterConfiguration(parameters), symbol);
 
@@ -24,8 +24,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             var result = dialog.Show();
 
             return result == true
-                ? new ChangeSignatureOptionsResult { IsCancelled = false, UpdatedSignature = new SignatureChange(new ParameterConfiguration(parameters), viewModel.GetParameterConfiguration()).ToInternal() }
-                : new ChangeSignatureOptionsResult { IsCancelled = true };
+                ? new ChangeSignatureOptionsResult(new SignatureChange(new ParameterConfiguration(parameters), viewModel.GetParameterConfiguration()).ToInternal(), previewChanges: false)
+                : null;
         }
     }
 }

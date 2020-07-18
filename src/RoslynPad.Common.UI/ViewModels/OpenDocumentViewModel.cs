@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
@@ -342,7 +343,8 @@ namespace RoslynPad.UI
             await dialog.ShowAsync();
             if (dialog.ShouldRename)
             {
-                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName, null).ConfigureAwait(true);
+                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName ?? string.Empty,
+                    document.Project.Solution.Options).ConfigureAwait(true);
                 var newDocument = newSolution.GetDocument(DocumentId);
                 // TODO: possibly update entire solution
                 host.UpdateDocument(newDocument!);

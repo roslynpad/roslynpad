@@ -106,7 +106,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     return default;
                 }
 
-                using var diagnostics = SharedPools.Default<List<DiagnosticData>>().GetPooledObject();
+                using var diagnostics = SharedPools.Default<ArrayBuilder<DiagnosticData>>().GetPooledObject();
                 using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
                 var linkedToken = linkedTokenSource.Token;

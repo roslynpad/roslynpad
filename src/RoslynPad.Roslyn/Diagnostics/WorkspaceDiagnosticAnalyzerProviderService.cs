@@ -1,40 +1,11 @@
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Composition;
-using System.IO;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Host;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace RoslynPad.Roslyn.Diagnostics
 {
-    [Export(typeof(IHostDiagnosticAnalyzerPackageProvider))]
-    internal sealed class WorkspaceDiagnosticAnalyzerProviderService : IHostDiagnosticAnalyzerPackageProvider
-    {
-        public ImmutableArray<HostDiagnosticAnalyzerPackage> GetHostDiagnosticAnalyzerPackages()
-        {
-            return ImmutableArray.Create(
-                new HostDiagnosticAnalyzerPackage(LanguageNames.CSharp,
-                    ImmutableArray.Create(
-                        // Microsoft.CodeAnalysis
-                        typeof(Compilation).Assembly.Location,
-                        // Microsoft.CodeAnalysis.CSharp
-                        typeof(CSharpResources).Assembly.Location,
-                        // Microsoft.CodeAnalysis.Features
-                        typeof(FeaturesResources).Assembly.Location,
-                        // Microsoft.CodeAnalysis.CSharp.Features
-                        typeof(CSharpFeaturesResources).Assembly.Location)));
-        }
-
-        public IAnalyzerAssemblyLoader GetAnalyzerAssemblyLoader()
-        {
-            return SimpleAnalyzerAssemblyLoader.Instance;
-        }
-    }
-
     [ExportWorkspaceService(typeof(IAnalyzerService), ServiceLayer.Host), Shared]
     internal sealed class AnalyzerAssemblyLoaderService : IAnalyzerService
     {
@@ -44,7 +15,8 @@ namespace RoslynPad.Roslyn.Diagnostics
         }
     }
 
-    internal class SimpleAnalyzerAssemblyLoader : Microsoft.CodeAnalysis.AnalyzerAssemblyLoader
+    [Export(typeof(IAnalyzerAssemblyLoader))]
+    internal class SimpleAnalyzerAssemblyLoader : AnalyzerAssemblyLoader
     {
         public static IAnalyzerAssemblyLoader Instance { get; } = new SimpleAnalyzerAssemblyLoader();
 

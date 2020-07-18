@@ -11,6 +11,8 @@ using System.Composition.Hosting;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
+using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 
 namespace RoslynPad.Roslyn
 {
@@ -249,7 +251,8 @@ namespace RoslynPad.Roslyn
 
         private DocumentId AddDocument(RoslynWorkspace workspace, DocumentCreationArgs args, Document? previousDocument = null)
         {
-            var project = CreateProject(workspace.CurrentSolution, args,
+            var solution = workspace.CurrentSolution.AddAnalyzerReferences(GetSolutionAnalyzerReferences());
+            var project = CreateProject(solution, args,
                 CreateCompilationOptions(args, previousDocument == null), previousDocument?.Project);
             var document = CreateDocument(project, args);
             var documentId = document.Id;
@@ -274,6 +277,15 @@ namespace RoslynPad.Roslyn
             }
 
             return documentId;
+        }
+
+        protected virtual IEnumerable<AnalyzerReference> GetSolutionAnalyzerReferences()
+        {
+            var loader = GetService<IAnalyzerAssemblyLoader>();
+            yield return new AnalyzerFileReference(typeof(Compilation).Assembly.Location, loader);
+            yield return new AnalyzerFileReference(typeof(CSharpResources).Assembly.Location, loader);
+            yield return new AnalyzerFileReference(typeof(FeaturesResources).Assembly.Location, loader);
+            yield return new AnalyzerFileReference(typeof(CSharpFeaturesResources).Assembly.Location, loader);
         }
 
         public void UpdateDocument(Document document)
