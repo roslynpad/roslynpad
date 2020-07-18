@@ -37,7 +37,7 @@ namespace RoslynPad.UI
         private const int EditorFontSizeDefault = 12;
         private const string DefaultConfigFileName = "RoslynPad.json";
 
-        private readonly ITelemetryProvider _telemetryProvider;
+        private readonly ITelemetryProvider? _telemetryProvider;
         private string? _path;
 
         private bool _sendErrors;
@@ -57,7 +57,7 @@ namespace RoslynPad.UI
         private string _defaultPlatformName;
 
         [ImportingConstructor]
-        public ApplicationSettings(ITelemetryProvider telemetryProvider)
+        public ApplicationSettings([Import(AllowDefault = true)] ITelemetryProvider telemetryProvider)
         {
             _telemetryProvider = telemetryProvider;
             _defaultPlatformName = string.Empty;
@@ -194,7 +194,7 @@ namespace RoslynPad.UI
             if (string.IsNullOrEmpty(documentsPath))
             {
                 documentsPath = "/";
-                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
+                _telemetryProvider?.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
             }
 
             return Path.Combine(documentsPath, "RoslynPad");
@@ -226,7 +226,7 @@ namespace RoslynPad.UI
             catch (Exception e)
             {
                 LoadDefaultSettings();
-                _telemetryProvider.ReportError(e);
+                _telemetryProvider?.ReportError(e);
             }
         }
 
@@ -251,7 +251,7 @@ namespace RoslynPad.UI
             }
             catch (Exception e)
             {
-                _telemetryProvider.ReportError(e);
+                _telemetryProvider?.ReportError(e);
             }
         }
     }

@@ -35,7 +35,7 @@ namespace RoslynPad.UI
         public string GlobalPackageFolder { get; }
 
         [ImportingConstructor]
-        public NuGetViewModel(ITelemetryProvider telemetryProvider, IApplicationSettings appSettings)
+        public NuGetViewModel([Import(AllowDefault = true)] ITelemetryProvider? telemetryProvider, IApplicationSettings appSettings)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace RoslynPad.UI
                     {
                         if (i == retries)
                         {
-                            telemetryProvider.ReportError(ex);
+                            telemetryProvider?.ReportError(ex);
                             throw;
                         }
                     }

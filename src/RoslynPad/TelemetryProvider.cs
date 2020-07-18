@@ -1,7 +1,9 @@
-﻿using System.Composition;
-using System.Configuration;
+﻿using System;
+using System.Composition;
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.Configuration;
 using RoslynPad.UI;
 
 namespace RoslynPad
@@ -22,6 +24,8 @@ namespace RoslynPad
             args.Handled = true;
         }
         
-        protected override string GetInstrumentationKey() => ConfigurationManager.AppSettings["InstrumentationKey"];
+        protected override string GetInstrumentationKey() =>
+            new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
+                .Build()["InstrumentationKey"];
     }
 }
