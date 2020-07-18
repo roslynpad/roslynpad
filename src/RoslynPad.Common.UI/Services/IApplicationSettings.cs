@@ -28,7 +28,7 @@ namespace RoslynPad.UI
         bool SearchWhileTyping { get; set; }
         string DefaultPlatformName { get; set; }
         string EffectiveDocumentPath { get; }
-        int? EnvironmentFontSize { get; set; }
+        double? WindowFontSize { get; set; }
         bool FormatDocumentOnComment { get; set; }
     }
 
@@ -57,7 +57,7 @@ namespace RoslynPad.UI
         private bool _searchWhileTyping;
         private bool _enableBraceCompletion = true;
         private string _defaultPlatformName;
-        private int? _environmentFontSize;
+        private double? _windowFontSize;
         private bool _formatDocumentOnComment = true;
 
         [ImportingConstructor]
@@ -165,10 +165,10 @@ namespace RoslynPad.UI
             set => SetProperty(ref _defaultPlatformName, value);
         }
 
-        public int? EnvironmentFontSize
+        public double? WindowFontSize
         {
-            get => _environmentFontSize;
-            set => SetProperty(ref _environmentFontSize, value);
+            get => _windowFontSize;
+            set => SetProperty(ref _windowFontSize, value);
         }
 
         public bool FormatDocumentOnComment
@@ -249,6 +249,7 @@ namespace RoslynPad.UI
         private void LoadDefaultSettings()
         {
             SendErrors = true;
+            FormatDocumentOnComment = true;
             EditorFontSize = EditorFontSizeDefault;
             LiveModeDelayMs = LiveModeDelayMsDefault;
         }
