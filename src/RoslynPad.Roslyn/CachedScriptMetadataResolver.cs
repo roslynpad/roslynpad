@@ -25,7 +25,7 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        public override bool Equals(object other) => _inner.Equals(other);
+        public override bool Equals(object? other) => _inner.Equals(other);
 
         public override int GetHashCode() => _inner.GetHashCode();
 
