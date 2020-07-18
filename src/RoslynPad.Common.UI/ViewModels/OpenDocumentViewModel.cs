@@ -322,7 +322,7 @@ namespace RoslynPad.UI
 
         private IEnumerable<string> GetReferencePaths(IEnumerable<MetadataReference> references)
         {
-            return references.OfType<PortableExecutableReference>().Select(x => x.FilePath);
+            return references.OfType<PortableExecutableReference>().Select(x => x.FilePath).Where(x => x != null)!;
         }
 
         private async Task RenameSymbol()

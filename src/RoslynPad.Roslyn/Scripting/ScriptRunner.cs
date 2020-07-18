@@ -254,9 +254,6 @@ namespace RoslynPad.Roslyn.Scripting
             return !string.IsNullOrEmpty(qualifier) ? string.Concat(qualifier, ".", name) : name;
         }
 
-        // TODO:
-        //public bool HasSubmissionResult => GetCompilation().HasSubmissionResult;
-
         private Compilation GetCompilation(string assemblyName)
         {
             if (_lazyCompilation == null)
@@ -265,9 +262,7 @@ namespace RoslynPad.Roslyn.Scripting
                 Interlocked.CompareExchange(ref _lazyCompilation, compilation, null);
             }
 
-#pragma warning disable CS8603 // Possible null reference return.
-            return _lazyCompilation;
-#pragma warning restore CS8603 // Possible null reference return.
+            return _lazyCompilation!;
         }
 
         private Compilation GetCompilationFromCode(string assemblyName)
@@ -275,6 +270,8 @@ namespace RoslynPad.Roslyn.Scripting
             var trees = SyntaxTrees;
             if (trees == null)
             {
+                if (Code == null) throw new InvalidOperationException($"Either specify {nameof(Code)} or {nameof(SyntaxTrees)}");
+
                 trees = ImmutableList.Create(SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath));
             }
 
