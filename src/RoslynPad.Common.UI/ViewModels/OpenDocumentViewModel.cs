@@ -670,6 +670,11 @@ namespace RoslynPad.UI
                 var code = await GetCode(cancellationToken).ConfigureAwait(true);
                 if (_executionHost != null)
                 {
+                    // Make sure the execution working directory matches the current script path
+                    // which may have chaned since we loaded.
+                    if (_executionHostParameters.WorkingDirectory != WorkingDirectory)
+                        _executionHostParameters.WorkingDirectory = WorkingDirectory;
+
                     await _executionHost.ExecuteAsync(code, ShowIL, OptimizationLevel).ConfigureAwait(true);
                 }
             }
