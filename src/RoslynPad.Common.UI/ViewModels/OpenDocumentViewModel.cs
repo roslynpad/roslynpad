@@ -671,7 +671,7 @@ namespace RoslynPad.UI
                 if (_executionHost != null)
                 {
                     // Make sure the execution working directory matches the current script path
-                    // which may have chaned since we loaded.
+                    // which may have changed since we loaded.
                     if (_executionHostParameters.WorkingDirectory != WorkingDirectory)
                         _executionHostParameters.WorkingDirectory = WorkingDirectory;
 
