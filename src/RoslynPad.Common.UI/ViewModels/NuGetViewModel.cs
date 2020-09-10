@@ -111,9 +111,9 @@ namespace RoslynPad.UI
 
                 if (result?.Length > 0)
                 {
-                    var repositoryPackages = result.Where(x => x.Identity.Id.Contains(searchTerm))
-                                                   .Select(x => new PackageData(x))
-                                                   .ToArray();
+                    var repositoryPackages = result
+                                             .Select(x => new PackageData(x))
+                                             .ToArray();
                     await Task.WhenAll(repositoryPackages.Select(x => x.Initialize())).ConfigureAwait(false);
                     packages.AddRange(repositoryPackages);
                 }
