@@ -26,7 +26,7 @@ namespace RoslynPad.Build
         public string NuGetConfigPath { get; }
         public ImmutableArray<string> Imports { get; set; }
         public ImmutableArray<string> DisabledDiagnostics { get; }
-        public string WorkingDirectory { get; }
+        public string WorkingDirectory { get; set; }
         public bool CheckOverflow { get; }
         public bool AllowUnsafe { get; }
     }

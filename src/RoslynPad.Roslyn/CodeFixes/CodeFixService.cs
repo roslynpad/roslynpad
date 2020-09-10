@@ -106,7 +106,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                     return default;
                 }
 
-                using var diagnostics = SharedPools.Default<List<DiagnosticData>>().GetPooledObject();
+                using var diagnostics = SharedPools.Default<ArrayBuilder<DiagnosticData>>().GetPooledObject();
                 using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
                 var linkedToken = linkedTokenSource.Token;
@@ -258,9 +258,8 @@ namespace RoslynPad.Roslyn.CodeFixes
                 }
 
                 var fixAllService = document.Project.Solution.Workspace.Services.GetService<IFixAllGetFixesService>();
-
                 var solution = await fixAllService!.GetFixAllChangedSolutionAsync(
-                    fixCollection.FixAllState.CreateFixAllContext(progressTracker, cancellationToken)).ConfigureAwait(false);
+                    new FixAllContext(fixCollection.FixAllState, progressTracker, cancellationToken)).ConfigureAwait(false);
 
                 return solution.GetDocument(document.Id)!;
             }

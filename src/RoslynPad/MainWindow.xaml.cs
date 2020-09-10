@@ -110,6 +110,11 @@ namespace RoslynPad
             {
                 WindowState = state;
             }
+
+            if (_viewModel.Settings.WindowFontSize.HasValue)
+            {
+                FontSize = _viewModel.Settings.WindowFontSize.Value;
+            }
         }
 
         private void SaveWindowLayout()

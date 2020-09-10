@@ -71,9 +71,10 @@ namespace RoslynPad.Editor
                 
                 foreach (var change in changes)
                 {
-                    Document.Replace(change.Span.Start + documentOffset, change.Span.Length, new StringTextSource(change.NewText));
-
-                    var changeOffset = change.NewText.Length - change.Span.Length;
+                    var newTextChange = change.NewText ?? string.Empty;
+                    Document.Replace(change.Span.Start + documentOffset, change.Span.Length, new StringTextSource(newTextChange));
+                    
+                    var changeOffset = newTextChange.Length - change.Span.Length;
                     if (caretOffset >= change.Span.Start + documentOffset + change.Span.Length)
                     {
                         // If caret is after text, adjust it by text size difference
@@ -82,7 +83,7 @@ namespace RoslynPad.Editor
                     else if (caretOffset >= change.Span.Start + documentOffset)
                     {
                         // If caret is inside changed text, but go out of bounds of the replacing text after the change, go back inside
-                        if (caretOffset >= change.Span.Start + documentOffset + change.NewText.Length)
+                        if (caretOffset >= change.Span.Start + documentOffset + newTextChange.Length)
                         {
                             caretOffset = change.Span.Start + documentOffset;
                         }

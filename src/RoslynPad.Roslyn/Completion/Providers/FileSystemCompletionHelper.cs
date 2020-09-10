@@ -185,13 +185,13 @@ namespace RoslynPad.Roslyn
                     // base directory:
                     if (_baseDirectoryOpt != null)
                     {
-                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(_baseDirectoryOpt, directoryPath), cancellationToken));
+                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(_baseDirectoryOpt, directoryPath)!, cancellationToken));
                     }
 
                     // search paths:
                     foreach (var searchPath in _searchPaths)
                     {
-                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(searchPath, directoryPath), cancellationToken));
+                        result.AddRange(GetItemsInDirectory(PathUtilities.CombineAbsoluteAndRelativePaths(searchPath, directoryPath)!, cancellationToken));
                     }
 
                     break;

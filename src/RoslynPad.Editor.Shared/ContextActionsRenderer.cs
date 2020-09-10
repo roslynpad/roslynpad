@@ -27,7 +27,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 #if AVALONIA
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -118,7 +117,9 @@ namespace RoslynPad.Editor
         private void OpenContextMenu()
         {
             _contextMenu.Open(_bulbMargin.Marker);
+#if !AVALONIA
             _contextMenu.Focus();
+#endif
         }
 
         private ContextActionsBulbContextMenu CreateContextMenu()

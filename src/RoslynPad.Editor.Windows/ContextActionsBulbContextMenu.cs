@@ -13,7 +13,8 @@ namespace RoslynPad.Editor
         {
             _converter = converter;
             ItemContainerStyle = CreateItemContainerStyle();
-            Placement = PlacementMode.Bottom;
+            HasDropShadow = false;
+            Placement = SystemParameters.MenuDropAlignment ? PlacementMode.Left : PlacementMode.Right;
         }
 
         private Style CreateItemContainerStyle()

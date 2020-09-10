@@ -4,7 +4,6 @@ using Avalonia.Media;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using Avalonia.Controls;
-using Avalonia.Layout;
 
 namespace RoslynPad.Editor
 {

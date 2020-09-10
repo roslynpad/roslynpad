@@ -10,7 +10,7 @@ $location = $PSScriptRoot
 
 if ($Avalonia)
 {
-    . .\GetFilesAvalonia.ps1
+    . .\GetFiles.ps1 -Avalonia
     $archiveFile = "$location\RoslynPadAvalonia.zip"
 }
 else
@@ -27,7 +27,7 @@ try
 
 	foreach ($file in $files)
 	{
-		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file, $file.Substring($rootPath.Length).Replace("\", "/")) | Out-Null
+		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file, $file.Substring($rootPath.Length + 1).Replace("\", "/")) | Out-Null
 		$file
 	}
 }

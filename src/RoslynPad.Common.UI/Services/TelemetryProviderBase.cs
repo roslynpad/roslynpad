@@ -4,7 +4,7 @@ using Microsoft.ApplicationInsights;
 
 namespace RoslynPad.UI
 {
-    internal abstract class TelemetryProviderBase : ITelemetryProvider
+    public abstract class TelemetryProviderBase : ITelemetryProvider
     {
         private TelemetryClient? _client;
         private Exception? _lastError;

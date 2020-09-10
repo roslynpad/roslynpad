@@ -21,7 +21,7 @@ namespace RoslynPad.Roslyn.Diagnostics
         public bool IsEnabledByDefault => _inner.IsEnabledByDefault;
         public int WarningLevel => _inner.WarningLevel;
         public IReadOnlyList<string> CustomTags => _inner.CustomTags;
-        public ImmutableDictionary<string, string> Properties => _inner.Properties;
+        public ImmutableDictionary<string, string?> Properties => _inner.Properties;
         public bool IsSuppressed => _inner.IsSuppressed;
         public ProjectId? ProjectId => _inner.ProjectId;
         public DocumentId? DocumentId => _inner.DocumentId;

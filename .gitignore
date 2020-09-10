@@ -203,3 +203,6 @@ RoslynPad.zip
 
 *.appx
 *.msix
+
+RoslynPad.json
+RoslynPad.nuget.config

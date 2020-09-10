@@ -6,7 +6,7 @@
   <Identity Name="34685EliArbel.RoslynPad"
     ProcessorArchitecture="x86"
     Publisher="CN=9C7E53B6-ADB4-497A-97E5-B4B9B239B179"
-    Version="14.1.0.0" />
+    Version="15.0.0.0" />
   <Properties>
     <DisplayName>RoslynPad</DisplayName>
     <PublisherDisplayName>Eli Arbel</PublisherDisplayName>

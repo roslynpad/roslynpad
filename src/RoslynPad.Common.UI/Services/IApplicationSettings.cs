@@ -28,6 +28,8 @@ namespace RoslynPad.UI
         bool SearchWhileTyping { get; set; }
         string DefaultPlatformName { get; set; }
         string EffectiveDocumentPath { get; }
+        double? WindowFontSize { get; set; }
+        bool FormatDocumentOnComment { get; set; }
     }
 
     [Export(typeof(IApplicationSettings)), Shared]
@@ -37,7 +39,7 @@ namespace RoslynPad.UI
         private const int EditorFontSizeDefault = 12;
         private const string DefaultConfigFileName = "RoslynPad.json";
 
-        private readonly ITelemetryProvider _telemetryProvider;
+        private readonly ITelemetryProvider? _telemetryProvider;
         private string? _path;
 
         private bool _sendErrors;
@@ -55,9 +57,11 @@ namespace RoslynPad.UI
         private bool _searchWhileTyping;
         private bool _enableBraceCompletion = true;
         private string _defaultPlatformName;
+        private double? _windowFontSize;
+        private bool _formatDocumentOnComment = true;
 
         [ImportingConstructor]
-        public ApplicationSettings(ITelemetryProvider telemetryProvider)
+        public ApplicationSettings([Import(AllowDefault = true)] ITelemetryProvider telemetryProvider)
         {
             _telemetryProvider = telemetryProvider;
             _defaultPlatformName = string.Empty;
@@ -161,6 +165,18 @@ namespace RoslynPad.UI
             set => SetProperty(ref _defaultPlatformName, value);
         }
 
+        public double? WindowFontSize
+        {
+            get => _windowFontSize;
+            set => SetProperty(ref _windowFontSize, value);
+        }
+
+        public bool FormatDocumentOnComment
+        {
+            get => _formatDocumentOnComment;
+            set => SetProperty(ref _formatDocumentOnComment, value);
+        }
+
         public string EffectiveDocumentPath
         {
             get
@@ -194,7 +210,7 @@ namespace RoslynPad.UI
             if (string.IsNullOrEmpty(documentsPath))
             {
                 documentsPath = "/";
-                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
+                _telemetryProvider?.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
             }
 
             return Path.Combine(documentsPath, "RoslynPad");
@@ -226,13 +242,14 @@ namespace RoslynPad.UI
             catch (Exception e)
             {
                 LoadDefaultSettings();
-                _telemetryProvider.ReportError(e);
+                _telemetryProvider?.ReportError(e);
             }
         }
 
         private void LoadDefaultSettings()
         {
             SendErrors = true;
+            FormatDocumentOnComment = true;
             EditorFontSize = EditorFontSizeDefault;
             LiveModeDelayMs = LiveModeDelayMsDefault;
         }
@@ -251,7 +268,7 @@ namespace RoslynPad.UI
             }
             catch (Exception e)
             {
-                _telemetryProvider.ReportError(e);
+                _telemetryProvider?.ReportError(e);
             }
         }
     }
