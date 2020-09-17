@@ -209,7 +209,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            //_contextMenu.SetItems(_actions!);
+            _contextMenu.SetItems(_actions!);
             _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         }
 
