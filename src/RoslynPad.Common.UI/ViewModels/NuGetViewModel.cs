@@ -88,6 +88,7 @@ namespace RoslynPad.UI
             _initializationException?.Throw();
 
             var filter = new SearchFilter(includePrerelease);
+            var packages = new List<PackageData>();
 
             foreach (var sourceRepository in _sourceRepositoryProvider!.GetRepositories())
             {
@@ -110,13 +111,15 @@ namespace RoslynPad.UI
 
                 if (result?.Length > 0)
                 {
-                    var packages = result.Select(x => new PackageData(x)).ToArray();
-                    await Task.WhenAll(packages.Select(x => x.Initialize())).ConfigureAwait(false);
-                    return packages;
+                    var repositoryPackages = result
+                                             .Select(x => new PackageData(x))
+                                             .ToArray();
+                    await Task.WhenAll(repositoryPackages.Select(x => x.Initialize())).ConfigureAwait(false);
+                    packages.AddRange(repositoryPackages);
                 }
             }
 
-            return Array.Empty<PackageData>();
+            return packages;
         }
 
         async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
