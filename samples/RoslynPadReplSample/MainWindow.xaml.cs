@@ -44,7 +44,12 @@ namespace RoslynPadReplSample
             {
                 Assembly.Load("RoslynPad.Roslyn.Windows"),
                 Assembly.Load("RoslynPad.Editor.Windows")
-            });
+            }, RoslynHostReferences.NamespaceDefault.With(new[]
+            { 
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
+            }));
 
             AddNewDocument();
         }
@@ -68,9 +73,9 @@ namespace RoslynPadReplSample
             {
                 editor.CreatingDocument += (o, args) =>
                 {
-                    args.DocumentId = _host.AddRelatedDocument(previous.Id,
+                    args.DocumentId = _host.AddRelatedDocument(previous.Id, new DocumentCreationArgs(
                         args.TextContainer, workingDirectory, args.ProcessDiagnostics,
-                        args.TextContainer.UpdateText);
+                        args.TextContainer.UpdateText));
                 };
             }
 
