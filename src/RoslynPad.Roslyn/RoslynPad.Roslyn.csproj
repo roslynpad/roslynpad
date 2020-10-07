@@ -15,5 +15,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynPackageVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynPackageVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynPackageVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="5.0.0-preview.8.20407.11" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0-preview.8.20407.11" />
   </ItemGroup>
 </Project>

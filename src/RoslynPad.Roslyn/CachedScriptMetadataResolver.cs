@@ -31,7 +31,7 @@ namespace RoslynPad.Roslyn
 
         public override bool ResolveMissingAssemblies => _inner.ResolveMissingAssemblies;
 
-        public override PortableExecutableReference ResolveMissingAssembly(MetadataReference definition, AssemblyIdentity referenceIdentity)
+        public override PortableExecutableReference? ResolveMissingAssembly(MetadataReference definition, AssemblyIdentity referenceIdentity)
         {
             if (_cache == null)
             {
@@ -39,7 +39,7 @@ namespace RoslynPad.Roslyn
             }
 
             return _cache.GetOrAdd(referenceIdentity.ToString(),
-                _ => ImmutableArray.Create(_inner.ResolveMissingAssembly(definition, referenceIdentity))).FirstOrDefault();
+                _ => ImmutableArray.Create(_inner.ResolveMissingAssembly(definition, referenceIdentity)!)).FirstOrDefault();
         }
 
         public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string? baseFilePath, MetadataReferenceProperties properties)

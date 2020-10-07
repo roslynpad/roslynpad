@@ -37,10 +37,9 @@ namespace RoslynPad.Editor
 
         public IEnumerable<CodeSnippet> Snippets => DefaultSnippets.Values;
         
-        public CodeSnippet FindSnippet(string name)
+        public CodeSnippet? FindSnippet(string name)
         {
-            CodeSnippet snippet;
-            DefaultSnippets.TryGetValue(name, out snippet);
+            DefaultSnippets.TryGetValue(name, out var snippet);
             return snippet;
         }
 
