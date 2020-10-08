@@ -4,9 +4,9 @@
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <Identity Name="34685EliArbel.RoslynPad"
-    ProcessorArchitecture="x86"
+    ProcessorArchitecture="x64"
     Publisher="CN=9C7E53B6-ADB4-497A-97E5-B4B9B239B179"
-    Version="15.0.0.0" />
+    Version="15.1.0.0" />
   <Properties>
     <DisplayName>RoslynPad</DisplayName>
     <PublisherDisplayName>Eli Arbel</PublisherDisplayName>
@@ -17,7 +17,7 @@
     <Resource Language="en" />
   </Resources>
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.16299.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.19041.0" />
   </Dependencies>
   <Capabilities>
     <rescap:Capability Name="runFullTrust"/>

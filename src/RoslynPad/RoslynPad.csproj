@@ -28,18 +28,4 @@
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
   </ItemGroup>
-  <Target Name="UpdateAppSettings" AfterTargets="Build"
-          Condition=" '$(UpdateAppSettings)' == 'true' ">
-    <PropertyGroup>
-      <AppSettingsInputFile>$(MSBuildThisFileDirectory)\appsettings.json</AppSettingsInputFile>
-      <AppSettingsOutputFile>$(OutDir)\appsettings.json</AppSettingsOutputFile>
-      <AppSettingsOriginalString>"InstrumentationKey":  ""</AppSettingsOriginalString>
-      <AppSettingsReplaceString>"InstrumentationKey":  "$(RoslynPadTelemetryKey)"</AppSettingsReplaceString>
-    </PropertyGroup>
-    <WriteLinesToFile
-        File="$(AppSettingsOutputFile)"
-        Lines="$([System.IO.File]::ReadAllText($(AppSettingsInputFile)).Replace($(AppSettingsOriginalString), $(AppSettingsReplaceString)))"
-        Overwrite="true"
-        Encoding="Unicode"/>
-  </Target>
 </Project>

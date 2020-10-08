@@ -1,0 +1,21 @@
+<Project>
+  <Target Name="UpdateAppSettings" AfterTargets="Build;Publish"
+          Condition=" '$(UpdateAppSettings)' == 'true' and Exists('$(MSBuildProjectDirectory)\appsettings.json') ">
+    <PropertyGroup>
+      <AppSettingsInputFile>$(MSBuildProjectDirectory)\appsettings.json</AppSettingsInputFile>
+      <AppSettingsOriginalString>"InstrumentationKey":  ""</AppSettingsOriginalString>
+      <AppSettingsReplaceString>"InstrumentationKey":  "$(RoslynPadTelemetryKey)"</AppSettingsReplaceString>
+    </PropertyGroup>
+    <WriteLinesToFile
+        File="$(OutDir)\appsettings.json"
+        Lines="$([System.IO.File]::ReadAllText($(AppSettingsInputFile)).Replace($(AppSettingsOriginalString), $(AppSettingsReplaceString)))"
+        Overwrite="true"
+        Encoding="Unicode"/>
+    <WriteLinesToFile
+        Condition=" '$(PublishDir)' != '' "
+        File="$(PublishDir)\appsettings.json"
+        Lines="$([System.IO.File]::ReadAllText($(AppSettingsInputFile)).Replace($(AppSettingsOriginalString), $(AppSettingsReplaceString)))"
+        Overwrite="true"
+        Encoding="Unicode"/>
+  </Target>
+</Project>
