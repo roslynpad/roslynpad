@@ -27,7 +27,7 @@ namespace RoslynPad.Editor
         private SearchReplacePanelAdorner _adorner;
         private ISearchStrategy _strategy;
 
-        private ToolTip _messageView = new ToolTip { Placement = PlacementMode.Bottom, StaysOpen = true, Focusable = false };
+        private readonly ToolTip _messageView = new ToolTip { Placement = PlacementMode.Bottom, StaysOpen = true, Focusable = false };
 
         #region DependencyProperties
         /// <summary>
@@ -658,7 +658,7 @@ namespace RoslynPad.Editor
 
     class SearchReplacePanelAdorner : Adorner
     {
-        private SearchReplacePanel _panel;
+        private readonly SearchReplacePanel _panel;
 
         public SearchReplacePanelAdorner(TextArea textArea, SearchReplacePanel panel)
             : base(textArea)

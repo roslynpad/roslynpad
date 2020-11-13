@@ -31,7 +31,7 @@ namespace RoslynPad.Build.ILDecompiler
     internal sealed class ReflectionDisassembler
     {
         private readonly ITextOutput _output;
-        private CancellationToken _cancellationToken;
+        private readonly CancellationToken _cancellationToken;
         private bool _isInType; // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
         private readonly MethodBodyDisassembler _methodBodyDisassembler;
 

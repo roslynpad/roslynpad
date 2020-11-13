@@ -52,7 +52,7 @@ namespace RoslynPad.Editor
         private readonly IClassificationHighlightColors _highlightColors;
         private readonly List<CachedLine>? _cachedLines;
         private readonly Subject<HighlightedLine> _subject;
-        private List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
+        private readonly List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
         private readonly SynchronizationContext? _syncContext;
 
         private volatile bool _inHighlightingGroup;

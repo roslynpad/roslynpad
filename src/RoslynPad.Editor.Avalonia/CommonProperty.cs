@@ -42,8 +42,8 @@ namespace RoslynPad.Editor
             return property;
         }
 
-        private static Action<AvaloniaProperty[]> AffectsRender = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsRender));
-        private static Action<AvaloniaProperty[]> AffectsArrange = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsArrange));
-        private static Action<AvaloniaProperty[]> AffectsMeasure = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsMeasure));
+        private static readonly Action<AvaloniaProperty[]> AffectsRender = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsRender));
+        private static readonly Action<AvaloniaProperty[]> AffectsArrange = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsArrange));
+        private static readonly Action<AvaloniaProperty[]> AffectsMeasure = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsMeasure));
     }
 }

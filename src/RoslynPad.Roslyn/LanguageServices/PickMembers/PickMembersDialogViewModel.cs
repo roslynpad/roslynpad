@@ -147,7 +147,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
         {
             public ISymbol MemberSymbol { get; }
 
-            private static SymbolDisplayFormat s_memberDisplayFormat = new SymbolDisplayFormat(
+            private static readonly SymbolDisplayFormat s_memberDisplayFormat = new SymbolDisplayFormat(
                 genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
                 memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
                 parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeOptionalBrackets,
