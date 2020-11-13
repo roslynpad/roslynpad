@@ -6,7 +6,6 @@ using RoslynPad.Annotations;
 
 namespace RoslynPad.Runtime
 {
-    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static class ObjectExtensions
     {
         public static T Dump<T>(this T o, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
@@ -23,24 +22,23 @@ namespace RoslynPad.Runtime
 
         public static TEnumerable DumpFirst<TEnumerable>(this TEnumerable enumerable, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
             where TEnumerable : IEnumerable
-
         {
             Dump(enumerable?.Cast<object>().FirstOrDefault(), header, maxDepth, maxExpandedDepth, maxEnumerableLength, maxStringLength);
-            return enumerable;
+            return enumerable!;
         }
 
         public static TEnumerable DumpLast<TEnumerable>(this TEnumerable enumerable, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
             where TEnumerable : IEnumerable
         {
             Dump(enumerable?.Cast<object>().LastOrDefault(), header, maxDepth, maxExpandedDepth, maxEnumerableLength, maxStringLength);
-            return enumerable;
+            return enumerable!;
         }
 
         public static TEnumerable DumpElementAt<TEnumerable>(this TEnumerable enumerable, int index, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
             where TEnumerable : IEnumerable
         {
             Dump(enumerable?.Cast<object>().ElementAtOrDefault(index), header, maxDepth, maxExpandedDepth, maxEnumerableLength, maxStringLength);
-            return enumerable;
+            return enumerable!;
         }
 
         internal static event Action<DumpData>? Dumped;

@@ -11,7 +11,7 @@ namespace RoslynPad.Editor
             Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
             where TOwner : AvaloniaObject
         {
-            var property = AvaloniaProperty.Register<TOwner, TValue>(name, defaultValue,
+            var property = AvaloniaProperty.Register<TOwner, TValue>(name, defaultValue!,
                 options.Has(PropertyOptions.Inherits),
                 options.Has(PropertyOptions.BindsTwoWay)
                     ? Avalonia.Data.BindingMode.TwoWay

@@ -28,7 +28,7 @@ namespace RoslynPad.Utilities
             {
             }
 
-            return defaultValue;
+            return defaultValue!;
         }
 
         public static async Task<T> PerformIOAsync<T>(Func<Task<T>> function, T defaultValue = default)
@@ -41,7 +41,7 @@ namespace RoslynPad.Utilities
             {
             }
 
-            return defaultValue;
+            return defaultValue!;
         }
 
         public static string CurrentDirectory => PerformIO(Directory.GetCurrentDirectory, ".");
