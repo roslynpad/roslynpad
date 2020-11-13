@@ -26,15 +26,18 @@ namespace RoslynPad
             {
                 foreach (var version in core.versions)
                 {
-                    yield return new ExecutionPlatform(".NET Core", version.tfm, version.name, Architecture.X64, isCore: true);
+                    if (Version.TryParse(version.name, out var parsedVersion))
+                    {
+                        yield return new ExecutionPlatform(".NET Core", version.tfm, parsedVersion, Architecture.X64, isCore: true);
+                    }
                 }
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var targetFrameworkName = GetNetFrameworkName();
-                yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, string.Empty, Architecture.X86, isCore: false);
-                yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, string.Empty, Architecture.X64, isCore: false);
+                yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, null, Architecture.X86, isCore: false);
+                yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, null, Architecture.X64, isCore: false);
             }
         }
 
@@ -85,9 +88,9 @@ namespace RoslynPad
             }
 
             var sdkPath = (from path in dotnetPaths
-                       let fullPath = Path.Combine(path, "sdk")
-                       where Directory.Exists(fullPath)
-                       select fullPath).FirstOrDefault();
+                           let fullPath = Path.Combine(path, "sdk")
+                           where Directory.Exists(fullPath)
+                           select fullPath).FirstOrDefault();
 
             if (sdkPath != null)
             {

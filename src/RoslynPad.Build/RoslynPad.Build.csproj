@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
+    <ProjectReference Include="..\RoslynPad.Runtime.Compat50\RoslynPad.Runtime.Compat50.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>

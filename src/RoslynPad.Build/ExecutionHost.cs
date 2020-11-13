@@ -57,7 +57,6 @@ namespace RoslynPad.Build
             {
                 _platform = value;
                 InitializeBuildPath(stop: true);
-                TryRestore();
             }
         }
 
@@ -522,7 +521,7 @@ namespace RoslynPad.Build
                 {
                     var global = new JObject(
                         new JProperty("sdk", new JObject(
-                            new JProperty("version", Platform.FrameworkVersion))));
+                            new JProperty("version", Platform.FrameworkVersion!.ToString()))));
 
                     await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
                 }

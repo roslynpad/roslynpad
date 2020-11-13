@@ -21,7 +21,7 @@ namespace RoslynPad.UI
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         private readonly DocumentFileWatcher _documentFileWatcher;
-        private static readonly Version _currentVersion = new Version(15, 1);
+        private static readonly Version _currentVersion = new Version(16, 0);
         private static readonly string _currentVersionVariant = "";
 
         public const string NuGetPathVariableName = "$NuGet";
@@ -42,6 +42,8 @@ namespace RoslynPad.UI
             private set => SetProperty(ref _documentRoot, value);
         }
         public RoslynHost RoslynHost { get; private set; }
+        public ImmutableArray<MetadataReference> DefaultReferences { get; private set; }
+        public ImmutableArray<MetadataReference> DefaultReferencesCompat50 { get; private set; }
 
         public bool IsInitialized
         {
@@ -116,6 +118,11 @@ namespace RoslynPad.UI
                 RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }),
                 disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702")))
                 .ConfigureAwait(true);
+
+            var runtimeAssemblyPath = typeof(Runtime.ObjectExtensions).Assembly.Location;
+            DefaultReferences = RoslynHost.DefaultReferences;
+            DefaultReferencesCompat50 = DefaultReferences.Add(MetadataReference.CreateFromFile(
+                Path.Combine(Path.GetDirectoryName(runtimeAssemblyPath)!, "RoslynPad.Runtime.Compat50.dll")));
 
             OpenDocumentFromCommandLine();
             await OpenAutoSavedDocuments().ConfigureAwait(true);

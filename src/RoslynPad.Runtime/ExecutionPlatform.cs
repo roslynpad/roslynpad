@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace RoslynPad
 {
@@ -7,12 +8,12 @@ namespace RoslynPad
     {
         internal string Name { get; }
         internal string TargetFrameworkMoniker { get; }
-        internal string FrameworkVersion { get; }
+        internal Version? FrameworkVersion { get; }
         internal Architecture Architecture { get; }
         internal bool IsCore { get; }
         internal bool IsFramework => !IsCore;
 
-        internal ExecutionPlatform(string name, string targetFrameworkMoniker, string frameworkVersion, Architecture architecture, bool isCore)
+        internal ExecutionPlatform(string name, string targetFrameworkMoniker, Version? frameworkVersion, Architecture architecture, bool isCore)
         {
             Name = name;
             TargetFrameworkMoniker = targetFrameworkMoniker;

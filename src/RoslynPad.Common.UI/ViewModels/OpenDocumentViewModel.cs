@@ -436,6 +436,7 @@ namespace RoslynPad.UI
                 if (SetProperty(ref _platform, value))
                 {
                     _executionHost.Platform = value;
+                    UpdatePackages();
 
                     RunCommand.RaiseCanExecuteChanged();
                     RestartHostCommand.RaiseCanExecuteChanged();
@@ -733,7 +734,10 @@ namespace RoslynPad.UI
                 var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
                 var libraries = ParseReferences(syntaxRoot!);
 
-                var defaultReferences = MainViewModel.RoslynHost.DefaultReferences;
+                var defaultReferences = Platform?.FrameworkVersion?.Major < 5
+                    ? MainViewModel.DefaultReferencesCompat50
+                    : MainViewModel.DefaultReferences;
+
                 if (defaultReferences.Length > 0)
                 {
                     libraries.AddRange(GetReferencePaths(defaultReferences).Select(p => LibraryRef.Reference(p)));
