@@ -156,33 +156,29 @@ namespace RoslynPad.Roslyn.Scripting
 
         private static async Task SaveAssembly(string assemblyPath, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
         {
-            using (var peStream = new MemoryStream())
-            using (var pdbStream = new MemoryStream())
+            using var peStream = new MemoryStream();
+            using var pdbStream = new MemoryStream();
+            var emitResult = compilation.Emit(
+                peStream: peStream,
+                pdbStream: pdbStream,
+                cancellationToken: cancellationToken);
+
+            diagnostics.AddRange(emitResult.Diagnostics);
+
+            if (emitResult.Success)
             {
-                var emitResult = compilation.Emit(
-                    peStream: peStream,
-                    pdbStream: pdbStream,
-                    cancellationToken: cancellationToken);
+                peStream.Position = 0;
+                pdbStream.Position = 0;
 
-                diagnostics.AddRange(emitResult.Diagnostics);
-
-                if (emitResult.Success)
-                {
-                    peStream.Position = 0;
-                    pdbStream.Position = 0;
-
-                    await CopyToFileAsync(assemblyPath, peStream).ConfigureAwait(false);
-                    await CopyToFileAsync(Path.ChangeExtension(assemblyPath, "pdb"), pdbStream).ConfigureAwait(false);
-                }
+                await CopyToFileAsync(assemblyPath, peStream).ConfigureAwait(false);
+                await CopyToFileAsync(Path.ChangeExtension(assemblyPath, "pdb"), pdbStream).ConfigureAwait(false);
             }
         }
 
         private static async Task CopyToFileAsync(string path, Stream stream)
         {
-            using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
-            {
-                await stream.CopyToAsync(fileStream).ConfigureAwait(false);
-            }
+            using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+            await stream.CopyToAsync(fileStream).ConfigureAwait(false);
         }
 
         private Func<object[], Task<object>>? Build(Action<Stream>? peStreamAction, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
@@ -193,49 +189,47 @@ namespace RoslynPad.Roslyn.Scripting
                 return null;
             }
 
-            using (var peStream = new MemoryStream())
-            using (var pdbStream = new MemoryStream())
+            using var peStream = new MemoryStream();
+            using var pdbStream = new MemoryStream();
+            var emitResult = compilation.Emit(
+                peStream: peStream,
+                pdbStream: pdbStream,
+                cancellationToken: cancellationToken);
+
+            diagnostics.AddRange(emitResult.Diagnostics);
+
+            if (!emitResult.Success)
             {
-                var emitResult = compilation.Emit(
-                    peStream: peStream,
-                    pdbStream: pdbStream,
-                    cancellationToken: cancellationToken);
-
-                diagnostics.AddRange(emitResult.Diagnostics);
-
-                if (!emitResult.Success)
-                {
-                    return null;
-                }
-
-                if (_registerDependencies)
-                {
-                    foreach (var referencedAssembly in compilation.References.Select(
-                        x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) as IAssemblySymbol }))
-                    {
-                        if (referencedAssembly.Value == null) continue;
-
-                        var path = (referencedAssembly.Key as PortableExecutableReference)?.FilePath;
-                        if (path == null) continue;
-
-                        _assemblyLoader.RegisterDependency(referencedAssembly.Value.Identity, path);
-                    }
-                }
-
-                peStream.Position = 0;
-                pdbStream.Position = 0;
-
-                var assembly = _assemblyLoader.LoadAssemblyFromStream(peStream, pdbStream);
-                var runtimeEntryPoint = GetEntryPointRuntimeMethod(entryPoint, assembly);
-
-                if (peStreamAction != null)
-                {
-                    peStream.Position = 0;
-                    peStreamAction(peStream);
-                }
-
-                return (Func<object[], Task<object>>)runtimeEntryPoint.CreateDelegate(typeof(Func<object[], Task<object>>));
+                return null;
             }
+
+            if (_registerDependencies)
+            {
+                foreach (var referencedAssembly in compilation.References.Select(
+                    x => new { Key = x, Value = compilation.GetAssemblyOrModuleSymbol(x) as IAssemblySymbol }))
+                {
+                    if (referencedAssembly.Value == null) continue;
+
+                    var path = (referencedAssembly.Key as PortableExecutableReference)?.FilePath;
+                    if (path == null) continue;
+
+                    _assemblyLoader.RegisterDependency(referencedAssembly.Value.Identity, path);
+                }
+            }
+
+            peStream.Position = 0;
+            pdbStream.Position = 0;
+
+            var assembly = _assemblyLoader.LoadAssemblyFromStream(peStream, pdbStream);
+            var runtimeEntryPoint = GetEntryPointRuntimeMethod(entryPoint, assembly);
+
+            if (peStreamAction != null)
+            {
+                peStream.Position = 0;
+                peStreamAction(peStream);
+            }
+
+            return (Func<object[], Task<object>>)runtimeEntryPoint.CreateDelegate(typeof(Func<object[], Task<object>>));
         }
 
         private static MethodInfo GetEntryPointRuntimeMethod(IMethodSymbol entryPoint, Assembly assembly)

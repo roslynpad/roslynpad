@@ -16,12 +16,9 @@ namespace RoslynPad.Controls
                 "ILAsm", new[] { ".il" },
                 () =>
                 {
-                    using (var stream = typeof(ILViewer).Assembly.GetManifestResourceStream(typeof(ILViewer), "ILAsm-Mode.xshd"))
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    using (var reader = new XmlTextReader(stream))
-                    {
-                        return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-                    }
+                    using var stream = typeof(ILViewer).Assembly.GetManifestResourceStream(typeof(ILViewer), "ILAsm-Mode.xshd");
+                    using var reader = new XmlTextReader(stream);
+                    return HighlightingLoader.Load(reader, HighlightingManager.Instance);
                 });
         }
 

@@ -81,13 +81,11 @@ namespace RoslynPad.Utilities
         public static IEnumerable<string> ReadLines(string path)
         {
             var lines = PerformIO(() => File.ReadLines(path), Array.Empty<string>());
-            using (var enumerator = lines.GetEnumerator())
+            using var enumerator = lines.GetEnumerator();
+            // ReSharper disable once AccessToDisposedClosure
+            while (PerformIO(() => enumerator.MoveNext()))
             {
-                // ReSharper disable once AccessToDisposedClosure
-                while (PerformIO(() => enumerator.MoveNext()))
-                {
-                    yield return enumerator.Current;
-                }
+                yield return enumerator.Current;
             }
         }
 
@@ -96,10 +94,8 @@ namespace RoslynPad.Utilities
 
         private static async Task<string> ReadAllTextInternalAsync(string path)
         {
-            using (var reader = File.OpenText(path))
-            {
-                return await reader.ReadToEndAsync().ConfigureAwait(false);
-            }
+            using var reader = File.OpenText(path);
+            return await reader.ReadToEndAsync().ConfigureAwait(false);
         }
 
         public static IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*")
@@ -107,13 +103,11 @@ namespace RoslynPad.Utilities
             var files = PerformIO(() => Directory.EnumerateFiles(path, searchPattern),
                 Array.Empty<string>());
 
-            using (var enumerator = files.GetEnumerator())
+            using var enumerator = files.GetEnumerator();
+            // ReSharper disable once AccessToDisposedClosure
+            while (PerformIO(() => enumerator.MoveNext()))
             {
-                // ReSharper disable once AccessToDisposedClosure
-                while (PerformIO(() => enumerator.MoveNext()))
-                {
-                    yield return enumerator.Current;
-                }
+                yield return enumerator.Current;
             }
         }
 
@@ -122,13 +116,11 @@ namespace RoslynPad.Utilities
             var directories = PerformIO(() => Directory.EnumerateDirectories(path, searchPattern),
                 Array.Empty<string>());
 
-            using (var enumerator = directories.GetEnumerator())
+            using var enumerator = directories.GetEnumerator();
+            // ReSharper disable once AccessToDisposedClosure
+            while (PerformIO(() => enumerator.MoveNext()))
             {
-                // ReSharper disable once AccessToDisposedClosure
-                while (PerformIO(() => enumerator.MoveNext()))
-                {
-                    yield return enumerator.Current;
-                }
+                yield return enumerator.Current;
             }
         }
 
@@ -142,11 +134,9 @@ namespace RoslynPad.Utilities
             }
             catch (IOException ex) when (ex.HResult == ERROR_ENCRYPTION_FAILED)
             {
-                using (var read = File.OpenRead(source))
-                using (var write = new FileStream(destination, overwrite ? FileMode.Create : FileMode.CreateNew))
-                {
-                    read.CopyTo(write);
-                }
+                using var read = File.OpenRead(source);
+                using var write = new FileStream(destination, overwrite ? FileMode.Create : FileMode.CreateNew);
+                read.CopyTo(write);
             }
         }
 

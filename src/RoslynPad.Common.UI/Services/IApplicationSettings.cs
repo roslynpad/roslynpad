@@ -234,10 +234,8 @@ namespace RoslynPad.UI
             try
             {
                 var serializer = new JsonSerializer { NullValueHandling = NullValueHandling.Ignore };
-                using (var reader = File.OpenText(path))
-                {
-                    serializer.Populate(reader, this);
-                }
+                using var reader = File.OpenText(path);
+                serializer.Populate(reader, this);
             }
             catch (Exception e)
             {
@@ -261,10 +259,8 @@ namespace RoslynPad.UI
             try
             {
                 var serializer = new JsonSerializer { Formatting = Formatting.Indented };
-                using (var writer = File.CreateText(_path))
-                {
-                    serializer.Serialize(writer, this);
-                }
+                using var writer = File.CreateText(_path);
+                serializer.Serialize(writer, this);
             }
             catch (Exception e)
             {
