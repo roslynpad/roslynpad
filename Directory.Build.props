@@ -6,11 +6,11 @@
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <EditorPackageVersion>1.3.0-3.final</EditorPackageVersion>
-    <RoslynPackageVersion>3.8.0-3.final</RoslynPackageVersion>
+    <EditorPackageVersion>1.3.0</EditorPackageVersion>
+    <RoslynPackageVersion>3.8.0</RoslynPackageVersion>
     <RoslynAssemblyVersion>3.8.0.0</RoslynAssemblyVersion>
     <AvaloniaVersion>0.9.11</AvaloniaVersion>
-    <DotNet5Version>5.0.0-rc.1.20451.14</DotNet5Version>
+    <DotNet5Version>5.0.0</DotNet5Version>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>

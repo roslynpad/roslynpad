@@ -73,7 +73,7 @@ namespace RoslynPad.Roslyn.CodeFixes
 
             private readonly ImmutableDictionary<LanguageKind, Lazy<ImmutableArray<IConfigurationFixProvider>>> _configurationProvidersMap;
 
-            private ImmutableDictionary<object, FixAllProviderInfo> _fixAllProviderMap;
+            private ImmutableDictionary<object, FixAllProviderInfo?> _fixAllProviderMap;
 
             [ImportingConstructor]
             public CodeFixService(
@@ -95,7 +95,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 _projectFixersMap = new ConditionalWeakTable<IReadOnlyList<AnalyzerReference>, ImmutableDictionary<string, List<CodeFixProvider>>>();
                 _analyzerReferenceToFixersMap = new ConditionalWeakTable<AnalyzerReference, ProjectCodeFixProvider>();
                 _createProjectCodeFixProvider = new ConditionalWeakTable<AnalyzerReference, ProjectCodeFixProvider>.CreateValueCallback(r => new ProjectCodeFixProvider(r));
-                _fixAllProviderMap = ImmutableDictionary<object, FixAllProviderInfo>.Empty;
+                _fixAllProviderMap = ImmutableDictionary<object, FixAllProviderInfo?>.Empty;
             }
 
             public async Task<FirstDiagnosticResult> GetMostSevereFixableDiagnosticAsync(

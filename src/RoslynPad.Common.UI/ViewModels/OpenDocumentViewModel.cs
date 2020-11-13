@@ -416,7 +416,7 @@ namespace RoslynPad.UI
         private async Task FormatDocument()
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
-            var formattedDocument = await Formatter.FormatAsync(document).ConfigureAwait(false);
+            var formattedDocument = await Formatter.FormatAsync(document!).ConfigureAwait(false);
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 

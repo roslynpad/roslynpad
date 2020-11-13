@@ -162,19 +162,5 @@ namespace RoslynPad.Roslyn
 
             return new Version(0, 0);
         }
-
-        private static IEnumerable<string>? TryGetFacadeAssemblies(string? referenceAssembliesPath)
-        {
-            if (referenceAssembliesPath != null)
-            {
-                var facadesPath = Path.Combine(referenceAssembliesPath, "Facades");
-                if (Directory.Exists(facadesPath))
-                {
-                    return Directory.EnumerateFiles(facadesPath, "*.dll");
-                }
-            }
-
-            return null;
-        }
     }
 }
