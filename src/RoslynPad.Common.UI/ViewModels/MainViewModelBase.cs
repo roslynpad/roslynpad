@@ -201,7 +201,12 @@ namespace RoslynPad.UI
 
         private static void ReportProblem()
         {
-            Task.Run(() => Process.Start("https://github.com/aelij/RoslynPad/issues"));
+            Task.Run(() => Process.Start(
+                new ProcessStartInfo
+                {
+                    FileName = "https://github.com/aelij/RoslynPad/issues",
+                    UseShellExecute = true,
+                }));
         }
 
         public bool HasUpdate
