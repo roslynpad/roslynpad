@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Test your packages in a test environment: https://github.com/chocolatey/chocolatey-test-environment -->
+<!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>RoslynPad</id>
+    <version>15.2</version>
+    <packageSourceUrl>https://github.com/aelij/RoslynPad</packageSourceUrl>
+    <owners>aelij</owners>
+    <title>RoslynPad (Install)</title>
+    <authors>aelij</authors>
+    <projectUrl>https://github.com/aelij/RoslynPad</projectUrl>
+    <licenseUrl>https://github.com/aelij/RoslynPad/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/aelij/RoslynPad</projectSourceUrl>
+    <tags>RoslynPad</tags>
+    <summary>A cross-platform C# editor based on Roslyn and AvalonEdit</summary>
+    <description>A cross-platform C# editor based on Roslyn and AvalonEdit</description>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
