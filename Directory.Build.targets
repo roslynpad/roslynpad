@@ -1,4 +1,7 @@
 <Project>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
   <Target Name="UpdateAppSettings" AfterTargets="Build;Publish"
     Condition=" '$(UpdateAppSettings)' == 'true' and Exists('$(MSBuildProjectDirectory)\appsettings.json') ">
     <PropertyGroup>
@@ -19,5 +22,5 @@
       Encoding="Unicode"/>
   </Target>
 
-  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetTargets)') and !$(MSBuildAllProjects.Contains('nuget.g.targets')) " Project="$(NuGetTargets)" />
+  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetTargets)') " Project="$(NuGetTargets)" />
 </Project>

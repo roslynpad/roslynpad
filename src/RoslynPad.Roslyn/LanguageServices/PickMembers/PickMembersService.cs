@@ -21,7 +21,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
         }
 
         public PickMembersResult PickMembers(
-            string title, ImmutableArray<ISymbol> members, ImmutableArray<PickMembersOption> options)
+            string title, ImmutableArray<ISymbol> members, ImmutableArray<PickMembersOption> options = default, bool selectAll = true)
         {
             options = options.NullToEmpty();
 
@@ -35,7 +35,7 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers
                     viewModel.MemberContainers.Where(c => c.IsChecked)
                                               .Select(c => c.MemberSymbol)
                                               .ToImmutableArray(), 
-                    options);
+                    options, selectAll);
             }
             else
             {

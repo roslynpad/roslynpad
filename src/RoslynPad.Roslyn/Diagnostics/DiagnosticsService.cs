@@ -29,15 +29,11 @@ namespace RoslynPad.Roslyn.Diagnostics
         public IEnumerable<DiagnosticData> GetDiagnostics(Workspace workspace, ProjectId projectId, DocumentId documentId, object id,
             bool includeSuppressedDiagnostics, CancellationToken cancellationToken)
         {
+            // TODO: migrate to diagnostics push/pull model
+#pragma warning disable CS0618 // Type or member is obsolete
             return _inner.GetDiagnostics(workspace, projectId, documentId, id, includeSuppressedDiagnostics,
                 cancellationToken).Select(x => new DiagnosticData(x));
-        }
-
-        public IEnumerable<UpdatedEventArgs> GetDiagnosticsUpdatedEventArgs(Workspace workspace, ProjectId projectId, DocumentId documentId,
-            CancellationToken cancellationToken)
-        {
-            return _inner.GetDiagnosticsUpdatedEventArgs(workspace, projectId, documentId, cancellationToken)
-                .Select(x => new UpdatedEventArgs(x));
+#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 }

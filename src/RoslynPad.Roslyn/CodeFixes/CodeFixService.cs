@@ -179,7 +179,7 @@ namespace RoslynPad.Roslyn.CodeFixes
                 // group diagnostics by their diagnostics span
                 // invariant: later code gathers & runs CodeFixProviders for diagnostics with one identical diagnostics span (that gets set later as CodeFixCollection's TextSpan)
                 Dictionary<TextSpan, List<DiagnosticData>>? aggregatedDiagnostics = null;
-                foreach (var diagnostic in await _diagnosticService.GetDiagnosticsForSpanAsync(document, range, diagnosticIdOpt: null, includeConfigurationFixes, cancellationToken: cancellationToken).ConfigureAwait(false))
+                foreach (var diagnostic in await _diagnosticService.GetDiagnosticsForSpanAsync(document, range, includeSuppressedDiagnostics: includeConfigurationFixes, cancellationToken: cancellationToken).ConfigureAwait(false))
                 {
                     if (diagnostic.IsSuppressed)
                     {

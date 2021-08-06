@@ -14,7 +14,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
 
         public int ArgumentCount { get; }
 
-        public string ArgumentName { get; }
+        public string? ArgumentName { get; }
 
         public int? SelectedItemIndex { get; internal set; }
 

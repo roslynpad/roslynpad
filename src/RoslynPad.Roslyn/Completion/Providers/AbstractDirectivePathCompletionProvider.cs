@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.Scripting;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.ErrorReporting;
 using System.Diagnostics;
+using Microsoft.CodeAnalysis.Scripting.Hosting;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
@@ -51,7 +51,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
                 await ProvideCompletionsAsync(context, pathThroughLastSlash).ConfigureAwait(false);
             }
-            catch (Exception e) when (FatalError.ReportWithoutCrashUnlessCanceled(e))
+            catch (Exception e) when (FatalError.ReportAndPropagateUnlessCanceled(e))
             {
                 // nop
             }
@@ -129,34 +129,44 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         protected abstract Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash);
 
-        protected FileSystemCompletionHelper GetFileSystemCompletionHelper(
+        protected static FileSystemCompletionHelper GetFileSystemCompletionHelper(
             Document document,
             Microsoft.CodeAnalysis.Glyph itemGlyph,
             ImmutableArray<string> extensions,
             CompletionItemRules completionRules)
         {
-            var serviceOpt = document.Project.Solution.Workspace.Services.GetService<IScriptEnvironmentService>();
-            var searchPaths = serviceOpt?.MetadataReferenceSearchPaths ?? ImmutableArray<string>.Empty;
+            ImmutableArray<string> referenceSearchPaths;
+            string? baseDirectory;
+            if (document.Project.CompilationOptions?.MetadataReferenceResolver is RuntimeMetadataReferenceResolver resolver)
+            {
+                referenceSearchPaths = resolver.PathResolver.SearchPaths;
+                baseDirectory = resolver.PathResolver.BaseDirectory;
+            }
+            else
+            {
+                referenceSearchPaths = ImmutableArray<string>.Empty;
+                baseDirectory = null;
+            }
 
             return new FileSystemCompletionHelper(
                 Microsoft.CodeAnalysis.Glyph.OpenFolder,
                 itemGlyph,
-                searchPaths,
-                GetBaseDirectory(document, serviceOpt),
+                referenceSearchPaths,
+                GetBaseDirectory(document, baseDirectory),
                 extensions,
                 completionRules);
         }
 
-        private static string GetBaseDirectory(Document document, IScriptEnvironmentService? environmentOpt)
+        private static string GetBaseDirectory(Document document, string? baseDirectory)
         {
             var result = PathUtilities.GetDirectoryName(document.FilePath);
             if (!PathUtilities.IsAbsolute(result))
             {
-                result = environmentOpt?.BaseDirectory!;
+                result = baseDirectory;
                 Debug.Assert(result == null || PathUtilities.IsAbsolute(result));
             }
 
-            return result!;
+            return result ?? string.Empty;
         }
     }
 }

@@ -158,7 +158,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             foreach (var candidate in candidateResults)
             {
                 // Does the candidate have anything remotely equivalent?
-                if (!candidate.Item3.Intersect(bestBinding.Item3, LinkedFilesSymbolEquivalenceComparer.Instance).Any())
+                if (!candidate.Item3.Intersect(bestBinding.Item3, SymbolEqualityComparer.Default).Any())
                 {
                     invalidProjects.Add(candidate.Item1.ProjectId);
                 }
@@ -299,7 +299,8 @@ namespace RoslynPad.Roslyn.QuickInfo
                 var symbol = symbols.First().OriginalDefinition;
 
                 // if generating quick info for an attribute, bind to the class instead of the constructor
-                if (syntaxFactsService.IsAttributeName(token.Parent) &&
+                if (token.Parent != null &&
+                    syntaxFactsService.IsAttributeName(token.Parent) &&
                     symbol.ContainingType?.IsAttribute() == true)
                 {
                     symbol = symbol.ContainingType;
@@ -334,7 +335,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 symbols = symbols.Where(IsOk)
                     .Where(s => IsAccessible(s, enclosingType!))
                     .Concat(overloads)
-                    .Distinct(SymbolEquivalenceComparer.Instance)
+                    .Distinct(SymbolEqualityComparer.Default)
                     .ToImmutableArray();
 
                 if (symbols.Any())

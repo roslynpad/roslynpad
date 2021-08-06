@@ -6,50 +6,36 @@ using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace RoslynPad.Roslyn
 {
-    public interface IDocumentTrackingService : IWorkspaceService
-    {
-        event EventHandler<DocumentId> ActiveDocumentChanged;
-        event EventHandler<EventArgs> NonRoslynBufferTextChanged;
-        DocumentId GetActiveDocument();
-        DocumentId? TryGetActiveDocument();
-        ImmutableArray<DocumentId> GetVisibleDocuments();
-    }
-
-    [ExportWorkspaceServiceFactory(typeof(Microsoft.CodeAnalysis.IDocumentTrackingService))]
+    [ExportWorkspaceServiceFactory(typeof(IDocumentTrackingService), ServiceLayer.Host)]
     internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
     {
-        private class DocumentTrackingService : Microsoft.CodeAnalysis.IDocumentTrackingService
+        private class DocumentTrackingService : IDocumentTrackingService
         {
-            private readonly IDocumentTrackingService _inner;
+            private readonly RoslynWorkspace _workspace;
 
-            public DocumentTrackingService(IDocumentTrackingService inner)
+            public bool SupportsDocumentTracking => true;
+
+            public DocumentTrackingService(Workspace workspace)
             {
-                _inner = inner;
+                _workspace = (RoslynWorkspace)workspace;
             }
 
-            public event EventHandler<DocumentId> ActiveDocumentChanged
-            {
-                add => _inner.ActiveDocumentChanged += value;
-                remove => _inner.ActiveDocumentChanged -= value;
-            }
+            public DocumentId GetActiveDocument() => _workspace.OpenDocumentId ?? throw new InvalidOperationException("No active document");
 
-            public event EventHandler<EventArgs> NonRoslynBufferTextChanged
-            {
-                add => _inner.NonRoslynBufferTextChanged += value;
-                remove => _inner.NonRoslynBufferTextChanged -= value;
-            }
+            public DocumentId? TryGetActiveDocument() => _workspace.OpenDocumentId;
 
-            public DocumentId GetActiveDocument() => _inner.GetActiveDocument();
+            public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? ImmutableArray.Create(_workspace.OpenDocumentId) : ImmutableArray<DocumentId>.Empty;
 
-            public ImmutableArray<DocumentId> GetVisibleDocuments() => _inner.GetVisibleDocuments();
+            public event EventHandler<DocumentId?>? ActiveDocumentChanged;
 
-            public DocumentId? TryGetActiveDocument() => _inner.TryGetActiveDocument();
+            public event EventHandler<EventArgs>? NonRoslynBufferTextChanged;
+
+            private void OnActiveDocumentChanged(DocumentId e) => ActiveDocumentChanged?.Invoke(this, e);
+
+            private void OnNonRoslynBufferTextChanged() => NonRoslynBufferTextChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public IWorkspaceService? CreateService(HostWorkspaceServices workspaceServices)
-        {
-            var innerService = workspaceServices.GetService<IDocumentTrackingService>();
-            return innerService != null ? new DocumentTrackingService(innerService) : null;
-        }
+        public IWorkspaceService? CreateService(HostWorkspaceServices workspaceServices) =>
+            new DocumentTrackingService(workspaceServices.Workspace);
     }
 }

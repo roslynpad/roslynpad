@@ -26,7 +26,7 @@ namespace RoslynPad.Roslyn.CodeRefactorings
 
         public async Task<IEnumerable<CodeRefactoring>> GetRefactoringsAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
         {
-            var result = await _inner.GetRefactoringsAsync(document, textSpan, cancellationToken).ConfigureAwait(false);
+            var result = await _inner.GetRefactoringsAsync(document, textSpan, isBlocking: false, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
             return result.Select(x => new CodeRefactoring(x)).ToArray();
         }
     }

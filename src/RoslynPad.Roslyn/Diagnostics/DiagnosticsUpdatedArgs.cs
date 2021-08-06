@@ -16,7 +16,7 @@ namespace RoslynPad.Roslyn.Diagnostics
         {
             _inner = inner;
             Solution = inner.Solution;
-            Diagnostics = diagnostics ?? inner.Diagnostics.Select(x => new DiagnosticData(x)).ToImmutableArray();
+            Diagnostics = diagnostics ?? inner.GetAllDiagnosticsRegardlessOfPushPullSetting().Select(x => new DiagnosticData(x)).ToImmutableArray();
             Kind = (DiagnosticsUpdatedKind)inner.Kind;
         }
 

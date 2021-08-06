@@ -106,7 +106,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
                 bool userSelected,
                 int argumentIndex,
                 int argumentCount,
-                string argumentName,
+                string? argumentName,
                 bool isCaseSensitive)
             {
                 selectedItem = SelectBestItem(selectedItem, ref userSelected, items, argumentIndex, argumentCount, argumentName, isCaseSensitive);
@@ -114,7 +114,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
                 return new SignatureHelpSelection(selectedItem, userSelected, selectedParameter);
             }
 
-            private static int GetSelectedParameter(SignatureHelpItem bestItem, int parameterIndex, string parameterName, bool isCaseSensitive)
+            private static int GetSelectedParameter(SignatureHelpItem bestItem, int parameterIndex, string? parameterName, bool isCaseSensitive)
             {
                 if (!string.IsNullOrEmpty(parameterName))
                 {

@@ -101,10 +101,12 @@ namespace RoslynPad.Utilities
         }
 
 #pragma warning disable CS8604 // Possible null reference argument.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
         bool ICommand.CanExecute(object? parameter) => CanExecute((T)parameter);
 
         void ICommand.Execute(object? parameter) => Execute((T)parameter);
 #pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
         public event EventHandler? CanExecuteChanged;
 

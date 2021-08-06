@@ -17,7 +17,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         private readonly List<ParameterViewModel> _parametersWithoutDefaultValues;
         private readonly List<ParameterViewModel> _parametersWithDefaultValues;
         private readonly ParameterViewModel? _paramsParameter;
-        private readonly HashSet<IParameterSymbol> _disabledParameters = new HashSet<IParameterSymbol>();
+        private readonly HashSet<ParameterViewModel> _disabledParameters = new();
         private readonly ImmutableArray<SymbolDisplayPart> _declarationParts;
 
         internal ChangeSignatureDialogViewModel(ParameterConfiguration parameters, ISymbol symbol)
@@ -31,7 +31,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 startingSelectedIndex++;
 
                 _thisParameter = new ParameterViewModel(this, parameters.ThisParameter);
-                _disabledParameters.Add(parameters.ThisParameter.Symbol);
+                _disabledParameters.Add(_thisParameter);
             }
 
             if (parameters.ParamsParameter != null)
@@ -291,7 +291,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         private bool IsDisabled(ParameterViewModel parameterViewModel)
         {
-            return _disabledParameters.Contains(parameterViewModel.ParameterSymbol);
+            return _disabledParameters.Contains(parameterViewModel);
         }
 
         private IList<ParameterViewModel> GetSelectedGroup()
