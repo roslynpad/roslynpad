@@ -30,8 +30,10 @@ namespace RoslynPad.Editor
                 ToolTip.SetTip(this, _toolTip);
                 _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
                 {
-                    if (!(bool)c.NewValue)
+                    if (c.NewValue as bool? != true)
+                    {
                         _toolTip = null;
+                    }
                 });
             }
         }

@@ -77,14 +77,12 @@ namespace RoslynPad.UI
 
                 if (value)
                 {
-                    // ReSharper disable once UnusedVariable
                     _ = Run();
 
                     if (_liveModeTimer == null)
                     {
                         _liveModeTimer = new Timer(o => _dispatcher.InvokeAsync(() =>
                         {
-                            // ReSharper disable once UnusedVariable
                             var runTask = Run();
                         }), null, Timeout.Infinite, Timeout.Infinite);
                     }
@@ -547,7 +545,6 @@ namespace RoslynPad.UI
 
                 if (result == SaveResult.Save && Document != null)
                 {
-                    // ReSharper disable once PossibleNullReferenceException
                     await SaveDocument(Document.GetSavePath()).ConfigureAwait(true);
                     IsDirty = false;
                 }

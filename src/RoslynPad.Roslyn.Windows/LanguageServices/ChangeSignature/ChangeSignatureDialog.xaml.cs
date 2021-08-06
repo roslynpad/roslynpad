@@ -22,7 +22,6 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         public string PreviewReferenceChanges => "PreviewReferenceChanges";
         public string Remove => "Remove";
         public string Restore => "Restore";
-        // ReSharper disable once InconsistentNaming
         public string OK => "OK";
         public string Cancel => "Cancel";
 
@@ -213,7 +212,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         public object ViewModel
         {
-            get => DataContext;
+            get => DataContext ?? throw new InvalidOperationException("DataContext is null");
             set
             {
                 DataContext = value;

@@ -1,16 +1,17 @@
 <Project>
   <PropertyGroup>
-    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-  </PropertyGroup>
-  <PropertyGroup>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <TargetFrameworks Condition=" $(MSBuildProjectName.EndsWith('Windows')) ">net5.0-windows;net48</TargetFrameworks>
+    <TargetFramework Condition=" '$(TargetFrameworks)' == '' and $(MSBuildProjectName.Contains('Windows')) ">net5.0-windows</TargetFramework>
+    <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">net5.0</TargetFramework>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <EditorPackageVersion>1.3.0</EditorPackageVersion>
     <RoslynPackageVersion>3.8.0</RoslynPackageVersion>
     <RoslynAssemblyVersion>3.8.0.0</RoslynAssemblyVersion>
-    <AvaloniaVersion>0.9.11</AvaloniaVersion>
-    <DotNet5Version>5.0.0</DotNet5Version>
+    <AvaloniaVersion>0.10.6</AvaloniaVersion>
+    <DotNetVersion>[5.0.*,5.0.8]</DotNetVersion>
     <LangVersion>8.0</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -20,5 +21,23 @@
     <PackageTags>Roslyn;RoslynPad</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NuGetPrefix>$(MSBuildProjectDirectory)/obj/$([System.IO.Path]::GetFileName($(MSBuildProjectDirectory)))$(MSBuildProjectExtension)</NuGetPrefix>
+    <NuGetProps>$(NuGetPrefix).nuget.g.props</NuGetProps>
+    <NuGetTargets>$(NuGetPrefix).nuget.g.targets</NuGetTargets>
+  </PropertyGroup>
+
+  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetProps)') " Project="$(NuGetProps)" />
+
 </Project>

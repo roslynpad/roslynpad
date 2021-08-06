@@ -19,7 +19,6 @@ namespace RoslynPad.Roslyn.Diagnostics
             inner.DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
 
-        // ReSharper disable once UnusedParameter.Local
         private void OnDiagnosticsUpdated(object sender, Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs e)
         {
             DiagnosticsUpdated?.Invoke(this, new DiagnosticsUpdatedArgs(e));

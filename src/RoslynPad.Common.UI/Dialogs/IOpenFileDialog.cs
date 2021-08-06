@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using RoslynPad.Annotations;
 
 namespace RoslynPad.UI
 {
@@ -21,12 +20,12 @@ namespace RoslynPad.UI
 
     public class FileDialogFilter
     {
-        public FileDialogFilter([NotNull] string header, [NotNull] params string[] extensions)
+        public FileDialogFilter(string header, params string[] extensions)
             : this(header, (IList<string>)extensions)
         {
         }
 
-        public FileDialogFilter([NotNull] string header, [NotNull] IList<string> extensions)
+        public FileDialogFilter(string header, IList<string> extensions)
         {
             Header = header ?? throw new ArgumentNullException(nameof(header));
             Extensions = extensions ?? throw new ArgumentNullException(nameof(extensions));

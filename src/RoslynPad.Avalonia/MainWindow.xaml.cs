@@ -30,13 +30,11 @@ namespace RoslynPad
             }
 
             AvaloniaXamlLoader.Load(this);
-
-            this.AttachDevTools();
         }
 
-        protected override async void OnTemplateApplied(TemplateAppliedEventArgs e)
+        protected override async void OnApplyTemplate(TemplateAppliedEventArgs e)
         {
-            base.OnTemplateApplied(e);
+            base.OnApplyTemplate(e);
             
             await _viewModel.Initialize().ConfigureAwait(true);
         }

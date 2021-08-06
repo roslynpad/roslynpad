@@ -133,7 +133,6 @@ namespace RoslynPad.UI
             }
             else
             {
-                // ReSharper disable once UnusedVariable
                 var task = Task.Run(CheckForUpdates);
             }
         }

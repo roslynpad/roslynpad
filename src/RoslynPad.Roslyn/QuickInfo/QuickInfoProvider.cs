@@ -18,7 +18,6 @@ using Roslyn.Utilities;
 namespace RoslynPad.Roslyn.QuickInfo
 {
     [Export(typeof(IQuickInfoProvider)), Shared]
-    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     internal sealed class QuickInfoProvider : IQuickInfoProvider
     {
         private readonly IDeferredQuickInfoContentProvider _contentProvider;

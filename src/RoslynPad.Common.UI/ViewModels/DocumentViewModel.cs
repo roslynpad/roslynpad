@@ -73,7 +73,6 @@ namespace RoslynPad.UI
         public string GetSavePath()
         {
             return IsAutoSave
-                // ReSharper disable once AssignNullToNotNullAttribute
                 ? System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, Name + DefaultFileExtension)
                 : Path;
         }
@@ -82,7 +81,6 @@ namespace RoslynPad.UI
         {
             return IsAutoSave ?
                 Path
-                // ReSharper disable once AssignNullToNotNullAttribute
                 : System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, GetAutoSaveName(Name));
         }
 
@@ -168,7 +166,6 @@ namespace RoslynPad.UI
                 if (_isAutoSaveOnly == null)
                 {
                     _isAutoSaveOnly = IsAutoSave &&
-                                      // ReSharper disable once AssignNullToNotNullAttribute
                                       !File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, Name + DefaultFileExtension));
                 }
 

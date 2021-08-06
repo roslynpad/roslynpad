@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
-using RoslynPad.Annotations;
 
 namespace RoslynPad.Utilities
 {
@@ -12,7 +12,7 @@ namespace RoslynPad.Utilities
 
         public override Encoding Encoding => Encoding.UTF8;
 
-        public DelegatingTextWriter([NotNull] Action<string> onLineWritten)
+        public DelegatingTextWriter(Action<string> onLineWritten)
         {
             _onLineWritten = onLineWritten;
             _builder = new StringBuilder();

@@ -22,7 +22,6 @@ namespace RoslynPad.Runtime
     [DataContract]
     [KnownType(typeof(ExceptionResultObject))]
     [KnownType(typeof(InputReadRequest))]
-    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
         private static readonly HashSet<string> _irrelevantEnumerableProperties = new HashSet<string>
@@ -154,10 +153,8 @@ namespace RoslynPad.Runtime
                 {
                     var members = GetMembers(type);
 
-                    // ReSharper disable once PossibleMultipleEnumeration
                     if (IsSpecialEnumerable(type, members))
                     {
-                        // ReSharper disable once PossibleMultipleEnumeration
                         PopulateChildren(o, targetQuotas, members, headerPrefix);
                         var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                         enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
@@ -234,7 +231,6 @@ namespace RoslynPad.Runtime
             catch (TargetInvocationException exception)
             {
                 Header = _member.Name;
-                // ReSharper disable once PossibleNullReferenceException
                 Value = $"Threw {exception.InnerException.GetType().Name}";
                 Children = new List<ResultObject> { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return true;
@@ -475,11 +471,9 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract]
-    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class ExceptionResultObject : ResultObject
     {
         // for serialization
-        // ReSharper disable once UnusedMember.Local
         private ExceptionResultObject()
         {
             Message = string.Empty;
@@ -521,7 +515,6 @@ namespace RoslynPad.Runtime
     internal class ProgressResultObject: ResultObject
     {
         // for serialization
-        // ReSharper disable once UnusedMember.Local
         private ProgressResultObject()
         {
         }
@@ -538,11 +531,9 @@ namespace RoslynPad.Runtime
     }
 
     [DataContract]
-    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")]
     internal class CompilationErrorResultObject : IResultObject
     {
         // for serialization
-        // ReSharper disable once UnusedMember.Local
         protected CompilationErrorResultObject()
         {
             ErrorCode = string.Empty;

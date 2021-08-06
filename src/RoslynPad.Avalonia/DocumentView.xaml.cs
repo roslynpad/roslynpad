@@ -46,7 +46,7 @@ namespace RoslynPad
 
         private async void OnDataContextChanged(object? sender, EventArgs args)
         {
-            _viewModel = (OpenDocumentViewModel)DataContext;
+            _viewModel = DataContext as OpenDocumentViewModel ?? throw new InvalidOperationException("DataContext is null");
             if (_viewModel == null) return;
 
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;

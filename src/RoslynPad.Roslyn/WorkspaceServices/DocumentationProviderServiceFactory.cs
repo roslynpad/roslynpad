@@ -45,7 +45,6 @@ namespace RoslynPad.Roslyn.WorkspaceServices
         {
             if (path != null)
             {
-                // ReSharper disable once AssignNullToNotNullAttribute
                 var referenceLocation = Path.Combine(path, Path.GetFileName(location));
                 if (File.Exists(referenceLocation))
                 {

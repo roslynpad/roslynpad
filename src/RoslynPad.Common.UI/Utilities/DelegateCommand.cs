@@ -45,7 +45,7 @@ namespace RoslynPad.Utilities
         {
             if (_asyncAction != null)
             {
-                var task = _asyncAction();
+                _ = _asyncAction();
             }
             else
             {
@@ -53,9 +53,9 @@ namespace RoslynPad.Utilities
             }
         }
 
-        bool ICommand.CanExecute(object parameter) => CanExecute();
+        bool ICommand.CanExecute(object? parameter) => CanExecute();
 
-        void ICommand.Execute(object parameter) => Execute();
+        void ICommand.Execute(object? parameter) => Execute();
 
         public event EventHandler? CanExecuteChanged;
 
@@ -100,9 +100,11 @@ namespace RoslynPad.Utilities
             }
         }
 
-        bool ICommand.CanExecute(object parameter) => CanExecute((T)parameter);
+#pragma warning disable CS8604 // Possible null reference argument.
+        bool ICommand.CanExecute(object? parameter) => CanExecute((T)parameter);
 
-        void ICommand.Execute(object parameter) => Execute((T)parameter);
+        void ICommand.Execute(object? parameter) => Execute((T)parameter);
+#pragma warning restore CS8604 // Possible null reference argument.
 
         public event EventHandler? CanExecuteChanged;
 

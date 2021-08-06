@@ -11,7 +11,7 @@ using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Input;
-using ImageSource = Avalonia.Media.Drawing;
+using ImageSource = Avalonia.Media.IImage;
 using ModifierKeys = Avalonia.Input.KeyModifiers;
 using TextCompositionEventArgs = Avalonia.Input.TextInputEventArgs;
 using RoutingStrategy = Avalonia.Interactivity.RoutingStrategies;

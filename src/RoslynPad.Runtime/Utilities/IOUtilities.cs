@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +13,7 @@ namespace RoslynPad.Utilities
     {
         public static void PerformIO(Action action)
         {
-            PerformIO<object?>(() =>
+            PerformIO<object>(() =>
             {
                 action();
                 return null;
@@ -28,7 +30,7 @@ namespace RoslynPad.Utilities
             {
             }
 
-            return defaultValue!;
+            return defaultValue;
         }
 
         public static async Task<T> PerformIOAsync<T>(Func<Task<T>> function, T defaultValue = default)
@@ -41,7 +43,7 @@ namespace RoslynPad.Utilities
             {
             }
 
-            return defaultValue!;
+            return defaultValue;
         }
 
         public static string CurrentDirectory => PerformIO(Directory.GetCurrentDirectory, ".");
@@ -82,7 +84,6 @@ namespace RoslynPad.Utilities
         {
             var lines = PerformIO(() => File.ReadLines(path), Array.Empty<string>());
             using var enumerator = lines.GetEnumerator();
-            // ReSharper disable once AccessToDisposedClosure
             while (PerformIO(() => enumerator.MoveNext()))
             {
                 yield return enumerator.Current;
@@ -104,7 +105,6 @@ namespace RoslynPad.Utilities
                 Array.Empty<string>());
 
             using var enumerator = files.GetEnumerator();
-            // ReSharper disable once AccessToDisposedClosure
             while (PerformIO(() => enumerator.MoveNext()))
             {
                 yield return enumerator.Current;
@@ -117,7 +117,6 @@ namespace RoslynPad.Utilities
                 Array.Empty<string>());
 
             using var enumerator = directories.GetEnumerator();
-            // ReSharper disable once AccessToDisposedClosure
             while (PerformIO(() => enumerator.MoveNext()))
             {
                 yield return enumerator.Current;

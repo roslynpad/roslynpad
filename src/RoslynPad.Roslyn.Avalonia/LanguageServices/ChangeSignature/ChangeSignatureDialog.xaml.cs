@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using System;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
@@ -20,7 +21,6 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         public string PreviewReferenceChanges => "PreviewReferenceChanges";
         public string Remove => "Remove";
         public string Restore => "Restore";
-        // ReSharper disable once InconsistentNaming
         public string OK => "OK";
         public string Cancel => "Cancel";
 
@@ -208,7 +208,8 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
 
         public object ViewModel
         {
-            get => DataContext; set
+            get => DataContext ?? throw new InvalidOperationException("DataContext is null");
+            set
             {
                 DataContext = value;
                 _viewModel = (ChangeSignatureDialogViewModel)value;

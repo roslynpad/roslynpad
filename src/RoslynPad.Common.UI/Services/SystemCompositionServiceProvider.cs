@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Composition;
-using RoslynPad.Annotations;
 
 namespace RoslynPad.UI
 {
@@ -23,10 +22,10 @@ namespace RoslynPad.UI
 
     internal static class ServiceProviderExtensions
     {
-        public static T GetService<T>([NotNull] this IServiceProvider serviceProvider)
+        public static T GetService<T>(this IServiceProvider serviceProvider) where T : class
         {
             if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
-            return (T)serviceProvider.GetService(typeof(T));
+            return serviceProvider.GetService(typeof(T)) as T ?? throw new InvalidOperationException("Unable to find service");
         }
     }
 }

@@ -49,6 +49,7 @@ namespace RoslynPad.Build
         private bool _running;
         private bool _initializeBuildPathAfterRun;
         private TextWriter? _processInputStream;
+        private string? _dotNetExecutable;
 
         public ExecutionPlatform Platform
         {
@@ -62,7 +63,13 @@ namespace RoslynPad.Build
 
         public bool HasPlatform => _platform != null;
 
-        public string? DotNetExecutable { get; set; }
+        public string DotNetExecutable
+        {
+            get => _dotNetExecutable ?? throw new InvalidOperationException("Missing dotnet");
+            set => _dotNetExecutable = value;
+        }
+
+        private bool HasDotNetExecutable => _dotNetExecutable != null;
 
         public string Name
         {
@@ -434,7 +441,7 @@ namespace RoslynPad.Build
 
             async Task RestoreAsync(Task previousTask, CancellationToken cancellationToken)
             {
-                if (DotNetExecutable == null)
+                if (!HasDotNetExecutable)
                 {
                     return;
                 }

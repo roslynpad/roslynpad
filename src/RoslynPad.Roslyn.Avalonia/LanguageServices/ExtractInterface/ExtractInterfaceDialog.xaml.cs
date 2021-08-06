@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using System;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
@@ -7,7 +8,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
     [Export(typeof(IExtractInterfaceDialog))]
     internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
     {
-        private ExtractInterfaceDialogViewModel _viewModel;
+        private ExtractInterfaceDialogViewModel? _viewModel;
         
         public string ExtractInterfaceDialogTitle => "Extract Interface";
         public string NewInterfaceName => "New Interface Name";
@@ -16,7 +17,6 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         public string SelectPublicMembersToFormInterface => "Select Public Members To Form Interface";
         public string SelectAll => "Select All";
         public string DeselectAll => "Deselect All";
-        // ReSharper disable once InconsistentNaming
         public string OK => "OK";
         public string Cancel => "Cancel";
 
@@ -124,7 +124,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
 
         public object ViewModel
         {
-            get => DataContext;
+            get => DataContext ?? throw new InvalidOperationException("DataContext is null");
             set
             {
                 DataContext = value;

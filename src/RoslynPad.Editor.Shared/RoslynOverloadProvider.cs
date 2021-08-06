@@ -112,7 +112,6 @@ namespace RoslynPad.Editor
 
         public int Count => _items.Count;
 
-        // ReSharper disable once UnusedMember.Local
         public string? CurrentIndexText
         {
             get => _currentIndexText;

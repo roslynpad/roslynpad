@@ -65,7 +65,6 @@ namespace RoslynPad.Roslyn
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
 
-            // ReSharper disable once VirtualMemberCallInConstructor
             var assemblies = GetDefaultCompositionAssemblies();
 
             if (additionalAssemblies != null)
@@ -83,7 +82,6 @@ namespace RoslynPad.Roslyn
 
             HostServices = MefHostServices.Create(_compositionContext);
 
-            // ReSharper disable once VirtualMemberCallInConstructor
             ParseOptions = CreateDefaultParseOptions();
 
             _documentationProviderService = GetService<IDocumentationProviderService>();

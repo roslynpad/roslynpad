@@ -1,5 +1,3 @@
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.Resources;
 using Avalonia.Media;
@@ -10,7 +8,7 @@ namespace RoslynPad.Roslyn
     {
         private static readonly GlyphService _service = new GlyphService();
 
-        public static Drawing? ToImageSource(this Glyph glyph)
+        public static DrawingImage? ToImageSource(this Glyph glyph)
         {
             var image = _service.GetGlyphImage(glyph);
             return image;
@@ -20,11 +18,11 @@ namespace RoslynPad.Roslyn
         {
             private readonly Glyphs _glyphs = new Glyphs();
 
-            public Drawing? GetGlyphImage(Glyph glyph)
+            public DrawingImage? GetGlyphImage(Glyph glyph)
             {
-                if (_glyphs != null && _glyphs.TryGetValue(glyph.ToString(), out var glyphImage))
+                if (_glyphs != null && _glyphs.TryGetValue(glyph.ToString(), out var glyphImage) && glyphImage is Drawing drawing)
                 {
-                    return glyphImage as Drawing;
+                    return new DrawingImage { Drawing = drawing };
                 }
 
                 return null;

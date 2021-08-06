@@ -16,15 +16,13 @@ namespace RoslynPad.Controls
                 "ILAsm", new[] { ".il" },
                 () =>
                 {
-                    using var stream = typeof(ILViewer).Assembly.GetManifestResourceStream(typeof(ILViewer), "ILAsm-Mode.xshd");
+                    using var stream = typeof(ILViewer).Assembly.GetManifestResourceStream(typeof(ILViewer), "ILAsm-Mode.xshd")!;
                     using var reader = new XmlTextReader(stream);
                     return HighlightingLoader.Load(reader, HighlightingManager.Instance);
                 });
         }
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public ILViewer()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             InitializeComponent();
 

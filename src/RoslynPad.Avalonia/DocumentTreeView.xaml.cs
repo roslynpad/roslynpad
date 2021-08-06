@@ -47,7 +47,7 @@ namespace RoslynPad
 
         protected override void OnDataContextChanged(EventArgs e)
         {
-            _viewModel = (MainViewModel)DataContext;
+            _viewModel = DataContext as MainViewModel ?? throw new InvalidOperationException("DataContext is null");
         }
 
 
@@ -64,10 +64,12 @@ namespace RoslynPad
             }
         }
 
-        private void OpenDocument(object source)
+        private void OpenDocument(object? source)
         {
-            var documentViewModel = (DocumentViewModel)((Control)source).DataContext;
-            _viewModel.OpenDocument(documentViewModel);
+            if ((source as Control)?.DataContext is DocumentViewModel documentViewModel)
+            {
+                _viewModel.OpenDocument(documentViewModel);
+            }
         }
     }
 }

@@ -1,10 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <RootNamespace>RoslynPad.Build</RootNamespace>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
     <ProjectReference Include="..\RoslynPad.Runtime.Compat50\RoslynPad.Runtime.Compat50.csproj" />

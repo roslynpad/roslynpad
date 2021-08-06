@@ -85,7 +85,7 @@ namespace RoslynPad.Editor
         {
             char? completionChar = null;
             var txea = e as CommonTextEventArgs;
-            if (txea != null && txea.Text.Length > 0)
+            if (txea != null && txea.Text?.Length > 0)
                 completionChar = txea.Text[0];
             else if (e is KeyEventArgs kea && kea.Key == Key.Tab)
                 completionChar = '\t';
@@ -115,7 +115,7 @@ namespace RoslynPad.Editor
 
 #if AVALONIA
         public CommonImage? Image => null;
-        public Drawing? Drawing => _glyph.ToImageSource();
+        public IImage? Drawing => _glyph.ToImageSource();
 #else
         public CommonImage? Image => _glyph.ToImageSource();
 #endif
@@ -151,7 +151,6 @@ namespace RoslynPad.Editor
             }
         }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public double Priority { get; private set; }
 
         public bool IsSelected => _item.Rules.MatchPriority == MatchPriority.Preselect;

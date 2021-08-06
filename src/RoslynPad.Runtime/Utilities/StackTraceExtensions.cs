@@ -65,7 +65,6 @@ namespace RoslynPad.Utilities
                 }
                 else if (declaringType?.IsGenericType == true)
                 {
-                    // ReSharper disable once PossibleNullReferenceException
                     FormatGenericArguments(stringBuilder, declaringType.GenericTypeArguments);
                 }
                 stringBuilder.Append("(");
@@ -152,8 +151,6 @@ namespace RoslynPad.Utilities
                 {
                     firstParam = false;
                 }
-                // ReSharper disable once ConstantConditionalAccessQualifier
-                // ReSharper disable once ConstantNullCoalescingCondition
                 var typeName = t.ParameterType?.Name ?? "<UnknownType>";
                 stringBuilder.Append(typeName + " " + t.Name);
             }

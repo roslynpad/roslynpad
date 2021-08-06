@@ -7,7 +7,7 @@ namespace RoslynPad.Editor
     public static class CommonProperty
     {
         public static StyledProperty<TValue> Register<TOwner, TValue>(string name,
-            TValue defaultValue = default, PropertyOptions options = PropertyOptions.None,
+            TValue defaultValue = default!, PropertyOptions options = PropertyOptions.None,
             Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
             where TOwner : AvaloniaObject
         {
@@ -36,7 +36,9 @@ namespace RoslynPad.Editor
             if (onChangedLocal != null)
             {
                 property.Changed.AddClassHandler<TOwner>(
+#pragma warning disable CS8604 // Possible null reference argument.
                     (o, e) => onChangedLocal(o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue, (TValue)e.NewValue)));
+#pragma warning restore CS8604 // Possible null reference argument.
             }
 
             return property;

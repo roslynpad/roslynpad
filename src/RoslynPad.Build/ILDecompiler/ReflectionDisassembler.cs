@@ -171,7 +171,6 @@ namespace RoslynPad.Build.ILDecompiler
             }
 
             //call convention
-            // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
             WriteEnum(method.CallingConvention & (MethodCallingConvention)0x1f, _callingConvention);
 
             //return type

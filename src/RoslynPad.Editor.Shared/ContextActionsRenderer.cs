@@ -30,7 +30,7 @@ using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Threading;
-using ImageSource = Avalonia.Media.Drawing;
+using ImageSource = Avalonia.Media.IImage;
 using ModifierKeys = Avalonia.Input.KeyModifiers;
 #else
 using System.Windows.Data;
@@ -92,7 +92,7 @@ namespace RoslynPad.Editor
 
         public IList<IContextActionProvider> Providers => _providers;
 
-        private void Providers_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void Providers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             StartTimer();
         }

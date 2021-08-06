@@ -73,7 +73,6 @@ namespace RoslynPad
                 }
 
                 _isClosed = true;
-                // ReSharper disable once UnusedVariable
                 var closeTask = Dispatcher.InvokeAsync(Close);
             }
             else

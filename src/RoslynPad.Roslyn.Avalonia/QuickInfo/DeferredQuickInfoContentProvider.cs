@@ -186,11 +186,11 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             public object Create()
             {
-                var image = new DrawingPresenter
+                var image = new Image
                 {
                     Width = 16,
                     Height = 16,
-                    Drawing = Glyph.ToImageSource()
+                    Source = Glyph.ToImageSource()
                 };
                 return image;
             }

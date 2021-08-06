@@ -92,15 +92,15 @@ namespace RoslynPad.Editor
                 _codeAction = codeAction;
             }
 
-            public event EventHandler CanExecuteChanged
+            public event EventHandler? CanExecuteChanged
             {
                 add { }
                 remove { }
             }
 
-            public bool CanExecute(object parameter) => true;
+            public bool CanExecute(object? parameter) => true;
 
-            public async void Execute(object parameter)
+            public async void Execute(object? parameter)
             {
                 await _provider.ExecuteCodeAction(_codeAction).ConfigureAwait(true);
             }

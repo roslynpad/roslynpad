@@ -10,7 +10,6 @@ namespace RoslynPad.Formatting
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var vm = (DocumentViewModel)value;
-            // ReSharper disable once PossibleNullReferenceException
             var childrenView = new ListCollectionView(vm.Children);
             childrenView.LiveFilteringProperties.Add(nameof(DocumentViewModel.IsSearchMatch));
             childrenView.IsLiveFiltering = true;

@@ -22,7 +22,6 @@ namespace RoslynPad.Runtime
         private static extern ErrorMode GetErrorMode();
 
         [Flags]
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum ErrorMode
         {
             SEM_FAILCRITICALERRORS = 0x0001,

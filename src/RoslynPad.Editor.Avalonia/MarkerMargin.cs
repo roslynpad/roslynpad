@@ -23,9 +23,9 @@ namespace RoslynPad.Editor
 
         private Control CreateMarker()
         {
-            var marker = new DrawingPresenter();
+            var marker = new Image();
             marker.PointerPressed += (o, e) => { e.Handled = true; MarkerPointerDown?.Invoke(o, e); };
-            marker[~DrawingPresenter.DrawingProperty] = this[~MarkerImageProperty];
+            marker[~Image.SourceProperty] = this[~MarkerImageProperty];
             marker[~ToolTip.TipProperty] = this[~MessageProperty];
             VisualChildren.Add(marker);
             LogicalChildren.Add(marker);
@@ -50,10 +50,10 @@ namespace RoslynPad.Editor
             set => SetValue(MessageProperty, value);
         }
 
-        public static readonly StyledProperty<Drawing?> MarkerImageProperty =
-            AvaloniaProperty.Register<MarkerMargin, Drawing?>(nameof(MarkerImage));
+        public static readonly StyledProperty<IImage?> MarkerImageProperty =
+            AvaloniaProperty.Register<MarkerMargin, IImage?>(nameof(MarkerImage));
 
-        public Drawing? MarkerImage
+        public IImage? MarkerImage
         {
             get => GetValue(MarkerImageProperty);
             set => SetValue(MarkerImageProperty, value);

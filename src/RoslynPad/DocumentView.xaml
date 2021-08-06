@@ -33,7 +33,7 @@
             </StatusBar.ItemsPanel>
             <StatusBarItem>
                 <TextBlock>
-                    Ln <Run Name="Ln" /> 
+                    Ln <Run Name="Ln" />
                     Col <Run Name="Col" />
                 </TextBlock>
             </StatusBarItem>
@@ -100,7 +100,7 @@
                 <Grid Visibility="{Binding HasReportedProgress, Converter={StaticResource BooleanToVisibilityConverter}}"
                       Width="60"
                       Margin="5, 0" >
-                    <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}" 
+                    <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}"
                                  Minimum="0.0"
                                  Maximum="1.0" />
                     <TextBlock Text="{Binding ReportedProgress, Mode=OneWay, Converter={StaticResource DoubleToPercentageTextConverter}}"
@@ -357,7 +357,6 @@
                             <ItemsControl.ItemContainerStyle>
                                 <Style TargetType="controls:TreeListViewItem"
                                        BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-                                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
                                     <Setter Property="IsExpanded"
                                             Value="{Binding IsExpanded, Mode=OneTime}" />
                                     <EventSetter Event="KeyDown"
