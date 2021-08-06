@@ -67,16 +67,16 @@ namespace RoslynPad.Utilities
                 {
                     FormatGenericArguments(stringBuilder, declaringType.GenericTypeArguments);
                 }
-                stringBuilder.Append("(");
+                stringBuilder.Append('(');
                 if (isAsync)
                 {
-                    stringBuilder.Append("?");
+                    stringBuilder.Append('?');
                 }
                 else
                 {
                     FormatParameters(stringBuilder, method);
                 }
-                stringBuilder.Append(")");
+                stringBuilder.Append(')');
                 displayFilenames = FormatFileName(displayFilenames, frame, stringBuilder);
             }
             return stringBuilder.ToString();
@@ -105,7 +105,7 @@ namespace RoslynPad.Utilities
             else
             {
                 stringBuilder.Append(fullName);
-                stringBuilder.Append(".");
+                stringBuilder.Append('.');
             }
             return isAsync;
         }
@@ -158,14 +158,14 @@ namespace RoslynPad.Utilities
 
         private static void FormatGenericArguments(StringBuilder stringBuilder, Type[] genericArguments)
         {
-            stringBuilder.Append("[");
+            stringBuilder.Append('[');
             var k = 0;
             var firstTypeParam = true;
             while (k < genericArguments.Length)
             {
                 if (!firstTypeParam)
                 {
-                    stringBuilder.Append(",");
+                    stringBuilder.Append(',');
                 }
                 else
                 {
@@ -174,7 +174,7 @@ namespace RoslynPad.Utilities
                 stringBuilder.Append(genericArguments[k].Name);
                 k++;
             }
-            stringBuilder.Append("]");
+            stringBuilder.Append(']');
         }
     }
 }

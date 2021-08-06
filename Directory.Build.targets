@@ -19,5 +19,5 @@
       Encoding="Unicode"/>
   </Target>
 
-  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetTargets)') " Project="$(NuGetTargets)" />
+  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetTargets)') and !$(MSBuildAllProjects.Contains('nuget.g.targets')) " Project="$(NuGetTargets)" />
 </Project>

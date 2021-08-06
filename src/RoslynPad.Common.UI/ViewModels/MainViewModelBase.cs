@@ -534,7 +534,7 @@ namespace RoslynPad.UI
 
             bool SearchDocumentName(DocumentViewModel document)
             {
-                return document.Name.IndexOf(SearchText!, StringComparison.OrdinalIgnoreCase) >= 0;
+                return document.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
             }
 
             Regex? CreateSearchRegex()
@@ -579,7 +579,7 @@ namespace RoslynPad.UI
                     {
                         var lines = IOUtilities.ReadLines(document.Path);
                         document.IsSearchMatch = lines.Any(line =>
-                            line.IndexOf(SearchText!, StringComparison.OrdinalIgnoreCase) >= 0);
+                            line.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
                     }).ConfigureAwait(false);
                 }
             }

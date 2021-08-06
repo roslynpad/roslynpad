@@ -21,9 +21,7 @@ namespace RoslynPad
         private string? _symbolName;
         private InlineModalDialog? _dialog;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public RenameSymbolDialog()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             DataContext = this;
             InitializeComponent();

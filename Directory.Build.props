@@ -38,6 +38,6 @@
     <NuGetTargets>$(NuGetPrefix).nuget.g.targets</NuGetTargets>
   </PropertyGroup>
 
-  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetProps)') " Project="$(NuGetProps)" />
+  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetProps)') and !$(MSBuildAllProjects.Contains('nuget.g.props')) " Project="$(NuGetProps)" />
 
 </Project>
