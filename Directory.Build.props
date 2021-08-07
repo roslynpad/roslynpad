@@ -26,6 +26,7 @@
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,13 +35,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
-  <PropertyGroup>
-    <NuGetPrefix>$(MSBuildProjectDirectory)/obj/$([System.IO.Path]::GetFileName($(MSBuildProjectDirectory)))$(MSBuildProjectExtension)</NuGetPrefix>
-    <NuGetProps>$(NuGetPrefix).nuget.g.props</NuGetProps>
-    <NuGetTargets>$(NuGetPrefix).nuget.g.targets</NuGetTargets>
-  </PropertyGroup>
-
-  <Import Condition=" $(MSBuildProjectName.Contains('wpftmp')) and Exists('$(NuGetProps)') " Project="$(NuGetProps)" />
 
 </Project>
