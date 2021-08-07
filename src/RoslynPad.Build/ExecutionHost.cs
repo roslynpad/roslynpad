@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Scripting;
+using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,13 +33,13 @@ namespace RoslynPad.Build
     /// </summary>
     internal class ExecutionHost : IExecutionHost
     {
-        private static Lazy<string> CurrentPid { get; } = new Lazy<string>(() => Process.GetCurrentProcess().Id.ToString());
-
         private readonly ExecutionHostParameters _parameters;
         private readonly IRoslynHost _roslynHost;
+        private readonly ILogger _logger;
         private readonly IAnalyzerAssemblyLoader _analyzerAssemblyLoader;
         private readonly SyntaxTree _initHostSyntax;
         private readonly HashSet<LibraryRef> _libraries;
+        private readonly SemaphoreSlim _lock;
         private ScriptOptions _scriptOptions;
         private CancellationTokenSource? _executeCts;
         private Task? _restoreTask;
@@ -80,7 +81,7 @@ namespace RoslynPad.Build
                 {
                     _name = value;
                     InitializeBuildPath(stop: false);
-                    TryRestore();
+                    Restore();
                 }
             }
         }
@@ -89,7 +90,7 @@ namespace RoslynPad.Build
 
         private string BuildPath => _parameters.BuildPath;
 
-        public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost)
+        public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost, ILogger logger)
         {
             _jsonSerializer = new JsonSerializer
             {
@@ -100,11 +101,14 @@ namespace RoslynPad.Build
             _name = "";
             _parameters = parameters;
             _roslynHost = roslynHost;
+            _logger = logger;
             _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
             _libraries = new HashSet<LibraryRef>();
             _scriptOptions = ScriptOptions.Default
                    .WithImports(parameters.Imports)
                    .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
+
+            _lock = new SemaphoreSlim(1, 1);
 
             _initHostSyntax = ParseSyntaxTree(@"RoslynPad.Runtime.RuntimeInitializer.Initialize();", roslynHost.ParseOptions);
 
@@ -164,9 +168,13 @@ namespace RoslynPad.Build
 
         public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
         {
+            _logger.LogInformation("Start ExecuteAsync");
+
             await new NoContextYieldAwaitable();
 
             await RestoreTask.ConfigureAwait(false);
+
+            using var _ = await _lock.DisposableWaitAsync();
 
             try
             {
@@ -179,10 +187,13 @@ namespace RoslynPad.Build
 
                 _assemblyPath = Path.Combine(BuildPath, "bin", $"rp-{Name}.{AssemblyExtension}");
 
-                var diagnostics = await script.SaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                var diagnostics = await script.CompileAndSaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
+                _logger.LogInformation("Assembly saved at {assemblyPath}, has errors = {hasErrors}", _assemblyPath, hasErrors);
+
                 SendDiagnostics(diagnostics);
 
-                if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+                if (hasErrors)
                 {
                     return;
                 }
@@ -229,6 +240,17 @@ namespace RoslynPad.Build
                 ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
                 : Microsoft.CodeAnalysis.Platform.AnyCpu;
 
+            var optimization = optimizationLevel ?? OptimizationLevel.Release;
+
+            _logger.LogInformation("Creating script runner, platform = {platform}, " +
+                "references = {references}, imports = {imports}, directory = {directory}, " +
+                "optimization = {optimization}",
+                platform,
+                _scriptOptions.MetadataReferences.Select(t => t.Display),
+                _scriptOptions.Imports,
+                _parameters.WorkingDirectory,
+                optimizationLevel);
+
             return new ScriptRunner(code: null,
                                     syntaxTrees: ImmutableList.Create(_initHostSyntax, ParseCode(code)),
                                     _roslynHost.ParseOptions as CSharpParseOptions,
@@ -239,43 +261,46 @@ namespace RoslynPad.Build
                                     _scriptOptions.FilePath,
                                     _parameters.WorkingDirectory,
                                     _scriptOptions.MetadataResolver,
-                                    optimizationLevel: optimizationLevel ?? OptimizationLevel.Release,
+                                    optimizationLevel: optimization,
                                     checkOverflow: _parameters.CheckOverflow,
                                     allowUnsafe: _parameters.AllowUnsafe);
         }
 
         private async Task RunProcess(string assemblyPath, CancellationToken cancellationToken)
         {
-            using (var process = new Process
-            {
-                StartInfo = GetProcessStartInfo(assemblyPath)
-            })
-            using (cancellationToken.Register(() =>
+            using var process = new Process { StartInfo = GetProcessStartInfo(assemblyPath) };
+            using var _ = cancellationToken.Register(() =>
             {
                 try
                 {
                     _processInputStream = null;
                     process.Kill();
                 }
-                catch { }
-            }))
-            {
-                if (process.Start())
+                catch (Exception ex)
                 {
-                    _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
-
-                    await Task.WhenAll(
-                        Task.Run(() => ReadObjectProcessStream(process.StandardOutput)),
-                        Task.Run(() => ReadProcessStream(process.StandardError)));
+                    _logger.LogWarning(ex, "Error killing process");
                 }
+            });
+
+            _logger.LogInformation("Starting process {executable}, arguments = {arguments}", process.StartInfo.FileName, process.StartInfo.Arguments);
+            if (!process.Start())
+            {
+                _logger.LogWarning("Process.Start returned false");
+                return;
             }
+
+            _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
+
+            await Task.WhenAll(
+                Task.Run(() => ReadObjectProcessStream(process.StandardOutput)),
+                Task.Run(() => ReadProcessStream(process.StandardError)));
 
             ProcessStartInfo GetProcessStartInfo(string assemblyPath)
             {
                 return new ProcessStartInfo
                 {
                     FileName = Platform.IsCore ? DotNetExecutable : assemblyPath,
-                    Arguments = $"\"{assemblyPath}\" --pid {CurrentPid.Value}",
+                    Arguments = $"\"{assemblyPath}\" --pid {Environment.ProcessId}",
                     WorkingDirectory = _parameters.WorkingDirectory,
                     CreateNoWindow = true,
                     UseShellExecute = false,
@@ -337,6 +362,7 @@ namespace RoslynPad.Build
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogWarning(ex, "Error deserializing result");
                     Dumped?.Invoke(ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default));
                 }
             }
@@ -404,7 +430,7 @@ namespace RoslynPad.Build
             _executeCts?.Cancel();
         }
 
-        public void UpdateLibraries(IList<LibraryRef> libraries)
+        public void UpdateLibraries(IList<LibraryRef> libraries, bool alwaysRestore)
         {
             lock (_libraries)
             {
@@ -412,15 +438,18 @@ namespace RoslynPad.Build
                 {
                     _libraries.Clear();
                     _libraries.UnionWith(libraries);
-
-                    TryRestore();
+                    Restore();
+                }
+                else if (alwaysRestore)
+                {
+                    Restore();
                 }
             }
         }
 
         private Task RestoreTask => _restoreTask ?? Task.CompletedTask;
 
-        public void TryRestore()
+        private async void Restore()
         {
             if (!HasPlatform || string.IsNullOrEmpty(Name))
             {
@@ -435,6 +464,7 @@ namespace RoslynPad.Build
 
             RestoreStarted?.Invoke();
 
+            var lockDisposer = await _lock.DisposableWaitAsync();
             var restoreCts = new CancellationTokenSource();
             _restoreTask = RestoreAsync(RestoreTask, restoreCts.Token);
             _restoreCts = restoreCts;
@@ -450,7 +480,10 @@ namespace RoslynPad.Build
                 {
                     await previousTask.ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error in previous restore task");
+                }
 
                 try
                 {
@@ -507,7 +540,12 @@ namespace RoslynPad.Build
                 }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
+                    _logger.LogWarning(ex, "Restore error");
                     RestoreCompleted?.Invoke(RestoreResult.FromErrors(new[] { ex.Message }));
+                }
+                finally
+                {
+                    lockDisposer.Dispose();
                 }
 
                 static string? GetDeviceCode(string line)

@@ -30,7 +30,7 @@ namespace RoslynPad.Roslyn.BraceMatching
             return LeftSpan.Equals(other.LeftSpan) && RightSpan.Equals(other.RightSpan);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null) return false;
             return obj is BraceMatchingResult result && Equals(result);

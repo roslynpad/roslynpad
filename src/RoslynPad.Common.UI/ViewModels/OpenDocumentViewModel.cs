@@ -14,6 +14,8 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 using RoslynPad.Build;
 using RoslynPad.NuGet;
@@ -114,21 +116,21 @@ namespace RoslynPad.UI
         }
 
         [ImportingConstructor]
-        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider)
+        public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider, ILogger<OpenDocumentViewModel> logger)
         {
             Id = Guid.NewGuid().ToString("n");
             BuildPath = Path.Combine(Path.GetTempPath(), "roslynpad", "build", Id);
             Directory.CreateDirectory(BuildPath);
 
             _telemetryProvider = telemetryProvider;
-            _platformsFactory = serviceProvider.GetService<IPlatformsFactory>();
+            _platformsFactory = serviceProvider.GetRequiredService<IPlatformsFactory>();
             _serviceProvider = serviceProvider;
             _results = new ObservableCollection<IResultObject>();
 
             MainViewModel = mainViewModel;
             CommandProvider = commands;
 
-            NuGet = serviceProvider.GetService<NuGetDocumentViewModel>();
+            NuGet = serviceProvider.GetRequiredService<NuGetDocumentViewModel>();
 
             _restoreSuccessful = true; // initially set to true so we can immediately start running and wait for restore
             _dispatcher = appDispatcher;
@@ -150,11 +152,11 @@ namespace RoslynPad.UI
 
             _executionHostParameters = new ExecutionHostParameters(
                 BuildPath,
-                serviceProvider.GetService<NuGetViewModel>().ConfigPath,
+                serviceProvider.GetRequiredService<NuGetViewModel>().ConfigPath,
                 roslynHost.DefaultImports,
                 roslynHost.DisabledDiagnostics,
                 WorkingDirectory);
-            _executionHost = new ExecutionHost(_executionHostParameters, roslynHost);
+            _executionHost = new ExecutionHost(_executionHostParameters, roslynHost, logger);
 
             _executionHost.Dumped += ExecutionHostOnDump;
             _executionHost.Error += ExecutionHostOnError;
@@ -336,7 +338,7 @@ namespace RoslynPad.UI
             var symbol = await RenameHelper.GetRenameSymbol(document, _getSelection().Start).ConfigureAwait(true);
             if (symbol == null) return;
 
-            var dialog = _serviceProvider.GetService<IRenameSymbolDialog>();
+            var dialog = _serviceProvider.GetRequiredService<IRenameSymbolDialog>();
             dialog.Initialize(symbol.Name);
             await dialog.ShowAsync();
             if (dialog.ShouldRename)
@@ -521,7 +523,7 @@ namespace RoslynPad.UI
                 var result = SaveResult.Save;
                 if (Document == null || Document.IsAutoSaveOnly)
                 {
-                    var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
+                    var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
                     dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, s);
@@ -536,7 +538,7 @@ namespace RoslynPad.UI
                 }
                 else if (promptSave)
                 {
-                    var dialog = _serviceProvider.GetService<ISaveDocumentDialog>();
+                    var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = true;
                     dialog.DocumentName = Document.Name;
                     await dialog.ShowAsync();
@@ -714,7 +716,7 @@ namespace RoslynPad.UI
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 
-        private void UpdatePackages()
+        private void UpdatePackages(bool alwaysRestore = true)
         {
             _restoreCts?.Cancel();
             _restoreCts = new CancellationTokenSource();
@@ -740,7 +742,7 @@ namespace RoslynPad.UI
                     libraries.AddRange(GetReferencePaths(defaultReferences).Select(p => LibraryRef.Reference(p)));
                 }
 
-                _executionHost.UpdateLibraries(libraries);
+                _executionHost.UpdateLibraries(libraries, alwaysRestore);
             }
         }
 
@@ -919,7 +921,7 @@ namespace RoslynPad.UI
                 _liveModeTimer?.Change(MainViewModel.Settings.LiveModeDelayMs, Timeout.Infinite);
             }
 
-            UpdatePackages();
+            UpdatePackages(alwaysRestore: false);
         }
     }
 }

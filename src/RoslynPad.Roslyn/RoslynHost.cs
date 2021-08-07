@@ -112,7 +112,7 @@ namespace RoslynPad.Roslyn
                 documentation: _documentationProviderService.GetDocumentationProvider(location));
         }
 
-        private void OnDiagnosticsUpdated(object sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
+        private void OnDiagnosticsUpdated(object? sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
             var documentId = diagnosticsUpdatedArgs.DocumentId;
             if (documentId == null) return;

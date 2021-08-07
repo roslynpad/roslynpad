@@ -19,5 +19,6 @@
     <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageReference Include="System.Reactive.Core" Version="4.1.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
   </ItemGroup>
 </Project>

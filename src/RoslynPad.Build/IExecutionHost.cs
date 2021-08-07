@@ -27,8 +27,7 @@ namespace RoslynPad.Build
         event Action<RestoreResultObject>? RestoreMessage;
         event Action<ProgressResultObject>? ProgressChanged;
 
-        void UpdateLibraries(IList<LibraryRef> libraries);
-
+        void UpdateLibraries(IList<LibraryRef> libraries, bool alwaysRestore);
         Task SendInputAsync(string input);
         Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);
         Task TerminateAsync();

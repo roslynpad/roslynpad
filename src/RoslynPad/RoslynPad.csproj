@@ -18,6 +18,9 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
+    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
+      <SetTargetFramework>TargetFramework=$(DefaultTargetFramework)</SetTargetFramework>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonLibrary" Version="2.4.0" />
@@ -27,5 +30,7 @@
     <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
   </ItemGroup>
 </Project>

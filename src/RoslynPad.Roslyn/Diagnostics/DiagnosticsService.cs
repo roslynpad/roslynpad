@@ -19,7 +19,7 @@ namespace RoslynPad.Roslyn.Diagnostics
             inner.DiagnosticsUpdated += OnDiagnosticsUpdated;
         }
 
-        private void OnDiagnosticsUpdated(object sender, Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs e)
+        private void OnDiagnosticsUpdated(object? sender, Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs e)
         {
             DiagnosticsUpdated?.Invoke(this, new DiagnosticsUpdatedArgs(e));
         }

@@ -14,15 +14,4 @@ namespace RoslynPad.Roslyn.Diagnostics
             return SimpleAnalyzerAssemblyLoader.Instance;
         }
     }
-
-    [Export(typeof(IAnalyzerAssemblyLoader))]
-    internal class SimpleAnalyzerAssemblyLoader : AnalyzerAssemblyLoader
-    {
-        public static IAnalyzerAssemblyLoader Instance { get; } = new SimpleAnalyzerAssemblyLoader();
-
-        protected override Assembly LoadFromPathImpl(string fullPath)
-        {
-            return Assembly.Load(AssemblyName.GetAssemblyName(fullPath));
-        }
-    }
 }

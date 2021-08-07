@@ -48,7 +48,7 @@ namespace RoslynPad.Runtime
                 Helpers.Progress += progress => consoleDumper.DumpProgress(ProgressResultObject.Create(progress));
             }
 
-            ObjectExtensions.Dumped += data => consoleDumper.Dump(data);
+            ObjectExtensions.Dumped += consoleDumper.Dump;
             AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();            
         }
 

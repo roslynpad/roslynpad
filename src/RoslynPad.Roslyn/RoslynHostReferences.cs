@@ -56,7 +56,7 @@ namespace RoslynPad.Roslyn
 
             foreach (var type in typeNamespaceImports!.WhereNotNull())
             {
-                importsArray = importsArray.Add(type.Namespace);
+                importsArray = importsArray.Add(type!.Namespace!);
                 var location = type.Assembly.Location;
                 referenceLocations = referenceLocations.SetItem(location, string.Empty);
             }

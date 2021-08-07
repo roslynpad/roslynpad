@@ -140,7 +140,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             }
 
             // Take the first result with no errors.
-            var bestBinding = candidateResults.FirstOrDefault(c => c.Item3.Count > 0 && !ErrorVisitor.ContainsError(c.Item3.FirstOrDefault()));
+            var bestBinding = candidateResults.FirstOrDefault(c => c.Item3.Count > 0 && !ErrorVisitor.ContainsError(c.Item3.First()));
 
             // Every file binds with errors. Take the first candidate, which is from the current file.
             if (bestBinding == null)

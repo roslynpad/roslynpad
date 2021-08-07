@@ -9,7 +9,7 @@ namespace RoslynPad
 
         public App()
         {
-            ProfileOptimization.SetProfileRoot(AppDomain.CurrentDomain.BaseDirectory!);
+            ProfileOptimization.SetProfileRoot(AppContext.BaseDirectory);
             ProfileOptimization.StartProfile(ProfileFileName);
         }
     }

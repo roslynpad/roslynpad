@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
@@ -177,7 +178,7 @@ namespace RoslynPad.UI
 
         private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel? documentViewModel = null)
         {
-            var d = _serviceProvider.GetService<OpenDocumentViewModel>();
+            var d = _serviceProvider.GetRequiredService<OpenDocumentViewModel>();
             d.SetDocument(documentViewModel);
             return d;
         }
@@ -254,7 +255,7 @@ namespace RoslynPad.UI
 
         public void EditUserDocumentPath()
         {
-            var dialog = _serviceProvider.GetService<IFolderBrowserDialog>();
+            var dialog = _serviceProvider.GetRequiredService<IFolderBrowserDialog>();
             dialog.ShowEditBox = true;
             dialog.SelectedPath = Settings.EffectiveDocumentPath;
 
@@ -321,7 +322,7 @@ namespace RoslynPad.UI
         {
             if (!IsInitialized) return;
 
-            var dialog = _serviceProvider.GetService<IOpenFileDialog>();
+            var dialog = _serviceProvider.GetRequiredService<IOpenFileDialog>();
             dialog.Filter = new FileDialogFilter("C# Scripts", "csx");
             var fileNames = await dialog.ShowAsync().ConfigureAwait(true);
             if (fileNames == null)

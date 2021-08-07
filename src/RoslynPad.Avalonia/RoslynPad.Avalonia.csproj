@@ -19,5 +19,8 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
+    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
+      <SetTargetFramework>TargetFramework=$(DefaultTargetFramework)</SetTargetFramework>
+    </ProjectReference>
   </ItemGroup>
 </Project>

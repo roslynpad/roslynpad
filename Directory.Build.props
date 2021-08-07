@@ -4,9 +4,10 @@
   </PropertyGroup>
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
-    <TargetFrameworks Condition=" $(MSBuildProjectName.EndsWith('Windows')) ">net5.0-windows;net48</TargetFrameworks>
-    <TargetFramework Condition=" '$(TargetFrameworks)' == '' and $(MSBuildProjectName.Contains('Windows')) ">net5.0-windows</TargetFramework>
-    <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">net5.0</TargetFramework>
+    <DefaultTargetFramework>net5.0</DefaultTargetFramework>
+    <TargetFrameworks Condition=" $(MSBuildProjectName.EndsWith('Windows')) ">$(DefaultTargetFramework)-windows;net48</TargetFrameworks>
+    <TargetFramework Condition=" '$(TargetFrameworks)' == '' and $(MSBuildProjectName.Contains('Windows')) ">$(DefaultTargetFramework)-windows</TargetFramework>
+    <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>

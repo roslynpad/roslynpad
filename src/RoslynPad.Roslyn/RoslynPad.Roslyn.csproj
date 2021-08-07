@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
     <InternalsAssemblyNames>Microsoft.CodeAnalysis.CSharp;Microsoft.CodeAnalysis.Features;Microsoft.CodeAnalysis.CSharp.Features;Microsoft.CodeAnalysis.Scripting;Microsoft.CodeAnalysis.CSharp.Scripting;Microsoft.CodeAnalysis.Workspaces;Microsoft.CodeAnalysis.CSharp.Workspaces;Microsoft.CodeAnalysis.Extensions;Microsoft.CodeAnalysis.PooledObjects</InternalsAssemblyNames>
     <Version>$(RoslynAssemblyVersion)</Version>
     <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
@@ -16,5 +17,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynPackageVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(DotNetVersion)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(DotNetVersion)" />
+    <PackageReference Include="System.Composition" Version="$(DotNetVersion)" />
   </ItemGroup>
 </Project>

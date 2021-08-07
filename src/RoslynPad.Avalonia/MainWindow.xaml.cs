@@ -6,6 +6,7 @@ using System;
 using System.Composition.Hosting;
 using System.Reflection;
 using Avalonia.Controls.Primitives;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RoslynPad
 {
@@ -20,7 +21,7 @@ namespace RoslynPad
                 .WithAssembly(Assembly.GetEntryAssembly());
             var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-            _viewModel = locator.GetService<MainViewModelBase>();
+            _viewModel = locator.GetRequiredService<MainViewModelBase>();
             
             DataContext = _viewModel;
 

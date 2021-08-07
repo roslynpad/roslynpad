@@ -13,7 +13,7 @@ namespace RoslynPad.Runtime
         bool SupportsRedirect { get; }
         TextWriter CreateWriter(string? header = null);
         TextReader CreateReader();
-        void Dump(DumpData data);
+        void Dump(in DumpData data);
         void DumpException(Exception exception);
         void Flush();
         void DumpProgress(ProgressResultObject result);
@@ -30,7 +30,7 @@ namespace RoslynPad.Runtime
             throw new NotSupportedException();
         }
 
-        public void Dump(DumpData data)
+        public void Dump(in DumpData data)
         {
             try
             {
@@ -151,7 +151,7 @@ namespace RoslynPad.Runtime
             _stream.Dispose();
         }
 
-        public void Dump(DumpData data)
+        public void Dump(in DumpData data)
         {
             if (!CanDump())
             {

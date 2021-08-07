@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -41,9 +40,11 @@ namespace RoslynPad.Runtime
             return enumerable!;
         }
 
-        internal static event Action<DumpData>? Dumped;
-    }
+        internal static event DumpDelegate? Dumped;
 
+        internal delegate void DumpDelegate(in DumpData data);
+    }
+    
     internal struct DumpData
     {
         public object? Object { get; }

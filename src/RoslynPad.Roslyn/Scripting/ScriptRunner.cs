@@ -106,7 +106,7 @@ namespace RoslynPad.Roslyn.Scripting
             return result;
         }
 
-        public async Task<ImmutableArray<Diagnostic>> SaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
+        public async Task<ImmutableArray<Diagnostic>> CompileAndSaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
         {
             var compilation = GetCompilation(Path.GetFileNameWithoutExtension(assemblyPath));
 
@@ -237,8 +237,8 @@ namespace RoslynPad.Roslyn.Scripting
             var entryPointTypeName = BuildQualifiedName(entryPoint.ContainingNamespace.MetadataName, entryPoint.ContainingType.MetadataName);
             var entryPointMethodName = entryPoint.MetadataName;
 
-            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false);
-            return entryPointType.GetTypeInfo().GetDeclaredMethod(entryPointMethodName);
+            var entryPointType = assembly.GetType(entryPointTypeName, throwOnError: true, ignoreCase: false) ?? throw new InvalidOperationException("Missing entry point type");
+            return entryPointType.GetTypeInfo().GetDeclaredMethod(entryPointMethodName) ?? throw new InvalidOperationException("Missing entry point");
         }
 
         private static string BuildQualifiedName(

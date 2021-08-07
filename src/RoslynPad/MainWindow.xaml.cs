@@ -10,6 +10,8 @@ using System.Xml.Linq;
 using Avalon.Windows.Controls;
 using AvalonDock;
 using AvalonDock.Layout.Serialization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RoslynPad.UI;
 using RoslynPad.Utilities;
 
@@ -28,12 +30,16 @@ namespace RoslynPad
         {
             Loaded += OnLoaded;
 
+            var services = new ServiceCollection();
+            services.AddLogging(l => l.AddSimpleConsole().AddDebug());
+
             var container = new ContainerConfiguration()
+                .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
                 .WithAssembly(typeof(MainViewModelBase).Assembly)   // RoslynPad.Common.UI
                 .WithAssembly(typeof(MainWindow).Assembly);         // RoslynPad
             var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-            _viewModel = locator.GetService<MainViewModelBase>();
+            _viewModel = locator.GetRequiredService<MainViewModelBase>();
 
             DataContext = _viewModel;
             InitializeComponent();

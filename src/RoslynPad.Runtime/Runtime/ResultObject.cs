@@ -39,7 +39,7 @@ namespace RoslynPad.Runtime
         private readonly DumpQuotas _quotas;
         private readonly MemberInfo? _member;
 
-        public static ResultObject Create(object? o, DumpQuotas quotas, string? header = null)
+        public static ResultObject Create(object? o, in DumpQuotas quotas, string? header = null)
         {
             return new ResultObject(o, quotas, header);
         }
@@ -49,7 +49,7 @@ namespace RoslynPad.Runtime
         {
         }
 
-        internal ResultObject(object? o, DumpQuotas quotas, string? header = null, MemberInfo? member = null)
+        internal ResultObject(object? o, in DumpQuotas quotas, string? header = null, MemberInfo? member = null)
         {
             _quotas = quotas;
             _member = member;
@@ -120,7 +120,7 @@ namespace RoslynPad.Runtime
             PopulateObject(o, headerPrefix, targetQuota);
         }
 
-        private void PopulateObject(object? o, string? headerPrefix, DumpQuotas targetQuotas)
+        private void PopulateObject(object? o, string? headerPrefix, in DumpQuotas targetQuotas)
         {
             if (o == null)
             {
@@ -321,16 +321,21 @@ namespace RoslynPad.Runtime
             return typeName;
         }
 
-        private void PopulateChildren(object o, DumpQuotas targetQuotas, IEnumerable<MemberInfo> properties, string? headerPrefix)
+        private void PopulateChildren(object o, in DumpQuotas targetQuotas, IEnumerable<MemberInfo> properties, string? headerPrefix)
         {
             Header = headerPrefix;
             Value = GetString(o);
 
             if (o == null) return;
 
-            var children = properties
-                .Select(p => new ResultObject(o, targetQuotas, member: p));
-            Children = children.ToList();
+            var children = new List<ResultObject>();
+
+            foreach (var property in properties)
+            {
+                children.Add(new ResultObject(o, targetQuotas, member: property));
+            }
+
+            Children = children;
         }
 
         protected static string GetStackTrace(Exception exception)
@@ -386,7 +391,7 @@ namespace RoslynPad.Runtime
             }
         }
 
-        private void InitializeEnumerable(string? headerPrefix, IEnumerable e, DumpQuotas targetQuotas)
+        private void InitializeEnumerable(string? headerPrefix, IEnumerable e, in DumpQuotas targetQuotas)
         {
             try
             {
@@ -479,7 +484,7 @@ namespace RoslynPad.Runtime
             Message = string.Empty;
         }
 
-        private ExceptionResultObject(Exception exception, DumpQuotas quotas) : base(exception, quotas)
+        private ExceptionResultObject(Exception exception, in DumpQuotas quotas) : base(exception, quotas)
         {
             Message = exception.Message;
 

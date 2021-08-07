@@ -772,11 +772,12 @@ namespace RoslynPad.Roslyn.CodeFixes
                                     var attribute = typeInfo.GetCustomAttribute<ExportCodeFixProviderAttribute>();
                                     if (attribute != null)
                                     {
-                                        if (attribute.Languages == null ||
+                                        if ((attribute.Languages == null ||
                                             attribute.Languages.Length == 0 ||
                                             attribute.Languages.Contains(language))
+                                            && Activator.CreateInstance(typeInfo.AsType()) is CodeFixProvider provider)
                                         {
-                                            builder.Add((CodeFixProvider)Activator.CreateInstance(typeInfo.AsType()));
+                                            builder.Add(provider);
                                         }
                                     }
                                 }

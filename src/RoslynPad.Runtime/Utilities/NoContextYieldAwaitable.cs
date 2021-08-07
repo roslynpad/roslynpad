@@ -9,7 +9,7 @@ namespace RoslynPad.Utilities
     /// </summary>
     public readonly struct NoContextYieldAwaitable
     {
-        public NoContextYieldAwaiter GetAwaiter() { return new NoContextYieldAwaiter(); }
+        public NoContextYieldAwaiter GetAwaiter() => new();
 
         public readonly struct NoContextYieldAwaiter : ICriticalNotifyCompletion
         {

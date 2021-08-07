@@ -391,7 +391,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                         ? "null"
                         : ParameterSymbol.ExplicitDefaultValue is string
                             ? "\"" + ParameterSymbol.ExplicitDefaultValue + "\""
-                            : ParameterSymbol.ExplicitDefaultValue.ToString();
+                            : ParameterSymbol.ExplicitDefaultValue.ToString() ?? string.Empty;
                 }
             }
 
