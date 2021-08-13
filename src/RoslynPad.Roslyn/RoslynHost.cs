@@ -304,7 +304,8 @@ namespace RoslynPad.Roslyn
                 usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
-                metadataReferenceResolver: new CachedScriptMetadataResolver(args.WorkingDirectory, useCache: true),
+                // all #r references are resolved by the editor/msbuild
+                metadataReferenceResolver: DummyScriptMetadataResolver.Instance,
                 nullableContextOptions: NullableContextOptions.Enable);
             return compilationOptions;
         }

@@ -104,9 +104,7 @@ namespace RoslynPad.Build
             _logger = logger;
             _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
             _libraries = new HashSet<LibraryRef>();
-            _scriptOptions = ScriptOptions.Default
-                   .WithImports(parameters.Imports)
-                   .WithMetadataResolver(new CachedScriptMetadataResolver(parameters.WorkingDirectory));
+            _scriptOptions = ScriptOptions.Default.WithImports(parameters.Imports);
 
             _lock = new SemaphoreSlim(1, 1);
 
@@ -260,7 +258,6 @@ namespace RoslynPad.Build
                                     _scriptOptions.Imports,
                                     _scriptOptions.FilePath,
                                     _parameters.WorkingDirectory,
-                                    _scriptOptions.MetadataResolver,
                                     optimizationLevel: optimization,
                                     checkOverflow: _parameters.CheckOverflow,
                                     allowUnsafe: _parameters.AllowUnsafe);
@@ -373,29 +370,33 @@ namespace RoslynPad.Build
             var tree = ParseSyntaxTree(code, _roslynHost.ParseOptions);
             var root = tree.GetRoot();
 
-            if (root is CompilationUnitSyntax c)
+            if (!(root is CompilationUnitSyntax compilationUnit))
             {
-                var members = c.Members;
-
-                // add .Dump() to the last bare expression
-                var lastMissingSemicolon = c.Members.OfType<GlobalStatementSyntax>()
-                    .LastOrDefault(m => m.Statement is ExpressionStatementSyntax expr && expr.SemicolonToken.IsMissing);
-                if (lastMissingSemicolon != null)
-                {
-                    var statement = (ExpressionStatementSyntax)lastMissingSemicolon.Statement;
-
-                    members = members.Replace(lastMissingSemicolon,
-                        GlobalStatement(
-                            ExpressionStatement(
-                            InvocationExpression(
-                                MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    statement.Expression,
-                                    IdentifierName(nameof(ObjectExtensions.Dump)))))));
-                }
-
-                root = c.WithMembers(members);
+                return tree;
             }
+
+            // references directives are resolved by msbuild, so removing from compilation
+            compilationUnit = compilationUnit.RemoveNodes(compilationUnit.GetReferenceDirectives(), SyntaxRemoveOptions.KeepEndOfLine) ?? compilationUnit;
+            var members = compilationUnit.Members;
+
+            // add .Dump() to the last bare expression
+            var lastMissingSemicolon = compilationUnit.Members.OfType<GlobalStatementSyntax>()
+                .LastOrDefault(m => m.Statement is ExpressionStatementSyntax expr && expr.SemicolonToken.IsMissing);
+            if (lastMissingSemicolon != null)
+            {
+                var statement = (ExpressionStatementSyntax)lastMissingSemicolon.Statement;
+
+                members = members.Replace(lastMissingSemicolon,
+                    GlobalStatement(
+                        ExpressionStatement(
+                        InvocationExpression(
+                            MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                statement.Expression,
+                                IdentifierName(nameof(ObjectExtensions.Dump)))))));
+            }
+
+            root = compilationUnit.WithMembers(members);
 
             return tree.WithRootAndOptions(root, _roslynHost.ParseOptions);
         }
@@ -575,6 +576,7 @@ namespace RoslynPad.Build
             async Task<string> BuildCsproj()
             {
                 var csproj = MSBuildHelper.CreateCsproj(
+                    Platform.IsCore,
                     Platform.TargetFrameworkMoniker,
                     _libraries);
                 var csprojPath = Path.Combine(BuildPath, $"rp-{Name}.csproj");
