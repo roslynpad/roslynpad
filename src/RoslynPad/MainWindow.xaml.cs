@@ -179,7 +179,7 @@ namespace RoslynPad
 
         private void ViewUpdateClick(object sender, RoutedEventArgs e)
         {
-            Task.Run(() => Process.Start("https://roslynpad.net/"));
+            Task.Run(() => Process.Start(new ProcessStartInfo("https://roslynpad.net/") { UseShellExecute = true }));
         }
     }
 }
