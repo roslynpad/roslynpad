@@ -12,4 +12,4 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
     - name: Build with dotnet
-      run: dotnet msbuild /restore /bl /p:Configuration=Release src/RoslynPad.sln
+      run: dotnet build -bl -c -m:1 Release src/RoslynPad.sln
