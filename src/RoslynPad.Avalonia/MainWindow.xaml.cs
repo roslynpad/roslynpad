@@ -7,6 +7,7 @@ using System.Composition.Hosting;
 using System.Reflection;
 using Avalonia.Controls.Primitives;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace RoslynPad
 {
@@ -16,7 +17,11 @@ namespace RoslynPad
 
         public MainWindow()
         {
+            var services = new ServiceCollection();
+            services.AddLogging(l => l.AddSimpleConsole().AddDebug());
+
             var container = new ContainerConfiguration()
+                .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
                 .WithAssembly(Assembly.Load(new AssemblyName("RoslynPad.Common.UI")))
                 .WithAssembly(Assembly.GetEntryAssembly());
             var locator = container.CreateContainer().GetExport<IServiceProvider>();

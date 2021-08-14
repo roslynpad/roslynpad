@@ -3,6 +3,7 @@
         x:Class="RoslynPad.MainWindow"
         xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+        xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         MinWidth="500"
         MinHeight="300"
@@ -10,7 +11,11 @@
         Name="This">
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+N"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}" />
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
+        <KeyBinding Gesture="Ctrl+Shift+N"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
         <KeyBinding Gesture="Ctrl+O"
                     Command="{Binding OpenFileCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+W"
@@ -78,20 +83,42 @@
                 </TabControl.DataTemplates>
             </TabControl>
 
-            <Button HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Padding="5"
-                    Background="Transparent"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    IsVisible="{Binding HasNoOpenDocuments}">
-                <StackPanel>
-                    <DrawingPresenter Drawing="{StaticResource CsFile}"
-                                      Width="64"
-                                      Height="64" />
-                    <TextBlock Text="New (Ctrl+N)"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
-            </Button>
+            <UniformGrid HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Rows="1"
+                         IsVisible="{Binding HasNoOpenDocuments}">
+
+                <Button Padding="5"
+                        Margin="20 0 0 0"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+                    <StackPanel>
+                        <DrawingPresenter Drawing="{StaticResource CsFile}"
+                                          Width="64"
+                                          Height="64" />
+                        <TextBlock Text="New&#xA;(Ctrl+N)"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Padding="5"
+                        Margin="20 0 0 0"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
+                    <StackPanel>
+                        <DrawingPresenter Drawing="{StaticResource CsFile}"
+                                          Width="64"
+                                          Height="64" />
+                        <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+            </UniformGrid>
         </Grid>
     </DockPanel>
 </Window>

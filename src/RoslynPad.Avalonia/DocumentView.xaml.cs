@@ -13,11 +13,8 @@ namespace RoslynPad
     class DocumentView : UserControl, IDisposable
     {
         private readonly RoslynCodeEditor _editor;
-        private OpenDocumentViewModel _viewModel;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
         public DocumentView()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
         {
             AvaloniaXamlLoader.Load(this);
 
@@ -46,27 +43,27 @@ namespace RoslynPad
 
         private async void OnDataContextChanged(object? sender, EventArgs args)
         {
-            _viewModel = DataContext as OpenDocumentViewModel ?? throw new InvalidOperationException("DataContext is null");
-            if (_viewModel == null) return;
+            var viewModel = DataContext as OpenDocumentViewModel;
+            if (viewModel == null) return;
 
-            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+            viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
-            _viewModel.EditorFocus += (o, e) => _editor.Focus();
+            viewModel.EditorFocus += (o, e) => _editor.Focus();
 
-            _viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
-            _editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
+            viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
+            _editor.FontSize = viewModel.MainViewModel.EditorFontSize;
 
-            var documentText = await _viewModel.LoadText().ConfigureAwait(true);
+            var documentText = await viewModel.LoadText().ConfigureAwait(true);
 
-            var documentId = _editor.Initialize(_viewModel.MainViewModel.RoslynHost,
+            var documentId = _editor.Initialize(viewModel.MainViewModel.RoslynHost,
                 new ClassificationHighlightColors(),
-                _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
+                viewModel.WorkingDirectory, documentText, viewModel.SourceCodeKind);
 
-            _viewModel.Initialize(documentId, OnError,
+            viewModel.Initialize(documentId, OnError,
                 () => new TextSpan(_editor.SelectionStart, _editor.SelectionLength),
                 this);
 
-            _editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+            _editor.Document.TextChanged += (o, e) => viewModel.OnTextChanged();
         }
 
         private void NuGetOnPackageInstalled(PackageData package)

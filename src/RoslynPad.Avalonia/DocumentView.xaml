@@ -110,9 +110,7 @@
                             <Setter Property="Command"
                                     Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
                             <Setter Property="CommandParameter"
-                                    Value="{Binding Mode=OneTime}" />
-                            <!--<Setter Property="Icon"
-                                    Value="{Binding Mode=OneTime}" />-->
+                                    Value="{Binding}" />
                         </Style>
                     </MenuItem.Styles>
                     <MenuItem.DataTemplates>
@@ -134,29 +132,6 @@
                                              IsVisible="{Binding IsSearching}" />
                             </Grid>
                         </DataTemplate>
-                        <!--<DataTemplate DataType="{x:Type ui:PackageData}">
-                            <Menu Background="Transparent"
-                                  ToolTip.Tip="Other versions">
-                                <MenuItem ItemsSource="{Binding OtherVersions, Mode=OneTime}"
-                                          DisplayMemberPath="Version"
-                                          Padding="2">
-                                    <MenuItem.Header>
-                                        <TextBlock FontWeight="Bold"
-                                                   FontFamily="Segoe UI Symbol"
-                                                   Text=""
-                                                   FontSize="8" />
-                                    </MenuItem.Header>
-                                    <MenuItem.Styles>
-                                        <Style Selector="MenuItem">
-                                            <Setter Property="Command"
-                                                    Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
-                                            <Setter Property="CommandParameter"
-                                                    Value="{Binding Path='.', Mode=OneTime}" />
-                                        </Style>
-                                    </MenuItem.Styles>
-                                </MenuItem>
-                            </Menu>
-                        </DataTemplate>-->
                     </MenuItem.DataTemplates>
                 </MenuItem>
             </Menu>

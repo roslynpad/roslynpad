@@ -63,7 +63,7 @@ namespace RoslynPad
         public Task<string?> ShowAsync()
         {
             var active = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.First(w => w.IsActive);
-            return _dialog.ShowAsync(null);
+            return _dialog.ShowAsync(active);
         }
     }
 }
