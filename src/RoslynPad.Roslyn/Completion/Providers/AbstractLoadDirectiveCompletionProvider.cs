@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis.PooledObjects;
+using System.IO;
 
 namespace RoslynPad.Roslyn.Completion.Providers
 {
@@ -35,7 +36,13 @@ namespace RoslynPad.Roslyn.Completion.Providers
 
         protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
         {
-            var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.CSharpFile, ImmutableArray.Create(".csx"), s_rules);
+            var extension = Path.GetExtension(context.Document.FilePath);
+            if (extension == null)
+            {
+                return;
+            }
+
+            var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.CSharpFile, ImmutableArray.Create(extension), s_rules);
             context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
         }
     }

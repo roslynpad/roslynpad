@@ -1,62 +1,51 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Scripting;
 
-namespace RoslynPad.Roslyn.Scripting
+namespace RoslynPad.Roslyn
 {
-    /// <summary>
-    /// Provides an alternative to the <see cref="Script"/> class that also emits PDBs.
-    /// </summary>
-    public sealed class ScriptRunner
+    internal sealed class Compiler
     {
-        private readonly OptimizationLevel _optimizationLevel;
-        private readonly bool _checkOverflow;
-        private readonly bool _allowUnsafe;
-
-        public ScriptRunner(string? code, ImmutableList<SyntaxTree>? syntaxTrees = null, CSharpParseOptions? parseOptions = null, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        public Compiler(ImmutableList<SyntaxTree> syntaxTrees, CSharpParseOptions parseOptions,
+            OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
             Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
-            IEnumerable<string>? usings = null, string? filePath = null, string? workingDirectory = null,
+            IEnumerable<string>? usings = null, string? workingDirectory = null,
             SourceReferenceResolver? sourceResolver = null,
-            OptimizationLevel optimizationLevel = OptimizationLevel.Debug, bool checkOverflow = false, bool allowUnsafe = true)
+            OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
+            bool checkOverflow = false, bool allowUnsafe = true)
         {
-            _optimizationLevel = optimizationLevel;
-            _checkOverflow = checkOverflow;
-            _allowUnsafe = allowUnsafe;
-            Code = code;
+            OptimizationLevel = optimizationLevel;
+            CheckOverflow = checkOverflow;
+            AllowUnsafe = allowUnsafe;
             SyntaxTrees = syntaxTrees;
             OutputKind = outputKind;
             Platform = platform;
-            ParseOptions = (parseOptions ?? new CSharpParseOptions())
-                               .WithKind(SourceCodeKind.Script)
-                               .WithPreprocessorSymbols(RoslynHost.PreprocessorSymbols);
+            ParseOptions = parseOptions;
             References = references?.AsImmutable() ?? ImmutableArray<MetadataReference>.Empty;
             Usings = usings?.AsImmutable() ?? ImmutableArray<string>.Empty;
-            FilePath = filePath ?? string.Empty;
             SourceResolver = sourceResolver ??
                              (workingDirectory != null
                                  ? new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory)
                                  : SourceFileResolver.Default);
         }
 
-        public string? Code { get; }
-        public ImmutableList<SyntaxTree>? SyntaxTrees { get; }
+        public ImmutableList<SyntaxTree> SyntaxTrees { get; }
         public OutputKind OutputKind { get; }
         public Platform Platform { get; }
         public ImmutableArray<MetadataReference> References { get; }
         public SourceReferenceResolver SourceResolver { get; }
         public ImmutableArray<string> Usings { get; }
-        public string FilePath { get; }
         public CSharpParseOptions ParseOptions { get; }
+        public OptimizationLevel OptimizationLevel { get; }
+        public bool CheckOverflow { get; }
+        public bool AllowUnsafe { get; }
 
-        public async Task<ImmutableArray<Diagnostic>> CompileAndSaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
+        public ImmutableArray<Diagnostic> CompileAndSaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
         {
             var compilation = GetCompilationFromCode(Path.GetFileNameWithoutExtension(assemblyPath));
 
@@ -67,55 +56,32 @@ namespace RoslynPad.Roslyn.Scripting
             }
 
             var diagnosticsBag = new DiagnosticBag();
-            await SaveAssembly(assemblyPath, compilation, diagnosticsBag, cancellationToken).ConfigureAwait(false);
+            SaveAssembly(assemblyPath, compilation, diagnosticsBag, cancellationToken);
             return GetDiagnostics(diagnosticsBag, includeWarnings: true);
         }
 
-        private static async Task SaveAssembly(string assemblyPath, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
+        private static void SaveAssembly(string assemblyPath, Compilation compilation, DiagnosticBag diagnostics, CancellationToken cancellationToken)
         {
-            using var peStream = new MemoryStream();
-            using var pdbStream = new MemoryStream();
+            using var peStream = File.OpenWrite(assemblyPath);
+            using var pdbStream = File.OpenWrite(Path.ChangeExtension(assemblyPath, "pdb"));
             var emitResult = compilation.Emit(
                 peStream: peStream,
                 pdbStream: pdbStream,
                 cancellationToken: cancellationToken);
 
             diagnostics.AddRange(emitResult.Diagnostics);
-
-            if (emitResult.Success)
-            {
-                peStream.Position = 0;
-                pdbStream.Position = 0;
-
-                await CopyToFileAsync(assemblyPath, peStream).ConfigureAwait(false);
-                await CopyToFileAsync(Path.ChangeExtension(assemblyPath, "pdb"), pdbStream).ConfigureAwait(false);
-            }
-        }
-
-        private static async Task CopyToFileAsync(string path, Stream stream)
-        {
-            using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-            await stream.CopyToAsync(fileStream).ConfigureAwait(false);
         }
 
         private Compilation GetCompilationFromCode(string assemblyName)
         {
-            var trees = SyntaxTrees;
-            if (trees == null)
-            {
-                if (Code == null) throw new InvalidOperationException($"Either specify {nameof(Code)} or {nameof(SyntaxTrees)}");
-
-                trees = ImmutableList.Create(SyntaxFactory.ParseSyntaxTree(Code, ParseOptions, FilePath));
-            }
-
             var compilationOptions = new CSharpCompilationOptions(
                 OutputKind,
                 mainTypeName: null,
-                scriptClassName: "Program",
+                scriptClassName: ParseOptions.Kind == SourceCodeKind.Script ? "Program" : null,
                 usings: Usings,
-                optimizationLevel: _optimizationLevel,
-                checkOverflow: _checkOverflow,
-                allowUnsafe: _allowUnsafe,
+                optimizationLevel: OptimizationLevel,
+                checkOverflow: CheckOverflow,
+                allowUnsafe: AllowUnsafe,
                 platform: Platform,
                 warningLevel: 4,
                 deterministic: true,
@@ -127,7 +93,7 @@ namespace RoslynPad.Roslyn.Scripting
 
             return CSharpCompilation.Create(
                  assemblyName,
-                 trees,
+                 SyntaxTrees,
                  References,
                  compilationOptions);
         }

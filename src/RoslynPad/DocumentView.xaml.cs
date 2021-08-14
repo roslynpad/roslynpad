@@ -76,7 +76,7 @@ namespace RoslynPad
             var documentText = await _viewModel.LoadText().ConfigureAwait(true);
 
             var documentId = Editor.Initialize(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
-                _viewModel.WorkingDirectory, documentText);
+                _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
 
             _viewModel.Initialize(documentId, OnError,
                 () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),

@@ -13,7 +13,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Newtonsoft.Json;
@@ -21,7 +20,6 @@ using Newtonsoft.Json.Linq;
 using RoslynPad.Build.ILDecompiler;
 using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
-using RoslynPad.Roslyn.Scripting;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -37,10 +35,13 @@ namespace RoslynPad.Build
         private readonly IRoslynHost _roslynHost;
         private readonly ILogger _logger;
         private readonly IAnalyzerAssemblyLoader _analyzerAssemblyLoader;
-        private readonly SyntaxTree _initHostSyntax;
         private readonly HashSet<LibraryRef> _libraries;
+        private readonly ImmutableArray<string> _imports;
         private readonly SemaphoreSlim _lock;
-        private ScriptOptions _scriptOptions;
+        private readonly SyntaxTree _scriptInitSyntax;
+        private readonly SyntaxTree _moduleInitAttributeSyntax;
+        private readonly SyntaxTree _moduleInitSyntax;
+        private readonly SyntaxTree _importsSyntax;
         private CancellationTokenSource? _executeCts;
         private Task? _restoreTask;
         private CancellationTokenSource? _restoreCts;
@@ -104,14 +105,20 @@ namespace RoslynPad.Build
             _logger = logger;
             _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
             _libraries = new HashSet<LibraryRef>();
-            _scriptOptions = ScriptOptions.Default.WithImports(parameters.Imports);
+            _imports = parameters.Imports;
 
             _lock = new SemaphoreSlim(1, 1);
 
-            _initHostSyntax = ParseSyntaxTree(@"RoslynPad.Runtime.RuntimeInitializer.Initialize();", roslynHost.ParseOptions);
+            _scriptInitSyntax = ParseSyntaxTree(InitializerCode.ScriptInit, roslynHost.ParseOptions.WithKind(SourceCodeKind.Script));
+            var regularParseOptions = roslynHost.ParseOptions.WithKind(SourceCodeKind.Regular);
+            _moduleInitAttributeSyntax = ParseSyntaxTree(InitializerCode.ModuleInitAttribute, regularParseOptions);
+            _moduleInitSyntax = ParseSyntaxTree(InitializerCode.ModuleInit, regularParseOptions);
+            _importsSyntax = ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
 
             MetadataReferences = ImmutableArray<MetadataReference>.Empty;
         }
+
+        private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
 
         private static void WriteJson(string path, JToken token)
         {
@@ -181,11 +188,11 @@ namespace RoslynPad.Build
                 using var executeCts = new CancellationTokenSource();
                 var cancellationToken = executeCts.Token;
 
-                var script = CreateScriptRunner(code, optimizationLevel);
+                var script = CreateCompiler(code, optimizationLevel);
 
-                _assemblyPath = Path.Combine(BuildPath, "bin", $"rp-{Name}.{AssemblyExtension}");
+                _assemblyPath = Path.Combine(BuildPath, "bin", $"{Name}.{ExecutableExtension}");
 
-                var diagnostics = await script.CompileAndSaveAssembly(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                var diagnostics = script.CompileAndSaveAssembly(_assemblyPath, cancellationToken);
                 var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
                 _logger.LogInformation("Assembly saved at {assemblyPath}, has errors = {hasErrors}", _assemblyPath, hasErrors);
 
@@ -227,12 +234,12 @@ namespace RoslynPad.Build
             Disassembled?.Invoke(output.ToString());
         }
 
-        private string AssemblyExtension => Platform.IsCore ? "dll" : "exe";
+        private string ExecutableExtension => Platform.IsCore ? "dll" : "exe";
 
         public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
         public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
 
-        private ScriptRunner CreateScriptRunner(string code, OptimizationLevel? optimizationLevel)
+        private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel)
         {
             Platform platform = Platform.Architecture == Architecture.X86
                 ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
@@ -244,23 +251,38 @@ namespace RoslynPad.Build
                 "references = {references}, imports = {imports}, directory = {directory}, " +
                 "optimization = {optimization}",
                 platform,
-                _scriptOptions.MetadataReferences.Select(t => t.Display),
-                _scriptOptions.Imports,
+                MetadataReferences.Select(t => t.Display),
+                _imports,
                 _parameters.WorkingDirectory,
                 optimizationLevel);
 
-            return new ScriptRunner(code: null,
-                                    syntaxTrees: ImmutableList.Create(_initHostSyntax, ParseCode(code)),
-                                    _roslynHost.ParseOptions as CSharpParseOptions,
-                                    OutputKind.ConsoleApplication,
-                                    platform,
-                                    _scriptOptions.MetadataReferences,
-                                    _scriptOptions.Imports,
-                                    _scriptOptions.FilePath,
-                                    _parameters.WorkingDirectory,
-                                    optimizationLevel: optimization,
-                                    checkOverflow: _parameters.CheckOverflow,
-                                    allowUnsafe: _parameters.AllowUnsafe);
+            var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
+
+            var syntaxTrees = ImmutableList.Create(ParseCode(code, parseOptions));
+            if (_parameters.SourceCodeKind == SourceCodeKind.Script)
+            {
+                syntaxTrees = syntaxTrees.Add(_scriptInitSyntax);
+            }
+            else
+            {
+                if (Platform.FrameworkVersion?.Major < 5)
+                {
+                    syntaxTrees = syntaxTrees.Add(_moduleInitAttributeSyntax);
+                }
+
+                syntaxTrees = syntaxTrees.Add(_moduleInitSyntax).Add(_importsSyntax);
+            }
+
+            return new Compiler(syntaxTrees,
+                parseOptions,
+                OutputKind.ConsoleApplication,
+                platform,
+                MetadataReferences,
+                _imports,
+                _parameters.WorkingDirectory,
+                optimizationLevel: optimization,
+                checkOverflow: _parameters.CheckOverflow,
+                allowUnsafe: _parameters.AllowUnsafe);
         }
 
         private async Task RunProcess(string assemblyPath, CancellationToken cancellationToken)
@@ -365,12 +387,12 @@ namespace RoslynPad.Build
             }
         }
 
-        private SyntaxTree ParseCode(string code)
+        private SyntaxTree ParseCode(string code, CSharpParseOptions parseOptions)
         {
-            var tree = ParseSyntaxTree(code, _roslynHost.ParseOptions);
+            var tree = ParseSyntaxTree(code, parseOptions);
             var root = tree.GetRoot();
 
-            if (!(root is CompilationUnitSyntax compilationUnit))
+            if (root is not CompilationUnitSyntax compilationUnit)
             {
                 return tree;
             }
@@ -398,7 +420,7 @@ namespace RoslynPad.Build
 
             root = compilationUnit.WithMembers(members);
 
-            return tree.WithRootAndOptions(root, _roslynHost.ParseOptions);
+            return tree.WithRootAndOptions(root, parseOptions);
         }
 
         private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -535,8 +557,6 @@ namespace RoslynPad.Build
                         .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))
                         .ToImmutableArray();
 
-                    _scriptOptions = _scriptOptions.WithReferences(MetadataReferences);
-
                     RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
                 }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
@@ -579,7 +599,7 @@ namespace RoslynPad.Build
                     Platform.IsCore,
                     Platform.TargetFrameworkMoniker,
                     _libraries);
-                var csprojPath = Path.Combine(BuildPath, $"rp-{Name}.csproj");
+                var csprojPath = Path.Combine(BuildPath, $"{Name}.csproj");
 
                 await Task.Run(() => csproj.Save(csprojPath)).ConfigureAwait(false);
                 return csprojPath;

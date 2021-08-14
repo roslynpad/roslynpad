@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:roslynPad="clr-namespace:RoslynPad"
+        xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
@@ -18,7 +19,11 @@
 
     <FrameworkElement.InputBindings>
         <KeyBinding Gesture="Ctrl+N"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}" />
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
+        <KeyBinding Gesture="Ctrl+Shift+N"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
         <KeyBinding Gesture="Ctrl+O"
                     Command="{Binding OpenFileCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+W"
@@ -107,20 +112,42 @@
                     </dock:LayoutRoot>
                 </dock:DockingManager>
 
-                <Button HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Padding="5"
-                        Background="Transparent"
-                        Command="{Binding NewDocumentCommand}"
-                        Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <Image Source="{StaticResource CsFile}"
-                               Width="64"
-                               Height="64" />
-                        <TextBlock Text="New (Ctrl+N)"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+                <UniformGrid HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Rows="1"
+                             Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    <Button Padding="5"
+                            Margin="20 0 0 0"
+                            Background="Transparent"
+                            Command="{Binding NewDocumentCommand}"
+                            CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+                        <StackPanel>
+                            <Image Source="{StaticResource CsFile}"
+                                   Width="64"
+                                   Height="64" />
+                            <TextBlock Text="New&#xA;(Ctrl+N)"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Padding="5"
+                            Margin="20 0 0 0"
+                            Background="Transparent"
+                            Command="{Binding NewDocumentCommand}"
+                            CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
+                        <StackPanel>
+                            <Image Source="{StaticResource CsFile}"
+                                   Width="64"
+                                   Height="64" />
+                            <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                </UniformGrid>
 
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"

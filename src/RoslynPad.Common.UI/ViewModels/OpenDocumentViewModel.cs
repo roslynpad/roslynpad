@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
@@ -28,6 +27,9 @@ namespace RoslynPad.UI
     [Export]
     public class OpenDocumentViewModel : NotificationObject
     {
+        private const string DefaultDocumentName = "New";
+        private const string RegularFileExtension = ".cs";
+        private const string ScriptFileExtension = ".csx";
         private const string DefaultILText = "// Run to view IL";
 
         private readonly IServiceProvider _serviceProvider;
@@ -37,6 +39,7 @@ namespace RoslynPad.UI
         private readonly IExecutionHost _executionHost;
         private readonly ObservableCollection<IResultObject> _results;
         private readonly ExecutionHostParameters _executionHostParameters;
+
         private CancellationTokenSource? _restoreCts;
         private CancellationTokenSource? _runCts;
         private bool _isRunning;
@@ -56,6 +59,7 @@ namespace RoslynPad.UI
         private DocumentId? _documentId;
         private bool _restoreSuccessful;
         private double? _reportedProgress;
+        private SourceCodeKind? _sourceCodeKind;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -91,6 +95,16 @@ namespace RoslynPad.UI
                 }
             }
         }
+
+        public SourceCodeKind SourceCodeKind
+        {
+            get => _sourceCodeKind ??= Path.GetExtension(Document?.Name)?.Equals(ScriptFileExtension, StringComparison.OrdinalIgnoreCase) == true
+                ? SourceCodeKind.Script : SourceCodeKind.Regular;
+            set => _sourceCodeKind = value;
+        }
+
+        private string GetFileExtension() =>
+            SourceCodeKind == SourceCodeKind.Script ? ScriptFileExtension : RegularFileExtension;
 
         public DocumentViewModel? Document
         {
@@ -155,7 +169,8 @@ namespace RoslynPad.UI
                 serviceProvider.GetRequiredService<NuGetViewModel>().ConfigPath,
                 roslynHost.DefaultImports,
                 roslynHost.DisabledDiagnostics,
-                WorkingDirectory);
+                WorkingDirectory,
+                SourceCodeKind);
             _executionHost = new ExecutionHost(_executionHostParameters, roslynHost, logger);
 
             _executionHost.Dumped += ExecutionHostOnDump;
@@ -485,7 +500,7 @@ namespace RoslynPad.UI
 
                 do
                 {
-                    path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++));
+                    path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName(("Program" + index++) + GetFileExtension()));
                 }
                 while (File.Exists(path));
 
@@ -526,13 +541,13 @@ namespace RoslynPad.UI
                     var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
-                    dialog.FilePathFactory = s => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, s);
+                    dialog.FilePathFactory = name => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, name);
                     await dialog.ShowAsync();
                     result = dialog.Result;
                     if (result == SaveResult.Save && dialog.DocumentName != null)
                     {
                         Document?.DeleteAutoSave();
-                        Document = MainViewModel.AddDocument(dialog.DocumentName);
+                        Document = MainViewModel.AddDocument(dialog.DocumentName + GetFileExtension());
                         OnPropertyChanged(nameof(Title));
                     }
                 }
@@ -612,25 +627,15 @@ namespace RoslynPad.UI
 
         public MainViewModelBase MainViewModel { get; }
         public ICommandProvider CommandProvider { get; }
-
         public NuGetDocumentViewModel NuGet { get; }
-
-        public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : "New";
-
+        public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : DefaultDocumentName + GetFileExtension();
         public IDelegateCommand OpenBuildPathCommand { get; }
-
         public IDelegateCommand SaveCommand { get; }
-
         public IDelegateCommand RunCommand { get; }
-
         public IDelegateCommand RestartHostCommand { get; }
-
         public IDelegateCommand FormatDocumentCommand { get; }
-
         public IDelegateCommand CommentSelectionCommand { get; }
-
         public IDelegateCommand UncommentSelectionCommand { get; }
-
         public IDelegateCommand RenameSymbolCommand { get; }
 
         public bool IsRunning
@@ -754,7 +759,7 @@ namespace RoslynPad.UI
 
             var libraries = new List<LibraryRef>();
 
-            if (!(syntaxRoot is Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax compilation))
+            if (syntaxRoot is not Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax compilation)
             {
                 return libraries;
             }

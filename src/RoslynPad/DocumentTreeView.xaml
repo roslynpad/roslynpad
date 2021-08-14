@@ -6,6 +6,7 @@
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:roslynPad="clr-namespace:RoslynPad"
+             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:MainViewModel}"
              d:DesignHeight="300"
@@ -135,7 +136,16 @@
                  Margin="0,5,0,0">
             <Button ToolTip="New Document (Ctrl+N)"
                     ToolTipService.Placement="Top"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}">
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+                <Image Source="{StaticResource CsFile}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="New Script Document (Ctrl+Shift+N)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
                 <Image Source="{StaticResource CsFile}"
                        Width="16"
                        Height="16" />

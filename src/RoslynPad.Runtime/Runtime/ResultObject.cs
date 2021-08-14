@@ -350,21 +350,8 @@ namespace RoslynPad.Runtime
             {
                 return Array.Empty<StackFrame>();
             }
-            int index;
-            for (index = frames.Length - 1; index >= 0; --index)
-            {
-                if (IsScriptMethod(frames[index]))
-                {
-                    break;
-                }
-            }
-            return frames.Take(index + 1);
-        }
 
-        protected static bool IsScriptMethod(StackFrame stackFrame)
-        {
-            return stackFrame.GetMethod()?.DeclaringType?.
-                   Assembly.FullName.StartsWith("rp-", StringComparison.Ordinal) == true;
+            return frames;
         }
 
         private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
@@ -491,9 +478,10 @@ namespace RoslynPad.Runtime
             var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
             foreach (var stackFrame in stackFrames)
             {
-                if (IsScriptMethod(stackFrame))
+                if (string.IsNullOrWhiteSpace(stackFrame.GetFileName()) &&
+                    stackFrame.GetFileLineNumber() is var lineNumber && lineNumber > 0)
                 {
-                    LineNumber = stackFrame.GetFileLineNumber();
+                    LineNumber = lineNumber;
                     break;
                 }
             }

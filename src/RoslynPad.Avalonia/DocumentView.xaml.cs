@@ -60,7 +60,7 @@ namespace RoslynPad
 
             var documentId = _editor.Initialize(_viewModel.MainViewModel.RoslynHost,
                 new ClassificationHighlightColors(),
-                _viewModel.WorkingDirectory, documentText);
+                _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
 
             _viewModel.Initialize(documentId, OnError,
                 () => new TextSpan(_editor.SelectionStart, _editor.SelectionLength),

@@ -10,7 +10,6 @@ using System.Collections.Immutable;
 using System.Composition.Hosting;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 
@@ -40,16 +39,11 @@ namespace RoslynPad.Roslyn
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly IDocumentationProviderService _documentationProviderService;
         private readonly CompositionHost _compositionContext;
-        private int _documentNumber;
-
-        public ParseOptions ParseOptions { get; }
 
         public HostServices HostServices { get; }
-
+        public ParseOptions ParseOptions { get; }
         public ImmutableArray<MetadataReference> DefaultReferences { get; }
-
         public ImmutableArray<string> DefaultImports { get; }
-
         public ImmutableArray<string> DisabledDiagnostics { get; }
 
         #endregion
@@ -102,8 +96,9 @@ namespace RoslynPad.Roslyn
 
         protected virtual ParseOptions CreateDefaultParseOptions()
         {
-            return new CSharpParseOptions(kind: SourceCodeKind.Script,
-                preprocessorSymbols: PreprocessorSymbols, languageVersion: LanguageVersion.Preview);
+            return new CSharpParseOptions(
+                preprocessorSymbols: PreprocessorSymbols,
+                languageVersion: LanguageVersion.Preview);
         }
 
         public MetadataReference CreateMetadataReference(string location)
@@ -319,10 +314,11 @@ namespace RoslynPad.Roslyn
 
         protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project? previousProject = null)
         {
-            var name = args.Name ?? "Program" + Interlocked.Increment(ref _documentNumber);
+            var name = args.Name ?? "New";
             var id = ProjectId.CreateNewId(name);
 
-            var isScript = ParseOptions.Kind == SourceCodeKind.Script;
+            var parseOptions = ParseOptions.WithKind(args.SourceCodeKind);
+            var isScript = args.SourceCodeKind == SourceCodeKind.Script;
 
             if (isScript)
             {
@@ -336,14 +332,29 @@ namespace RoslynPad.Roslyn
                 name,
                 LanguageNames.CSharp,
                 isSubmission: isScript,
-                parseOptions: ParseOptions,
+                parseOptions: parseOptions,
                 compilationOptions: compilationOptions,
                 metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences,
                 projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null));
 
-            var project = solution.GetProject(id);
+            var project = solution.GetProject(id)!;
 
-            return project!;
+            if (!isScript && GetUsings(project) is { Length: > 0 } usings)
+            {
+                project = project.AddDocument("RoslynPadGeneratedUsings", usings).Project;
+            }
+
+            return project;
+
+            static string GetUsings(Project project)
+            {
+                if (project.CompilationOptions is CSharpCompilationOptions options)
+                {
+                    return string.Join(" ", options.Usings.Select(i => $"global using {i};"));
+                }
+
+                return string.Empty;
+            }
         }
 
         #endregion

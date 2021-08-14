@@ -18,14 +18,14 @@ namespace RoslynPad.UI
 {
     public class MainViewModelBase : NotificationObject
     {
+        private static readonly Version s_currentVersion = new Version(16, 0);
+        private static readonly string s_currentVersionVariant = "";
+
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         private readonly DocumentFileWatcher _documentFileWatcher;
-        private static readonly Version _currentVersion = new Version(16, 0);
-        private static readonly string _currentVersionVariant = "";
 
-        public const string NuGetPathVariableName = "$NuGet";
 
         private OpenDocumentViewModel? _currentOpenDocument;
         private bool _hasUpdate;
@@ -68,7 +68,7 @@ namespace RoslynPad.UI
             settings.LoadDefault();
             Settings = settings;
 
-            _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
+            _telemetryProvider.Initialize(s_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
             {
                 OnPropertyChanged(nameof(LastError));
@@ -77,7 +77,7 @@ namespace RoslynPad.UI
 
             NuGet = nugetViewModel;
 
-            NewDocumentCommand = commands.Create(CreateNewDocument);
+            NewDocumentCommand = commands.Create<SourceCodeKind>(CreateNewDocument);
             OpenFileCommand = commands.CreateAsync(OpenFile);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
             CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
@@ -117,7 +117,7 @@ namespace RoslynPad.UI
         {
             RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
                 RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }),
-                disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702")))
+                disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011")))
                 .ConfigureAwait(true);
 
             var runtimeAssemblyPath = typeof(Runtime.ObjectExtensions).Assembly.Location;
@@ -187,13 +187,13 @@ namespace RoslynPad.UI
         {
             get
             {
-                var currentVersion = _currentVersion.Minor <= 0 && _currentVersion.Build <= 0
-                    ? _currentVersion.Major.ToString()
-                    : _currentVersion.ToString();
+                var currentVersion = s_currentVersion.Minor <= 0 && s_currentVersion.Build <= 0
+                    ? s_currentVersion.Major.ToString()
+                    : s_currentVersion.ToString();
                 var title = "RoslynPad " + currentVersion;
-                if (!string.IsNullOrEmpty(_currentVersionVariant))
+                if (!string.IsNullOrEmpty(s_currentVersionVariant))
                 {
-                    title += "-" + _currentVersionVariant;
+                    title += "-" + s_currentVersionVariant;
                 }
                 return title;
             }
@@ -217,7 +217,7 @@ namespace RoslynPad.UI
         private bool HasCachedUpdate()
         {
             return Version.TryParse(Settings.LatestVersion, out var latestVersion) &&
-                   latestVersion > _currentVersion;
+                   latestVersion > s_currentVersion;
         }
 
         private async Task CheckForUpdates()
@@ -237,7 +237,7 @@ namespace RoslynPad.UI
 
             if (Version.TryParse(latestVersionString, out var latestVersion))
             {
-                if (latestVersion > _currentVersion)
+                if (latestVersion > s_currentVersion)
                 {
                     HasUpdate = true;
                 }
@@ -292,7 +292,7 @@ namespace RoslynPad.UI
             OnPropertyChanged(nameof(CurrentOpenDocument));
         }
 
-        public IDelegateCommand NewDocumentCommand { get; }
+        public IDelegateCommand<SourceCodeKind> NewDocumentCommand { get; }
 
         public IDelegateCommand OpenFileCommand { get; }
 
@@ -323,7 +323,7 @@ namespace RoslynPad.UI
             if (!IsInitialized) return;
 
             var dialog = _serviceProvider.GetRequiredService<IOpenFileDialog>();
-            dialog.Filter = new FileDialogFilter("C# Scripts", "csx");
+            dialog.Filter = new FileDialogFilter("C# Files", "cs", "csx");
             var fileNames = await dialog.ShowAsync().ConfigureAwait(true);
             if (fileNames == null)
             {
@@ -345,9 +345,10 @@ namespace RoslynPad.UI
             OpenDocument(document);
         }
 
-        public void CreateNewDocument()
+        public void CreateNewDocument(SourceCodeKind kind = SourceCodeKind.Regular)
         {
-            var openDocument = GetOpenDocumentViewModel(null);
+            var openDocument = GetOpenDocumentViewModel();
+            openDocument.SourceCodeKind = kind;
             OpenDocuments.Add(openDocument);
             CurrentOpenDocument = openDocument;
         }
@@ -736,8 +737,8 @@ namespace RoslynPad.UI
 
             private static bool IsRelevantDocument(DocumentViewModel document)
             {
-                return document.IsFolder || string.Equals(Path.GetExtension(document.OriginalName),
-                           DocumentViewModel.DefaultFileExtension, StringComparison.OrdinalIgnoreCase);
+                return document.IsFolder ||
+                    DocumentViewModel.RelevantFileExtensions.Contains(Path.GetExtension(document.Name));
             }
         }
 

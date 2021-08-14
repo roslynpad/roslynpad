@@ -29,22 +29,22 @@ namespace RoslynPad.UI
         protected override void InsertItem(int index, DocumentViewModel item)
         {
             base.InsertItem(index, item);
-            _dictionary.Add(item.OriginalName, item);
+            _dictionary.Add(item.Name, item);
         }
 
         protected override void RemoveItem(int index)
         {
             var item = Items[index];
             base.RemoveItem(index);
-            _dictionary.Remove(item.OriginalName);
+            _dictionary.Remove(item.Name);
         }
 
         protected override void SetItem(int index, DocumentViewModel item)
         {
             var existingItem = Items[index];
             base.SetItem(index, existingItem);
-            _dictionary.Remove(existingItem.OriginalName);
-            _dictionary.Add(item.OriginalName, item);
+            _dictionary.Remove(existingItem.Name);
+            _dictionary.Add(item.Name, item);
         }
 
         public DocumentViewModel? this[string name]
