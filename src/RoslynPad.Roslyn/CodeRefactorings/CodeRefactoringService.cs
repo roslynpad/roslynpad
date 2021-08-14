@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.CodeRefactorings
@@ -26,7 +27,7 @@ namespace RoslynPad.Roslyn.CodeRefactorings
 
         public async Task<IEnumerable<CodeRefactoring>> GetRefactoringsAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
         {
-            var result = await _inner.GetRefactoringsAsync(document, textSpan, isBlocking: false, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
+            var result = await _inner.GetRefactoringsAsync(document, textSpan, CodeActionRequestPriority.Normal, isBlocking: false, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
             return result.Select(x => new CodeRefactoring(x)).ToArray();
         }
     }
