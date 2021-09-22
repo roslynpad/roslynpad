@@ -156,12 +156,20 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            var text = await document.GetTextAsync(token).ConfigureAwait(false);
-            var caretOffset = CaretOffset;
-            if (caretOffset <= text.Length)
+            try
             {
-                var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, caretOffset, token).ConfigureAwait(true);
-                _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+                var text = await document.GetTextAsync(token).ConfigureAwait(false);
+                var caretOffset = CaretOffset;
+                if (caretOffset <= text.Length)
+                {
+                    var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, caretOffset, token).ConfigureAwait(true);
+                    _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Caret moved again, we do nothing because execution stopped before propagating stale data
+                // while fresh data is being applied in a different `CaretOnPositionChanged` handler which runs in parallel.
             }
         }
 
