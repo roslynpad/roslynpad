@@ -197,7 +197,7 @@ namespace RoslynPad.Editor
                 (
                     "desktopapp",
                     "#r Framework-include and await Helpers.RunWpfAsync()",
-                    "#r \"framework:Microsoft.WindowsDesktop.App\"\nawait Helpers.RunWpfAsync();\n\n${Selection}",
+                    "#r \"framework: Microsoft.WindowsDesktop.App\"\nawait Helpers.RunWpfAsync();\n\n${Selection}",
                     "#r"
                 )
             };

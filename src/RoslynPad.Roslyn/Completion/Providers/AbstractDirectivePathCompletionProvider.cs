@@ -17,8 +17,9 @@ namespace RoslynPad.Roslyn.Completion.Providers
 {
     internal abstract class AbstractDirectivePathCompletionProvider : CompletionProvider
     {
-        protected static bool IsDirectorySeparator(char ch) =>
-             ch == '/' || (ch == '\\' && !PathUtilities.IsUnixLikePlatform);
+        private static readonly char[] s_separators = PathUtilities.IsUnixLikePlatform
+            ? new[] { '/', ',' }
+            : new[] { '/', ',', '\\' };
 
         protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
@@ -118,8 +119,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
             position = Math.Min(position, text.Length - 1);
 
             int index;
-            if ((index = text.LastIndexOf('/', position)) >= 0 ||
-                !PathUtilities.IsUnixLikePlatform && (index = text.LastIndexOf('\\', position)) >= 0)
+            if ((index = text.LastIndexOfAny(s_separators, position)) >= 0)
             {
                 return index + 1;
             }

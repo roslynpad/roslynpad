@@ -32,8 +32,6 @@ namespace RoslynPad.Build
     /// </summary>
     internal class ExecutionHost : IExecutionHost
     {
-        private static readonly char[] s_nugetSeparators = new[] { '/', ',' };
-
         private readonly ExecutionHostParameters _parameters;
         private readonly IRoslynHost _roslynHost;
         private readonly ILogger _logger;
@@ -511,7 +509,6 @@ namespace RoslynPad.Build
 
             static List<LibraryRef> ParseReferences(SyntaxNode syntaxRoot)
             {
-                const string NuGetPrefix = "nuget:";
                 const string LegacyNuGetPrefix = "$NuGet\\";
                 const string FxPrefix = "framework:";
 
@@ -534,9 +531,9 @@ namespace RoslynPad.Build
                         continue;
                     }
 
-                    if (HasPrefix(NuGetPrefix, value))
+                    if (HasPrefix(ReferenceDirectiveHelper.NuGetPrefix, value))
                     {
-                        (id, version) = ParseNuGetReference(NuGetPrefix, value);
+                        (id, version) = ReferenceDirectiveHelper.ParseNuGetReference(value);
                     }
                     else if (HasPrefix(LegacyNuGetPrefix, value))
                     {
@@ -553,12 +550,7 @@ namespace RoslynPad.Build
                         continue;
                     }
 
-                    VersionRange versionRange;
-                    if (version == string.Empty)
-                    {
-                        versionRange = VersionRange.All;
-                    }
-                    else if (!VersionRange.TryParse(version, out versionRange))
+                    if (!string.IsNullOrEmpty(version) && !VersionRange.TryParse(version, out _))
                     {
                         continue;
                     }
@@ -573,25 +565,6 @@ namespace RoslynPad.Build
                 static bool HasPrefix(string prefix, string value) =>
                     value.Length > prefix.Length &&
                     value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
-
-                static (string id, string version) ParseNuGetReference(string prefix, string value)
-                {
-                    string id, version;
-
-                    var separatorIndex = value.IndexOfAny(s_nugetSeparators);
-                    if (separatorIndex >= 0)
-                    {
-                        id = value.Substring(prefix.Length, separatorIndex - prefix.Length);
-                        version = separatorIndex != value.Length - 1 ? value.Substring(separatorIndex + 1) : string.Empty;
-                    }
-                    else
-                    {
-                        id = value.Substring(prefix.Length);
-                        version = string.Empty;
-                    }
-
-                    return (id, version);
-                }
 
                 static (string? id, string? version) ParseLegacyNuGetReference(string value)
                 {

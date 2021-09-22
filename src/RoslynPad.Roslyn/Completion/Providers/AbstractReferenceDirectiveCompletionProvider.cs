@@ -33,10 +33,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
                 builder.Add('\\');
             }
 
-            if (GacFileResolver.IsAvailable)
-            {
-                builder.Add(',');
-            }
+            builder.Add(',');
 
             return builder.ToImmutableAndFree();
         }

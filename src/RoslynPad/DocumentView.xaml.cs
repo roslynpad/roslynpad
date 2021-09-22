@@ -141,7 +141,7 @@ namespace RoslynPad
         {
             Dispatcher.InvokeAsync(() =>
             {
-                var text = $"#r \"nuget:{package.Id}/{package.Version}\"{Environment.NewLine}";
+                var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
                 Editor.Document.Insert(0, text, AnchorMovementType.Default);
             });
         }

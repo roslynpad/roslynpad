@@ -70,7 +70,7 @@ namespace RoslynPad
         {
             this.GetDispatcher().InvokeAsync(() =>
             {
-                var text = $"#r \"nuget:{package.Id}/{package.Version}\"{Environment.NewLine}";
+                var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
                 _editor.Document.Insert(0, text, AnchorMovementType.Default);
             });
         }
