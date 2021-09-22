@@ -6,7 +6,7 @@ namespace RoslynPad.Build
     {
         public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, errors: null);
 
-        public static RestoreResult FromErrors(string[] errors) => new RestoreResult(success: false, errors);
+        public static RestoreResult FromErrors(string[] errors) => new(success: false, errors);
 
         private RestoreResult(bool success, string[]? errors)
         {

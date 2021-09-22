@@ -26,13 +26,9 @@ namespace RoslynPad.Roslyn
 
             public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? ImmutableArray.Create(_workspace.OpenDocumentId) : ImmutableArray<DocumentId>.Empty;
 
-            public event EventHandler<DocumentId?>? ActiveDocumentChanged;
+            public event EventHandler<DocumentId?>? ActiveDocumentChanged = delegate { };
 
-            public event EventHandler<EventArgs>? NonRoslynBufferTextChanged;
-
-            private void OnActiveDocumentChanged(DocumentId e) => ActiveDocumentChanged?.Invoke(this, e);
-
-            private void OnNonRoslynBufferTextChanged() => NonRoslynBufferTextChanged?.Invoke(this, EventArgs.Empty);
+            public event EventHandler<EventArgs>? NonRoslynBufferTextChanged = delegate { };
         }
 
         public IWorkspaceService? CreateService(HostWorkspaceServices workspaceServices) =>

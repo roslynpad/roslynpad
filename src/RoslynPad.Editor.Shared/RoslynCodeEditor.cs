@@ -272,17 +272,13 @@ namespace RoslynPad.Editor
 
         private static Color GetDiagnosticsColor(DiagnosticData diagnosticData)
         {
-            switch (diagnosticData.Severity)
+            return diagnosticData.Severity switch
             {
-                case DiagnosticSeverity.Info:
-                    return Colors.LimeGreen;
-                case DiagnosticSeverity.Warning:
-                    return Colors.DodgerBlue;
-                case DiagnosticSeverity.Error:
-                    return Colors.Red;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(diagnosticData));
-            }
+                DiagnosticSeverity.Info => Colors.LimeGreen,
+                DiagnosticSeverity.Warning => Colors.DodgerBlue,
+                DiagnosticSeverity.Error => Colors.Red,
+                _ => throw new ArgumentOutOfRangeException(nameof(diagnosticData)),
+            };
         }
 
         protected override void OnKeyDown(KeyEventArgs e)

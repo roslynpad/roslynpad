@@ -67,7 +67,7 @@ namespace RoslynPad.Editor
         }
 
         public StyledProperty<TValue> AddOwner<TOwner>() =>
-            new StyledProperty<TValue>(Property.AddOwner(typeof(TOwner)));
+            new(Property.AddOwner(typeof(TOwner)));
 
         public Type PropertyType => Property.PropertyType;
     }

@@ -177,7 +177,6 @@ namespace RoslynPad.Roslyn
         public DocumentId AddDocument(DocumentCreationArgs args)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
-            if (args.SourceTextContainer == null) throw new ArgumentNullException(nameof(args.SourceTextContainer));
 
             return AddDocument(CreateWorkspace(), args);
         }
@@ -190,8 +189,6 @@ namespace RoslynPad.Roslyn
             {
                 throw new ArgumentException("Unable to locate the document's workspace", nameof(relatedDocumentId));
             }
-
-            if (args.SourceTextContainer == null) throw new ArgumentNullException(nameof(args.SourceTextContainer));
 
             var documentId = AddDocument(workspace, args,
                 addProjectReference ? workspace.CurrentSolution.GetDocument(relatedDocumentId) : null);

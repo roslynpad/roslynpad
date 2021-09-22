@@ -92,7 +92,7 @@ namespace RoslynPad.Utilities
         {
             if (_asyncAction != null)
             {
-                var task = _asyncAction(parameter);
+                _ = _asyncAction(parameter);
             }
             else
             {

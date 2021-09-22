@@ -21,7 +21,7 @@ namespace RoslynPad.Runtime
 
     internal class DirectConsoleDumper : IConsoleDumper
     {
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
 
         public bool SupportsRedirect => false;
 

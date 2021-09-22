@@ -81,7 +81,7 @@ namespace RoslynPad.Build.ILDecompiler
         /// <summary>
         /// The list of child structures.
         /// </summary>
-        public readonly List<ILStructure> Children = new List<ILStructure>();
+        public readonly List<ILStructure> Children = new();
 
         public ILStructure(MethodBody body)
             : this(ILStructureType.Root, 0, body.CodeSize)

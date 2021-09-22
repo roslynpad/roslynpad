@@ -39,7 +39,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 _paramsParameter = new ParameterViewModel(this, parameters.ParamsParameter);
             }
 
-            _declarationParts = symbol.ToDisplayParts(_symbolDeclarationDisplayFormat);
+            _declarationParts = symbol.ToDisplayParts(s_symbolDeclarationDisplayFormat);
 
             _parametersWithoutDefaultValues = parameters.ParametersWithoutDefaultValues.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p)).ToList();
             _parametersWithDefaultValues = parameters.RemainingEditableParameters.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p)).ToList();
@@ -129,7 +129,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 selectedIndex: -1);
         }
 
-        private static readonly SymbolDisplayFormat _symbolDeclarationDisplayFormat = new SymbolDisplayFormat(
+        private static readonly SymbolDisplayFormat s_symbolDeclarationDisplayFormat = new(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes,
             extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod,
@@ -139,7 +139,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 SymbolDisplayMemberOptions.IncludeAccessibility |
                 SymbolDisplayMemberOptions.IncludeModifiers);
 
-        private static readonly SymbolDisplayFormat _parameterDisplayFormat = new SymbolDisplayFormat(
+        private static readonly SymbolDisplayFormat s_parameterDisplayFormat = new(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes,
             parameterOptions:
@@ -182,7 +182,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 }
 
                 first = false;
-                displayParts.AddRange(parameter.ParameterSymbol.ToDisplayParts(_parameterDisplayFormat));
+                displayParts.AddRange(parameter.ParameterSymbol.ToDisplayParts(s_parameterDisplayFormat));
             }
 
             displayParts.Add(new SymbolDisplayPart(SymbolDisplayPartKind.Punctuation, null, ")"));
@@ -374,7 +374,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
                 }
             }
 
-            public string Type => ParameterSymbol.Type.ToDisplayString(_parameterDisplayFormat);
+            public string Type => ParameterSymbol.Type.ToDisplayString(s_parameterDisplayFormat);
 
             public string ParameterName => ParameterSymbol.Name;
 

@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
-using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -137,7 +136,7 @@ namespace RoslynPad.UI
 
             // There should only be one instance of the source repository for each package source.
             private static readonly ConcurrentDictionary<PackageSource, SourceRepository> _cachedSources
-                = new ConcurrentDictionary<PackageSource, SourceRepository>();
+                = new();
 
             public CommandLineSourceRepositoryProvider(IPackageSourceProvider packageSourceProvider)
             {

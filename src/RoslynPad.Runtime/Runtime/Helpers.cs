@@ -14,7 +14,7 @@ namespace RoslynPad.Runtime
     {
         internal static event Action<double?>? Progress;
 
-        private static readonly Lazy<Task<SynchronizationContext>> _dispatcherTask = new Lazy<Task<SynchronizationContext>>(CreateWpfDispatcherAsync);
+        private static readonly Lazy<Task<SynchronizationContext>> _dispatcherTask = new(CreateWpfDispatcherAsync);
 
         /// <summary>
         /// Creates a new thread running a WPF Dispatcher and returns a <see cref="SynchronizationContext"/> for that dispatcher.
@@ -82,7 +82,7 @@ namespace RoslynPad.Runtime
                 _task = task;
             }
 
-            public SynchronizationContextAwaiter GetAwaiter() => new SynchronizationContextAwaiter(_task);
+            public SynchronizationContextAwaiter GetAwaiter() => new(_task);
         }
 
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]

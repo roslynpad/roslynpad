@@ -194,7 +194,7 @@ namespace RoslynPad.Build.ILDecompiler
             return true;
         }
 
-        private static readonly HashSet<string> _ilKeywords = BuildKeywordList(
+        private static readonly HashSet<string> s_ilKeywords = BuildKeywordList(
             "abstract", "algorithm", "alignment", "ansi", "any", "arglist",
             "array", "as", "assembly", "assert", "at", "auto", "autochar", "beforefieldinit",
             "blob", "blob_object", "bool", "brnull", "brnull.s", "brzero", "brzero.s", "bstr",
@@ -239,11 +239,11 @@ namespace RoslynPad.Build.ILDecompiler
 
         public static string Escape(string identifier)
         {
-            if (IsValidIdentifier(identifier) && !_ilKeywords.Contains(identifier))
+            if (IsValidIdentifier(identifier) && !s_ilKeywords.Contains(identifier))
             {
                 return identifier;
             }
-            
+
             // The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
             // but we follow Microsoft's ILDasm and use \'.
             return "'" + TextWriterTokenWriter.ConvertString(identifier).Replace("'", "\\'") + "'";
@@ -252,97 +252,96 @@ namespace RoslynPad.Build.ILDecompiler
         public static void WriteTo(this TypeReference type, ITextOutput writer, ILNameSyntax syntax = ILNameSyntax.Signature)
         {
             var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
-            if (type is PinnedType pinnedType)
-            {
-                pinnedType.ElementType.WriteTo(writer, syntaxForElementTypes);
-                writer.Write(" pinned");
-            }
-            else if (type is ArrayType at)
-            {
-                at.ElementType.WriteTo(writer, syntaxForElementTypes);
-                writer.Write('[');
-                writer.Write(string.Join(", ", at.Dimensions));
-                writer.Write(']');
-            }
-            else if (type is GenericParameter)
-            {
-                writer.Write('!');
-                if (((GenericParameter)type).Owner.GenericParameterType == GenericParameterType.Method)
-                    writer.Write('!');
-                if (string.IsNullOrEmpty(type.Name) || type.Name[0] == '!' || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
-                    writer.Write(((GenericParameter)type).Position.ToString());
-                else
-                    writer.Write(Escape(type.Name));
-            }
-            else if (type is ByReferenceType)
-            {
-                ((ByReferenceType)type).ElementType.WriteTo(writer, syntaxForElementTypes);
-                writer.Write('&');
-            }
-            else if (type is PointerType)
-            {
-                ((PointerType)type).ElementType.WriteTo(writer, syntaxForElementTypes);
-                writer.Write('*');
-            }
-            else if (type is GenericInstanceType)
-            {
-                type.GetElementType().WriteTo(writer, syntaxForElementTypes);
-                writer.Write('<');
-                var arguments = ((GenericInstanceType)type).GenericArguments;
-                for (var i = 0; i < arguments.Count; i++)
-                {
-                    if (i > 0)
-                        writer.Write(", ");
-                    arguments[i].WriteTo(writer, syntaxForElementTypes);
-                }
-                writer.Write('>');
-            }
-            else if (type is OptionalModifierType)
-            {
-                ((OptionalModifierType)type).ElementType.WriteTo(writer, syntax);
-                writer.Write(" modopt(");
-                ((OptionalModifierType)type).ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
-                writer.Write(") ");
-            }
-            else if (type is RequiredModifierType)
-            {
-                ((RequiredModifierType)type).ElementType.WriteTo(writer, syntax);
-                writer.Write(" modreq(");
-                ((RequiredModifierType)type).ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
-                writer.Write(") ");
-            }
-            else
-            {
-                var name = PrimitiveTypeName(type.FullName);
-                if (syntax == ILNameSyntax.ShortTypeName)
-                {
-                    if (name != null)
-                        writer.Write(name);
-                    else
-                        writer.WriteReference(Escape(type.Name), type);
-                }
-                else if ((syntax == ILNameSyntax.Signature || syntax == ILNameSyntax.SignatureNoNamedTypeParameters) && name != null)
-                {
-                    writer.Write(name);
-                }
-                else
-                {
-                    if (syntax == ILNameSyntax.Signature || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
-                        writer.Write(type.IsValueType ? "valuetype " : "class ");
 
-                    if (type.DeclaringType != null)
+            switch (type)
+            {
+                case PinnedType pinnedType:
+                    pinnedType.ElementType.WriteTo(writer, syntaxForElementTypes);
+                    writer.Write(" pinned");
+                    break;
+                case ArrayType arrayType:
+                    arrayType.ElementType.WriteTo(writer, syntaxForElementTypes);
+                    writer.Write('[');
+                    writer.Write(string.Join(", ", arrayType.Dimensions));
+                    writer.Write(']');
+                    break;
+                case GenericParameter genericParameter:
+                    writer.Write('!');
+                    if (genericParameter.Owner.GenericParameterType == GenericParameterType.Method)
+                        writer.Write('!');
+                    if (string.IsNullOrEmpty(type.Name) || type.Name[0] == '!' || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
+                        writer.Write(genericParameter.Position.ToString());
+                    else
+                        writer.Write(Escape(type.Name));
+                    break;
+                case ByReferenceType byReferenceType:
+                    byReferenceType.ElementType.WriteTo(writer, syntaxForElementTypes);
+                    writer.Write('&');
+                    break;
+                case PointerType pointerType:
+                    pointerType.ElementType.WriteTo(writer, syntaxForElementTypes);
+                    writer.Write('*');
+                    break;
+                case GenericInstanceType genericInstanceType:
                     {
-                        type.DeclaringType.WriteTo(writer, ILNameSyntax.TypeName);
-                        writer.Write('/');
-                        writer.WriteReference(Escape(type.Name), type);
+                        type.GetElementType().WriteTo(writer, syntaxForElementTypes);
+                        writer.Write('<');
+                        var arguments = genericInstanceType.GenericArguments;
+                        for (var i = 0; i < arguments.Count; i++)
+                        {
+                            if (i > 0)
+                                writer.Write(", ");
+                            arguments[i].WriteTo(writer, syntaxForElementTypes);
+                        }
+                        writer.Write('>');
+                        break;
+                    }
+
+                case OptionalModifierType optionalModifierType:
+                    optionalModifierType.ElementType.WriteTo(writer, syntax);
+                    writer.Write(" modopt(");
+                    optionalModifierType.ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
+                    writer.Write(") ");
+                    break;
+                case RequiredModifierType requiredModifierType:
+                    requiredModifierType.ElementType.WriteTo(writer, syntax);
+                    writer.Write(" modreq(");
+                    requiredModifierType.ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
+                    writer.Write(") ");
+                    break;
+                default:
+                    var name = PrimitiveTypeName(type.FullName);
+                    if (syntax == ILNameSyntax.ShortTypeName)
+                    {
+                        if (name != null)
+                            writer.Write(name);
+                        else
+                            writer.WriteReference(Escape(type.Name), type);
+                    }
+                    else if ((syntax == ILNameSyntax.Signature || syntax == ILNameSyntax.SignatureNoNamedTypeParameters) && name != null)
+                    {
+                        writer.Write(name);
                     }
                     else
                     {
-                        if (!type.IsDefinition && type.Scope != null && !(type is TypeSpecification))
-                            writer.Write("[{0}]", Escape(type.Scope.Name));
-                        writer.WriteReference(Escape(type.FullName), type);
+                        if (syntax == ILNameSyntax.Signature || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
+                            writer.Write(type.IsValueType ? "valuetype " : "class ");
+
+                        if (type.DeclaringType != null)
+                        {
+                            type.DeclaringType.WriteTo(writer, ILNameSyntax.TypeName);
+                            writer.Write('/');
+                            writer.WriteReference(Escape(type.Name), type);
+                        }
+                        else
+                        {
+                            if (!type.IsDefinition && type.Scope != null && !(type is TypeSpecification))
+                                writer.Write("[{0}]", Escape(type.Scope.Name));
+                            writer.WriteReference(Escape(type.FullName), type);
+                        }
                     }
-                }
+
+                    break;
             }
         }
 
@@ -351,167 +350,125 @@ namespace RoslynPad.Build.ILDecompiler
             if (operand == null)
                 throw new ArgumentNullException(nameof(operand));
 
-            if (operand is Instruction targetInstruction)
+            switch (operand)
             {
-                WriteOffsetReference(writer, targetInstruction);
-                return;
-            }
-
-            if (operand is Instruction[] targetInstructions)
-            {
-                WriteLabelList(writer, targetInstructions);
-                return;
-            }
-
-            if (operand is VariableReference variableRef)
-            {
-                writer.WriteReference(
-                    string.IsNullOrEmpty(variableRef.ToString())
+                case Instruction targetInstruction:
+                    WriteOffsetReference(writer, targetInstruction);
+                    return;
+                case Instruction[] targetInstructions:
+                    WriteLabelList(writer, targetInstructions);
+                    return;
+                case VariableReference variableRef:
+                    writer.WriteReference(
+                        string.IsNullOrEmpty(variableRef.ToString())
                         ? variableRef.Index.ToString()
                         : Escape(variableRef.ToString()), variableRef);
-                return;
-            }
-
-            if (operand is ParameterReference paramRef)
-            {
-                writer.WriteReference(
-                    string.IsNullOrEmpty(paramRef.Name) ? paramRef.Index.ToString() : Escape(paramRef.Name), paramRef);
-                return;
-            }
-
-            if (operand is MethodReference methodRef)
-            {
-                methodRef.WriteTo(writer);
-                return;
-            }
-
-            if (operand is TypeReference typeRef)
-            {
-                typeRef.WriteTo(writer, ILNameSyntax.TypeName);
-                return;
-            }
-
-            if (operand is FieldReference fieldRef)
-            {
-                fieldRef.WriteTo(writer);
-                return;
-            }
-
-            if (operand is string s)
-            {
-                writer.Write("\"" + TextWriterTokenWriter.ConvertString(s) + "\"");
-            }
-            else if (operand is char)
-            {
-                writer.Write(((int)(char)operand).ToString());
-            }
-            else if (operand is float)
-            {
-                var val = (float)operand;
-                if (val == 0)
-                {
-                    if (1 / val == float.NegativeInfinity)
+                    return;
+                case ParameterReference paramRef:
+                    writer.WriteReference(
+                        string.IsNullOrEmpty(paramRef.Name) ? paramRef.Index.ToString() : Escape(paramRef.Name), paramRef);
+                    return;
+                case MethodReference methodRef:
+                    methodRef.WriteTo(writer);
+                    return;
+                case TypeReference typeRef:
+                    typeRef.WriteTo(writer, ILNameSyntax.TypeName);
+                    return;
+                case FieldReference fieldRef:
+                    fieldRef.WriteTo(writer);
+                    return;
+                case string stringOpeand:
+                    writer.Write("\"" + TextWriterTokenWriter.ConvertString(stringOpeand) + "\"");
+                    break;
+                case char charOperand:
+                    writer.Write(((int)charOperand).ToString());
+                    break;
+                case float floatOperand:
+                    if (floatOperand == 0)
                     {
-                        // negative zero is a special case
-                        writer.Write('-');
+                        if (1 / floatOperand == float.NegativeInfinity)
+                        {
+                            // negative zero is a special case
+                            writer.Write('-');
+                        }
+                        writer.Write("0.0");
                     }
-                    writer.Write("0.0");
-                }
-                else if (float.IsInfinity(val) || float.IsNaN(val))
-                {
-                    var data = BitConverter.GetBytes(val);
-                    writer.Write('(');
-                    for (var i = 0; i < data.Length; i++)
+                    else if (float.IsInfinity(floatOperand) || float.IsNaN(floatOperand))
                     {
-                        if (i > 0)
-                            writer.Write(' ');
-                        writer.Write(data[i].ToString("X2"));
+                        var data = BitConverter.GetBytes(floatOperand);
+                        writer.Write('(');
+                        for (var i = 0; i < data.Length; i++)
+                        {
+                            if (i > 0)
+                                writer.Write(' ');
+                            writer.Write(data[i].ToString("X2"));
+                        }
+                        writer.Write(')');
                     }
-                    writer.Write(')');
-                }
-                else
-                {
-                    writer.Write(val.ToString("R", CultureInfo.InvariantCulture));
-                }
-            }
-            else if (operand is double val)
-            {
-                if (val == 0)
-                {
-                    if (1 / val == double.NegativeInfinity)
+                    else
                     {
-                        // negative zero is a special case
-                        writer.Write('-');
+                        writer.Write(floatOperand.ToString("R", CultureInfo.InvariantCulture));
                     }
-                    writer.Write("0.0");
-                }
-                else if (double.IsInfinity(val) || double.IsNaN(val))
-                {
-                    var data = BitConverter.GetBytes(val);
-                    writer.Write('(');
-                    for (var i = 0; i < data.Length; i++)
-                    {
-                        if (i > 0)
-                            writer.Write(' ');
-                        writer.Write(data[i].ToString("X2"));
-                    }
-                    writer.Write(')');
-                }
-                else
-                {
-                    writer.Write(val.ToString("R", CultureInfo.InvariantCulture));
-                }
-            }
-            else if (operand is bool)
-            {
-                writer.Write((bool)operand ? "true" : "false");
-            }
-            else
-            {
-                s = ToInvariantCultureString(operand);
-                writer.Write(s);
-            }
-        }
 
-        public static string? PrimitiveTypeName(string fullName)
-        {
-            switch (fullName)
-            {
-                case "System.SByte":
-                    return "int8";
-                case "System.Int16":
-                    return "int16";
-                case "System.Int32":
-                    return "int32";
-                case "System.Int64":
-                    return "int64";
-                case "System.Byte":
-                    return "uint8";
-                case "System.UInt16":
-                    return "uint16";
-                case "System.UInt32":
-                    return "uint32";
-                case "System.UInt64":
-                    return "uint64";
-                case "System.Single":
-                    return "float32";
-                case "System.Double":
-                    return "float64";
-                case "System.Void":
-                    return "void";
-                case "System.Boolean":
-                    return "bool";
-                case "System.String":
-                    return "string";
-                case "System.Char":
-                    return "char";
-                case "System.Object":
-                    return "object";
-                case "System.IntPtr":
-                    return "native int";
+                    break;
+
+                case double doubleOperand:
+                    if (doubleOperand == 0)
+                    {
+                        if (1 / doubleOperand == double.NegativeInfinity)
+                        {
+                            // negative zero is a special case
+                            writer.Write('-');
+                        }
+                        writer.Write("0.0");
+                    }
+                    else if (double.IsInfinity(doubleOperand) || double.IsNaN(doubleOperand))
+                    {
+                        var data = BitConverter.GetBytes(doubleOperand);
+                        writer.Write('(');
+                        for (var i = 0; i < data.Length; i++)
+                        {
+                            if (i > 0)
+                                writer.Write(' ');
+                            writer.Write(data[i].ToString("X2"));
+                        }
+                        writer.Write(')');
+                    }
+                    else
+                    {
+                        writer.Write(doubleOperand.ToString("R", CultureInfo.InvariantCulture));
+                    }
+
+                    break;
+
+                case bool boolOperand:
+                    writer.Write(boolOperand ? "true" : "false");
+                    break;
                 default:
-                    return null;
+                    writer.Write(ToInvariantCultureString(operand));
+                    break;
             }
         }
+
+        public static string? PrimitiveTypeName(string fullName) => fullName switch
+        {
+            "System.SByte" => "int8",
+            "System.Int16" => "int16",
+            "System.Int32" => "int32",
+            "System.Int64" => "int64",
+            "System.Byte" => "uint8",
+            "System.UInt16" => "uint16",
+            "System.UInt32" => "uint32",
+            "System.UInt64" => "uint64",
+            "System.Single" => "float32",
+            "System.Double" => "float64",
+            "System.Void" => "void",
+            "System.Boolean" => "bool",
+            "System.String" => "string",
+            "System.Char" => "char",
+            "System.Object" => "object",
+            "System.IntPtr" => "native int",
+            _ => null,
+        };
     }
 }

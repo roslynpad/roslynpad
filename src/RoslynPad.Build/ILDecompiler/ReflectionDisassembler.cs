@@ -44,7 +44,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         #region Disassemble Method
 
-        private readonly EnumNameCollection<MethodAttributes> _methodAttributeFlags = new EnumNameCollection<MethodAttributes>
+        private readonly EnumNameCollection<MethodAttributes> _methodAttributeFlags = new()
         {
             { MethodAttributes.Final, "final" },
             { MethodAttributes.HideBySig, "hidebysig" },
@@ -61,7 +61,7 @@ namespace RoslynPad.Build.ILDecompiler
             { MethodAttributes.HasSecurity, null } // ?? also invisible in ILDasm
 		};
 
-        private readonly EnumNameCollection<MethodAttributes> _methodVisibility = new EnumNameCollection<MethodAttributes>
+        private readonly EnumNameCollection<MethodAttributes> _methodVisibility = new()
         {
             { MethodAttributes.Private, "private" },
             { MethodAttributes.FamANDAssem, "famandassem" },
@@ -71,7 +71,7 @@ namespace RoslynPad.Build.ILDecompiler
             { MethodAttributes.Public, "public" }
         };
 
-        private readonly EnumNameCollection<MethodCallingConvention> _callingConvention = new EnumNameCollection<MethodCallingConvention>
+        private readonly EnumNameCollection<MethodCallingConvention> _callingConvention = new()
         {
             { MethodCallingConvention.C, "unmanaged cdecl" },
             { MethodCallingConvention.StdCall, "unmanaged stdcall" },
@@ -81,7 +81,7 @@ namespace RoslynPad.Build.ILDecompiler
             { MethodCallingConvention.Generic, null }
         };
 
-        private readonly EnumNameCollection<MethodImplAttributes> _methodCodeType = new EnumNameCollection<MethodImplAttributes>
+        private readonly EnumNameCollection<MethodImplAttributes> _methodCodeType = new()
         {
             { MethodImplAttributes.IL, "cil" },
             { MethodImplAttributes.Native, "native" },
@@ -89,7 +89,7 @@ namespace RoslynPad.Build.ILDecompiler
             { MethodImplAttributes.Runtime, "runtime" }
         };
 
-        private readonly EnumNameCollection<MethodImplAttributes> _methodImpl = new EnumNameCollection<MethodImplAttributes>
+        private readonly EnumNameCollection<MethodImplAttributes> _methodImpl = new()
         {
             { MethodImplAttributes.Synchronized, "synchronized" },
             { MethodImplAttributes.NoInlining, "noinlining" },
@@ -700,7 +700,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         #region Disassemble Field
 
-        private readonly EnumNameCollection<FieldAttributes> _fieldVisibility = new EnumNameCollection<FieldAttributes>
+        private readonly EnumNameCollection<FieldAttributes> _fieldVisibility = new()
         {
             { FieldAttributes.Private, "private" },
             { FieldAttributes.FamANDAssem, "famandassem" },
@@ -710,7 +710,7 @@ namespace RoslynPad.Build.ILDecompiler
             { FieldAttributes.Public, "public" }
         };
 
-        private readonly EnumNameCollection<FieldAttributes> _fieldAttributes = new EnumNameCollection<FieldAttributes>
+        private readonly EnumNameCollection<FieldAttributes> _fieldAttributes = new()
         {
             { FieldAttributes.Static, "static" },
             { FieldAttributes.Literal, "literal" },
@@ -758,7 +758,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         #region Disassemble Property
 
-        private readonly EnumNameCollection<PropertyAttributes> _propertyAttributes = new EnumNameCollection<PropertyAttributes>
+        private readonly EnumNameCollection<PropertyAttributes> _propertyAttributes = new()
         {
             { PropertyAttributes.SpecialName, "specialname" },
             { PropertyAttributes.RTSpecialName, "rtspecialname" },
@@ -813,7 +813,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         #region Disassemble Event
 
-        private readonly EnumNameCollection<EventAttributes> _eventAttributes = new EnumNameCollection<EventAttributes>
+        private readonly EnumNameCollection<EventAttributes> _eventAttributes = new()
         {
             { EventAttributes.SpecialName, "specialname" },
             { EventAttributes.RTSpecialName, "rtspecialname" }
@@ -843,7 +843,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         #region Disassemble Type
 
-        private readonly EnumNameCollection<TypeAttributes> _typeVisibility = new EnumNameCollection<TypeAttributes>
+        private readonly EnumNameCollection<TypeAttributes> _typeVisibility = new()
         {
             { TypeAttributes.Public, "public" },
             { TypeAttributes.NotPublic, "private" },
@@ -855,21 +855,21 @@ namespace RoslynPad.Build.ILDecompiler
             { TypeAttributes.NestedFamORAssem, "nested famorassem" }
         };
 
-        private readonly EnumNameCollection<TypeAttributes> _typeLayout = new EnumNameCollection<TypeAttributes>
+        private readonly EnumNameCollection<TypeAttributes> _typeLayout = new()
         {
             { TypeAttributes.AutoLayout, "auto" },
             { TypeAttributes.SequentialLayout, "sequential" },
             { TypeAttributes.ExplicitLayout, "explicit" }
         };
 
-        private readonly EnumNameCollection<TypeAttributes> _typeStringFormat = new EnumNameCollection<TypeAttributes>
+        private readonly EnumNameCollection<TypeAttributes> _typeStringFormat = new()
         {
             { TypeAttributes.AutoClass, "auto" },
             { TypeAttributes.AnsiClass, "ansi" },
             { TypeAttributes.UnicodeClass, "unicode" }
         };
 
-        private readonly EnumNameCollection<TypeAttributes> _typeAttributes = new EnumNameCollection<TypeAttributes>
+        private readonly EnumNameCollection<TypeAttributes> _typeAttributes = new()
         {
             { TypeAttributes.Abstract, "abstract" },
             { TypeAttributes.Sealed, "sealed" },
@@ -1140,7 +1140,7 @@ namespace RoslynPad.Build.ILDecompiler
 
         private sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string?>> where T : struct
         {
-            private readonly List<KeyValuePair<long, string?>> _names = new List<KeyValuePair<long, string?>>();
+            private readonly List<KeyValuePair<long, string?>> _names = new();
 
             public void Add(T flag, string? name)
             {

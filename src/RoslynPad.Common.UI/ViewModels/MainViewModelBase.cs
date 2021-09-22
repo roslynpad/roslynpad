@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
-using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -19,7 +18,7 @@ namespace RoslynPad.UI
 {
     public class MainViewModelBase : NotificationObject
     {
-        private static readonly Version s_currentVersion = new Version(16, 0);
+        private static readonly Version s_currentVersion = new(16, 0);
         private static readonly string s_currentVersionVariant = "";
 
         private readonly IServiceProvider _serviceProvider;
@@ -652,7 +651,7 @@ namespace RoslynPad.UI
 
         private class DocumentWatcher : IDisposable
         {
-            private static readonly char[] PathSeparators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+            private static readonly char[] s_pathSeparators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
             private readonly DocumentViewModel _documentRoot;
             private readonly IDisposable _subscription;
@@ -669,7 +668,7 @@ namespace RoslynPad.UI
             private void OnDocumentFileChanged(DocumentFileChanged data)
             {
                 var pathParts = data.Path.Substring(_documentRoot.Path.Length)
-                    .Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+                    .Split(s_pathSeparators, StringSplitOptions.RemoveEmptyEntries);
 
                 DocumentViewModel? current = _documentRoot;
 

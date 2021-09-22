@@ -47,7 +47,7 @@ namespace RoslynPad.Editor
         {
             get
             {
-                return _pattern.Matches(Text)
+                return s_pattern.Matches(Text)
                     .OfType<Match>()
                     .Any(item => item.Value == "${Selection}");
             }
@@ -60,13 +60,13 @@ namespace RoslynPad.Editor
             return CreateAvalonEditSnippet(Text);
         }
 
-        private static readonly Regex _pattern = new Regex(@"\$\{([^\}]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex s_pattern = new(@"\$\{([^\}]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         public static Snippet CreateAvalonEditSnippet(string snippetText)
         {
             if (snippetText == null) throw new ArgumentNullException(nameof(snippetText));
             var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
-            foreach (var match in _pattern.Matches(snippetText).OfType<Match>())
+            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
             {
                 var val = match.Groups[1].Value;
                 var equalsSign = val.IndexOf('=');
@@ -78,7 +78,7 @@ namespace RoslynPad.Editor
             }
             var snippet = new Snippet();
             var pos = 0;
-            foreach (var match in _pattern.Matches(snippetText).OfType<Match>())
+            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
             {
                 if (pos < match.Index)
                 {
@@ -101,7 +101,7 @@ namespace RoslynPad.Editor
             return snippet;
         }
 
-        private static readonly Regex _functionPattern = new Regex(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant);
+        private static readonly Regex s_functionPattern = new(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant);
 
         private static SnippetElement CreateElementForValue(Dictionary<string, SnippetReplaceableTextElement> replaceableElements, string val, int offset, string snippetText)
         {
@@ -124,7 +124,7 @@ namespace RoslynPad.Editor
 
             if (replaceableElements.TryGetValue(val, out srte))
                 return new SnippetBoundElement { TargetElement = srte };
-            var m = _functionPattern.Match(val);
+            var m = s_functionPattern.Match(val);
             if (m.Success)
             {
                 var f = GetFunction(m.Groups[1].Value);

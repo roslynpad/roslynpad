@@ -16,7 +16,7 @@ namespace RoslynPad.Roslyn.Completion.Providers
     internal sealed class GlobalAssemblyCacheCompletionHelper
     {
         private static readonly Lazy<List<string>> s_lazyAssemblySimpleNames =
-             new Lazy<List<string>>(() => GlobalAssemblyCache.Instance.GetAssemblySimpleNames().ToList());
+             new(() => GlobalAssemblyCache.Instance.GetAssemblySimpleNames().ToList());
 
         private readonly CompletionItemRules _itemRules;
 

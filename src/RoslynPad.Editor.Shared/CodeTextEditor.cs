@@ -125,7 +125,7 @@ namespace RoslynPad.Editor
                 var mode = e.HasModifiers(ModifierKeys.Shift)
                     ? TriggerMode.SignatureHelp
                     : TriggerMode.Completion;
-                var task = ShowCompletion(mode);
+                _ = ShowCompletion(mode);
             }
         }
 
@@ -268,7 +268,7 @@ namespace RoslynPad.Editor
 
         private void OnTextEntered(object sender, TextCompositionEventArgs e)
         {
-            var task = ShowCompletion(TriggerMode.Text);
+            _ = ShowCompletion(TriggerMode.Text);
         }
 
         private async Task ShowCompletion(TriggerMode triggerMode)

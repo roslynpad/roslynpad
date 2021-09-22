@@ -376,7 +376,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 
         private class ErrorVisitor : SymbolVisitor<bool>
         {
-            private static readonly ErrorVisitor _instance = new ErrorVisitor();
+            private static readonly ErrorVisitor _instance = new();
 
             public static bool ContainsError(ISymbol symbol)
             {

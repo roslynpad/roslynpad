@@ -248,7 +248,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 
             private static string? GetStringFromInline(Inline currentInline)
             {
-                if (currentInline is LineBreak lineBreak)
+                if (currentInline is LineBreak)
                 {
                     return Environment.NewLine;
                 }

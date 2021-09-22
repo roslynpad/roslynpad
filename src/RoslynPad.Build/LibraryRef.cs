@@ -12,9 +12,9 @@ namespace RoslynPad.NuGet
             Version = version;
         }
 
-        public static LibraryRef Reference(string path) => new LibraryRef(RefKind.Reference, path, string.Empty);
-        public static LibraryRef FrameworkReference(string id) => new LibraryRef(RefKind.FrameworkReference, id, string.Empty);
-        public static LibraryRef PackageReference(string id, string versionRange) => new LibraryRef(RefKind.PackageReference, id, versionRange);
+        public static LibraryRef Reference(string path) => new(RefKind.Reference, path, string.Empty);
+        public static LibraryRef FrameworkReference(string id) => new(RefKind.FrameworkReference, id, string.Empty);
+        public static LibraryRef PackageReference(string id, string versionRange) => new(RefKind.PackageReference, id, versionRange);
 
         public override bool Equals(object? obj)
         {

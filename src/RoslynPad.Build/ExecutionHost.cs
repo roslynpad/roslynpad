@@ -32,6 +32,8 @@ namespace RoslynPad.Build
     /// </summary>
     internal class ExecutionHost : IExecutionHost
     {
+        private static readonly char[] s_nugetSeparators = new[] { '/', ',' };
+
         private readonly ExecutionHostParameters _parameters;
         private readonly IRoslynHost _roslynHost;
         private readonly ILogger _logger;
@@ -576,7 +578,7 @@ namespace RoslynPad.Build
                 {
                     string id, version;
 
-                    var separatorIndex = value.IndexOfAny(new[] { '/', ',' });
+                    var separatorIndex = value.IndexOfAny(s_nugetSeparators);
                     if (separatorIndex >= 0)
                     {
                         id = value.Substring(prefix.Length, separatorIndex - prefix.Length);
@@ -608,7 +610,7 @@ namespace RoslynPad.Build
 
         public DocumentId? DocumentId { get; set; }
 
-        private async ValueTask RestoreAsync()
+        private async Task RestoreAsync()
         {
             if (!HasPlatform || string.IsNullOrEmpty(Name))
             {

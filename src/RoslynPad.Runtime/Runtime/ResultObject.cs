@@ -24,13 +24,11 @@ namespace RoslynPad.Runtime
     [KnownType(typeof(InputReadRequest))]
     internal class ResultObject : INotifyPropertyChanged, IResultObject
     {
-        private static readonly HashSet<string> _irrelevantEnumerableProperties = new HashSet<string>
-            { "Count", "Length", "Key" };
+        private static readonly HashSet<string> s_irrelevantEnumerableProperties = new() { "Count", "Length", "Key" };
 
-        private static readonly HashSet<string> _doNotTreatAsEnumerableTypeNames = new HashSet<string>
-            { "JObject", "JProperty" };
+        private static readonly HashSet<string> s_doNotTreatAsEnumerableTypeNames = new() { "JObject", "JProperty" };
 
-        private static readonly Dictionary<string, string> _toStringAlternatives = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> s_toStringAlternatives = new()
         {
             ["JArray"] = "[...]",
             ["JObject"] = "{...}"
@@ -189,7 +187,7 @@ namespace RoslynPad.Runtime
 
         private IEnumerable? GetEnumerable(object o, Type type)
         {
-            if (o is IEnumerable e && !_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
+            if (o is IEnumerable e && !s_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
             {
                 return e;
             }
@@ -428,7 +426,7 @@ namespace RoslynPad.Runtime
 
         private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members)
         {
-            return members.Any(p => !_irrelevantEnumerableProperties.Contains(p.Name))
+            return members.Any(p => !s_irrelevantEnumerableProperties.Contains(p.Name))
                    && !typeof(IEnumerator).IsAssignableFrom(t)
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
@@ -445,7 +443,7 @@ namespace RoslynPad.Runtime
             }
 
             var typeName = o?.GetType().Name;
-            if (typeName != null && _toStringAlternatives.TryGetValue(typeName, out var value))
+            if (typeName != null && s_toStringAlternatives.TryGetValue(typeName, out var value))
             {
                 return value;
             }
@@ -487,7 +485,7 @@ namespace RoslynPad.Runtime
             }
         }
 
-        public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new ExceptionResultObject(exception, quotas ?? DumpQuotas.Default);
+        public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new(exception, quotas ?? DumpQuotas.Default);
 
         [DataMember(Name = "l")]
         public int LineNumber { get; private set; }
@@ -517,7 +515,7 @@ namespace RoslynPad.Runtime
             Progress = progress;
         }
 
-        public static ProgressResultObject Create(double? progress) => new ProgressResultObject(progress);
+        public static ProgressResultObject Create(double? progress) => new(progress);
 
         [DataMember(Name = "p")]
         public double? Progress { get; private set; }
