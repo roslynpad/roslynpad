@@ -167,16 +167,16 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-    <DrawingImage x:Key="Restart">
+    <DrawingImage x:Key="Stop">
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <DrawingGroup.Children>
                     <GeometryDrawing Brush="#00FFFFFF"
                                      Geometry="F1M16,16L0,16 0,0 16,0z" />
                     <GeometryDrawing Brush="#FFF6F6F6"
-                                     Geometry="F1M8,12C6.346,12 5,10.654 5,9 5,8.583 5.091,8.17 5.271,7.771L5.298,7.712 5.586,8 10.828,8C10.939,8.313 11,8.649 11,9 11,10.654 9.654,12 8,12 M9.295,2.12L11.414,0 5.586,0 1.586,4 2.376,4.79 2.028,5.36C1.355,6.462 1,7.721 1,9 1,12.859 4.14,16 8,16 11.859,16 15,12.859 15,9 15,5.583 12.537,2.729 9.295,2.12" />
-                    <GeometryDrawing Brush="#FF414141"
-                                     Geometry="F1M8,3L7,3 9,1 6,1 3,4 6,7 9,7 7,5 8,5C10.209,5 12,6.791 12,9 12,11.209 10.209,13 8,13 5.791,13 4,11.209 4,9 4,8.414 4.133,7.861 4.36,7.36L2.881,5.881C2.326,6.791 2,7.856 2,9 2,12.313 4.687,15 8,15 11.313,15 14,12.313 14,9 14,5.687 11.313,3 8,3" />
+                                     Geometry="F1M13,13L3,13 3,3 13,3z" />
+                    <GeometryDrawing Brush="#FFA1260D"
+                                     Geometry="F1M12,12L4,12 4,4 12,4z" />
                 </DrawingGroup.Children>
             </DrawingGroup>
         </DrawingImage.Drawing>

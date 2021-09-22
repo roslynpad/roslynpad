@@ -560,8 +560,6 @@ namespace RoslynPad.Build
 
                 return libraries;
 
-                // local functions
-
                 static bool HasPrefix(string prefix, string value) =>
                     value.Length > prefix.Length &&
                     value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);

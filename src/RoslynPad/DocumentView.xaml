@@ -12,7 +12,7 @@
         <KeyBinding Key="F5"
                     Command="{Binding RunCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Shift+F5"
-                    Command="{Binding RestartHostCommand, Mode=OneTime}" />
+                    Command="{Binding TerminateCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+D"
@@ -107,9 +107,10 @@
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
                 </Grid>
-                <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
-                        ToolTip="Restart host process (Shift+F5)"
-                        Content="{StaticResource Restart}" />
+                <Button Command="{Binding TerminateCommand, Mode=OneTime}"
+                        ToolTip="Terminate process (Shift+F5)"
+                        Content="{StaticResource Stop}"
+                        IsEnabled="{Binding IsRunning}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                           SelectedItem="{Binding Platform}" />
                 <Separator />

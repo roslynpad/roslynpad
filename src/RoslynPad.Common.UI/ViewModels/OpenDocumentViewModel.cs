@@ -150,7 +150,7 @@ namespace RoslynPad.UI
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning && RestoreSuccessful && Platform != null);
-            RestartHostCommand = commands.CreateAsync(RestartHost, () => Platform != null);
+            TerminateCommand = commands.CreateAsync(TerminateAsync, () => Platform != null);
             FormatDocumentCommand = commands.CreateAsync(FormatDocument);
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
@@ -416,17 +416,17 @@ namespace RoslynPad.UI
                     UpdatePackages();
 
                     RunCommand.RaiseCanExecuteChanged();
-                    RestartHostCommand.RaiseCanExecuteChanged();
+                    TerminateCommand.RaiseCanExecuteChanged();
 
                     if (_isInitialized)
                     {
-                        RestartHostCommand.Execute();
+                        TerminateCommand.Execute();
                     }
                 }
             }
         }
 
-        private async Task RestartHost()
+        private async Task TerminateAsync()
         {
             Reset();
             try
@@ -575,7 +575,7 @@ namespace RoslynPad.UI
 
             UpdatePackages();
 
-            RestartHostCommand?.Execute();
+            TerminateCommand?.Execute();
         }
 
         public DocumentId DocumentId
@@ -595,7 +595,7 @@ namespace RoslynPad.UI
         public IDelegateCommand OpenBuildPathCommand { get; }
         public IDelegateCommand SaveCommand { get; }
         public IDelegateCommand RunCommand { get; }
-        public IDelegateCommand RestartHostCommand { get; }
+        public IDelegateCommand TerminateCommand { get; }
         public IDelegateCommand FormatDocumentCommand { get; }
         public IDelegateCommand CommentSelectionCommand { get; }
         public IDelegateCommand UncommentSelectionCommand { get; }
