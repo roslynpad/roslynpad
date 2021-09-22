@@ -167,8 +167,10 @@ namespace RoslynPad.UI
 
         private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
         {
-            return IOUtilities.EnumerateFilesRecursive(root, DocumentViewModel.GetAutoSaveName("*")).Select(x =>
-                GetOpenDocumentViewModel(DocumentViewModel.FromPath(x)));
+            return IOUtilities.EnumerateFilesRecursive(root, $"*{DocumentViewModel.AutoSaveSuffix}.*")
+                .Select(d => DocumentViewModel.FromPath(d))
+                .Where(d => IsRelevantDocument(d))
+                .Select(d => GetOpenDocumentViewModel(d));
         }
 
         private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel? documentViewModel = null)
@@ -729,12 +731,12 @@ namespace RoslynPad.UI
                     }
                 }
             }
+        }
 
-            private static bool IsRelevantDocument(DocumentViewModel document)
-            {
-                return document.IsFolder ||
-                    DocumentViewModel.RelevantFileExtensions.Contains(Path.GetExtension(document.Name));
-            }
+        private static bool IsRelevantDocument(DocumentViewModel document)
+        {
+            return document.IsFolder ||
+                DocumentViewModel.RelevantFileExtensions.Contains(Path.GetExtension(document.Name));
         }
 
         #endregion

@@ -14,8 +14,7 @@ namespace RoslynPad.UI
     {
         internal const string AutoSaveSuffix = ".autosave";
         
-        public static ImmutableHashSet<string> RelevantFileExtensions { get; } =
-            ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, ".cs", ".csx");
+        public static ImmutableArray<string> RelevantFileExtensions { get; } = ImmutableArray.Create(".cs", ".csx");
 
         private bool _isExpanded;
         private bool? _isAutoSaveOnly;
