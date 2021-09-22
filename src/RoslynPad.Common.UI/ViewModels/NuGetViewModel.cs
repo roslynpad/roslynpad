@@ -39,7 +39,7 @@ namespace RoslynPad.UI
             try
             {
                 var settings = LoadSettings();
-                ConfigPath = settings.ConfigFilePath;
+                ConfigPath = settings.GetConfigFilePaths().First();
                 GlobalPackageFolder = SettingsUtility.GetGlobalPackagesFolder(settings);
 
                 DefaultCredentialServiceUtility.SetupDefaultCredentialService(NullLogger.Instance, nonInteractive: false);
