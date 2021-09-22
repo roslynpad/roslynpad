@@ -141,7 +141,10 @@ namespace RoslynPad.Editor
 
             _braceMatchingCts?.Cancel();
 
-            if (_braceMatchingService == null) return;
+            if (_braceMatchingService == null)
+            {
+                return;
+            }
 
             var cts = new CancellationTokenSource();
             var token = cts.Token;
