@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace RoslynPad.Roslyn
 {
@@ -67,6 +68,7 @@ namespace RoslynPad.Roslyn
             var emitResult = compilation.Emit(
                 peStream: peStream,
                 pdbStream: pdbStream,
+                options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb),
                 cancellationToken: cancellationToken);
 
             diagnostics.AddRange(emitResult.Diagnostics);
@@ -113,14 +115,7 @@ namespace RoslynPad.Roslyn
         {
             private ConcurrentQueue<Diagnostic>? _lazyBag;
 
-            public bool IsEmptyWithoutResolution
-            {
-                get
-                {
-                    var bag = _lazyBag;
-                    return bag == null || bag.IsEmpty;
-                }
-            }
+            public bool IsEmptyWithoutResolution => _lazyBag?.IsEmpty != false;
 
             private ConcurrentQueue<Diagnostic> Bag
             {
@@ -171,10 +166,8 @@ namespace RoslynPad.Roslyn
 
             private static DiagnosticSeverity DiagnosticSeverityVoid => ~DiagnosticSeverity.Info;
 
-            private IEnumerable<Diagnostic> AsEnumerableFiltered()
-            {
-                return Bag.Where(diagnostic => diagnostic.Severity != DiagnosticSeverityVoid);
-            }
+            private IEnumerable<Diagnostic> AsEnumerableFiltered() =>
+                Bag.Where(diagnostic => diagnostic.Severity != DiagnosticSeverityVoid);
         }
     }
 }

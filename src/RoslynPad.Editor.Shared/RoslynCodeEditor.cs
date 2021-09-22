@@ -141,7 +141,10 @@ namespace RoslynPad.Editor
 
             _braceMatchingCts?.Cancel();
 
-            if (_braceMatchingService == null) return;
+            if (_braceMatchingService == null)
+            {
+                return;
+            }
 
             var cts = new CancellationTokenSource();
             var token = cts.Token;
@@ -153,7 +156,7 @@ namespace RoslynPad.Editor
                 return;
             }
 
-            var text = await document.GetTextAsync().ConfigureAwait(false);
+            var text = await document.GetTextAsync(token).ConfigureAwait(false);
             var caretOffset = CaretOffset;
             if (caretOffset <= text.Length)
             {

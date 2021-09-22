@@ -5,7 +5,6 @@
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
-    <SignAssembly>false</SignAssembly>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
     <NoWarn>1701;1702</NoWarn>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -17,9 +16,6 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
-    <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj">
-      <SetTargetFramework>TargetFramework=$(DefaultTargetFramework)</SetTargetFramework>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonLibrary" Version="2.4.0" />

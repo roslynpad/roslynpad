@@ -27,7 +27,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 namespace RoslynPad.Build
 {
     /// <summary>
-    /// An <see cref="IExecutionHost"/> implementation that compiles scripts to disk as EXEs and executes them in their own process.
+    /// An <see cref="IExecutionHost"/> implementation that compiles to disk and executes in separated processes.
     /// </summary>
     internal class ExecutionHost : IExecutionHost
     {
@@ -119,13 +119,6 @@ namespace RoslynPad.Build
         }
 
         private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
-
-        private static void WriteJson(string path, JToken token)
-        {
-            using var file = File.CreateText(path);
-            using var writer = new JsonTextWriter(file);
-            token.WriteTo(writer);
-        }
 
         public event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
         public event Action<string>? Disassembled;
@@ -311,8 +304,8 @@ namespace RoslynPad.Build
             _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
 
             await Task.WhenAll(
-                Task.Run(() => ReadObjectProcessStream(process.StandardOutput)),
-                Task.Run(() => ReadProcessStream(process.StandardError)));
+                Task.Run(() => ReadObjectProcessStream(process.StandardOutput), cancellationToken),
+                Task.Run(() => ReadProcessStream(process.StandardError), cancellationToken));
 
             ProcessStartInfo GetProcessStartInfo(string assemblyPath)
             {
@@ -398,7 +391,14 @@ namespace RoslynPad.Build
             }
 
             // references directives are resolved by msbuild, so removing from compilation
-            compilationUnit = compilationUnit.RemoveNodes(compilationUnit.GetReferenceDirectives(), SyntaxRemoveOptions.KeepEndOfLine) ?? compilationUnit;
+            var nodesToRemove = compilationUnit.GetReferenceDirectives().AsEnumerable<SyntaxNode>();
+            if (parseOptions.Kind == SourceCodeKind.Regular)
+            {
+                // load directives' files are added to the compilation separately
+                nodesToRemove = nodesToRemove.Concat(compilationUnit.GetLoadDirectives());
+            }
+
+            compilationUnit = compilationUnit.RemoveNodes(nodesToRemove, SyntaxRemoveOptions.KeepExteriorTrivia) ?? compilationUnit;
             var members = compilationUnit.Members;
 
             // add .Dump() to the last bare expression
@@ -407,20 +407,21 @@ namespace RoslynPad.Build
             if (lastMissingSemicolon != null)
             {
                 var statement = (ExpressionStatementSyntax)lastMissingSemicolon.Statement;
-
-                members = members.Replace(lastMissingSemicolon,
-                    GlobalStatement(
-                        ExpressionStatement(
-                        InvocationExpression(
-                            MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                statement.Expression,
-                                IdentifierName(nameof(ObjectExtensions.Dump)))))));
+                members = members.Replace(lastMissingSemicolon, GetDumpCall(statement));
             }
 
             root = compilationUnit.WithMembers(members);
 
             return tree.WithRootAndOptions(root, parseOptions);
+
+            static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
+                GlobalStatement(
+                    ExpressionStatement(
+                    InvocationExpression(
+                        MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            statement.Expression,
+                            IdentifierName(nameof(ObjectExtensions.Dump))))));
         }
 
         private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -583,14 +584,16 @@ namespace RoslynPad.Build
 
             async Task BuildGlobalJson()
             {
-                if (Platform?.IsCore == true)
+                if (Platform?.IsCore != true)
                 {
-                    var global = new JObject(
-                        new JProperty("sdk", new JObject(
-                            new JProperty("version", Platform.FrameworkVersion!.ToString()))));
-
-                    await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
+                    return;
                 }
+
+                var global = new JObject(
+                    new JProperty("sdk", new JObject(
+                        new JProperty("version", Platform.FrameworkVersion!.ToString()))));
+
+                await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
             }
 
             async Task<string> BuildCsproj()
@@ -634,10 +637,8 @@ namespace RoslynPad.Build
 
                 return errors;
 
-                static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result)
-                {
-                    return new[] { result.StandardOutput, result.StandardError! };
-                }
+                static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result) =>
+                    new[] { result.StandardOutput, result.StandardError! };
             }
 
             async Task<string[]> ReadPathsFile(string file, CancellationToken cancellationToken)
