@@ -23,7 +23,6 @@ using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
 using RoslynPad.Runtime;
 using RoslynPad.Utilities;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace RoslynPad.Build
 {
@@ -111,11 +110,11 @@ namespace RoslynPad.Build
 
             _lock = new SemaphoreSlim(1, 1);
 
-            _scriptInitSyntax = ParseSyntaxTree(InitializerCode.ScriptInit, roslynHost.ParseOptions.WithKind(SourceCodeKind.Script));
+            _scriptInitSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ScriptInit, roslynHost.ParseOptions.WithKind(SourceCodeKind.Script));
             var regularParseOptions = roslynHost.ParseOptions.WithKind(SourceCodeKind.Regular);
-            _moduleInitAttributeSyntax = ParseSyntaxTree(InitializerCode.ModuleInitAttribute, regularParseOptions);
-            _moduleInitSyntax = ParseSyntaxTree(InitializerCode.ModuleInit, regularParseOptions);
-            _importsSyntax = ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
+            _moduleInitAttributeSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ModuleInitAttribute, regularParseOptions);
+            _moduleInitSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ModuleInit, regularParseOptions);
+            _importsSyntax = SyntaxFactory.ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
 
             MetadataReferences = ImmutableArray<MetadataReference>.Empty;
 
@@ -311,22 +310,19 @@ namespace RoslynPad.Build
                 Task.Run(() => ReadObjectProcessStream(process.StandardOutput), cancellationToken),
                 Task.Run(() => ReadProcessStream(process.StandardError), cancellationToken));
 
-            ProcessStartInfo GetProcessStartInfo(string assemblyPath)
+            ProcessStartInfo GetProcessStartInfo(string assemblyPath) => new()
             {
-                return new ProcessStartInfo
-                {
-                    FileName = Platform.IsCore ? DotNetExecutable : assemblyPath,
-                    Arguments = $"\"{assemblyPath}\" --pid {Environment.ProcessId}",
-                    WorkingDirectory = _parameters.WorkingDirectory,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8,
-                };
-            }
+                FileName = Platform.IsCore ? DotNetExecutable : assemblyPath,
+                Arguments = $"\"{assemblyPath}\" --pid {Environment.ProcessId}",
+                WorkingDirectory = _parameters.WorkingDirectory,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            };
         }
 
         public async Task SendInputAsync(string message)
@@ -365,7 +361,7 @@ namespace RoslynPad.Build
                         case ExceptionResultObject exceptionResult:
                             Error?.Invoke(exceptionResult);
                             break;
-                        case InputReadRequest _:
+                        case InputReadRequest:
                             ReadInput?.Invoke();
                             break;
                         case ProgressResultObject progress:
@@ -384,9 +380,9 @@ namespace RoslynPad.Build
             }
         }
 
-        private SyntaxTree ParseCode(string code, CSharpParseOptions parseOptions)
+        private static SyntaxTree ParseCode(string code, CSharpParseOptions parseOptions)
         {
-            var tree = ParseSyntaxTree(code, parseOptions);
+            var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions);
             var root = tree.GetRoot();
 
             if (root is not CompilationUnitSyntax compilationUnit)
@@ -411,21 +407,12 @@ namespace RoslynPad.Build
             if (lastMissingSemicolon != null)
             {
                 var statement = (ExpressionStatementSyntax)lastMissingSemicolon.Statement;
-                members = members.Replace(lastMissingSemicolon, GetDumpCall(statement));
+                members = members.Replace(lastMissingSemicolon, BuildCode.GetDumpCall(statement));
             }
 
             root = compilationUnit.WithMembers(members);
 
             return tree.WithRootAndOptions(root, parseOptions);
-
-            static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
-                GlobalStatement(
-                    ExpressionStatement(
-                    InvocationExpression(
-                        MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            statement.Expression,
-                            IdentifierName(nameof(ObjectExtensions.Dump))))));
         }
 
         private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -453,10 +440,7 @@ namespace RoslynPad.Build
             return Task.CompletedTask;
         }
 
-        private void StopProcess()
-        {
-            _executeCts?.Cancel();
-        }
+        private void StopProcess() => _executeCts?.Cancel();
 
         public async Task UpdateReferencesAsync(bool alwaysRestore)
         {
@@ -480,12 +464,7 @@ namespace RoslynPad.Build
                 }
 
                 var document = _roslynHost.GetDocument(DocumentId);
-                if (document == null)
-                {
-                    return null;
-                }
-
-                return await document.GetSyntaxRootAsync().ConfigureAwait(false);
+                return document != null ? await document.GetSyntaxRootAsync().ConfigureAwait(false) : null;
             }
 
             bool UpdateLibraries(IEnumerable<LibraryRef> libraries)
@@ -566,13 +545,8 @@ namespace RoslynPad.Build
 
                 static (string? id, string? version) ParseLegacyNuGetReference(string value)
                 {
-                    var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (split.Length >= 3)
-                    {
-                        return (split[1], split[2]);
-                    }
-
-                    return (null, null);
+                    var split = value.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+                    return split.Length >= 3 ? (split[1], split[2]) : (null, null);
                 }
             }
         }

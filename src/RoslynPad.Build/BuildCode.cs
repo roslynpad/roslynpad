@@ -1,6 +1,11 @@
-﻿namespace RoslynPad.Build
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
+using RoslynPad.Runtime;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
+namespace RoslynPad.Build
 {
-    internal static class InitializerCode
+    internal static class BuildCode
     {
         public const string ScriptInit = "RoslynPad.Runtime.RuntimeInitializer.Initialize();";
 
@@ -22,5 +27,14 @@
                     RoslynPad.Runtime.RuntimeInitializer.Initialize();
             }
         ";
+
+        public static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
+            GlobalStatement(
+                ExpressionStatement(
+                InvocationExpression(
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        statement.Expression,
+                        IdentifierName(nameof(ObjectExtensions.Dump))))));
     }
 }
