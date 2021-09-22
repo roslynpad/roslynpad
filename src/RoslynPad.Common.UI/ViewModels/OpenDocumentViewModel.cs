@@ -40,7 +40,6 @@ namespace RoslynPad.UI
         private readonly ObservableCollection<IResultObject> _results;
         private readonly ExecutionHostParameters _executionHostParameters;
 
-        private CancellationTokenSource? _restoreCts;
         private CancellationTokenSource? _runCts;
         private bool _isRunning;
         private bool _isDirty;
@@ -192,10 +191,7 @@ namespace RoslynPad.UI
             _executionHost.DotNetExecutable = _platformsFactory.DotNetExecutable;
         }
 
-        private void OnRestoreStarted()
-        {
-            IsRestoring = true;
-        }
+        private void OnRestoreStarted() => IsRestoring = true;
 
         private void OnRestoreCompleted(RestoreResult restoreResult)
         {
@@ -252,10 +248,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void OnDocumentUpdated()
-        {
-            DocumentUpdated?.Invoke(this, EventArgs.Empty);
-        }
+        private void OnDocumentUpdated() => DocumentUpdated?.Invoke(this, EventArgs.Empty);
 
         public event EventHandler? DocumentUpdated;
 
@@ -263,64 +256,43 @@ namespace RoslynPad.UI
 
         public event Action? ResultsAvailable;
 
-        private void AddResult(object o)
-        {
-            AddResult(ResultObject.Create(o, DumpQuotas.Default));
-        }
+        private void AddResult(object o) => AddResult(ResultObject.Create(o, DumpQuotas.Default));
 
-        private void AddResult(IResultObject o)
+        private void AddResult(IResultObject o) => _dispatcher.InvokeAsync(() =>
         {
-            _dispatcher.InvokeAsync(() =>
+            _results.Add(o);
+            ResultsAvailable?.Invoke();
+        }, AppDispatcherPriority.Low);
+
+        private void ExecutionHostOnInputRequest() => _dispatcher.InvokeAsync(() =>
+        {
+            ReadInput?.Invoke();
+        }, AppDispatcherPriority.Low);
+
+        private void ExecutionHostOnDump(ResultObject result) => AddResult(result);
+
+        private void ExecutionHostOnError(ExceptionResultObject errorResult) => _dispatcher.InvokeAsync(() =>
+        {
+            _onError?.Invoke(errorResult);
+            if (errorResult != null)
             {
-                _results.Add(o);
-                ResultsAvailable?.Invoke();
-            }, AppDispatcherPriority.Low);
-        }
-
-        private void ExecutionHostOnInputRequest()
-        {
-            _dispatcher.InvokeAsync(() =>
-            {
-                ReadInput?.Invoke();
-            }, AppDispatcherPriority.Low);
-        }
-
-        private void ExecutionHostOnDump(ResultObject result)
-        {
-            AddResult(result);
-        }
-
-        private void ExecutionHostOnError(ExceptionResultObject errorResult)
-        {
-            _dispatcher.InvokeAsync(() =>
-            {
-                _onError?.Invoke(errorResult);
-                if (errorResult != null)
-                {
-                    _results.Add(errorResult);
-
-                    ResultsAvailable?.Invoke();
-                }
-            }, AppDispatcherPriority.Low);
-        }
-
-        private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors)
-        {
-            _dispatcher.InvokeAsync(() =>
-            {
-                foreach (var error in errors)
-                {
-                    _results.Add(error);
-                }
+                _results.Add(errorResult);
 
                 ResultsAvailable?.Invoke();
-            });
-        }
+            }
+        }, AppDispatcherPriority.Low);
 
-        private void ExecutionHostOnDisassembled(string il)
+        private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors) => _dispatcher.InvokeAsync(() =>
         {
-            ILText = il;
-        }
+            foreach (var error in errors)
+            {
+                _results.Add(error);
+            }
+
+            ResultsAvailable?.Invoke();
+        });
+
+        private void ExecutionHostOnDisassembled(string il) => ILText = il;
 
         public void SetDocument(DocumentViewModel? document)
         {
@@ -331,15 +303,7 @@ namespace RoslynPad.UI
             _executionHost.Name = Document?.Name ?? "Untitled";
         }
 
-        public void SendInput(string input)
-        {
-            _ = _executionHost?.SendInputAsync(input);
-        }
-
-        private IEnumerable<string> GetReferencePaths(IEnumerable<MetadataReference> references)
-        {
-            return references.OfType<PortableExecutableReference>().Select(x => x.FilePath).Where(x => x != null)!;
-        }
+        public void SendInput(string input) => _ = _executionHost?.SendInputAsync(input);
 
         private async Task RenameSymbol()
         {
@@ -482,10 +446,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void SetIsRunning(bool value)
-        {
-            _dispatcher.InvokeAsync(() => IsRunning = value);
-        }
+        private void SetIsRunning(bool value) => _dispatcher.InvokeAsync(() => IsRunning = value);
 
         public async Task AutoSave()
         {
@@ -622,7 +583,11 @@ namespace RoslynPad.UI
         public DocumentId DocumentId
         {
             get => _documentId ?? throw new ArgumentNullException(nameof(_documentId));
-            private set => _documentId = value;
+            private set
+            {
+                _documentId = value;
+                _executionHost.DocumentId = value;
+            }
         }
 
         public MainViewModelBase MainViewModel { get; }
@@ -708,146 +673,18 @@ namespace RoslynPad.UI
             _onError?.Invoke(null);
         }
 
-        private void ClearResults(Func<IResultObject, bool> filter)
+        private void ClearResults(Func<IResultObject, bool> filter) => _dispatcher.InvokeAsync(() =>
         {
-            _dispatcher.InvokeAsync(() =>
+            foreach (var result in _results.Where(filter).ToArray())
             {
-                foreach (var result in _results.Where(filter).ToArray())
-                {
-                    _results.Remove(result);
-                }
-            });
-        }
+                _results.Remove(result);
+            }
+        });
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 
-        private void UpdatePackages(bool alwaysRestore = true)
-        {
-            _restoreCts?.Cancel();
-            _restoreCts = new CancellationTokenSource();
-            _ = UpdatePackagesAsync(_restoreCts.Token);
-
-            async Task UpdatePackagesAsync(CancellationToken cancellationToken)
-            {
-                var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
-                if (document == null)
-                {
-                    return;
-                }
-
-                var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-                var libraries = ParseReferences(syntaxRoot!);
-
-                var defaultReferences = Platform?.FrameworkVersion?.Major < 5
-                    ? MainViewModel.DefaultReferencesCompat50
-                    : MainViewModel.DefaultReferences;
-
-                if (defaultReferences.Length > 0)
-                {
-                    libraries.AddRange(GetReferencePaths(defaultReferences).Select(p => LibraryRef.Reference(p)));
-                }
-
-                _executionHost.UpdateLibraries(libraries, alwaysRestore);
-            }
-        }
-
-        private List<LibraryRef> ParseReferences(SyntaxNode syntaxRoot)
-        {
-            const string NuGetPrefix = "nuget:";
-            const string LegacyNuGetPrefix = "$NuGet\\";
-            const string FxPrefix = "framework:";
-
-            var libraries = new List<LibraryRef>();
-
-            if (syntaxRoot is not Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax compilation)
-            {
-                return libraries;
-            }
-
-            foreach (var directive in compilation.GetReferenceDirectives())
-            {
-                var value = directive.File.ValueText;
-                string? id, version;
-
-                if (HasPrefix(FxPrefix, value))
-                {
-                    libraries.Add(LibraryRef.FrameworkReference(
-                        value.Substring(FxPrefix.Length, value.Length - FxPrefix.Length)));
-                    continue;
-                }
-
-                if (HasPrefix(NuGetPrefix, value))
-                {
-                    (id, version) = ParseNuGetReference(NuGetPrefix, value);
-                }
-                else if (HasPrefix(LegacyNuGetPrefix, value))
-                {
-                    (id, version) = ParseLegacyNuGetReference(value);
-                    if (id == null)
-                    {
-                        continue;
-                    }
-                }
-                else
-                {
-                    libraries.Add(LibraryRef.Reference(value));
-
-                    continue;
-                }
-
-                VersionRange versionRange;
-                if (version == string.Empty)
-                {
-                    versionRange = VersionRange.All;
-                }
-                else if (!VersionRange.TryParse(version, out versionRange))
-                {
-                    continue;
-                }
-
-                libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
-            }
-
-            return libraries;
-
-            // local functions
-
-            static bool HasPrefix(string prefix, string value)
-            {
-                return value.Length > prefix.Length &&
-                       value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
-            }
-
-            static (string id, string version) ParseNuGetReference(string prefix, string value)
-            {
-                string id, version;
-
-                var indexOfSlash = value.IndexOf('/');
-                if (indexOfSlash >= 0)
-                {
-                    id = value.Substring(prefix.Length, indexOfSlash - prefix.Length);
-                    version = indexOfSlash != value.Length - 1 ? value.Substring(indexOfSlash + 1) : string.Empty;
-                }
-                else
-                {
-                    id = value.Substring(prefix.Length);
-                    version = string.Empty;
-                }
-
-                return (id, version);
-            }
-
-            static (string? id, string? version) ParseLegacyNuGetReference(string value)
-            {
-                var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                if (split.Length >= 3)
-                {
-                    return (split[1], split[2]);
-                }
-
-                return (null, null);
-            }
-        }
+        private void UpdatePackages(bool alwaysRestore = true) => 
+            _ = _executionHost.UpdateReferencesAsync(alwaysRestore);
 
         private async Task<string> GetCode(CancellationToken cancellationToken)
         {

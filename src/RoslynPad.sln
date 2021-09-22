@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28407.52
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
@@ -34,8 +34,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Avalonia", "RoslynPad.Avalonia\RoslynPad.Avalonia.csproj", "{76D87CB7-F6D8-4230-A526-1AEFEE6E3C40}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Build", "RoslynPad.Build\RoslynPad.Build.csproj", "{561DF8E8-68D0-41B0-8268-51213C466E1C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Runtime.Compat50", "RoslynPad.Runtime.Compat50\RoslynPad.Runtime.Compat50.csproj", "{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -136,14 +134,6 @@ Global
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|x64.ActiveCfg = Release|Any CPU
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|x64.Build.0 = Release|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Debug|x64.Build.0 = Debug|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Release|x64.ActiveCfg = Release|Any CPU
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -159,7 +149,6 @@ Global
 		{8A9BFF57-9025-4BBC-B77C-C85937528210} = {09BCD791-CCF8-48DB-98E4-6B18105D2DDB}
 		{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4} = {09BCD791-CCF8-48DB-98E4-6B18105D2DDB}
 		{561DF8E8-68D0-41B0-8268-51213C466E1C} = {E219D424-5BAA-483A-BFE6-679BA2A3C9B0}
-		{CF2698B2-E9A3-43E3-BF68-DA060E9ADDCB} = {52BBDF63-C2F5-439C-AFD6-E7BAC5A868C8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E595517-397C-4164-83BB-D80FC9B19D36}

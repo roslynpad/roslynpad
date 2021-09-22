@@ -17,8 +17,6 @@ namespace RoslynPad.Roslyn
 {
     public class RoslynHost : IRoslynHost
     {
-        #region Fields
-
         internal static readonly ImmutableArray<string> PreprocessorSymbols =
             ImmutableArray.CreateRange(new[] { "TRACE", "DEBUG" });
 
@@ -45,10 +43,6 @@ namespace RoslynPad.Roslyn
         public ImmutableArray<MetadataReference> DefaultReferences { get; }
         public ImmutableArray<string> DefaultImports { get; }
         public ImmutableArray<string> DisabledDiagnostics { get; }
-
-        #endregion
-
-        #region Constructors
 
         public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
             RoslynHostReferences? references = null,
@@ -89,23 +83,15 @@ namespace RoslynPad.Roslyn
 
         public Func<string, DocumentationProvider> DocumentationProviderFactory => _documentationProviderService.GetDocumentationProvider;
 
-        protected virtual IEnumerable<Assembly> GetDefaultCompositionAssemblies()
-        {
-            return DefaultCompositionAssemblies;
-        }
+        protected virtual IEnumerable<Assembly> GetDefaultCompositionAssemblies() =>
+            DefaultCompositionAssemblies;
 
-        protected virtual ParseOptions CreateDefaultParseOptions()
-        {
-            return new CSharpParseOptions(
-                preprocessorSymbols: PreprocessorSymbols,
-                languageVersion: LanguageVersion.Preview);
-        }
+        protected virtual ParseOptions CreateDefaultParseOptions() => new CSharpParseOptions(
+            preprocessorSymbols: PreprocessorSymbols,
+            languageVersion: LanguageVersion.Preview);
 
-        public MetadataReference CreateMetadataReference(string location)
-        {
-            return MetadataReference.CreateFromFile(location,
-                documentation: _documentationProviderService.GetDocumentationProvider(location));
-        }
+        public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
+            documentation: _documentationProviderService.GetDocumentationProvider(location));
 
         private void OnDiagnosticsUpdated(object? sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
@@ -127,41 +113,12 @@ namespace RoslynPad.Roslyn
             }
         }
 
-        public TService GetService<TService>()
-        {
-            return _compositionContext.GetExport<TService>();
-        }
+        public TService GetService<TService>() => _compositionContext.GetExport<TService>();
 
-        #endregion
-
-        #region Reference Resolution
-
-        internal void AddMetadataReference(ProjectId projectId, AssemblyIdentity assemblyIdentity)
+        protected internal virtual void AddMetadataReference(ProjectId projectId, AssemblyIdentity assemblyIdentity)
         {
             // TODO
         }
-
-        public bool HasReference(DocumentId documentId, string text)
-        {
-            if (documentId == null) throw new ArgumentNullException(nameof(documentId));
-
-            if (!_workspaces.TryGetValue(documentId, out var workspace))
-            {
-                return false;
-            }
-
-            if (workspace.CurrentSolution.GetDocument(documentId) is Document document &&
-                document.Project.TryGetCompilation(out var compilation))
-            {
-                return compilation.ReferencedAssemblyNames.Any(a => a.Name == text);
-            }
-
-            return false;
-        }
-
-        #endregion
-
-        #region Documents
 
         public void CloseWorkspace(RoslynWorkspace workspace)
         {
@@ -176,7 +133,7 @@ namespace RoslynPad.Roslyn
             using (workspace) { }
         }
 
-        public virtual RoslynWorkspace CreateWorkspace() => new RoslynWorkspace(HostServices, roslynHost: this);
+        public virtual RoslynWorkspace CreateWorkspace() => new(HostServices, roslynHost: this);
 
         public void CloseDocument(DocumentId documentId)
         {
@@ -356,7 +313,5 @@ namespace RoslynPad.Roslyn
                 return string.Empty;
             }
         }
-
-        #endregion
     }
 }

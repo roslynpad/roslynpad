@@ -35,7 +35,6 @@ using ModifierKeys = Avalonia.Input.KeyModifiers;
 #else
 using System.Windows.Data;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 #endif
@@ -92,10 +91,7 @@ namespace RoslynPad.Editor
 
         public IList<IContextActionProvider> Providers => _providers;
 
-        private void Providers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            StartTimer();
-        }
+        private void Providers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => StartTimer();
 
         private async void ContextActionsRenderer_KeyDown(object sender, KeyEventArgs e)
         {
@@ -155,11 +151,9 @@ namespace RoslynPad.Editor
             return false;
         }
 
-        private ICommand? GetActionCommand(object action)
-        {
-            return _providers.Select(provider => provider.GetActionCommand(action))
+        private ICommand? GetActionCommand(object action) =>
+            _providers.Select(provider => provider.GetActionCommand(action))
                 .FirstOrDefault(command => command != null);
-        }
 
         private async Task<List<object>> LoadActionsAsync(CancellationToken cancellationToken)
         {
@@ -180,10 +174,7 @@ namespace RoslynPad.Editor
             return allActions;
         }
 
-        private void ScrollChanged(object? sender, EventArgs e)
-        {
-            StartTimer();
-        }
+        private void ScrollChanged(object? sender, EventArgs e) => StartTimer();
 
         private async void TimerMoveTick(object? sender, EventArgs e)
         {
@@ -213,15 +204,9 @@ namespace RoslynPad.Editor
             _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         }
 
-        private void HideBulb()
-        {
-            _bulbMargin.LineNumber = null;
-        }
+        private void HideBulb() => _bulbMargin.LineNumber = null;
 
-        private void CaretPositionChanged(object? sender, EventArgs e)
-        {
-            StartTimer();
-        }
+        private void CaretPositionChanged(object? sender, EventArgs e) => StartTimer();
 
         private void StartTimer()
         {
@@ -244,21 +229,12 @@ namespace RoslynPad.Editor
 
     internal class ActionCommandConverter : IValueConverter
     {
-        public ActionCommandConverter(Func<object, ICommand?>? commandProvider)
-        {
-            CommandProvider = commandProvider;
-        }
+        public ActionCommandConverter(Func<object, ICommand?>? commandProvider) => CommandProvider = commandProvider;
 
         public Func<object, ICommand?>? CommandProvider { get; }
 
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return CommandProvider?.Invoke(value);
-        }
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture) => CommandProvider?.Invoke(value);
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }

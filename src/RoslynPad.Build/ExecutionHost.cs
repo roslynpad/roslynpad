@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NuGet.Versioning;
 using RoslynPad.Build.ILDecompiler;
 using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
@@ -42,6 +43,7 @@ namespace RoslynPad.Build
         private readonly SyntaxTree _moduleInitAttributeSyntax;
         private readonly SyntaxTree _moduleInitSyntax;
         private readonly SyntaxTree _importsSyntax;
+        private readonly LibraryRef _runtimeAssemblyLibraryRef;
         private CancellationTokenSource? _executeCts;
         private Task? _restoreTask;
         private CancellationTokenSource? _restoreCts;
@@ -82,7 +84,7 @@ namespace RoslynPad.Build
                 {
                     _name = value;
                     InitializeBuildPath(stop: false);
-                    Restore();
+                    _ = RestoreAsync();
                 }
             }
         }
@@ -116,9 +118,9 @@ namespace RoslynPad.Build
             _importsSyntax = ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
 
             MetadataReferences = ImmutableArray<MetadataReference>.Empty;
-        }
 
-        private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
+            _runtimeAssemblyLibraryRef = LibraryRef.Reference(typeof(ObjectExtensions).Assembly.Location);
+        }
 
         public event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
         public event Action<string>? Disassembled;
@@ -133,6 +135,8 @@ namespace RoslynPad.Build
         public void Dispose()
         {
         }
+
+        private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
 
         private void InitializeBuildPath(bool stop)
         {
@@ -454,26 +458,157 @@ namespace RoslynPad.Build
             _executeCts?.Cancel();
         }
 
-        public void UpdateLibraries(IList<LibraryRef> libraries, bool alwaysRestore)
+        public async Task UpdateReferencesAsync(bool alwaysRestore)
         {
-            lock (_libraries)
+            var syntaxRoot = await GetSyntaxRootAsync();
+            if (syntaxRoot == null)
             {
-                if (!_libraries.SetEquals(libraries))
+                return;
+            }
+
+            var libraries = ParseReferences(syntaxRoot).Append(_runtimeAssemblyLibraryRef);
+            if (UpdateLibraries(libraries))
+            {
+                await RestoreAsync().ConfigureAwait(false);
+            }
+
+            async ValueTask<SyntaxNode?> GetSyntaxRootAsync()
+            {
+                if (DocumentId == null)
                 {
-                    _libraries.Clear();
-                    _libraries.UnionWith(libraries);
-                    Restore();
+                    return null;
                 }
-                else if (alwaysRestore)
+
+                var document = _roslynHost.GetDocument(DocumentId);
+                if (document == null)
                 {
-                    Restore();
+                    return null;
+                }
+
+                return await document.GetSyntaxRootAsync().ConfigureAwait(false);
+            }
+
+            bool UpdateLibraries(IEnumerable<LibraryRef> libraries)
+            {
+                lock (_libraries)
+                {
+                    if (!_libraries.SetEquals(libraries))
+                    {
+                        _libraries.Clear();
+                        _libraries.UnionWith(libraries);
+                        return true;
+                    }
+                    else if (alwaysRestore)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static List<LibraryRef> ParseReferences(SyntaxNode syntaxRoot)
+            {
+                const string NuGetPrefix = "nuget:";
+                const string LegacyNuGetPrefix = "$NuGet\\";
+                const string FxPrefix = "framework:";
+
+                var libraries = new List<LibraryRef>();
+
+                if (syntaxRoot is not CompilationUnitSyntax compilation)
+                {
+                    return libraries;
+                }
+
+                foreach (var directive in compilation.GetReferenceDirectives())
+                {
+                    var value = directive.File.ValueText;
+                    string? id, version;
+
+                    if (HasPrefix(FxPrefix, value))
+                    {
+                        libraries.Add(LibraryRef.FrameworkReference(
+                            value.Substring(FxPrefix.Length, value.Length - FxPrefix.Length)));
+                        continue;
+                    }
+
+                    if (HasPrefix(NuGetPrefix, value))
+                    {
+                        (id, version) = ParseNuGetReference(NuGetPrefix, value);
+                    }
+                    else if (HasPrefix(LegacyNuGetPrefix, value))
+                    {
+                        (id, version) = ParseLegacyNuGetReference(value);
+                        if (id == null)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        libraries.Add(LibraryRef.Reference(value));
+
+                        continue;
+                    }
+
+                    VersionRange versionRange;
+                    if (version == string.Empty)
+                    {
+                        versionRange = VersionRange.All;
+                    }
+                    else if (!VersionRange.TryParse(version, out versionRange))
+                    {
+                        continue;
+                    }
+
+                    libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
+                }
+
+                return libraries;
+
+                // local functions
+
+                static bool HasPrefix(string prefix, string value) =>
+                    value.Length > prefix.Length &&
+                    value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
+
+                static (string id, string version) ParseNuGetReference(string prefix, string value)
+                {
+                    string id, version;
+
+                    var separatorIndex = value.IndexOfAny(new[] { '/', ',' });
+                    if (separatorIndex >= 0)
+                    {
+                        id = value.Substring(prefix.Length, separatorIndex - prefix.Length);
+                        version = separatorIndex != value.Length - 1 ? value.Substring(separatorIndex + 1) : string.Empty;
+                    }
+                    else
+                    {
+                        id = value.Substring(prefix.Length);
+                        version = string.Empty;
+                    }
+
+                    return (id, version);
+                }
+
+                static (string? id, string? version) ParseLegacyNuGetReference(string value)
+                {
+                    var split = value.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (split.Length >= 3)
+                    {
+                        return (split[1], split[2]);
+                    }
+
+                    return (null, null);
                 }
             }
         }
 
         private Task RestoreTask => _restoreTask ?? Task.CompletedTask;
 
-        private async void Restore()
+        public DocumentId? DocumentId { get; set; }
+
+        private async ValueTask RestoreAsync()
         {
             if (!HasPlatform || string.IsNullOrEmpty(Name))
             {
@@ -490,10 +625,10 @@ namespace RoslynPad.Build
 
             var lockDisposer = await _lock.DisposableWaitAsync();
             var restoreCts = new CancellationTokenSource();
-            _restoreTask = RestoreAsync(RestoreTask, restoreCts.Token);
+            _restoreTask = DoRestoreAsync(RestoreTask, restoreCts.Token);
             _restoreCts = restoreCts;
 
-            async Task RestoreAsync(Task previousTask, CancellationToken cancellationToken)
+            async Task DoRestoreAsync(Task previousTask, CancellationToken cancellationToken)
             {
                 if (!HasDotNetExecutable)
                 {
@@ -543,20 +678,7 @@ namespace RoslynPad.Build
                         return;
                     }
 
-                    var references = await ReadPathsFile(MSBuildHelper.ReferencesFile, cancellationToken).ConfigureAwait(false);
-                    var analyzers = await ReadPathsFile(MSBuildHelper.AnalyzersFile, cancellationToken).ConfigureAwait(false);
-
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    MetadataReferences = references
-                        .Where(r => !string.IsNullOrWhiteSpace(r))
-                        .Select(r => _roslynHost.CreateMetadataReference(r))
-                        .ToImmutableArray();
-
-                    Analyzers = analyzers
-                        .Where(r => !string.IsNullOrWhiteSpace(r))
-                        .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))
-                        .ToImmutableArray();
+                    await ReadReferences(cancellationToken).ConfigureAwait(false);
 
                     RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
                 }
@@ -579,6 +701,24 @@ namespace RoslynPad.Build
 
                     var match = Regex.Match(line, @"[A-Z0-9]{9,}");
                     return match.Success ? match.Value : null;
+                }
+
+                async Task ReadReferences(CancellationToken cancellationToken)
+                {
+                    var references = await ReadPathsFile(MSBuildHelper.ReferencesFile, cancellationToken).ConfigureAwait(false);
+                    var analyzers = await ReadPathsFile(MSBuildHelper.AnalyzersFile, cancellationToken).ConfigureAwait(false);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    MetadataReferences = references
+                        .Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Select(r => _roslynHost.CreateMetadataReference(r))
+                        .ToImmutableArray();
+
+                    Analyzers = analyzers
+                        .Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))
+                        .ToImmutableArray();
                 }
             }
 

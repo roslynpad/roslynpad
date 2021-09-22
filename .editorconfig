@@ -60,9 +60,18 @@ dotnet_naming_rule.static_fields_should_have_prefix.symbols  = static_fields
 dotnet_naming_rule.static_fields_should_have_prefix.style    = static_prefix_style
 dotnet_naming_symbols.static_fields.applicable_kinds   = field
 dotnet_naming_symbols.static_fields.required_modifiers = static
-dotnet_naming_symbols.static_fields.applicable_accessibilities = private, internal, private_protected
+dotnet_naming_symbols.static_fields.applicable_accessibilities = private, private_protected
 dotnet_naming_style.static_prefix_style.required_prefix = s_
 dotnet_naming_style.static_prefix_style.capitalization = camel_case
+
+# public static fields should be pascal cased
+dotnet_naming_rule.static_fields.severity = suggestion
+dotnet_naming_rule.static_fields.symbols  = public_static_fields
+dotnet_naming_rule.static_fields.style    = public_static_prefix_style
+dotnet_naming_symbols.public_static_fields.applicable_kinds   = field
+dotnet_naming_symbols.public_static_fields.required_modifiers = static
+dotnet_naming_symbols.public_static_fields.applicable_accessibilities = public, internal
+dotnet_naming_style.public_static_prefix_style.capitalization = pascal_case
 
 # internal and private fields should be _camelCase
 dotnet_naming_rule.camel_case_for_private_internal_fields.severity = suggestion
@@ -150,6 +159,7 @@ csharp_space_between_parentheses = false
 csharp_space_between_square_brackets = false
 
 dotnet_diagnostic.CA1822.severity = silent
+dotnet_diagnostic.IDE0058.severity = none
 
 # XAML
 [*.xaml]

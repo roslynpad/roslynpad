@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
+using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -37,14 +38,14 @@ namespace RoslynPad.UI
         private DocumentWatcher _documentWatcher;
 
         public IApplicationSettings Settings { get; }
+
         public DocumentViewModel DocumentRoot
         {
             get => _documentRoot;
             private set => SetProperty(ref _documentRoot, value);
         }
+
         public RoslynHost RoslynHost { get; private set; }
-        public ImmutableArray<MetadataReference> DefaultReferences { get; private set; }
-        public ImmutableArray<MetadataReference> DefaultReferencesCompat50 { get; private set; }
 
         public bool IsInitialized
         {
@@ -116,14 +117,9 @@ namespace RoslynPad.UI
         private async Task InitializeInternal()
         {
             RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
-                RoslynHostReferences.NamespaceDefault.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) }),
-                disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011")))
+                RoslynHostReferences.NamespaceDefault.With(imports: new[] { "RoslynPad.Runtime" }),
+                disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097")))
                 .ConfigureAwait(true);
-
-            var runtimeAssemblyPath = typeof(Runtime.ObjectExtensions).Assembly.Location;
-            DefaultReferences = RoslynHost.DefaultReferences;
-            DefaultReferencesCompat50 = DefaultReferences.Add(MetadataReference.CreateFromFile(
-                Path.Combine(Path.GetDirectoryName(runtimeAssemblyPath)!, "RoslynPad.Runtime.Compat50.dll")));
 
             OpenDocumentFromCommandLine();
             await OpenAutoSavedDocuments().ConfigureAwait(true);

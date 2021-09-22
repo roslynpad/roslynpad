@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using RoslynPad.NuGet;
 using RoslynPad.Runtime;
 
 namespace RoslynPad.Build
@@ -16,6 +15,7 @@ namespace RoslynPad.Build
         string DotNetExecutable { get; set; }
         ImmutableArray<MetadataReference> MetadataReferences { get; }
         ImmutableArray<AnalyzerFileReference> Analyzers { get; }
+        DocumentId? DocumentId { get; set; }
 
         event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
         event Action<string>? Disassembled;
@@ -27,25 +27,9 @@ namespace RoslynPad.Build
         event Action<RestoreResultObject>? RestoreMessage;
         event Action<ProgressResultObject>? ProgressChanged;
 
-        void UpdateLibraries(IList<LibraryRef> libraries, bool alwaysRestore);
+        Task UpdateReferencesAsync(bool alwaysRestore);
         Task SendInputAsync(string input);
         Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);
         Task TerminateAsync();
-    }
-
-    internal class RestoreResult
-    {
-        public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, errors: null);
-
-        public static RestoreResult FromErrors(string[] errors) => new RestoreResult(success: false, errors);
-
-        private RestoreResult(bool success, string[]? errors)
-        {
-            Success = success;
-            Errors = errors ?? Array.Empty<string>();
-        }
-
-        public bool Success { get; }
-        public string[] Errors { get; }
     }
 }
