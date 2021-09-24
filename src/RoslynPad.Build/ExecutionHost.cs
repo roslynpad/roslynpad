@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -6,6 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,14 +19,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Nerdbank.Streams;
 using NuGet.Versioning;
 using RoslynPad.Build.ILDecompiler;
-using RoslynPad.NuGet;
 using RoslynPad.Roslyn;
-using RoslynPad.Runtime;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Build
 {
@@ -31,6 +31,19 @@ namespace RoslynPad.Build
     /// </summary>
     internal class ExecutionHost : IExecutionHost
     {
+        private static readonly JsonSerializerOptions s_serializerOptions = new()
+        {
+            Converters =
+            {
+                // needed since JsonReaderWriterFactory writes those types as strings
+                new BooleanConverter(),
+                new Int32Converter(),
+                new DoubleConverter(),
+            }
+        };
+
+        private static readonly ImmutableArray<byte> s_newLine = Encoding.UTF8.GetBytes(Environment.NewLine).ToImmutableArray();
+
         private readonly ExecutionHostParameters _parameters;
         private readonly IRoslynHost _roslynHost;
         private readonly ILogger _logger;
@@ -88,18 +101,15 @@ namespace RoslynPad.Build
             }
         }
 
-        private readonly JsonSerializer _jsonSerializer;
-
         private string BuildPath => _parameters.BuildPath;
+
+        private string ExecutableExtension => Platform.IsCore ? "dll" : "exe";
+
+        public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
+        public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
 
         public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost, ILogger logger)
         {
-            _jsonSerializer = new JsonSerializer
-            {
-                TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
-            };
-
             _name = "";
             _parameters = parameters;
             _roslynHost = roslynHost;
@@ -118,7 +128,7 @@ namespace RoslynPad.Build
 
             MetadataReferences = ImmutableArray<MetadataReference>.Empty;
 
-            _runtimeAssemblyLibraryRef = LibraryRef.Reference(typeof(ObjectExtensions).Assembly.Location);
+            _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "RoslynPad.Runtime.dll"));
         }
 
         public event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
@@ -175,7 +185,7 @@ namespace RoslynPad.Build
 
             await RestoreTask.ConfigureAwait(false);
 
-            using var _ = await _lock.DisposableWaitAsync();
+            using var _ = await _lock.DisposableWaitAsync().ConfigureAwait(false);
 
             try
             {
@@ -206,7 +216,7 @@ namespace RoslynPad.Build
 
                 _executeCts = executeCts;
 
-                await RunProcess(_assemblyPath, cancellationToken);
+                await RunProcessAsync(_assemblyPath, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -229,11 +239,6 @@ namespace RoslynPad.Build
             disassembler.WriteModuleContents(assembly.MainModule);
             Disassembled?.Invoke(output.ToString());
         }
-
-        private string ExecutableExtension => Platform.IsCore ? "dll" : "exe";
-
-        public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
-        public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
 
         private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel)
         {
@@ -281,7 +286,7 @@ namespace RoslynPad.Build
                 allowUnsafe: _parameters.AllowUnsafe);
         }
 
-        private async Task RunProcess(string assemblyPath, CancellationToken cancellationToken)
+        private async Task RunProcessAsync(string assemblyPath, CancellationToken cancellationToken)
         {
             using var process = new Process { StartInfo = GetProcessStartInfo(assemblyPath) };
             using var _ = cancellationToken.Register(() =>
@@ -307,8 +312,8 @@ namespace RoslynPad.Build
             _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
 
             await Task.WhenAll(
-                Task.Run(() => ReadObjectProcessStream(process.StandardOutput), cancellationToken),
-                Task.Run(() => ReadProcessStream(process.StandardError), cancellationToken));
+                Task.Run(() => ReadObjectProcessStreamAsync(process.StandardOutput), cancellationToken),
+                Task.Run(() => ReadProcessStreamAsync(process.StandardError), cancellationToken)).ConfigureAwait(false);
 
             ProcessStartInfo GetProcessStartInfo(string assemblyPath) => new()
             {
@@ -335,48 +340,92 @@ namespace RoslynPad.Build
             }
         }
 
-        private async Task ReadProcessStream(StreamReader reader)
+        private async Task ReadProcessStreamAsync(StreamReader reader)
         {
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync().ConfigureAwait(false);
                 if (line != null)
                 {
-                    Dumped?.Invoke(ResultObject.Create(line, DumpQuotas.Default));
+                    Dumped?.Invoke(new ResultObject { Value = line });
                 }
             }
         }
 
-        private void ReadObjectProcessStream(StreamReader reader)
+        private async Task ReadObjectProcessStreamAsync(StreamReader reader)
         {
-            using var jsonReader = new JsonTextReader(reader) { SupportMultipleContent = true };
-            while (jsonReader.Read())
+            const int prefixLength = 2;
+            using var sequence = new Sequence<byte>(ArrayPool<byte>.Shared) { AutoIncreaseMinimumSpanLength = false };
+            while (true)
             {
-                try
+                var eolPosition = await ReadLineAsync().ConfigureAwait(false);
+                if (eolPosition == null)
                 {
-                    var result = _jsonSerializer.Deserialize<ResultObject>(jsonReader);
+                    return;
+                }
 
-                    switch (result)
+                var readOnlySequence = sequence.AsReadOnlySequence;
+                if (readOnlySequence.First.Span[1] == ':')
+                {
+                    switch (readOnlySequence.First.Span[0])
                     {
-                        case ExceptionResultObject exceptionResult:
-                            Error?.Invoke(exceptionResult);
-                            break;
-                        case InputReadRequest:
+                        case (byte)'i':
                             ReadInput?.Invoke();
                             break;
-                        case ProgressResultObject progress:
-                            ProgressChanged?.Invoke(progress);
+                        case (byte)'o':
+                            var objectResult = Deserialize<ResultObject>(readOnlySequence);
+                            Dumped?.Invoke(objectResult);
                             break;
-                        default:
-                            Dumped?.Invoke(result);
+                        case (byte)'e':
+                            var exceptionResult = Deserialize<ExceptionResultObject>(readOnlySequence);
+                            Error?.Invoke(exceptionResult);
                             break;
+                        case (byte)'p':
+                            var progressResult = Deserialize<ProgressResultObject>(readOnlySequence);
+                            ProgressChanged?.Invoke(progressResult);
+                            break;
+
                     }
                 }
-                catch (Exception ex)
+
+                sequence.AdvanceTo(eolPosition.Value);
+            }
+
+            async ValueTask<SequencePosition?> ReadLineAsync()
+            {
+                var readOnlySequence = sequence.AsReadOnlySequence;
+                var position = readOnlySequence.PositionOf(s_newLine[0]);
+                if (position != null)
                 {
-                    _logger.LogWarning(ex, "Error deserializing result");
-                    Dumped?.Invoke(ResultObject.Create("Error deserializing result: " + ex.Message, DumpQuotas.Default));
+                    return readOnlySequence.GetPosition(s_newLine.Length, position.Value);
                 }
+
+                while (true)
+                {
+                    var memory = sequence.GetMemory(0);
+                    var read = await reader.BaseStream.ReadAsync(memory).ConfigureAwait(false);
+                    if (read == 0)
+                    {
+                        return null;
+                    }
+
+                    var eolIndex = memory.Span.Slice(0, read).IndexOf(s_newLine[0]);
+                    if (eolIndex != -1)
+                    {
+                        var length = sequence.Length;
+                        sequence.Advance(read);
+                        var index = length + eolIndex + s_newLine.Length;
+                        return sequence.AsReadOnlySequence.GetPosition(index);
+                    }
+
+                    sequence.Advance(read);
+                }
+            }
+
+            static T Deserialize<T>(ReadOnlySequence<byte> sequence)
+            {
+                var jsonReader = new Utf8JsonReader(sequence.Slice(prefixLength));
+                return JsonSerializer.Deserialize<T>(ref jsonReader, s_serializerOptions)!;
             }
         }
 
@@ -444,7 +493,7 @@ namespace RoslynPad.Build
 
         public async Task UpdateReferencesAsync(bool alwaysRestore)
         {
-            var syntaxRoot = await GetSyntaxRootAsync();
+            var syntaxRoot = await GetSyntaxRootAsync().ConfigureAwait(false);
             if (syntaxRoot == null)
             {
                 return;
@@ -570,7 +619,7 @@ namespace RoslynPad.Build
 
             RestoreStarted?.Invoke();
 
-            var lockDisposer = await _lock.DisposableWaitAsync();
+            var lockDisposer = await _lock.DisposableWaitAsync().ConfigureAwait(false);
             var restoreCts = new CancellationTokenSource();
             _restoreTask = DoRestoreAsync(RestoreTask, restoreCts.Token);
             _restoreCts = restoreCts;
@@ -606,9 +655,9 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    using var result = await ProcessUtil.RunProcess(DotNetExecutable, BuildPath, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
+                    using var result = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
 
-                    await foreach (var line in result.GetStandardOutputLines())
+                    await foreach (var line in result.GetStandardOutputLinesAsync())
                     {
                         var trimmed = line.Trim();
                         var deviceCode = GetDeviceCode(trimmed);
@@ -620,7 +669,7 @@ namespace RoslynPad.Build
 
                     if (result.ExitCode != 0)
                     {
-                        var errors = await GetErrorsAsync(errorsPath, result, cancellationToken);
+                        var errors = await GetErrorsAsync(errorsPath, result, cancellationToken).ConfigureAwait(false);
                         RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
                         return;
                     }
@@ -676,11 +725,8 @@ namespace RoslynPad.Build
                     return;
                 }
 
-                var global = new JObject(
-                    new JProperty("sdk", new JObject(
-                        new JProperty("version", Platform.FrameworkVersion!.ToString()))));
-
-                await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), global.ToString());
+                var globalJson = $@"{{ ""sdk"": {{ ""version"": ""{Platform.FrameworkVersion}"" }} }}";
+                await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), globalJson).ConfigureAwait(false);
             }
 
             async Task<string> BuildCsproj()
@@ -734,6 +780,33 @@ namespace RoslynPad.Build
                 var paths = await File.ReadAllLinesAsync(path, cancellationToken).ConfigureAwait(false);
                 return paths;
             }
+        }
+
+        private class BooleanConverter : JsonConverter<bool>
+        {
+            public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+                Utf8Parser.TryParse(reader.ValueSpan, out bool value, out _)
+                    ? value : throw new FormatException();
+
+            public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) => throw new NotSupportedException();
+        }
+
+        private class Int32Converter : JsonConverter<int>
+        {
+            public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+                Utf8Parser.TryParse(reader.ValueSpan, out int value, out _)
+                    ? value : throw new FormatException();
+
+            public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options) => throw new NotSupportedException();
+        }
+
+        private class DoubleConverter : JsonConverter<double>
+        {
+            public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+                Utf8Parser.TryParse(reader.ValueSpan, out double value, out _)
+                    ? value : throw new FormatException();
+
+            public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) => throw new NotSupportedException();
         }
     }
 }

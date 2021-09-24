@@ -8,107 +8,16 @@ using System.Xml;
 
 namespace RoslynPad.Runtime
 {
-    internal interface IConsoleDumper
-    {
-        bool SupportsRedirect { get; }
-        TextWriter CreateWriter(string? header = null);
-        TextReader CreateReader();
-        void Dump(in DumpData data);
-        void DumpException(Exception exception);
-        void Flush();
-        void DumpProgress(ProgressResultObject result);
-    }
-
-    internal class DirectConsoleDumper : IConsoleDumper
-    {
-        private readonly object _lock = new();
-
-        public bool SupportsRedirect => false;
-
-        public TextWriter CreateWriter(string? header = null)
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Dump(in DumpData data)
-        {
-            try
-            {
-                DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    Console.WriteLine("Error during Dump: " + ex.Message);
-                }
-                catch
-                {
-                    // ignore
-                }
-            }
-        }
-
-        public void DumpException(Exception exception)
-        {
-            throw new NotSupportedException();
-        }
-
-        public TextReader CreateReader()
-        {
-            throw new NotSupportedException();
-        }
-
-        private void DumpResultObject(ResultObject resultObject, int indent = 0)
-        {
-            lock (_lock)
-            {
-                if (indent > 0)
-                {
-                    Console.Write("".PadLeft(indent));
-                }
-
-                Console.Write(resultObject.HasChildren ? "+ " : "  ");
-
-                if (resultObject.Header != null)
-                {
-                    Console.Write($"[{resultObject.Header}]: ");
-                }
-
-                Console.WriteLine(resultObject.Value);
-
-                if (resultObject.Children != null)
-                {
-                    foreach (var child in resultObject.Children)
-                    {
-                        DumpResultObject(child, indent + 2);
-                    }
-                }
-
-                if (indent == 0)
-                {
-                    Console.WriteLine();
-                }
-            }
-        }
-
-        public void Flush()
-        {
-        }
-
-        public void DumpProgress(ProgressResultObject result)
-            => throw new NotSupportedException($"Dumping progress is not supported with {nameof(DirectConsoleDumper)}");
-    }
-
     internal class JsonConsoleDumper : IConsoleDumper, IDisposable
     {
         private const int MaxDumpsPerSession = 100000;
 
-        private static readonly byte[] NewLine = Encoding.Default.GetBytes(Environment.NewLine);
+        private static readonly byte[] s_newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
 
-        private readonly string _exceptionResultTypeName;
-        private readonly string _inputReadRequestTypeName;
-        private readonly string _progressResultTypeName;
+        private static readonly byte[] s_resultObjectHeader = Encoding.UTF8.GetBytes("o:");
+        private static readonly byte[] s_exceptionResultHeader = Encoding.UTF8.GetBytes("e:");
+        private static readonly byte[] s_inputReadRequestHeader = Encoding.UTF8.GetBytes("i:");
+        private static readonly byte[] s_progressResultHeader = Encoding.UTF8.GetBytes("p:");
 
         private readonly Stream _stream;
 
@@ -121,35 +30,19 @@ namespace RoslynPad.Runtime
             _stream = Console.OpenStandardOutput();
 
             _lock = new object();
-
-            var assemblyName = typeof(ExceptionResultObject).Assembly.GetName().Name;
-            _exceptionResultTypeName = $"{typeof(ExceptionResultObject).FullName}, {assemblyName}";
-            _inputReadRequestTypeName = $"{typeof(InputReadRequest).FullName}, {assemblyName}";
-            _progressResultTypeName = $"{typeof(ProgressResultObject).FullName}, {assemblyName}";
         }
 
-        private XmlDictionaryWriter CreateJsonWriter()
-        {
-            // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
-            return JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
-        }
+        // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
+        private XmlDictionaryWriter CreateJsonWriter() =>
+            JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
 
         public bool SupportsRedirect => true;
 
-        public TextWriter CreateWriter(string? header = null)
-        {
-            return new ConsoleRedirectWriter(this, header);
-        }
+        public TextWriter CreateWriter(string? header = null) => new ConsoleRedirectWriter(this, header);
 
-        public TextReader CreateReader()
-        {
-            return new ConsoleReader(this);
-        }
+        public TextReader CreateReader() => new ConsoleReader(this);
 
-        public void Dispose()
-        {
-            _stream.Dispose();
-        }
+        public void Dispose() => _stream.Dispose();
 
         public void Dump(in DumpData data)
         {
@@ -203,27 +96,22 @@ namespace RoslynPad.Runtime
         {
             lock (_lock)
             {
-                string jsonValue = result.Progress.HasValue
-                    ? result.Progress.Value.ToString(CultureInfo.InvariantCulture)
-                    : "null";
+                Write(s_progressResultHeader);
 
                 using (var jsonWriter = CreateJsonWriter())
                 {
-                    jsonWriter.WriteStartElement("root", "");
-                    jsonWriter.WriteAttributeString("type", "object");
-                    jsonWriter.WriteElementString("$type", _progressResultTypeName);
-                    jsonWriter.WriteElementString("p", jsonValue);
-                    jsonWriter.WriteEndElement();
+                    using var _ = jsonWriter.WriteObject();
+                    if (result.Progress != null)
+                    {
+                        jsonWriter.WriteProperty("p", result.Progress.Value);
+                    }
                 }
 
-                DumpNewLine();
+                WriteNewLine();
             }
         }
 
-        public void Flush()
-        {
-            _stream.Flush();
-        }
+        public void Flush() => _stream.Flush();
 
         private bool CanDump()
         {
@@ -245,15 +133,15 @@ namespace RoslynPad.Runtime
         {
             lock (_lock)
             {
+                Write(s_resultObjectHeader);
+
                 using (var jsonWriter = CreateJsonWriter())
                 {
-                    jsonWriter.WriteStartElement("root", "");
-                    jsonWriter.WriteAttributeString("type", "object");
-                    jsonWriter.WriteElementString("v", message);
-                    jsonWriter.WriteEndElement();
+                    using var _ = jsonWriter.WriteObject();
+                    jsonWriter.WriteProperty("v", message);
                 }
 
-                DumpNewLine();
+                WriteNewLine();
             }
         }
 
@@ -263,15 +151,9 @@ namespace RoslynPad.Runtime
             {
                 lock (_lock)
                 {
-                    using (var jsonWriter = CreateJsonWriter())
-                    {
-                        jsonWriter.WriteStartElement("root", "");
-                        jsonWriter.WriteAttributeString("type", "object");
-                        jsonWriter.WriteElementString("$type", _inputReadRequestTypeName);
-                        jsonWriter.WriteEndElement();
-                    }
+                    Write(s_inputReadRequestHeader);
 
-                    DumpNewLine();
+                    WriteNewLine();
                 }
             }
             catch
@@ -284,20 +166,17 @@ namespace RoslynPad.Runtime
         {
             lock (_lock)
             {
+                Write(s_exceptionResultHeader);
+
                 using (var jsonWriter = CreateJsonWriter())
                 {
-                    jsonWriter.WriteStartElement("root", "");
-                    jsonWriter.WriteAttributeString("type", "object");
-                    jsonWriter.WriteElementString("$type", _exceptionResultTypeName);
-                    jsonWriter.WriteElementString("m", result.Message);
-                    jsonWriter.WriteStartElement("l");
-                    jsonWriter.WriteValue(result.LineNumber);
-                    jsonWriter.WriteEndElement();
+                    using var _ = jsonWriter.WriteObject();
+                    jsonWriter.WriteProperty("m", result.Message);
+                    jsonWriter.WriteProperty("l", result.LineNumber);
                     WriteResultObjectContent(jsonWriter, result);
-                    jsonWriter.WriteEndElement();
                 }
 
-                DumpNewLine();
+                WriteNewLine();
             }
         }
 
@@ -305,50 +184,44 @@ namespace RoslynPad.Runtime
         {
             lock (_lock)
             {
+                Write(s_resultObjectHeader);
+
                 using (var jsonWriter = CreateJsonWriter())
                 {
                     WriteResultObject(jsonWriter, result, isRoot: true);
                 }
 
-                DumpNewLine();
+                WriteNewLine();
             }
         }
 
-        private void DumpNewLine()
-        {
-            _stream.Write(NewLine, 0, NewLine.Length);
-        }
+        private void WriteNewLine() => Write(s_newLine);
 
         private void WriteResultObject(XmlDictionaryWriter jsonWriter, ResultObject result, bool isRoot)
         {
-            jsonWriter.WriteStartElement(isRoot ? "root" : "item", "");
-            jsonWriter.WriteAttributeString("type", "object");
+            using var _ = jsonWriter.WriteObject(name: isRoot ? "root" : "item");
             WriteResultObjectContent(jsonWriter, result);
-            jsonWriter.WriteEndElement();
         }
 
         private void WriteResultObjectContent(XmlDictionaryWriter jsonWriter, ResultObject result)
         {
-            jsonWriter.WriteElementString("t", result.Type);
-            jsonWriter.WriteElementString("h", result.Header);
-            jsonWriter.WriteElementString("v", result.Value);
-            jsonWriter.WriteStartElement("x");
-            jsonWriter.WriteValue(result.IsExpanded);
-            jsonWriter.WriteEndElement();
+            jsonWriter.WriteProperty("t", result.Type);
+            jsonWriter.WriteProperty("h", result.Header);
+            jsonWriter.WriteProperty("v", result.Value);
+            jsonWriter.WriteProperty("x", result.IsExpanded);
 
             if (result.Children != null)
             {
-                jsonWriter.WriteStartElement("c");
-                jsonWriter.WriteAttributeString("type", "array");
+                using var _ = jsonWriter.WriteArray("c");
 
                 foreach (var child in result.Children)
                 {
                     WriteResultObject(jsonWriter, child, isRoot: false);
                 }
-
-                jsonWriter.WriteEndElement();
             }
         }
+
+        private void Write(byte[] bytes) => _stream.Write(bytes, 0, bytes.Length);
 
         /// <summary>
         /// Redirects the console to the Dump method.
@@ -412,15 +285,9 @@ namespace RoslynPad.Runtime
                 return true;
             }
 
-            public override void Write(char value)
-            {
-                Dump(value);
-            }
+            public override void Write(char value) => Dump(value);
 
-            private void Dump(object value)
-            {
-                _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
-            }
+            private void Dump(object value) => _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
         }
 
         private class ConsoleReader : TextReader

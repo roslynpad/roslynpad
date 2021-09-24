@@ -2,7 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace RoslynPad.Utilities
+#pragma warning disable CA1822
+
+namespace RoslynPad.Build
 {
     /// <summary>
     /// Yields to the thread-pool.
@@ -21,7 +23,10 @@ namespace RoslynPad.Utilities
 
             private static void QueueContinuation(Action continuation, bool flowContext)
             {
-                if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+                if (continuation == null)
+                {
+                    throw new ArgumentNullException(nameof(continuation));
+                }
 
                 if (flowContext)
                 {
@@ -33,7 +38,7 @@ namespace RoslynPad.Utilities
                 }
             }
 
-            private static readonly WaitCallback s_waitCallbackRunAction = RunAction;
+            private static readonly WaitCallback s_waitCallbackRunAction = RunAction!;
 
             private static void RunAction(object state) => ((Action)state)();
 

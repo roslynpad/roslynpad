@@ -9,7 +9,7 @@
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance ui:MainViewModel}"
+        d:DataContext="{d:DesignInstance ui:MainViewModelBase}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         Title="{Binding WindowTitle, Mode=OneTime}"

@@ -13,7 +13,7 @@ namespace RoslynPad
         public void InvokeAsync(Action action, AppDispatcherPriority priority = AppDispatcherPriority.Normal,
             CancellationToken cancellationToken = new CancellationToken())
         {
-            InternalInvoke(action, priority, cancellationToken);
+            _ = InternalInvoke(action, priority, cancellationToken);
         }
 
         public Task InvokeTaskAsync(Action action, AppDispatcherPriority priority = AppDispatcherPriority.Normal,

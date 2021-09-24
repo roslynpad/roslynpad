@@ -1,14 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
     <PackageReference Include="NuGet.Versioning" Version="5.11.0" />
-    <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.8.46" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
   </ItemGroup>
 </Project>

@@ -1,28 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Reflection;
-using System.Runtime.Serialization;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Runtime
 {
-    internal interface IResultObject
-    {
-        string? Value { get; }
-
-        void WriteTo(StringBuilder builder);
-    }
-
-    [DataContract]
-    [KnownType(typeof(ExceptionResultObject))]
-    [KnownType(typeof(InputReadRequest))]
-    internal class ResultObject : INotifyPropertyChanged, IResultObject
+    internal class ResultObject
     {
         private static readonly HashSet<string> s_irrelevantEnumerableProperties = new() { "Count", "Length", "Key" };
 
@@ -37,15 +22,8 @@ namespace RoslynPad.Runtime
         private readonly DumpQuotas _quotas;
         private readonly MemberInfo? _member;
 
-        public static ResultObject Create(object? o, in DumpQuotas quotas, string? header = null)
-        {
-            return new ResultObject(o, quotas, header);
-        }
-
-        // for serialization
-        protected ResultObject()
-        {
-        }
+        public static ResultObject Create(object? o, in DumpQuotas quotas, string? header = null) =>
+            new(o, quotas, header);
 
         internal ResultObject(object? o, in DumpQuotas quotas, string? header = null, MemberInfo? member = null)
         {
@@ -55,55 +33,11 @@ namespace RoslynPad.Runtime
             Initialize(o, header);
         }
 
-        public override string ToString()
-        {
-            var builder = new StringBuilder();
-            BuildStringRecursive(builder, 0);
-            return builder.ToString();
-        }
-
-        public void WriteTo(StringBuilder stringBuilder)
-        {
-            BuildStringRecursive(stringBuilder, 0);
-        }
-
-        private void BuildStringRecursive(StringBuilder builder, int level)
-        {
-            for (var i = 0; i < level; i++)
-            {
-                builder.Append("  ");
-            }
-            builder.Append(Header);
-            if (Header != null && Value != null)
-            {
-                builder.Append(" = ");
-            }
-            builder.Append(Value);
-            builder.AppendLine();
-            if (Children != null)
-            {
-                foreach (var child in Children)
-                {
-                    child.BuildStringRecursive(builder, level + 1);
-                }
-            }
-        }
-
-        [DataMember(Name = "h")]
         public string? Header { get; private set; }
-
-        [DataMember(Name = "v")]
         public string? Value { get; protected set; }
-
-        [DataMember(Name = "t")]
         public string? Type { get; private set; }
-
-        [DataMember(Name = "c")]
         public List<ResultObject>? Children { get; private set; }
-
         public bool HasChildren => Children?.Count > 0;
-
-        [DataMember(Name = "x")]
         public bool IsExpanded { get; private set; }
 
         private void Initialize(object? o, string? headerPrefix)
@@ -176,24 +110,14 @@ namespace RoslynPad.Runtime
             PopulateChildren(o, targetQuotas, GetMembers(type), headerPrefix);
         }
 
-        private static MemberInfo[] GetMembers(Type type)
-        {
-            return ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
-                    .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
-                .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
-                .OrderBy(m => m.Name)
-                .ToArray();
-        }
+        private static MemberInfo[] GetMembers(Type type) => ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
+            .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
+            .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
+            .OrderBy(m => m.Name)
+            .ToArray();
 
-        private IEnumerable? GetEnumerable(object o, Type type)
-        {
-            if (o is IEnumerable e && !s_doNotTreatAsEnumerableTypeNames.Contains(type.Name))
-            {
-                return e;
-            }
-
-            return null;
-        }
+        private static IEnumerable? GetEnumerable(object o, Type type) =>
+            o is IEnumerable e && !s_doNotTreatAsEnumerableTypeNames.Contains(type.Name) ? e : null;
 
         private bool TryPopulateMember(object? o, DumpQuotas targetQuotas)
         {
@@ -209,7 +133,7 @@ namespace RoslynPad.Runtime
                 {
                     if (_member.Name == nameof(Exception.StackTrace))
                     {
-                        value = GetStackTrace(exception);
+                        value = exception.StackTrace;
                     }
                     else
                     {
@@ -278,16 +202,16 @@ namespace RoslynPad.Runtime
 
         private void SetType(object o)
         {
-            if (o == null) return;
+            if (o == null)
+            {
+                return;
+            }
 
             var type = o.GetType();
             SetType(type);
         }
 
-        private void SetType(Type type)
-        {
-            Type = GetTypeName(type);
-        }
+        private void SetType(Type type) => Type = GetTypeName(type);
 
         private static string GetTypeName(Type type)
         {
@@ -324,7 +248,10 @@ namespace RoslynPad.Runtime
             Header = headerPrefix;
             Value = GetString(o);
 
-            if (o == null) return;
+            if (o == null)
+            {
+                return;
+            }
 
             var children = new List<ResultObject>();
 
@@ -334,22 +261,6 @@ namespace RoslynPad.Runtime
             }
 
             Children = children;
-        }
-
-        protected static string GetStackTrace(Exception exception)
-        {
-            return GetStackFrames(exception).ToAsyncString();
-        }
-
-        protected static IEnumerable<StackFrame> GetStackFrames(Exception exception)
-        {
-            var frames = new StackTrace(exception, fNeedFileInfo: true).GetFrames();
-            if (frames == null || frames.Length == 0)
-            {
-                return Array.Empty<StackFrame>();
-            }
-
-            return frames;
         }
 
         private void InitializeEnumerableHeaderOnly(string? headerPrefix, IEnumerable e)
@@ -362,7 +273,11 @@ namespace RoslynPad.Runtime
                 var enumerator = e.GetEnumerator();
                 using (enumerator as IDisposable)
                 {
-                    while (count < _quotas.MaxEnumerableLength && enumerator.MoveNext()) ++count;
+                    while (count < _quotas.MaxEnumerableLength && enumerator.MoveNext())
+                    {
+                        ++count;
+                    }
+
                     var hasMore = enumerator.MoveNext() ? "+" : "";
                     Value = $"<enumerable Count: {count}{hasMore}>";
                 }
@@ -424,16 +339,13 @@ namespace RoslynPad.Runtime
             }
         }
 
-        private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members)
-        {
-            return members.Any(p => !s_irrelevantEnumerableProperties.Contains(p.Name))
+        private static bool IsSpecialEnumerable(Type t, IEnumerable<MemberInfo> members) => members.Any(p => !s_irrelevantEnumerableProperties.Contains(p.Name))
                    && !typeof(IEnumerator).IsAssignableFrom(t)
                    && !t.IsArray
                    && t.Namespace?.StartsWith("System.Collections", StringComparison.Ordinal) != true
                    && t.Namespace?.StartsWith("System.Linq", StringComparison.Ordinal) != true
                    && t.Name.IndexOf("Collection", StringComparison.Ordinal) < 0
                    && !t.Name.Equals("JArray", StringComparison.Ordinal);
-        }
 
         private string GetString(object o)
         {
@@ -451,24 +363,10 @@ namespace RoslynPad.Runtime
             var s = o + string.Empty;
             return s.Length > _quotas.MaxStringLength ? s.Substring(0, _quotas.MaxStringLength) : s;
         }
-
-        // avoids WPF PropertyDescriptor binding leaks
-        public event PropertyChangedEventHandler PropertyChanged
-        {
-            add { }
-            remove { }
-        }
     }
 
-    [DataContract]
     internal class ExceptionResultObject : ResultObject
     {
-        // for serialization
-        private ExceptionResultObject()
-        {
-            Message = string.Empty;
-        }
-
         private ExceptionResultObject(Exception exception, in DumpQuotas quotas) : base(exception, quotas)
         {
             Message = exception.Message;
@@ -487,100 +385,20 @@ namespace RoslynPad.Runtime
 
         public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new(exception, quotas ?? DumpQuotas.Default);
 
-        [DataMember(Name = "l")]
         public int LineNumber { get; private set; }
-
-        [DataMember(Name = "m")]
         public string Message { get; private set; }
     }
 
-    [DataContract]
-    internal class InputReadRequest : ResultObject
+    internal class InputReadRequest
     {
-        public InputReadRequest()
-        {
-        }
     }
 
-    [DataContract]
-    internal class ProgressResultObject: ResultObject
+    internal class ProgressResultObject
     {
-        // for serialization
-        private ProgressResultObject()
-        {
-        }
-
-        private ProgressResultObject(double? progress)
-        {
-            Progress = progress;
-        }
+        private ProgressResultObject(double? progress) => Progress = progress;
 
         public static ProgressResultObject Create(double? progress) => new(progress);
 
-        [DataMember(Name = "p")]
-        public double? Progress { get; private set; }
-    }
-
-    [DataContract]
-    internal class CompilationErrorResultObject : IResultObject
-    {
-        // for serialization
-        protected CompilationErrorResultObject()
-        {
-            ErrorCode = string.Empty;
-            Severity = string.Empty;
-            Message = string.Empty;
-        }
-
-        [DataMember(Name = "ec")]
-        public string ErrorCode { get; private set; }
-        [DataMember(Name = "sev")]
-        public string Severity { get; private set; }
-        [DataMember(Name = "l")]
-        public int Line { get; private set; }
-        [DataMember(Name = "col")]
-        public int Column { get; private set; }
-        [DataMember(Name = "m")]
-        public string Message { get; private set; }
-
-        public static CompilationErrorResultObject Create(string severity, string errorCode, string message, int line, int column)
-        {
-            return new CompilationErrorResultObject
-            {
-                ErrorCode = errorCode,
-                Severity = severity,
-                Message = message,
-                // 0 to 1-based
-                Line = line + 1,
-                Column = column + 1,
-            };
-        }
-
-        public override string ToString() => $"{ErrorCode}: {Message}";
-
-        string? IResultObject.Value => ToString();
-
-        public void WriteTo(StringBuilder builder) => builder.Append(ToString());
-    }
-
-    internal class RestoreResultObject : IResultObject
-    {
-        private readonly string? _value;
-
-        public RestoreResultObject(string message, string severity, string? value = null)
-        {
-            Message = message;
-            Severity = severity;
-            _value = value;
-        }
-
-        public string Message { get; }
-        public string Severity { get; }
-        public string Value => _value ?? Message;
-
-        public void WriteTo(StringBuilder builder)
-        {
-            builder.Append(Value);
-        }
+        public double? Progress { get; }
     }
 }

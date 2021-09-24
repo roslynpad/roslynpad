@@ -1,5 +1,5 @@
-﻿using RoslynPad.Utilities;
-using System;
+﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -10,16 +10,20 @@ namespace RoslynPad.Runtime
     /// <summary>
     /// This class initializes the RoslynPad standalone host.
     /// </summary>
-    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static class RuntimeInitializer
     {
-        private static bool _initialized;
+        private static bool s_initialized;
 
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Initialize()
         {
-            if (_initialized) return;
-            _initialized = true;
+            if (s_initialized)
+            {
+                return;
+            }
+
+            s_initialized = true;
 
             var isAttachedToParent = TryAttachToParentProcess();
             DisableWer();
@@ -54,14 +58,14 @@ namespace RoslynPad.Runtime
 
         private static bool TryAttachToParentProcess()
         {
-            if (ParseCommandLine("pid", @"\d+", out var parentProcessId))
+            if (!ParseCommandLine("pid", @"\d+", out var parentProcessId))
             {
-                AttachToParentProcess(int.Parse(parentProcessId));
-
-                return true;
+                return false;
             }
 
-            return false;
+            AttachToParentProcess(int.Parse(parentProcessId));
+
+            return true;
         }
 
         internal static void AttachToParentProcess(int parentProcessId)
@@ -78,10 +82,7 @@ namespace RoslynPad.Runtime
             }
 
             clientProcess.EnableRaisingEvents = true;
-            clientProcess.Exited += (o, e) =>
-            {
-                Environment.Exit(1);
-            };
+            clientProcess.Exited += (_, _) => Environment.Exit(1);
 
             if (!clientProcess.IsAlive())
             {
@@ -94,10 +95,12 @@ namespace RoslynPad.Runtime
         /// </summary>
         internal static void DisableWer()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                WindowsNativeMethods.DisableWer();
+                return;
             }
+
+            WindowsNativeMethods.DisableWer();
         }
 
         private static bool ParseCommandLine(string name, string pattern, out string value)

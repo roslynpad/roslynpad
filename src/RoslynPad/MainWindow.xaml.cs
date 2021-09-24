@@ -13,7 +13,6 @@ using AvalonDock.Layout.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RoslynPad.UI;
-using RoslynPad.Utilities;
 
 namespace RoslynPad
 {
@@ -174,12 +173,12 @@ namespace RoslynPad
             if (_viewModel.LastError == null) return;
 
             TaskDialog.ShowInline(this, "Unhandled Exception",
-                _viewModel.LastError.ToAsyncString(), string.Empty, TaskDialogButtons.Close);
+                _viewModel.LastError.ToString(), string.Empty, TaskDialogButtons.Close);
         }
 
         private void ViewUpdateClick(object sender, RoutedEventArgs e)
         {
-            Task.Run(() => Process.Start(new ProcessStartInfo("https://roslynpad.net/") { UseShellExecute = true }));
+            _ = Task.Run(() => Process.Start(new ProcessStartInfo("https://roslynpad.net/") { UseShellExecute = true }));
         }
     }
 }

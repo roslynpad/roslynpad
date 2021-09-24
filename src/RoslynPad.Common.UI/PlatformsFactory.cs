@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32;
 using NuGet.Versioning;
+using RoslynPad.Build;
 using RoslynPad.UI;
-using RoslynPad.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -111,6 +111,11 @@ namespace RoslynPad
 
         private static string GetNetFrameworkName()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return string.Empty;
+            }
+
             const string subkey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
 
             using (var ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subkey))

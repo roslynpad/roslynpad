@@ -9,7 +9,7 @@ namespace RoslynPad.Build
 {
     internal class ProcessUtil
     {
-        public static async Task<ProcessResult> RunProcess(string path, string workingDirectory, string arguments, CancellationToken cancellationToken)
+        public static async Task<ProcessResult> RunProcessAsync(string path, string workingDirectory, string arguments, CancellationToken cancellationToken)
         {
             var process = new Process
             {
@@ -46,15 +46,13 @@ namespace RoslynPad.Build
                 _process = process;
                 _standardOutput = new StringBuilder();
 
-                Task.Run(ReadStandardError);
+                _ = Task.Run(ReadStandardErrorAsync);
             }
 
-            private async Task ReadStandardError()
-            {
-                StandardError = await _process.StandardError.ReadToEndAsync();
-            }
+            private async Task ReadStandardErrorAsync() =>
+                StandardError = await _process.StandardError.ReadToEndAsync().ConfigureAwait(false);
 
-            public async IAsyncEnumerable<string> GetStandardOutputLines()
+            public async IAsyncEnumerable<string> GetStandardOutputLinesAsync()
             {
                 var output = _process.StandardOutput;
                 while (true)

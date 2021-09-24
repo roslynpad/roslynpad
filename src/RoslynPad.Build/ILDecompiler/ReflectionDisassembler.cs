@@ -1020,7 +1020,7 @@ namespace RoslynPad.Build.ILDecompiler
                         {
                             if (j > 0)
                                 output.Write(", ");
-                            gp.Constraints[j].WriteTo(output, ILNameSyntax.TypeName);
+                            gp.Constraints[j].ConstraintType.WriteTo(output, ILNameSyntax.TypeName);
                         }
                         output.Write(") ");
                     }

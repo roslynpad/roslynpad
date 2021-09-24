@@ -161,8 +161,11 @@ csharp_space_between_square_brackets = false
 dotnet_diagnostic.CA1822.severity = silent
 dotnet_diagnostic.CA1816.severity = none
 dotnet_diagnostic.CA1826.severity = none
+dotnet_diagnostic.CA2007.severity = error
 dotnet_diagnostic.IDE0042.severity = none
 dotnet_diagnostic.IDE0058.severity = none
+dotnet_diagnostic.VSTHRD100.severity = none
+dotnet_diagnostic.VSTHRD200.severity = none
 
 # XAML
 [*.xaml]

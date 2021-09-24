@@ -56,11 +56,11 @@ namespace RoslynPad
             {
                 if (documentViewModel.IsFolder)
                 {
-                    Task.Run(() => Process.Start(documentViewModel.Path));
+                    _ = Task.Run(() => Process.Start(documentViewModel.Path));
                 }
                 else
                 {
-                    Task.Run(() => Process.Start("explorer.exe", "/select," + documentViewModel.Path));
+                    _ = Task.Run(() => Process.Start("explorer.exe", "/select," + documentViewModel.Path));
                 }
             }
         }

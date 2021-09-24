@@ -8,17 +8,16 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Build\RoslynPad.Build.csproj" />
-    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.1" />
-    <PackageReference Include="Microsoft.Win32.Registry" Version="4.7.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
     <PackageReference Include="NuGet.Commands" Version="5.11.0" />
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageReference Include="System.Reactive.Core" Version="4.1.2" />
+    <PackageReference Include="System.Reactive.Core" Version="$(DotnetVersion)" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="$(DotnetVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
   </ItemGroup>
 </Project>

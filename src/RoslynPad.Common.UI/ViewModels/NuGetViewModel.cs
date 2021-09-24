@@ -123,7 +123,7 @@ namespace RoslynPad.UI
 
         async Task<IReadOnlyList<INuGetPackage>> INuGetCompletionProvider.SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken)
         {
-            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken);
+            var packages = await GetPackagesAsync(searchString, includePrerelease: true, exactMatch, cancellationToken).ConfigureAwait(false);
             return packages;
         }
 
@@ -262,7 +262,7 @@ namespace RoslynPad.UI
             var cancellationToken = searchCts.Token;
             _searchCts = searchCts;
 
-            Task.Run(() => PerformSearch(SearchTerm, cancellationToken), cancellationToken);
+            _ = Task.Run(() => PerformSearch(SearchTerm, cancellationToken), cancellationToken);
         }
 
         private async Task PerformSearch(string searchTerm, CancellationToken cancellationToken)

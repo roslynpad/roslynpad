@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
-using RoslynPad.Runtime;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace RoslynPad.Build
@@ -35,6 +34,6 @@ namespace RoslynPad.Build
                     MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,
                         statement.Expression,
-                        IdentifierName(nameof(ObjectExtensions.Dump))))));
+                        IdentifierName("Dump")))));
     }
 }

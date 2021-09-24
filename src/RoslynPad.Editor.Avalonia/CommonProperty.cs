@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using System;
-using RoslynPad.Utilities;
 
 namespace RoslynPad.Editor
 {

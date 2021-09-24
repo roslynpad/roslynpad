@@ -7,7 +7,7 @@ using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 
-namespace RoslynPad.Utilities
+namespace RoslynPad.Build
 {
     internal static class IOUtilities
     {
@@ -76,7 +76,7 @@ namespace RoslynPad.Utilities
         public static IEnumerable<string> EnumerateFilesRecursive(string path, string searchPattern = "*")
         {
             return EnumerateDirectories(path).Aggregate(
-                EnumerateFiles(path, searchPattern), 
+                EnumerateFiles(path, searchPattern),
                 (current, directory) => current.Concat(EnumerateFiles(directory, searchPattern)));
         }
 
@@ -90,7 +90,7 @@ namespace RoslynPad.Utilities
             }
         }
 
-        public static Task<string> ReadAllTextAsync(string path) => 
+        public static Task<string> ReadAllTextAsync(string path) =>
             PerformIOAsync(() => ReadAllTextInternalAsync(path), string.Empty);
 
         private static async Task<string> ReadAllTextInternalAsync(string path)

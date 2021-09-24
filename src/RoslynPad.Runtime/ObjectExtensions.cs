@@ -44,7 +44,7 @@ namespace RoslynPad.Runtime
 
         internal delegate void DumpDelegate(in DumpData data);
     }
-    
+
     internal struct DumpData
     {
         public object? Object { get; }
@@ -82,11 +82,11 @@ namespace RoslynPad.Runtime
         public static DumpQuotas Default { get; } = new DumpQuotas(DefaultMaxDepth, DefaultMaxExpandedDepth, DefaultMaxEnumerableLength, DefaultMaxStringLength);
 
         [Pure]
-        internal DumpQuotas StepDown() => 
+        internal DumpQuotas StepDown() =>
             new(MaxDepth - 1, MaxExpandedDepth - 1, MaxEnumerableLength, MaxStringLength);
 
         [Pure]
-        internal DumpQuotas WithMaxDepth(int maxDepth) => 
+        internal DumpQuotas WithMaxDepth(int maxDepth) =>
             new(maxDepth, MaxExpandedDepth, MaxEnumerableLength, MaxStringLength);
     }
 }

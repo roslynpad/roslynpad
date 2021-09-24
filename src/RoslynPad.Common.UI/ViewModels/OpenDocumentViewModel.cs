@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RoslynPad.Build;
 using RoslynPad.Roslyn.Rename;
-using RoslynPad.Runtime;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI
@@ -80,13 +79,13 @@ namespace RoslynPad.UI
 
                 if (value)
                 {
-                    _ = Run();
+                    _ = RunAsync();
 
                     if (_liveModeTimer == null)
                     {
                         _liveModeTimer = new Timer(o => _dispatcher.InvokeAsync(() =>
                         {
-                            var runTask = Run();
+                            var runTask = RunAsync();
                         }), null, Timeout.Infinite, Timeout.Infinite);
                     }
                 }
@@ -148,13 +147,13 @@ namespace RoslynPad.UI
             _platformsFactory.Changed += InitializePlatforms;
 
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
-            SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
-            RunCommand = commands.CreateAsync(Run, () => !IsRunning && RestoreSuccessful && Platform != null);
+            SaveCommand = commands.CreateAsync(() => SaveAsync(promptSave: false));
+            RunCommand = commands.CreateAsync(RunAsync, () => !IsRunning && RestoreSuccessful && Platform != null);
             TerminateCommand = commands.CreateAsync(TerminateAsync, () => Platform != null);
-            FormatDocumentCommand = commands.CreateAsync(FormatDocument);
-            CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
-            UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
-            RenameSymbolCommand = commands.CreateAsync(RenameSymbol);
+            FormatDocumentCommand = commands.CreateAsync(FormatDocumentAsync);
+            CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Comment));
+            UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Uncomment));
+            RenameSymbolCommand = commands.CreateAsync(RenameSymbolAsync);
             ToggleLiveModeCommand = commands.Create(() => IsLiveMode = !IsLiveMode);
 
             ILText = DefaultILText;
@@ -254,8 +253,6 @@ namespace RoslynPad.UI
 
         public event Action? ResultsAvailable;
 
-        private void AddResult(object o) => AddResult(ResultObject.Create(o, DumpQuotas.Default));
-
         private void AddResult(IResultObject o) => _dispatcher.InvokeAsync(() =>
         {
             _results.Add(o);
@@ -303,7 +300,7 @@ namespace RoslynPad.UI
 
         public void SendInput(string input) => _ = _executionHost?.SendInputAsync(input);
 
-        private async Task RenameSymbol()
+        private async Task RenameSymbolAsync()
         {
             var host = MainViewModel.RoslynHost;
             var document = host.GetDocument(DocumentId);
@@ -317,7 +314,7 @@ namespace RoslynPad.UI
 
             var dialog = _serviceProvider.GetRequiredService<IRenameSymbolDialog>();
             dialog.Initialize(symbol.Name);
-            await dialog.ShowAsync();
+            await dialog.ShowAsync().ConfigureAwait(true);
             if (dialog.ShouldRename)
             {
                 var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName ?? string.Empty,
@@ -335,7 +332,7 @@ namespace RoslynPad.UI
             Uncomment
         }
 
-        private async Task CommentUncommentSelection(CommentAction action)
+        private async Task CommentUncommentSelectionAsync(CommentAction action)
         {
             const string singleLineCommentString = "//";
 
@@ -386,11 +383,11 @@ namespace RoslynPad.UI
             MainViewModel.RoslynHost.UpdateDocument(document.WithText(documentText.WithChanges(changes)));
             if (action == CommentAction.Uncomment && MainViewModel.Settings.FormatDocumentOnComment)
             {
-                await FormatDocument().ConfigureAwait(false);
+                await FormatDocumentAsync().ConfigureAwait(false);
             }
         }
 
-        private async Task FormatDocument()
+        private async Task FormatDocumentAsync()
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
             var formattedDocument = await Formatter.FormatAsync(document!).ConfigureAwait(false);
@@ -446,7 +443,7 @@ namespace RoslynPad.UI
 
         private void SetIsRunning(bool value) => _dispatcher.InvokeAsync(() => IsRunning = value);
 
-        public async Task AutoSave()
+        public async Task AutoSaveAsync()
         {
             if (!IsDirty) return;
 
@@ -468,25 +465,22 @@ namespace RoslynPad.UI
 
             Document = document;
 
-            await SaveDocument(Document.GetAutoSavePath()).ConfigureAwait(false);
+            await SaveDocumentAsync(Document.GetAutoSavePath()).ConfigureAwait(false);
         }
 
-        public void OpenBuildPath()
+        public void OpenBuildPath() => _ = Task.Run(() =>
         {
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(new Uri("file://" + BuildPath).ToString()) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    _telemetryProvider.ReportError(ex);
-                }
-            });
-        }
+                Process.Start(new ProcessStartInfo(new Uri("file://" + BuildPath).ToString()) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                _telemetryProvider.ReportError(ex);
+            }
+        });
 
-        public async Task<SaveResult> Save(bool promptSave)
+        public async Task<SaveResult> SaveAsync(bool promptSave)
         {
             if (_isSaving) return SaveResult.Cancel;
             if (!IsDirty && promptSave) return SaveResult.Save;
@@ -501,7 +495,7 @@ namespace RoslynPad.UI
                     dialog.ShowDontSave = promptSave;
                     dialog.AllowNameEdit = true;
                     dialog.FilePathFactory = name => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, name);
-                    await dialog.ShowAsync();
+                    await dialog.ShowAsync().ConfigureAwait(true);
                     result = dialog.Result;
                     if (result == SaveResult.Save && dialog.DocumentName != null)
                     {
@@ -515,13 +509,13 @@ namespace RoslynPad.UI
                     var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
                     dialog.ShowDontSave = true;
                     dialog.DocumentName = Document.Name;
-                    await dialog.ShowAsync();
+                    await dialog.ShowAsync().ConfigureAwait(true);
                     result = dialog.Result;
                 }
 
                 if (result == SaveResult.Save && Document != null)
                 {
-                    await SaveDocument(Document.GetSavePath()).ConfigureAwait(true);
+                    await SaveDocumentAsync(Document.GetSavePath()).ConfigureAwait(true);
                     IsDirty = false;
                 }
 
@@ -538,7 +532,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private async Task SaveDocument(string path)
+        private async Task SaveDocumentAsync(string path)
         {
             if (!_isInitialized) return;
 
@@ -613,7 +607,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private async Task Run()
+        private async Task RunAsync()
         {
             if (IsRunning) return;
 
@@ -635,7 +629,7 @@ namespace RoslynPad.UI
             var cancellationToken = _runCts!.Token;
             try
             {
-                var code = await GetCode(cancellationToken).ConfigureAwait(true);
+                var code = await GetCodeAsync(cancellationToken).ConfigureAwait(true);
                 if (_executionHost != null)
                 {
                     // Make sure the execution working directory matches the current script path
@@ -650,12 +644,13 @@ namespace RoslynPad.UI
             {
                 foreach (var diagnostic in ex.Diagnostics)
                 {
-                    _results.Add(ResultObject.Create(diagnostic, DumpQuotas.Default));
+                    var startLinePosition = diagnostic.Location.GetLineSpan().StartLinePosition;
+                    _results.Add(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(), startLinePosition.Line, startLinePosition.Character));
                 }
             }
             catch (Exception ex)
             {
-                AddResult(ex);
+                AddResult(new ExceptionResultObject { Value = ex.ToString() });
             }
             finally
             {
@@ -681,10 +676,10 @@ namespace RoslynPad.UI
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 
-        private void UpdatePackages(bool alwaysRestore = true) => 
+        private void UpdatePackages(bool alwaysRestore = true) =>
             _ = _executionHost.UpdateReferencesAsync(alwaysRestore);
 
-        private async Task<string> GetCode(CancellationToken cancellationToken)
+        private async Task<string> GetCodeAsync(CancellationToken cancellationToken)
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
             if (document == null)
@@ -706,7 +701,7 @@ namespace RoslynPad.UI
             _runCts = new CancellationTokenSource();
         }
 
-        public async Task<string> LoadText()
+        public async Task<string> LoadTextAsync()
         {
             if (Document == null)
             {

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
+using RoslynPad.Build;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
 
@@ -36,7 +37,7 @@ namespace RoslynPad.UI
         private DocumentViewModel _documentRoot;
         private DocumentWatcher _documentWatcher;
 
-        public IApplicationSettings Settings { get; }
+        public IApplicationSettingsValues Settings { get; }
 
         public DocumentViewModel DocumentRoot
         {
@@ -66,7 +67,7 @@ namespace RoslynPad.UI
             _documentFileWatcher = documentFileWatcher;
 
             settings.LoadDefault();
-            Settings = settings;
+            Settings = settings.Values;
 
             _telemetryProvider.Initialize(s_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
@@ -84,7 +85,7 @@ namespace RoslynPad.UI
             ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
-            ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
+            ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
 
@@ -198,7 +199,7 @@ namespace RoslynPad.UI
 
         private static void ReportProblem()
         {
-            Task.Run(() => Process.Start(
+            _ = Task.Run(() => Process.Start(
                 new ProcessStartInfo
                 {
                     FileName = "https://github.com/aelij/RoslynPad/issues",
@@ -357,7 +358,7 @@ namespace RoslynPad.UI
                 return;
             }
 
-            var result = await document.Save(promptSave: true).ConfigureAwait(true);
+            var result = await document.SaveAsync(promptSave: true).ConfigureAwait(true);
             if (result == SaveResult.Cancel)
             {
                 return;
@@ -376,7 +377,7 @@ namespace RoslynPad.UI
         {
             foreach (var document in OpenDocuments)
             {
-                await document.AutoSave().ConfigureAwait(false);
+                await document.AutoSaveAsync().ConfigureAwait(false);
             }
         }
 

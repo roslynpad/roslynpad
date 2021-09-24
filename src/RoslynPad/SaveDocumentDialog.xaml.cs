@@ -152,7 +152,7 @@ namespace RoslynPad
                     SaveButton.Visibility = Visibility.Collapsed;
                     OverwriteButton.Visibility = Visibility.Visible;
                     DocumentTextBox.IsEnabled = false;
-                    Dispatcher.InvokeAsync(() => OverwriteButton.Focus());
+                    _ = Dispatcher.InvokeAsync(() => OverwriteButton.Focus());
                 }
                 else
                 {

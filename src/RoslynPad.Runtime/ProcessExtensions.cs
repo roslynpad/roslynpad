@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace RoslynPad.Utilities
+namespace RoslynPad.Runtime
 {
     internal static class ProcessExtensions
     {

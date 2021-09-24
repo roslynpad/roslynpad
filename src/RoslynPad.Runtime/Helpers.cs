@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -14,7 +15,7 @@ namespace RoslynPad.Runtime
     {
         internal static event Action<double?>? Progress;
 
-        private static readonly Lazy<Task<SynchronizationContext>> _dispatcherTask = new(CreateWpfDispatcherAsync);
+        private static readonly Lazy<Task<SynchronizationContext>> s_dispatcherTask = new(CreateWpfDispatcherAsync);
 
         /// <summary>
         /// Creates a new thread running a WPF Dispatcher and returns a <see cref="SynchronizationContext"/> for that dispatcher.
@@ -52,10 +53,7 @@ namespace RoslynPad.Runtime
         /// A Dispatcher creates a message pump that can be used with most Windows UI frameworks (e.g. WPF, Windows Forms).
         /// Lazily creates a Dispatcher using <see cref="CreateWpfDispatcherAsync"/>).
         /// </summary>
-        public static SynchronizationContextAwaitable RunWpfAsync()
-        {
-            return new SynchronizationContextAwaitable(_dispatcherTask.Value);
-        }
+        public static SynchronizationContextAwaitable RunWpfAsync() => new(s_dispatcherTask.Value);
 
         /// <summary>
         /// Reports progress to the UI
@@ -65,37 +63,37 @@ namespace RoslynPad.Runtime
         {
             if (progress.HasValue)
             {
-                if (progress.Value < 0.0) progress = 0.0;
-                else if (progress.Value > 1.0) progress = 1.0;
+                if (progress.Value < 0.0)
+                {
+                    progress = 0.0;
+                }
+                else if (progress.Value > 1.0)
+                {
+                    progress = 1.0;
+                }
             }
 
             Progress?.Invoke(progress);
         }
 
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public struct SynchronizationContextAwaitable
         {
             private readonly Task<SynchronizationContext> _task;
 
-            public SynchronizationContextAwaitable(Task<SynchronizationContext> task)
-            {
-                _task = task;
-            }
+            public SynchronizationContextAwaitable(Task<SynchronizationContext> task) => _task = task;
 
             public SynchronizationContextAwaiter GetAwaiter() => new(_task);
         }
 
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public struct SynchronizationContextAwaiter : INotifyCompletion
         {
-            private static readonly SendOrPostCallback _postCallback = state => ((Action)state)();
+            private static readonly SendOrPostCallback s_postCallback = state => ((Action)state)();
 
             private readonly Task<SynchronizationContext> _task;
 
-            public SynchronizationContextAwaiter(Task<SynchronizationContext> task)
-            {
-                _task = task;
-            }
+            public SynchronizationContextAwaiter(Task<SynchronizationContext> task) => _task = task;
 
             public bool IsCompleted => false;
 
@@ -103,7 +101,7 @@ namespace RoslynPad.Runtime
             {
                 if (_task.Status == TaskStatus.RanToCompletion)
                 {
-                    _task.Result.Post(_postCallback, continuation);
+                    _task.Result.Post(s_postCallback, continuation);
                     return;
                 }
 
@@ -111,7 +109,7 @@ namespace RoslynPad.Runtime
                 {
                     if (t.Status == TaskStatus.RanToCompletion)
                     {
-                        t.Result.Post(_postCallback, continuation);
+                        t.Result.Post(s_postCallback, continuation);
                     }
                     else
                     {

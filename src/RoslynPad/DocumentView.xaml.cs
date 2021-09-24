@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Controls;
 using RoslynPad.Editor;
-using RoslynPad.Runtime;
+using RoslynPad.Build;
 using RoslynPad.UI;
 
 namespace RoslynPad
@@ -73,7 +73,7 @@ namespace RoslynPad
             _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
             Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
 
-            var documentText = await _viewModel.LoadText().ConfigureAwait(true);
+            var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
             var documentId = Editor.Initialize(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
                 _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
@@ -139,7 +139,7 @@ namespace RoslynPad
 
         private void NuGetOnPackageInstalled(PackageData package)
         {
-            Dispatcher.InvokeAsync(() =>
+            _ = Dispatcher.InvokeAsync(() =>
             {
                 var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
                 Editor.Document.Insert(0, text, AnchorMovementType.Default);
@@ -164,7 +164,7 @@ namespace RoslynPad
 
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
-            Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
+            _ = Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
         }
 
         public void Dispose()
@@ -208,7 +208,7 @@ namespace RoslynPad
             Editor.TextArea.Caret.Column = result.Column;
             Editor.ScrollToLine(result.Line);
 
-            Dispatcher.InvokeAsync(() => Editor.Focus());
+            _ = Dispatcher.InvokeAsync(() => Editor.Focus());
         }
 
         private void CopyCommand(object sender, ExecutedRoutedEventArgs e)

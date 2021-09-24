@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace RoslynPad.UI
 {
@@ -11,16 +12,13 @@ namespace RoslynPad.UI
 
         public virtual void Initialize(string version, IApplicationSettings settings)
         {
-            if (settings.SendErrors)
+            if (settings.Values.SendErrors)
             {
                 var instrumentationKey = GetInstrumentationKey();
 
                 if (!string.IsNullOrEmpty(instrumentationKey))
                 {
-                    _client = new TelemetryClient
-                    {
-                        InstrumentationKey = instrumentationKey
-                    };
+                    _client = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
 
                     _client.Context.Component.Version = version;
 

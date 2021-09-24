@@ -10,13 +10,12 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <Compile Include="..\RoslynPad.Runtime\Utilities\ReflectionUtil.cs" Link="ReflectionUtil.cs" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.10.4" />
-    <PackageReference Include="System.Reactive.Linq" Version="4.3.1" />
+    <PackageReference Include="System.Reactive.Linq" Version="$(DotnetVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />

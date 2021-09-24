@@ -3,7 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace RoslynPad.Utilities
+namespace RoslynPad.Editor
 {
     internal static class ReflectionUtil
     {

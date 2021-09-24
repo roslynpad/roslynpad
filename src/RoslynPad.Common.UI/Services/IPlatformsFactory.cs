@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using RoslynPad.Build;
 
 namespace RoslynPad.UI
 {

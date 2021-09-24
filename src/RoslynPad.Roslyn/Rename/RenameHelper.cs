@@ -96,7 +96,7 @@ namespace RoslynPad.Roslyn.Rename
                 symbol.Language == LanguageNames.VisualBasic &&
                 triggerToken.ToString().Equals("New", StringComparison.OrdinalIgnoreCase))
             {
-                var originalSymbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, triggerToken.SpanStart, workspace, cancellationToken: cancellationToken);
+                var originalSymbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, triggerToken.SpanStart, workspace, cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 if (originalSymbol != null && originalSymbol.IsConstructor())
                 {

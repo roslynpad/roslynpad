@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace RoslynPad
+namespace RoslynPad.Build
 {
     public class ExecutionPlatform
     {

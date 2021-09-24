@@ -5,7 +5,7 @@ using Avalonia.Markup.Xaml;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
-using RoslynPad.Runtime;
+using RoslynPad.Build;
 using RoslynPad.UI;
 
 namespace RoslynPad
@@ -53,7 +53,7 @@ namespace RoslynPad
             viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
             _editor.FontSize = viewModel.MainViewModel.EditorFontSize;
 
-            var documentText = await viewModel.LoadText().ConfigureAwait(true);
+            var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 
             var documentId = _editor.Initialize(viewModel.MainViewModel.RoslynHost,
                 new ClassificationHighlightColors(),
@@ -68,7 +68,7 @@ namespace RoslynPad
 
         private void NuGetOnPackageInstalled(PackageData package)
         {
-            this.GetDispatcher().InvokeAsync(() =>
+            _ = this.GetDispatcher().InvokeAsync(() =>
             {
                 var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
                 _editor.Document.Insert(0, text, AnchorMovementType.Default);

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RoslynPad.NuGet
+namespace RoslynPad.Build
 {
     internal class LibraryRef : IEquatable<LibraryRef>
     {
