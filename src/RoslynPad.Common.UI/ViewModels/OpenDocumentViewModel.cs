@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NuGet.Packaging;
 using RoslynPad.Build;
 using RoslynPad.Roslyn.Rename;
 using RoslynPad.Utilities;
@@ -35,6 +36,7 @@ namespace RoslynPad.UI
         private readonly IPlatformsFactory _platformsFactory;
         private readonly IExecutionHost _executionHost;
         private readonly ObservableCollection<IResultObject> _results;
+        private readonly List<RestoreResultObject> _restoreResults;
         private readonly ExecutionHostParameters _executionHostParameters;
 
         private CancellationTokenSource? _runCts;
@@ -64,8 +66,7 @@ namespace RoslynPad.UI
             ? Path.GetDirectoryName(Document.Path)!
             : MainViewModel.DocumentRoot.Path;
 
-        public IEnumerable<object> Results => _results;
-        internal IEnumerable<IResultObject> ResultsInternal => _results;
+        public IEnumerable<IResultObject> Results => _results;
 
         public IDelegateCommand ToggleLiveModeCommand { get; }
 
@@ -136,6 +137,7 @@ namespace RoslynPad.UI
             _platformsFactory = serviceProvider.GetRequiredService<IPlatformsFactory>();
             _serviceProvider = serviceProvider;
             _results = new ObservableCollection<IResultObject>();
+            _restoreResults = new List<RestoreResultObject>();
 
             MainViewModel = mainViewModel;
             CommandProvider = commands;
@@ -176,7 +178,7 @@ namespace RoslynPad.UI
             _executionHost.Disassembled += ExecutionHostOnDisassembled;
             _executionHost.RestoreStarted += OnRestoreStarted;
             _executionHost.RestoreCompleted += OnRestoreCompleted;
-            _executionHost.RestoreMessage += AddResult;
+            _executionHost.RestoreMessage += AddRestoreResult;
             _executionHost.ProgressChanged += p => ReportedProgress = p.Progress;
 
             InitializePlatforms();
@@ -194,7 +196,11 @@ namespace RoslynPad.UI
         {
             IsRestoring = false;
 
-            ClearResults(t => t is RestoreResultObject);
+            lock (_results)
+            {
+                _restoreResults.Clear();
+                ClearResults();
+            }
 
             if (restoreResult.Success)
             {
@@ -220,7 +226,7 @@ namespace RoslynPad.UI
             {
                 foreach (var error in restoreResult.Errors)
                 {
-                    AddResult(new RestoreResultObject(error, "Error"));
+                    AddRestoreResult(new RestoreResultObject(error, "Error"));
                 }
             }
 
@@ -253,11 +259,24 @@ namespace RoslynPad.UI
 
         public event Action? ResultsAvailable;
 
-        private void AddResult(IResultObject o) => _dispatcher.InvokeAsync(() =>
+        private void AddResult(IResultObject o)
         {
-            _results.Add(o);
+            lock (_results)
+            {
+                _results.Add(o);
+            }
+
             ResultsAvailable?.Invoke();
-        }, AppDispatcherPriority.Low);
+        }
+
+        private void AddRestoreResult(RestoreResultObject o)
+        {
+            lock (_results)
+            {
+                _restoreResults.Add(o);
+                AddRestoreResult(o);
+            }
+        }
 
         private void ExecutionHostOnInputRequest() => _dispatcher.InvokeAsync(() =>
         {
@@ -271,21 +290,17 @@ namespace RoslynPad.UI
             _onError?.Invoke(errorResult);
             if (errorResult != null)
             {
-                _results.Add(errorResult);
-
-                ResultsAvailable?.Invoke();
+                AddResult(errorResult);
             }
         }, AppDispatcherPriority.Low);
 
-        private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors) => _dispatcher.InvokeAsync(() =>
+        private void ExecutionHostOnCompilationErrors(IList<CompilationErrorResultObject> errors)
         {
             foreach (var error in errors)
             {
-                _results.Add(error);
+                AddResult(error);
             }
-
-            ResultsAvailable?.Invoke();
-        });
+        }
 
         private void ExecutionHostOnDisassembled(string il) => ILText = il;
 
@@ -645,7 +660,7 @@ namespace RoslynPad.UI
                 foreach (var diagnostic in ex.Diagnostics)
                 {
                     var startLinePosition = diagnostic.Location.GetLineSpan().StartLinePosition;
-                    _results.Add(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(), startLinePosition.Line, startLinePosition.Character));
+                    AddResult(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(), startLinePosition.Line, startLinePosition.Character));
                 }
             }
             catch (Exception ex)
@@ -661,18 +676,19 @@ namespace RoslynPad.UI
 
         private void StartExec()
         {
-            ClearResults(t => !(t is RestoreResultObject));
+            ClearResults();
 
             _onError?.Invoke(null);
         }
 
-        private void ClearResults(Func<IResultObject, bool> filter) => _dispatcher.InvokeAsync(() =>
+        private void ClearResults()
         {
-            foreach (var result in _results.Where(filter).ToArray())
+            lock (_results)
             {
-                _results.Remove(result);
+                _results.Clear();
+                _results.AddRange(_restoreResults);
             }
-        });
+        }
 
         private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 

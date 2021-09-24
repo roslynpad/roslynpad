@@ -351,7 +351,7 @@ namespace RoslynPad.UI
             CurrentOpenDocument = openDocument;
         }
 
-        public async Task CloseDocument(OpenDocumentViewModel document)
+        public async Task CloseDocument(OpenDocumentViewModel? document)
         {
             if (document == null)
             {

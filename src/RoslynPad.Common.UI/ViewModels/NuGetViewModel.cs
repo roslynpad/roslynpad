@@ -203,8 +203,13 @@ namespace RoslynPad.UI
             InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
         }
 
-        private void InstallPackage(PackageData package)
+        private void InstallPackage(PackageData? package)
         {
+            if (package == null)
+            {
+                return;
+            }
+
             OnPackageInstalled(package);
         }
 

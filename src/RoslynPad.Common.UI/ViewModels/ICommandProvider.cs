@@ -9,8 +9,8 @@ namespace RoslynPad.UI
     {
         IDelegateCommand Create(Action execute, Func<bool>? canExecute = null);
         IDelegateCommand CreateAsync(Func<Task> execute, Func<bool>? canExecute = null);
-        IDelegateCommand<T> Create<T>(Action<T> execute, Func<T, bool>? canExecute = null);
-        IDelegateCommand<T> CreateAsync<T>(Func<T, Task> execute, Func<T, bool>? canExecute = null);
+        IDelegateCommand<T> Create<T>(Action<T?> execute, Func<T?, bool>? canExecute = null);
+        IDelegateCommand<T> CreateAsync<T>(Func<T?, Task> execute, Func<T?, bool>? canExecute = null);
     }
 
     [Export(typeof(ICommandProvider)), Shared]
@@ -26,12 +26,12 @@ namespace RoslynPad.UI
             return new DelegateCommand(execute, canExecute);
         }
 
-        public IDelegateCommand<T> Create<T>(Action<T> execute, Func<T, bool>? canExecute = null)
+        public IDelegateCommand<T> Create<T>(Action<T?> execute, Func<T?, bool>? canExecute = null)
         {
             return new DelegateCommand<T>(execute, canExecute);
         }
 
-        public IDelegateCommand<T> CreateAsync<T>(Func<T, Task> execute, Func<T, bool>? canExecute = null)
+        public IDelegateCommand<T> CreateAsync<T>(Func<T?, Task> execute, Func<T?, bool>? canExecute = null)
         {
             return new DelegateCommand<T>(execute, canExecute);
         }

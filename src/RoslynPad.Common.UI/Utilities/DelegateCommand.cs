@@ -35,11 +35,7 @@ namespace RoslynPad.Utilities
             _canExecute = canExecute;
         }
 
-        public bool CanExecute()
-        {
-            return _canExecute == null || _canExecute();
-        }
-
+        public bool CanExecute() => _canExecute == null || _canExecute();
 
         public void Execute()
         {
@@ -59,36 +55,30 @@ namespace RoslynPad.Utilities
 
         public event EventHandler? CanExecuteChanged;
 
-        public void RaiseCanExecuteChanged()
-        {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        }
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
     internal class DelegateCommand<T> : IDelegateCommand<T>
     {
-        private readonly Action<T>? _action;
-        private readonly Func<T, bool>? _canExecute;
-        private readonly Func<T, Task>? _asyncAction;
+        private readonly Action<T?>? _action;
+        private readonly Func<T?, bool>? _canExecute;
+        private readonly Func<T?, Task>? _asyncAction;
 
-        public DelegateCommand(Action<T> action, Func<T, bool>? canExecute = null)
+        public DelegateCommand(Action<T?> action, Func<T?, bool>? canExecute = null)
         {
             _action = action;
             _canExecute = canExecute;
         }
 
-        public DelegateCommand(Func<T, Task> asyncAction, Func<T, bool>? canExecute = null)
+        public DelegateCommand(Func<T?, Task> asyncAction, Func<T?, bool>? canExecute = null)
         {
             _asyncAction = asyncAction;
             _canExecute = canExecute;
         }
 
-        public bool CanExecute(T parameter)
-        {
-            return _canExecute == null || _canExecute(parameter);
-        }
+        public bool CanExecute(T? parameter) => _canExecute == null || _canExecute(parameter);
 
-        public void Execute(T parameter)
+        public void Execute(T? parameter)
         {
             if (_asyncAction != null)
             {
@@ -100,29 +90,19 @@ namespace RoslynPad.Utilities
             }
         }
 
-#pragma warning disable CS8604 // Possible null reference argument.
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-        bool ICommand.CanExecute(object? parameter) => CanExecute((T)parameter);
+        bool ICommand.CanExecute(object? parameter) => CanExecute(GetParameter(parameter));
 
-        void ICommand.Execute(object? parameter) => Execute((T)parameter);
-#pragma warning restore CS8604 // Possible null reference argument.
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+        void ICommand.Execute(object? parameter) => Execute(GetParameter(parameter));
+
+        private static T? GetParameter(object? parameter) =>
+            typeof(T).IsValueType && parameter == null ? default : (T)parameter!;
 
         public event EventHandler? CanExecuteChanged;
 
-        public void RaiseCanExecuteChanged()
-        {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        }
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
-        void IDelegateCommand.Execute()
-        {
-            Execute(default!);
-        }
+        void IDelegateCommand.Execute() => Execute(default!);
 
-        bool IDelegateCommand.CanExecute()
-        {
-            return CanExecute(default!);
-        }
+        bool IDelegateCommand.CanExecute() => CanExecute(default!);
     }
 }

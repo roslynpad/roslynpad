@@ -322,12 +322,21 @@
                                                ItemsSource="{Binding Results}"
                                                KeyDown="OnTreeViewKeyDown"
                                                MouseDoubleClick="OnTreeViewDoubleClick"
-                                               ScrollViewer.VerticalScrollBarVisibility="Auto"
                                                VirtualizingPanel.IsVirtualizing="True"
                                                VirtualizingPanel.VirtualizationMode="Recycling"
                                                BorderBrush="#cccccc"
                                                ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged"
                                                ContextMenuOpening="ResultTree_OnContextMenuOpening">
+                            <FrameworkElement.Style>
+                                <Style TargetType="controls:TreeListView">
+                                    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </FrameworkElement.Style>
                             <FrameworkElement.CommandBindings>
                                 <CommandBinding Command="Copy"
                                                 Executed="CopyCommand" />

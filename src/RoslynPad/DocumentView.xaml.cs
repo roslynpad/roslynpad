@@ -15,6 +15,7 @@ using RoslynPad.Controls;
 using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
+using System.Windows.Data;
 
 namespace RoslynPad
 {
@@ -63,6 +64,8 @@ namespace RoslynPad
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
+            BindingOperations.EnableCollectionSynchronization(_viewModel.Results, _viewModel.Results);
+
             _viewModel.ResultsAvailable += ResultsAvailable;
             _viewModel.ReadInput += OnReadInput;
             _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
@@ -242,7 +245,7 @@ namespace RoslynPad
         private void CopyAllResultsToClipboard(bool withChildren)
         {
             var builder = new StringBuilder();
-            foreach (var result in _viewModel.ResultsInternal)
+            foreach (var result in _viewModel.Results)
             {
                 if (withChildren)
                 {
