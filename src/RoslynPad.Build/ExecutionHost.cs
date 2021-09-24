@@ -365,9 +365,9 @@ namespace RoslynPad.Build
                 }
 
                 var readOnlySequence = sequence.AsReadOnlySequence;
-                if (readOnlySequence.First.Span[1] == ':')
+                if (readOnlySequence.FirstSpan.Length > 1 && readOnlySequence.FirstSpan[1] == ':')
                 {
-                    switch (readOnlySequence.First.Span[0])
+                    switch (readOnlySequence.FirstSpan[0])
                     {
                         case (byte)'i':
                             ReadInput?.Invoke();
@@ -394,10 +394,10 @@ namespace RoslynPad.Build
             async ValueTask<SequencePosition?> ReadLineAsync()
             {
                 var readOnlySequence = sequence.AsReadOnlySequence;
-                var position = readOnlySequence.PositionOf(s_newLine[0]);
+                var position = readOnlySequence.PositionOf(s_newLine[^1]);
                 if (position != null)
                 {
-                    return readOnlySequence.GetPosition(s_newLine.Length, position.Value);
+                    return readOnlySequence.GetPosition(1, position.Value);
                 }
 
                 while (true)
@@ -409,12 +409,12 @@ namespace RoslynPad.Build
                         return null;
                     }
 
-                    var eolIndex = memory.Span.Slice(0, read).IndexOf(s_newLine[0]);
+                    var eolIndex = memory.Span.Slice(0, read).IndexOf(s_newLine[^1]);
                     if (eolIndex != -1)
                     {
                         var length = sequence.Length;
                         sequence.Advance(read);
-                        var index = length + eolIndex + s_newLine.Length;
+                        var index = length + eolIndex + 1;
                         return sequence.AsReadOnlySequence.GetPosition(index);
                     }
 
