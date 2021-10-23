@@ -190,7 +190,7 @@ namespace RoslynPadReplSample
 
                 IsReadOnly = true;
 
-                await Execute(hasResult));
+                await Execute(hasResult);
 
                 return true;
             }
