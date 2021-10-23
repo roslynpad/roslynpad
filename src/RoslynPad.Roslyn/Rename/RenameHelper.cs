@@ -1,9 +1,8 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Shared.Extensions;
@@ -62,54 +61,16 @@ namespace RoslynPad.Roslyn.Rename
             // RenameOverloads option should be forced on.
             var forceRenameOverloads = tokenRenameInfo.IsMemberGroup;
 
-            if (triggerToken.Parent != null && syntaxFactsService.IsTypeNamedVarInVariableOrFieldDeclaration(triggerToken, triggerToken.Parent))
-            {
-                // To check if var in this context is a real type, or the keyword, we need to 
-                // speculatively bind the identifier "var". If it returns a symbol, it's a real type,
-                // if not, it's the keyword.
-                // see bugs 659683 (compiler API) and 659705 (rename/workspace api) for examples
-                var symbolForVar = semanticModel.GetSpeculativeSymbolInfo(
-                    triggerToken.SpanStart,
-                    triggerToken.Parent,
-                    SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol;
-
-                if (symbolForVar == null)
-                {
-                    return null;
-                }
-            }
-
             var symbol = await RenameLocations.ReferenceProcessing.TryGetRenamableSymbolAsync(document, triggerToken.SpanStart, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbol == null)
             {
                 return null;
             }
 
-            if (symbol.Kind == SymbolKind.Alias && symbol.IsExtern)
+            if (symbol.Kind == SymbolKind.Alias && symbol.IsExtern ||
+                triggerToken.IsTypeNamedDynamic() && symbol.Kind == SymbolKind.DynamicType)
             {
                 return null;
-            }
-
-            // Cannot rename constructors in VB.  TODO: this logic should be in the VB subclass of this type.
-            var workspace = document.Project.Solution.Workspace;
-            if (symbol.Kind == SymbolKind.NamedType &&
-                symbol.Language == LanguageNames.VisualBasic &&
-                triggerToken.ToString().Equals("New", StringComparison.OrdinalIgnoreCase))
-            {
-                var originalSymbol = await SymbolFinder.FindSymbolAtPositionAsync(semanticModel, triggerToken.SpanStart, workspace, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                if (originalSymbol != null && originalSymbol.IsConstructor())
-                {
-                    return null;
-                }
-            }
-
-            if (syntaxFactsService.IsTypeNamedDynamic(triggerToken, triggerToken.Parent))
-            {
-                if (symbol.Kind == SymbolKind.DynamicType)
-                {
-                    return null;
-                }
             }
 
             // we allow implicit locals and parameters of Event handlers

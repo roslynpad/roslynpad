@@ -146,7 +146,6 @@ namespace RoslynPad.UI
 
             _restoreSuccessful = true; // initially set to true so we can immediately start running and wait for restore
             _dispatcher = appDispatcher;
-            _platformsFactory.Changed += InitializePlatforms;
 
             OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
             SaveCommand = commands.CreateAsync(() => SaveAsync(promptSave: false));
@@ -274,7 +273,7 @@ namespace RoslynPad.UI
             lock (_results)
             {
                 _restoreResults.Add(o);
-                AddRestoreResult(o);
+                AddResult(o);
             }
         }
 
