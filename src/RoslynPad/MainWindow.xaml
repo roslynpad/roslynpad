@@ -89,6 +89,11 @@
                             <TextBlock Text="{Binding Content.Title}" />
                         </DataTemplate>
                     </dock:DockingManager.DocumentPaneMenuItemHeaderTemplate>
+                    <dock:DockingManager.LayoutItemContainerStyle>
+                        <Style TargetType="{x:Type dock:LayoutItem}">
+                            <Setter Property="Title" Value="{Binding Model.Title}"/>
+                        </Style>
+                    </dock:DockingManager.LayoutItemContainerStyle>
                     <dock:LayoutRoot>
                         <dock:LayoutPanel Orientation="Horizontal">
                             <dock:LayoutAnchorablePane Name="Documents"
