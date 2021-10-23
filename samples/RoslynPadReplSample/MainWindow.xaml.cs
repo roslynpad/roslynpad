@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -10,12 +11,16 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Scripting.Hosting;
+using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Scripting.Hosting;
+using Microsoft.CodeAnalysis.Shared.Utilities;
+
 
 namespace RoslynPadReplSample
 {
@@ -26,6 +31,7 @@ namespace RoslynPadReplSample
     {
         private readonly ObservableCollection<DocumentViewModel> _documents;
         private RoslynHost _host;
+        private DocumentationProviderService _documentationProviderService;
 
         public MainWindow()
         {
@@ -40,15 +46,21 @@ namespace RoslynPadReplSample
         {
             Loaded -= OnLoaded;
 
+            _documentationProviderService = new();
+
+            var objectLocation = typeof(object).Assembly.Location;
+            var regexLocation = typeof(System.Text.RegularExpressions.Regex).Assembly.Location;
+            var enumerableLocation = typeof(System.Linq.Enumerable).Assembly.Location;
+
             _host = new RoslynHost(additionalAssemblies: new[]
             {
                 Assembly.Load("RoslynPad.Roslyn.Windows"),
                 Assembly.Load("RoslynPad.Editor.Windows")
             }, RoslynHostReferences.NamespaceDefault.With(new[]
-            { 
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
+            {
+                MetadataReference.CreateFromFile(objectLocation, documentation:_documentationProviderService.GetDocumentationProvider(objectLocation)),
+                MetadataReference.CreateFromFile(regexLocation, documentation:_documentationProviderService.GetDocumentationProvider(regexLocation)),
+                MetadataReference.CreateFromFile(enumerableLocation, documentation:_documentationProviderService.GetDocumentationProvider(enumerableLocation)),
             }));
 
             AddNewDocument();
@@ -244,6 +256,119 @@ namespace RoslynPadReplSample
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
+        }
+
+        sealed class DocumentationProviderService : IDocumentationProviderService
+        {
+            #region Fields
+
+            private static readonly Lazy<(string assemblyPath, string docPath)> _referenceAssembliesPath =
+                new(GetReferenceAssembliesPath);
+
+            private readonly ConcurrentDictionary<string, DocumentationProvider> _assemblyPathToDocumentationProviderMap
+                = new();
+            #endregion
+
+            #region Properties
+
+            public static (string assemblyPath, string docPath) ReferenceAssembliesPath => _referenceAssembliesPath.Value;
+            #endregion
+
+            #region Public Methods
+
+            public DocumentationProvider GetDocumentationProvider(string location)
+            {
+                string finalPath = Path.ChangeExtension(location, "xml");
+
+                return _assemblyPathToDocumentationProviderMap.GetOrAdd(location,
+                    _ =>
+                    {
+                        if (!File.Exists(finalPath))
+                            finalPath = GetFilePath(ReferenceAssembliesPath.docPath, finalPath) ??
+                            GetFilePath(ReferenceAssembliesPath.assemblyPath, finalPath);
+
+                        return finalPath == null ? null : XmlDocumentationProvider.CreateFromFile(finalPath);
+                    });
+            }
+            #endregion
+
+            #region Private Methods
+
+            private static string GetFilePath(string path, string location)
+            {
+                if (path != null)
+                {
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    var referenceLocation = Path.Combine(path, Path.GetFileName(location));
+                    if (File.Exists(referenceLocation))
+                        return referenceLocation;
+                }
+
+                return null;
+            }
+
+            private static (string assemblyPath, string docPath) GetReferenceAssembliesPath()
+            {
+                string assemblyPath = null;
+                string docPath = null;
+
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    // all NuGet
+                    return (assemblyPath, docPath);
+
+                var programFiles = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+
+                if (string.IsNullOrEmpty(programFiles))
+                    programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
+
+                if (string.IsNullOrEmpty(programFiles))
+                    return (assemblyPath, docPath);
+
+                var path = Path.Combine(programFiles, @"Reference Assemblies\Microsoft\Framework\.NETFramework");
+                if (Directory.Exists(path))
+                {
+                    assemblyPath = IOUtilities.PerformIO(() => Directory.GetDirectories(path), Array.Empty<string>())
+                        .Select(x => new { path = x, version = GetFxVersionFromPath(x) })
+                        .OrderByDescending(x => x.version)
+                        .FirstOrDefault(x => File.Exists(Path.Combine(x.path, "System.dll")))?.path;
+
+                    if (assemblyPath == null || !File.Exists(Path.Combine(assemblyPath, "System.xml")))
+                        docPath = GetReferenceDocumentationPath(path);
+                }
+
+                return (assemblyPath, docPath);
+            }
+
+            private static string GetReferenceDocumentationPath(string path)
+            {
+                string docPath = null;
+
+                var docPathTemp = Path.Combine(path, "V4.X");
+                if (File.Exists(Path.Combine(docPathTemp, "System.xml")))
+                    docPath = docPathTemp;
+                else
+                {
+                    var localeDirectory = IOUtilities.PerformIO(() => Directory.GetDirectories(docPathTemp),
+                        Array.Empty<string>()).FirstOrDefault();
+                    if (localeDirectory != null && File.Exists(Path.Combine(localeDirectory, "System.xml")))
+                        docPath = localeDirectory;
+                }
+
+                return docPath;
+            }
+
+            private static Version GetFxVersionFromPath(string path)
+            {
+                var name = Path.GetFileName(path);
+                if (name?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    if (Version.TryParse(name.Substring(1), out var version))
+                        return version;
+                }
+
+                return new Version(0, 0);
+            }
+            #endregion
         }
     }
 }

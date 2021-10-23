@@ -7,8 +7,10 @@
     <NoWarn>1701;1702</NoWarn>
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <InternalsAssemblyNames>Microsoft.CodeAnalysis.CSharp;Microsoft.CodeAnalysis.Features;Microsoft.CodeAnalysis.CSharp.Features;Microsoft.CodeAnalysis.Scripting;Microsoft.CodeAnalysis.CSharp.Scripting;Microsoft.CodeAnalysis.Workspaces;Microsoft.CodeAnalysis.CSharp.Workspaces;Microsoft.CodeAnalysis.Extensions;Microsoft.CodeAnalysis.PooledObjects</InternalsAssemblyNames>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.5.0" PrivateAssets="All" />
     <PackageReference Include="RoslynPad.Editor.Windows" Version="1.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.6.0" />
   </ItemGroup>
