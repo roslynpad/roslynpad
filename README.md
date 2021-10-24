@@ -8,7 +8,7 @@ A cross-platform C# editor based on Roslyn and AvalonEdit
 
 Also available to download in the Microsoft Store:
 
-<a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://getbadgecdn.azureedge.net/images/English_S.png" alt="Microsoft Store badge logo" /></a>
+<a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://getbadgecdn.azureedge.net/images/English_S.png" height="50" alt="Microsoft Store badge logo" /></a>
 
 ## Packages
 
