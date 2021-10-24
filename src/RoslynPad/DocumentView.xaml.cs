@@ -36,11 +36,15 @@ namespace RoslynPad
             Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
             Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
             Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
+            Editor.TextArea.SelectionChanged += EditorSelectionChanged;
 
             _syncContext = SynchronizationContext.Current;
 
             DataContextChanged += OnDataContextChanged;
         }
+
+        private void EditorSelectionChanged(object? sender, EventArgs e) 
+            => _viewModel.SelectedText = Editor.SelectedText;
 
         private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
         {
