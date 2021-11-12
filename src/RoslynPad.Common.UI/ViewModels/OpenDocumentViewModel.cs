@@ -58,6 +58,7 @@ namespace RoslynPad.UI
         private bool _restoreSuccessful;
         private double? _reportedProgress;
         private SourceCodeKind? _sourceCodeKind;
+        private string? _selectedText;
 
         public string Id { get; }
         public string BuildPath { get; }
@@ -65,6 +66,12 @@ namespace RoslynPad.UI
         public string WorkingDirectory => Document != null
             ? Path.GetDirectoryName(Document.Path)!
             : MainViewModel.DocumentRoot.Path;
+
+        public string? SelectedText
+        {
+            get => _selectedText;
+            set => SetProperty(ref _selectedText, value);
+        }
 
         public IEnumerable<IResultObject> Results => _results;
 
@@ -705,6 +712,11 @@ namespace RoslynPad.UI
 
         private async Task<string> GetCodeAsync(CancellationToken cancellationToken)
         {
+            if (!string.IsNullOrWhiteSpace(SelectedText))
+            {
+                return SelectedText;
+            }
+               
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
             if (document == null)
             {
