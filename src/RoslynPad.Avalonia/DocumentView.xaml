@@ -87,6 +87,9 @@
                     IsEnabled="{Binding IsRunning}" />
             <DropDown Items="{Binding AvailablePlatforms, Mode=OneTime}"
                       SelectedItem="{Binding Platform}" />
+            <Button Content="{DynamicResource SetPlatform}"
+                    ToolTip.Tip="Set platform as default"
+                    Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}" />
             <Separator />
             <Button Command="{Binding SaveCommand, Mode=OneTime}"
                     ToolTip.Tip="Save (Ctrl+S)"

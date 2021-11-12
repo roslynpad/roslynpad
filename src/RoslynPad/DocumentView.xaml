@@ -99,7 +99,7 @@
                 </Menu>
                 <Grid Visibility="{Binding HasReportedProgress, Converter={StaticResource BooleanToVisibilityConverter}}"
                       Width="60"
-                      Margin="5, 0" >
+                      Margin="5, 0">
                     <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}"
                                  Minimum="0.0"
                                  Maximum="1.0" />
@@ -112,7 +112,11 @@
                         Content="{StaticResource Stop}"
                         IsEnabled="{Binding IsRunning}" />
                 <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
-                          SelectedItem="{Binding Platform}" />
+                          SelectedItem="{Binding Platform}"
+                          HorizontalContentAlignment="Stretch" />
+                <Button Content="{StaticResource SetPlatform}"
+                        ToolTip="Set platform as default"
+                        Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}"  />
                 <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
@@ -329,10 +333,13 @@
                                                ContextMenuOpening="ResultTree_OnContextMenuOpening">
                             <FrameworkElement.Style>
                                 <Style TargetType="controls:TreeListView">
-                                    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+                                    <Setter Property="ScrollViewer.VerticalScrollBarVisibility"
+                                            Value="Hidden" />
                                     <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+                                        <Trigger Property="IsMouseOver"
+                                                 Value="True">
+                                            <Setter Property="ScrollViewer.VerticalScrollBarVisibility"
+                                                    Value="Auto" />
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>

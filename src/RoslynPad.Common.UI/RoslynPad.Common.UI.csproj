@@ -16,8 +16,7 @@
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageReference Include="System.Reactive.Core" Version="$(DotnetVersion)" />
-    <PackageReference Include="Microsoft.Win32.Registry" Version="$(DotnetVersion)" />
+    <PackageReference Include="System.Reactive.Core" Version="$(RxVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
   </ItemGroup>
 </Project>

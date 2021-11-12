@@ -32,7 +32,7 @@ Open `src\RoslynPad.sln` in Visual Studio 2019.
 
 ## Running the cross-platform .NET Core Avalonia version (on Mac or Linux)
 
-* Install .NET Core SDK 5.0
+* Install .NET Core SDK 6.0
 * Download and unzip `RoslynPadNetCore.zip`.
 * Run `dotnet RoslynPad.dll`
 

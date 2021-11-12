@@ -13,7 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.1.2.30" />
-    <PackageReference Include="System.Reactive.Linq" Version="$(DotnetVersion)" />
+    <PackageReference Include="System.Reactive.Linq" Version="$(RxVersion)" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">

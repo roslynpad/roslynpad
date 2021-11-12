@@ -50,20 +50,20 @@ namespace RoslynPad
 
         public string DefaultExt
         {
-            get => _dialog.DefaultExtension;
+            get => _dialog.DefaultExtension ?? string.Empty;
             set => _dialog.DefaultExtension = value;
         }
 
         public string FileName
         {
-            get => _dialog.InitialFileName;
+            get => _dialog.InitialFileName ?? string.Empty;
             set => _dialog.InitialFileName = value;
         }
 
         public Task<string?> ShowAsync()
         {
             var active = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.First(w => w.IsActive);
-            return _dialog.ShowAsync(active);
+            return _dialog.ShowAsync(active!);
         }
     }
 }

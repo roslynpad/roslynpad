@@ -14,8 +14,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.10.4" />
-    <PackageReference Include="System.Reactive.Linq" Version="$(DotnetVersion)" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="$(AvaloniaEditVersion)" />
+    <PackageReference Include="System.Reactive.Linq" Version="$(RxVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />

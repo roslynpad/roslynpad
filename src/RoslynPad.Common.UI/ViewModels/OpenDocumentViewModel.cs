@@ -69,6 +69,7 @@ namespace RoslynPad.UI
         public IEnumerable<IResultObject> Results => _results;
 
         public IDelegateCommand ToggleLiveModeCommand { get; }
+        public IDelegateCommand SetDefaultPlatformCommand { get; }
 
         public bool IsLiveMode
         {
@@ -156,6 +157,7 @@ namespace RoslynPad.UI
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Uncomment));
             RenameSymbolCommand = commands.CreateAsync(RenameSymbolAsync);
             ToggleLiveModeCommand = commands.Create(() => IsLiveMode = !IsLiveMode);
+            SetDefaultPlatformCommand = commands.Create(SetDefaultPlatform);
 
             ILText = DefaultILText;
 
@@ -183,6 +185,13 @@ namespace RoslynPad.UI
             InitializePlatforms();
         }
 
+        private void SetDefaultPlatform()
+        {
+            if (Platform != null)
+            {
+                MainViewModel.Settings.DefaultPlatformName = Platform.ToString();
+            }
+        }
         private void InitializePlatforms()
         {
             AvailablePlatforms = _platformsFactory.GetExecutionPlatforms().ToImmutableArray();
@@ -578,7 +587,7 @@ namespace RoslynPad.UI
             DocumentId = documentId;
             _isInitialized = true;
 
-            Platform = AvailablePlatforms.FirstOrDefault(p => p.Name == MainViewModel.Settings.DefaultPlatformName) ??
+            Platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
                        AvailablePlatforms.FirstOrDefault();
 
             UpdatePackages();

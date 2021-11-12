@@ -17,7 +17,8 @@ namespace RoslynPad.UI
             WriteIndented = true,
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
         private readonly ITelemetryProvider? _telemetryProvider;
@@ -85,7 +86,7 @@ namespace RoslynPad.UI
             try
             {
                 var json = File.ReadAllText(path);
-                _values = JsonSerializer.Deserialize<SerializableValues>(json) ?? new SerializableValues();
+                _values = JsonSerializer.Deserialize<SerializableValues>(json, s_serializerOptions) ?? new SerializableValues();
                 InitializeValues();
             }
             catch (Exception e)
@@ -101,9 +102,8 @@ namespace RoslynPad.UI
 
             try
             {
-                using var writer = File.Create(_path);
-                using var jsonWriter = new Utf8JsonWriter(writer);
-                JsonSerializer.Serialize(jsonWriter, _values, s_serializerOptions);
+                using var stream = File.Create(_path);
+                JsonSerializer.Serialize(stream, _values, s_serializerOptions);
             }
             catch (Exception e)
             {
