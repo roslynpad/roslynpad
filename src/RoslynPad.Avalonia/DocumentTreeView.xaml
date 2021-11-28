@@ -1,15 +1,11 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:roslynPad="using:RoslynPad"
+             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:ui="using:RoslynPad.UI"
              Width="200"
              x:Class="RoslynPad.DocumentTreeView">
     <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="/Resources/Icons.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
         <!--<roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
                                                  FilterProperty="IsSearchMatch"
                                                  Filter="FilterCollectionViewSourceConverter_OnFilter" />-->
@@ -88,10 +84,11 @@
                               Content="{StaticResource FileCollection}" />
                 <!--ToolTip="Search File Contents"-->
                 <!--Style="{StaticResource SearchButtonStyle}"-->
-                <Button DockPanel.Dock="Right"
-                        Command="{Binding ClearSearchCommand}"
-                        Content="{StaticResource Close}" />
-                <!--ToolTip="Clear search (Esc)"-->
+                <Button
+                    DockPanel.Dock="Right"
+                    Command="{Binding ClearSearchCommand}"
+                    Content="{StaticResource Close}"
+                    ToolTip.Tip="Clear search (Esc)" />
                 <!--Style="{StaticResource SearchButtonStyle}"-->
                 <!--Visibility="{Binding CanClearSearch, Converter={StaticResource BooleanToVisibilityConverter}}"-->
                 <Grid>
@@ -139,26 +136,32 @@
             <!--BorderBrush="DarkGray"-->
             <!--BorderThickness="0 0 0 1"-->
             <Button
+                BorderBrush="Transparent"
+                Background="Transparent"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
                 ToolTip.Tip="New Document (Ctrl+N)">
                 <!--ToolTip.Placement="Top"-->
-                <!--CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"-->
                 <DrawingPresenter
                     Drawing="{StaticResource CsFile}"
                     Width="16"
                     Height="16" />
             </Button>
             <Button
+                BorderBrush="Transparent"
+                Background="Transparent"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
                 ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
                 <!--ToolTip.Placement="Top"-->
-                <!--CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"-->
                 <DrawingPresenter
                     Drawing="{StaticResource CsFile}"
                     Width="16"
                     Height="16" />
             </Button>
             <Button
+                BorderBrush="Transparent"
+                Background="Transparent"
                 Command="{Binding OpenFileCommand, Mode=OneTime}"
                 ToolTip.Tip="Open File (Ctrl+O)">
                 <!--ToolTip.Placement="Top">-->
@@ -168,6 +171,8 @@
                     Height="16" />
             </Button>
             <Button
+                BorderBrush="Transparent"
+                Background="Transparent"
                 Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}"
                 ToolTip.Tip="Change Documents Location">
                 <!--ToolTip.Placement="Top"-->
