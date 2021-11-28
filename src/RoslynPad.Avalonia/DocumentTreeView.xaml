@@ -1,12 +1,181 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:roslynPad="using:RoslynPad"
+             xmlns:ui="using:RoslynPad.UI"
+             Width="200"
              x:Class="RoslynPad.DocumentTreeView">
-    <TreeView Items="{Binding DocumentRoot.Children}"
-              Name="Tree">
-        <TreeView.ItemTemplate>
-            <TreeDataTemplate ItemsSource="{Binding Children}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Resources/Icons.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+        <!--<roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
+                                                 FilterProperty="IsSearchMatch"
+                                                 Filter="FilterCollectionViewSourceConverter_OnFilter" />-->
+
+        <!--<HierarchicalDataTemplate DataType="{x:Type ui:DocumentViewModel}"
+                                  ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
+            <DockPanel Margin="0 2 0 2"
+                       VerticalAlignment="Center">
+                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+
+                <Image Name="Icon"
+                       Source="{StaticResource CsFile}"
+                       Height="12"
+                       Margin="0 0 3 0" />
                 <TextBlock Text="{Binding Name}" />
-            </TreeDataTemplate>
-        </TreeView.ItemTemplate>
-    </TreeView>
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
+                             Value="True">
+                    <Setter TargetName="Icon"
+                            Property="Source"
+                            Value="{StaticResource Folder}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </HierarchicalDataTemplate>-->
+
+        <!--<ContextMenu x:Key="DocumentItemContextMenu"
+                     x:Shared="False">
+            <MenuItem Header="_Open in File Explorer"
+                      Click="DocumentsContextMenu_OpenFolder_Click" />
+        </ContextMenu>-->
+
+        <!--<Style x:Key="DocumentItemContainerStyle"
+               TargetType="controls:TreeListViewItem"
+               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+            <EventSetter Event="MouseDoubleClick"
+                         Handler="OnDocumentClick" />
+            <EventSetter Event="KeyDown"
+                         Handler="OnDocumentKeyDown" />
+            <Setter Property="ContextMenu"
+                    Value="{StaticResource DocumentItemContextMenu}" />
+        </Style>-->
+
+        <!--<Style x:Key="SearchButtonStyle"
+               TargetType="ButtonBase">
+            <Setter Property="BorderBrush"
+                    Value="Transparent" />
+            <Setter Property="Background"
+                    Value="Transparent" />
+            <Setter Property="Width"
+                    Value="22" />
+            <Setter Property="Padding"
+                    Value="2" />
+        </Style>-->
+
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border
+            BorderBrush="#ABADB3"
+            BorderThickness="1,1,1,0"
+            >
+            <DockPanel>
+                <ToggleButton DockPanel.Dock="Right"
+                              IsChecked="{Binding SearchUsingRegex}"
+                              Content="{StaticResource RegularExpression}" />
+                <!--ToolTip="Use Regular Expressions"-->
+                <!--Style="{StaticResource SearchButtonStyle}"-->
+                <ToggleButton DockPanel.Dock="Right"
+                              IsChecked="{Binding SearchFileContents}"
+                              Content="{StaticResource FileCollection}" />
+                <!--ToolTip="Search File Contents"-->
+                <!--Style="{StaticResource SearchButtonStyle}"-->
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding ClearSearchCommand}"
+                        Content="{StaticResource Close}" />
+                <!--ToolTip="Clear search (Esc)"-->
+                <!--Style="{StaticResource SearchButtonStyle}"-->
+                <!--Visibility="{Binding CanClearSearch, Converter={StaticResource BooleanToVisibilityConverter}}"-->
+                <Grid>
+                    <!--<TextBox Name="SearchText"
+                             BorderThickness="0"
+                             Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                             KeyDown="Search_OnKeyDown"
+                             />-->
+                    <TextBlock Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               Foreground="DarkGray">
+                        <!--<TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=SearchText, Path=Text}"
+                                                 Value="">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>-->
+                    </TextBlock>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <TreeView Grid.Row="1"
+                Items="{Binding DocumentRoot.Children}"
+                    Name="Tree">
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding Name}" />
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <StackPanel Grid.Row="2"
+                 Orientation="Horizontal"
+                 Background="Transparent"
+                 DockPanel.Dock="Bottom"
+                 Margin="0,5,0,0">
+            <!--BorderBrush="DarkGray"-->
+            <!--BorderThickness="0 0 0 1"-->
+            <Button
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                ToolTip.Tip="New Document (Ctrl+N)">
+                <!--ToolTip.Placement="Top"-->
+                <!--CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"-->
+                <DrawingPresenter
+                    Drawing="{StaticResource CsFile}"
+                    Width="16"
+                    Height="16" />
+            </Button>
+            <Button
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
+                <!--ToolTip.Placement="Top"-->
+                <!--CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"-->
+                <DrawingPresenter
+                    Drawing="{StaticResource CsFile}"
+                    Width="16"
+                    Height="16" />
+            </Button>
+            <Button
+                Command="{Binding OpenFileCommand, Mode=OneTime}"
+                ToolTip.Tip="Open File (Ctrl+O)">
+                <!--ToolTip.Placement="Top">-->
+                <DrawingPresenter
+                    Drawing="{StaticResource OpenFolder}"
+                    Width="16"
+                    Height="16" />
+            </Button>
+            <Button
+                Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}"
+                ToolTip.Tip="Change Documents Location">
+                <!--ToolTip.Placement="Top"-->
+                <DrawingPresenter
+                    Drawing="{DynamicResource MoveFolder}"
+                    Width="16"
+                    Height="16" />
+            </Button>
+        </StackPanel>
+    </Grid>
 </UserControl>
