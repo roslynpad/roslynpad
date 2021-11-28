@@ -11,7 +11,7 @@
   <ItemGroup>
     <AvaloniaResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
-    <AvaloniaResource Include="..\RoslynPad\Resources\RoslynPad.ico" Link="RoslynPad.ico" />
+    <AvaloniaResource Include="Resources\RoslynPad.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />

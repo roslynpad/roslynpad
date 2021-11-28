@@ -8,6 +8,7 @@
         MinWidth="500"
         MinHeight="300"
         Title="RoslynPad"
+        Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+N"
