@@ -5,55 +5,6 @@
              xmlns:ui="using:RoslynPad.UI"
              Width="200"
              x:Class="RoslynPad.DocumentTreeView">
-    <UserControl.Resources>
-        <!--<roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
-                                                 FilterProperty="IsSearchMatch"
-                                                 Filter="FilterCollectionViewSourceConverter_OnFilter" />-->
-
-        <!--<HierarchicalDataTemplate
-            DataType="{x:Type ui:DocumentViewModel}"
-            ItemsSource="{Binding Children, Converter={StaticResource FilterCollectionViewConverter}}">
-            
-            <DockPanel Margin="0 2 0 2"
-                       VerticalAlignment="Center">
-                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
-
-                <Image Name="Icon"
-                       Source="{StaticResource CsFile}"
-                       Height="12"
-                       Margin="0 0 3 0" />
-                <TextBlock Text="{Binding Name}" />
-            </DockPanel>
-            
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
-                             Value="True">
-                    <Setter TargetName="Icon"
-                            Property="Source"
-                            Value="{StaticResource Folder}" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </HierarchicalDataTemplate>-->
-
-        <!--<ContextMenu x:Key="DocumentItemContextMenu"
-                     x:Shared="False">
-            <MenuItem Header="_Open in File Explorer"
-                      Click="DocumentsContextMenu_OpenFolder_Click" />
-        </ContextMenu>-->
-
-        <!--<Style x:Key="DocumentItemContainerStyle"
-               TargetType="controls:TreeListViewItem"
-               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-            <EventSetter Event="MouseDoubleClick"
-                         Handler="OnDocumentClick" />
-            <EventSetter Event="KeyDown"
-                         Handler="OnDocumentKeyDown" />
-            <Setter Property="ContextMenu"
-                    Value="{StaticResource DocumentItemContextMenu}" />
-        </Style>-->
-
-
-    </UserControl.Resources>
     <UserControl.Styles>
 
         <!-- Search button Style -->
@@ -69,7 +20,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="23" />
             <RowDefinition />
-            <RowDefinition Height="25" />
+            <RowDefinition Height="32" />
         </Grid.RowDefinitions>
 
         <Border
@@ -94,9 +45,6 @@
                         BorderThickness="0"
                         Text="{Binding SearchText}"
                     />
-                    <!--Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"-->
-                    <!--Validation.ErrorTemplate="{StaticResource ErrorTemplate}"-->
-                    <!--KeyDown="Search_OnKeyDown"-->
                     <TextBlock
                         Text="Search documents (press Enter)"
                         IsHitTestVisible="False"
@@ -140,29 +88,31 @@
             Grid.Row="2"
             BorderBrush="DarkGray"
             BorderThickness="0 0 0 1">
+            
             <Grid
                 Background="Transparent"
                 DockPanel.Dock="Bottom"
                 Margin="0,5,0,0">
-
+                
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="5" />
-                    <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
                 <Button
                     Grid.Column="1"
                     BorderBrush="Transparent"
                     Background="Transparent"
+                    Content="{StaticResource CsFile}"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}"
                     CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
                     ToolTip.Tip="New Document (Ctrl+N)">
                     <DrawingPresenter
                         Drawing="{StaticResource CsFile}"
-                        Width="16"
-                        Height="16" />
+                        Width="32"
+                        Height="32" />
                 </Button>
                 <Button
                     Grid.Column="2"
@@ -174,8 +124,8 @@
                     <DrawingPresenter
                         Drawing="{StaticResource CsFile}"
                         Stretch="Uniform"
-                        Width="24"
-                        Height="24" />
+                        Width="32"
+                        Height="32" />
                 </Button>
                 <Button
                     Grid.Column="3"
@@ -185,8 +135,8 @@
                     ToolTip.Tip="Open File (Ctrl+O)">
                     <DrawingPresenter
                         Drawing="{StaticResource OpenFolder}"
-                        Width="16"
-                        Height="16" />
+                        Width="24"
+                        Height="24" />
                 </Button>
                 <Button
                     Grid.Column="4"
@@ -196,8 +146,8 @@
                     ToolTip.Tip="Change Documents Location">
                     <DrawingPresenter
                         Drawing="{DynamicResource MoveFolder}"
-                        Width="16"
-                        Height="16" />
+                        Width="24"
+                        Height="24" />
                 </Button>
             </Grid>
         </Border>
