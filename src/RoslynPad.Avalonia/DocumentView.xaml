@@ -27,9 +27,9 @@
     <UserControl.Styles>
         <Style Selector="DrawingPresenter.Icon">
             <Setter Property="Width"
-                            Value="16" />
+                    Value="16" />
             <Setter Property="Height"
-                            Value="16" />
+                    Value="16" />
         </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,5,*">

@@ -23,10 +23,8 @@
             <RowDefinition Height="32" />
         </Grid.RowDefinitions>
 
-        <Border
-            BorderBrush="#ABADB3"
-            BorderThickness="1,1,1,0"
-            >
+        <Border BorderBrush="#ABADB3"
+                BorderThickness="1,1,1,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
@@ -40,43 +38,38 @@
                         <ColumnDefinition MaxWidth="22" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBox
-                        Name="SearchText"
-                        BorderThickness="0"
-                        Text="{Binding SearchText}"
+                    <TextBox Name="SearchText"
+                             BorderThickness="0"
+                             Text="{Binding SearchText}"
                     />
-                    <TextBlock
-                        Text="Search documents (press Enter)"
-                        IsHitTestVisible="False"
-                        IsVisible="{Binding !CanClearSearch}"
-                        Foreground="DarkGray">
+                    <TextBlock Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               IsVisible="{Binding !CanClearSearch}"
+                               Foreground="DarkGray">
                     </TextBlock>
-                    <Button
-                        Grid.Column="1"
-                        Classes="SearchButtonStyle"
-                        Command="{Binding ClearSearchCommand}"
-                        Content="{StaticResource Close}"
-                        ToolTip.Tip="Clear search (Esc)"
-                        IsVisible="{Binding CanClearSearch}" />
+                    <Button Grid.Column="1"
+                            Classes="SearchButtonStyle"
+                            Command="{Binding ClearSearchCommand}"
+                            Content="{StaticResource Close}"
+                            ToolTip.Tip="Clear search (Esc)"
+                            IsVisible="{Binding CanClearSearch}" />
                 </Grid>
-                <ToggleButton
-                    Grid.Column="1"
-                    Classes="SearchButtonStyle"
-                    IsChecked="{Binding SearchFileContents}"
-                    Content="{StaticResource FileCollection}"
-                    ToolTip.Tip="Search File Contents" />
-                <ToggleButton
-                    Grid.Column="2"
-                    Classes="SearchButtonStyle"
-                    IsChecked="{Binding SearchUsingRegex}"
-                    Content="{StaticResource RegularExpression}"
-                    ToolTip.Tip="Use Regular Expressions" />
+                <ToggleButton Grid.Column="1"
+                              Classes="SearchButtonStyle"
+                              IsChecked=  "{Binding SearchFileContents}"
+                              Content="{StaticResource FileCollection}"
+                              ToolTip.Tip="Search File Contents" />
+                <ToggleButton Grid.Column="2"
+                              Classes="SearchButtonStyle"
+                              IsChecked="{Binding SearchUsingRegex}"
+                              Content="{StaticResource RegularExpression}"
+                              ToolTip.Tip="Use Regular Expressions" />
             </Grid>
         </Border>
 
         <TreeView Grid.Row="1"
-                Items="{Binding DocumentRoot.Children}"
-                    Name="Tree">
+                  Items="{Binding DocumentRoot.Children}"
+                  Name="Tree">
             <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}">
                     <TextBlock Text="{Binding Name}" />
@@ -84,15 +77,13 @@
             </TreeView.ItemTemplate>
         </TreeView>
 
-        <Border
-            Grid.Row="2"
-            BorderBrush="DarkGray"
-            BorderThickness="0 0 0 1">
+        <Border Grid.Row="2"
+                BorderBrush="DarkGray"
+                BorderThickness="0 0 0 1">
             
-            <Grid
-                Background="Transparent"
-                DockPanel.Dock="Bottom"
-                Margin="0,5,0,0">
+            <Grid Background="Transparent"
+                  DockPanel.Dock="Bottom"
+                  Margin="0,5,0,0">
                 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="5" />
@@ -101,53 +92,46 @@
                     <ColumnDefinition Width="32" />
                     <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
-                <Button
-                    Grid.Column="1"
-                    BorderBrush="Transparent"
-                    Background="Transparent"
-                    Content="{StaticResource CsFile}"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
-                    ToolTip.Tip="New Document (Ctrl+N)">
+                <Button Grid.Column="1"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Content="{StaticResource CsFile}"
+                        Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
+                        ToolTip.Tip="New Document (Ctrl+N)">
                     <DrawingPresenter
                         Drawing="{StaticResource CsFile}"
                         Width="32"
                         Height="32" />
                 </Button>
-                <Button
-                    Grid.Column="2"
-                    BorderBrush="Transparent"
-                    Background="Transparent"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
-                    ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
-                    <DrawingPresenter
-                        Drawing="{StaticResource CsFile}"
-                        Stretch="Uniform"
-                        Width="32"
-                        Height="32" />
+                <Button Grid.Column="2"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
+                        ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
+                    <DrawingPresenter Drawing="{StaticResource CsFile}"
+                                      Stretch="Uniform"
+                                      Width="32"
+                                      Height="32" />
                 </Button>
-                <Button
-                    Grid.Column="3"
-                    BorderBrush="Transparent"
-                    Background="Transparent"
-                    Command="{Binding OpenFileCommand, Mode=OneTime}"
-                    ToolTip.Tip="Open File (Ctrl+O)">
-                    <DrawingPresenter
-                        Drawing="{StaticResource OpenFolder}"
-                        Width="24"
-                        Height="24" />
+                <Button Grid.Column="3"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding OpenFileCommand, Mode=OneTime}"
+                        ToolTip.Tip="Open File (Ctrl+O)">
+                    <DrawingPresenter Drawing="{StaticResource OpenFolder}"
+                                      Width="24"
+                                      Height="24" />
                 </Button>
-                <Button
-                    Grid.Column="4"
-                    BorderBrush="Transparent"
-                    Background="Transparent"
-                    Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}"
-                    ToolTip.Tip="Change Documents Location">
-                    <DrawingPresenter
-                        Drawing="{DynamicResource MoveFolder}"
-                        Width="24"
-                        Height="24" />
+                <Button Grid.Column="4"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}"
+                        ToolTip.Tip="Change Documents Location">
+                    <DrawingPresenter Drawing="{DynamicResource MoveFolder}"
+                                      Width="24"
+                                      Height="24" />
                 </Button>
             </Grid>
         </Border>
