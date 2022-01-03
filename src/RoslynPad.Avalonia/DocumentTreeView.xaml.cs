@@ -7,7 +7,7 @@ using RoslynPad.UI;
 
 namespace RoslynPad
 {
-    class DocumentTreeView : UserControl
+    public class DocumentTreeView : UserControl
     {
         private MainViewModel _viewModel;
 

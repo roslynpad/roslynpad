@@ -95,9 +95,9 @@
                         Command="{Binding NewDocumentCommand}"
                         CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
                     <StackPanel>
-                        <DrawingPresenter Drawing="{StaticResource CsFile}"
-                                          Width="64"
-                                          Height="64" />
+                        <Image Source="{StaticResource CsFile}"
+                               Width="64"
+                               Height="64" />
                         <TextBlock Text="New&#xA;(Ctrl+N)"
                                        TextAlignment="Center"
                                        HorizontalAlignment="Center" />
@@ -110,9 +110,9 @@
                         Command="{Binding NewDocumentCommand}"
                         CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
                     <StackPanel>
-                        <DrawingPresenter Drawing="{StaticResource CsFile}"
-                                          Width="64"
-                                          Height="64" />
+                        <Image Source="{StaticResource CsFile}"
+                               Width="64"
+                               Height="64" />
                         <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
                                    TextAlignment="Center"
                                    HorizontalAlignment="Center" />
