@@ -1,12 +1,147 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:roslynPad="using:RoslynPad"
+             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             xmlns:ui="using:RoslynPad.UI"
+             Width="200"
+             Design.Height="300"
              x:Class="RoslynPad.DocumentTreeView">
-    <TreeView Items="{Binding DocumentRoot.Children}"
-              Name="Tree">
-        <TreeView.ItemTemplate>
-            <TreeDataTemplate ItemsSource="{Binding Children}">
-                <TextBlock Text="{Binding Name}" />
-            </TreeDataTemplate>
-        </TreeView.ItemTemplate>
-    </TreeView>
+    <UserControl.Styles>
+
+        <!-- Search button Style -->
+        <Style Selector="Button.SearchButtonStyle">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+        
+    </UserControl.Styles>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="23" />
+            <RowDefinition />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
+
+        <Border BorderBrush="#ABADB3"
+                BorderThickness="1,1,1,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="22" />
+                    <ColumnDefinition Width="22" />
+                </Grid.ColumnDefinitions>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition MaxWidth="22" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Name="SearchText"
+                             BorderThickness="0"
+                             Text="{Binding SearchText}"
+                    />
+                    <TextBlock Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               IsVisible="{Binding !CanClearSearch}"
+                               Foreground="DarkGray">
+                    </TextBlock>
+                    <Button Grid.Column="1"
+                            Classes="SearchButtonStyle"
+                            Command="{Binding ClearSearchCommand}"
+                            ToolTip.Tip="Clear search (Esc)"
+                            IsVisible="{Binding CanClearSearch}" >
+                        <Image Source="{StaticResource Close}"
+                               Width="16"
+                               Height="16"/>
+                    </Button>
+                </Grid>
+                <ToggleButton Grid.Column="1"
+                              Classes="SearchButtonStyle"
+                              IsChecked=  "{Binding SearchFileContents}"
+                              ToolTip.Tip="Search File Contents">
+                    <Image Source="{StaticResource FileCollection}"
+                           Width="16"
+                           Height="16" />
+                </ToggleButton>
+                <ToggleButton Grid.Column="2"
+                              Classes="SearchButtonStyle"
+                              IsChecked="{Binding SearchUsingRegex}"
+                              ToolTip.Tip="Use Regular Expressions" >
+                    <Image Source="{StaticResource RegularExpression}"
+                           Width="16"
+                           Height="16" />
+                </ToggleButton>
+            </Grid>
+        </Border>
+
+        <TreeView Grid.Row="1"
+                  Items="{Binding DocumentRoot.Children}"
+                  Name="Tree">
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding Name}" />
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+
+        <Border Grid.Row="2"
+                BorderBrush="DarkGray"
+                BorderThickness="0 0 0 1">
+            
+            <Grid Background="Transparent"
+                  DockPanel.Dock="Bottom"
+                  Margin="0,5,0,0">
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="22" />
+                    <ColumnDefinition Width="22" />
+                    <ColumnDefinition Width="22" />
+                    <ColumnDefinition Width="22" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="1"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Content="{StaticResource CsFile}"
+                        Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
+                        ToolTip.Tip="New Document (Ctrl+N)">
+                        <Image Source="{StaticResource CsFile}"
+                            Width="16"
+                            Height="16" />
+                </Button>
+                <Button Grid.Column="2"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                        CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
+                        ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
+                        <Image Source="{StaticResource CsFile}"
+                               Width="16"
+                               Height="16" />
+                </Button>
+                <Button Grid.Column="3"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding OpenFileCommand, Mode=OneTime}"
+                        ToolTip.Tip="Open File (Ctrl+O)">
+                        <Image Source="{StaticResource OpenFolder}"
+                               Width="16"
+                               Height="16" />
+                </Button>
+                <Button Grid.Column="4"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}"
+                        ToolTip.Tip="Change Documents Location">
+                        <Image Source="{DynamicResource MoveFolder}"
+                               Width="16"
+                               Height="16" />
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

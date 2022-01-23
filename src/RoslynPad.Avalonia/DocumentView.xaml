@@ -24,14 +24,6 @@
         <KeyBinding Gesture="F2"
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </UserControl.KeyBindings>
-    <UserControl.Styles>
-        <Style Selector="DrawingPresenter.Icon">
-            <Setter Property="Width"
-                            Value="16" />
-            <Setter Property="Height"
-                            Value="16" />
-        </Style>
-    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,5,*">
         <StackPanel Grid.Row="0"
                     Name="Toolbar"
@@ -63,8 +55,9 @@
             <Button Command="{Binding RunCommand, Mode=OneTime}"
                     ToolTip.Tip="Run (F5)">
                 <Grid>
-                    <DrawingPresenter Classes="Icon"
-                                      Drawing="{DynamicResource Run}" />
+                    <Image Source="{StaticResource Run}"
+                           Width="16"
+                           Height="16"/>
                     <ProgressBar VerticalAlignment="Bottom"
                                  Height="4"
                                  IsIndeterminate="{Binding IsRunning}"
@@ -72,9 +65,9 @@
                                  IsVisible="{Binding IsRunning}" />
                 </Grid>
             </Button>
-            <Grid Margin="5, 0" 
+            <Grid Margin="5, 0"
                   IsVisible="{Binding HasReportedProgress}" >
-                <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}" 
+                <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}"
                              Minimum="0.0"
                              Maximum="1.0" />
                 <TextBlock Text="{Binding ReportedProgress, Mode=OneWay, Converter={StaticResource DoubleToPercentageTextConverter}}"
@@ -83,20 +76,32 @@
             </Grid>
             <Button Command="{Binding TerminateCommand, Mode=OneTime}"
                     ToolTip.Tip="Terminate process (Shift+F5)"
-                    Content="{DynamicResource Stop}"
-                    IsEnabled="{Binding IsRunning}" />
+                    IsEnabled="{Binding IsRunning}" >
+                <Image Source="{StaticResource Stop}"
+                       Width="16"
+                       Height="16" />
+            </Button>
             <DropDown Items="{Binding AvailablePlatforms, Mode=OneTime}"
                       SelectedItem="{Binding Platform}" />
-            <Button Content="{DynamicResource SetPlatform}"
-                    ToolTip.Tip="Set platform as default"
-                    Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}" />
+            <Button ToolTip.Tip="Set platform as default"
+                    Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}">
+                <Image Source="{StaticResource SetPlatform}"
+                       Width="16"
+                       Height="16"/>
+            </Button>
             <Separator />
             <Button Command="{Binding SaveCommand, Mode=OneTime}"
-                    ToolTip.Tip="Save (Ctrl+S)"
-                    Content="{DynamicResource Save}" />
+                    ToolTip.Tip="Save (Ctrl+S)" >
+                <Image Source="{StaticResource Save}"
+                       Width="16"
+                       Height="16"/>
+            </Button>
             <Button Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
-                    ToolTip.Tip="Open Build Folder"
-                    Content="{DynamicResource PackageFolder}" />
+                    ToolTip.Tip="Open Build Folder">
+                <Image Source="{StaticResource PackageFolder}"
+                       Width="16"
+                       Height="16"/>
+            </Button>
             <Separator />
             <Menu Background="Transparent"
                   Name="RootMenu"
@@ -126,8 +131,9 @@
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
                             <Grid>
-                                <DrawingPresenter Classes="Icon"
-                                                  Drawing="{StaticResource NuGet}" />
+                                <Image Source="{StaticResource NuGet}"
+                                       Width="16"
+                                       Height="16" />
                                 <ProgressBar VerticalAlignment="Bottom"
                                              Height="4"
                                              MinWidth="0"
@@ -154,8 +160,9 @@
                 <ContentPresenter.ContentTemplate>
                     <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
                         <Grid>
-                            <DrawingPresenter Classes="Icon"
-                                              Drawing="{StaticResource NuGet}" />
+                            <Image Source="{StaticResource NuGet}"
+                                   Width="16"
+                                   Height="16"/>
                             <ProgressBar VerticalAlignment="Bottom"
                                              Height="4"
                                              MinWidth="0"
@@ -167,18 +174,30 @@
                 </ContentPresenter.ContentTemplate>
             </ContentPresenter>
             <Separator />
-            <Button Content="{StaticResource FormatDocument}"
-                    ToolTip.Tip="Format Document (Ctrl+D)"
-                    Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
-            <Button Content="{StaticResource CommentCode}"
-                    ToolTip.Tip="Comment Selection (Ctrl+K)"
-                    Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
-            <Button Content="{StaticResource UncommentCode}"
-                    ToolTip.Tip="Uncomment Selection (Ctrl+U)"
-                    Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
-            <Button Content="{StaticResource Rename}"
-                    ToolTip.Tip="Rename Symbol (F2)"
-                    Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
+            <Button ToolTip.Tip="Format Document (Ctrl+D)"
+                    Command="{Binding FormatDocumentCommand, Mode=OneTime}">
+                <Image Source="{StaticResource FormatDocument}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip.Tip="Comment Selection (Ctrl+K)"
+                    Command="{Binding CommentSelectionCommand, Mode=OneTime}">
+                <Image Source="{StaticResource CommentCode}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip.Tip="Uncomment Selection (Ctrl+U)"
+                    Command="{Binding UncommentSelectionCommand, Mode=OneTime}" >
+                <Image Source="{StaticResource UncommentCode}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip.Tip="Rename Symbol (F2)"
+                    Command="{Binding RenameSymbolCommand, Mode=OneTime}" >
+                <Image Source="{StaticResource Rename}"
+                       Width="16"
+                       Height="16"/>
+            </Button>
         </StackPanel>
 
         <Editor:RoslynCodeEditor Name="Editor"
