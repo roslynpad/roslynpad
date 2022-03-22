@@ -11,11 +11,11 @@ namespace RoslynPad.Build
 
         public static XDocument CreateCsproj(bool isCore, string targetFramework, IEnumerable<LibraryRef> references) =>
             new(new XElement("Project",
-                    ImportSdkProject("Microsoft.NET.Sdk", "Sdk.props"),
+                    ImportSdkProject("Microsoft.NET.Sdk.Web", "Sdk.props"),
                     BuildProperties(targetFramework),
                     References(references),
                     ReferenceAssemblies(isCore),
-                    ImportSdkProject("Microsoft.NET.Sdk", "Sdk.targets"),
+                    ImportSdkProject("Microsoft.NET.Sdk.Web", "Sdk.targets"),
                     CoreCompileTarget()));
 
         private static XElement ReferenceAssemblies(bool isCore) =>
