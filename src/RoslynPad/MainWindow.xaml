@@ -66,6 +66,7 @@
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
                                      ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
                                      DocumentClosing="DockingManager_OnDocumentClosing"
+                                     DocumentPaneControlStyle="{StaticResource DocumentPaneControlStyle}"
                                      AnchorableContextMenu="{x:Null}">
                     <dock:DockingManager.DocumentHeaderTemplate>
                         <DataTemplate>
