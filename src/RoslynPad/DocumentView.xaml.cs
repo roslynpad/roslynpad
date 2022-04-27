@@ -90,6 +90,9 @@ namespace RoslynPad
                 this);
 
             Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+            var doc = _viewModel.MainViewModel.RoslynHost.GetDocument(documentId);
+            var settings = _viewModel.MainViewModel.Settings;
+            MainViewModel.ApplyDictionaryOverObject(settings.AvalonTextEditorOptionOverrides, Editor.Options);
         }
 
         private void OnReadInput()

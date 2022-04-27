@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Composition;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -86,6 +87,13 @@ namespace RoslynPad.UI
             try
             {
                 var json = File.ReadAllText(path);
+                if (!haveAddedBoolConverter)
+                {
+                    haveAddedBoolConverter = true;
+                    s_serializerOptions.Converters.Add(new AutoNumberBoolToStringConverter());
+                }
+
+
                 _values = JsonSerializer.Deserialize<SerializableValues>(json, s_serializerOptions) ?? new SerializableValues();
                 InitializeValues();
             }
@@ -93,6 +101,41 @@ namespace RoslynPad.UI
             {
                 _values.LoadDefaultSettings();
                 _telemetryProvider?.ReportError(e);
+            }
+        }
+        private static bool haveAddedBoolConverter = false;
+        public class AutoNumberBoolToStringConverter : JsonConverter<string>
+        {
+            public override bool CanConvert(Type typeToConvert)
+            {
+                return typeof(string) == typeToConvert;
+            }
+            public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonTokenType.Number:
+                        return reader.TryGetInt64(out long l) ?
+                       l.ToString() :
+                       reader.GetDouble().ToString();
+                    case JsonTokenType.True:
+                        return true.ToString();
+                    case JsonTokenType.False:
+                        return false.ToString();
+                    case JsonTokenType.String:
+                        return reader.GetString()!;
+                    default:
+                        using (JsonDocument document = JsonDocument.ParseValue(ref reader))
+                        {
+                            return document.RootElement.Clone().ToString();
+                        }
+
+                }
+            }
+
+            public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString());
             }
         }
 
@@ -133,7 +176,8 @@ namespace RoslynPad.UI
             private double? _windowFontSize;
             private bool _formatDocumentOnComment = true;
             private string? _effectiveDocumentPath;
-
+            private IDictionary<string, string>? _AvalonTextEditorOptionOverrides;
+            private IDictionary<string, string>? _CSharpFormattingOptionOverrides;
             public void LoadDefaultSettings()
             {
                 SendErrors = true;
@@ -258,6 +302,16 @@ namespace RoslynPad.UI
 
             [JsonIgnore]
             public IApplicationSettings? Settings { get; set; }
+            public IDictionary<string, string>? AvalonTextEditorOptionOverrides
+            {
+                get => _AvalonTextEditorOptionOverrides;
+                set => SetProperty(ref _AvalonTextEditorOptionOverrides, value);
+            }
+            public IDictionary<string, string>? CSharpFormattingOptionOverrides
+            {
+                get => _CSharpFormattingOptionOverrides;
+                set => SetProperty(ref _CSharpFormattingOptionOverrides, value);
+            }
         }
     }
 }

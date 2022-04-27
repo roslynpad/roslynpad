@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace RoslynPad.UI
 {
@@ -21,5 +22,7 @@ namespace RoslynPad.UI
         double? WindowFontSize { get; set; }
         bool FormatDocumentOnComment { get; set; }
         string EffectiveDocumentPath { get; }
+        IDictionary<string, string>? AvalonTextEditorOptionOverrides {get; set;}
+        IDictionary<string, string>? CSharpFormattingOptionOverrides { get; set; }
     }
 }

@@ -9,6 +9,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
 using RoslynPad.Build;
@@ -39,6 +41,8 @@ namespace RoslynPad.UI
 
         public IApplicationSettingsValues Settings { get; }
 
+        public OptionSet? DocumentFormatOptions;
+
         public DocumentViewModel DocumentRoot
         {
             get => _documentRoot;
@@ -68,6 +72,7 @@ namespace RoslynPad.UI
 
             settings.LoadDefault();
             Settings = settings.Values;
+
 
             _telemetryProvider.Initialize(s_currentVersion.ToString(), settings);
             _telemetryProvider.LastErrorChanged += () =>
@@ -120,6 +125,8 @@ namespace RoslynPad.UI
                 RoslynHostReferences.NamespaceDefault.With(imports: new[] { "RoslynPad.Runtime" }),
                 disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097")))
                 .ConfigureAwait(true);
+
+            DocumentFormatOptions = ApplyDictionaryToTargetOptions(Settings.CSharpFormattingOptionOverrides, typeof(CSharpFormattingOptions), RoslynHost!.CreateWorkspace().CurrentSolution.Options);
 
             OpenDocumentFromCommandLine();
             await OpenAutoSavedDocuments().ConfigureAwait(true);
@@ -741,5 +748,95 @@ namespace RoslynPad.UI
         }
 
         #endregion
+
+
+        public static OptionSet ApplyDictionaryToTargetOptions(IDictionary<string, string>? dict, Type optionList, OptionSet targetOptions)
+        {
+            if (dict == null)
+                return targetOptions;
+            var optionType = typeof(IOption);
+            foreach (var kvp in dict)
+            {
+                var prop = optionList.GetProperty(kvp.Key);
+                if (targetOptions != null && prop != null && optionType.IsAssignableFrom(prop.PropertyType))
+                {
+                    var option = (IOption?)prop.GetValue(null);
+                    if (option != null)
+                    {
+                        var res = StringToVal(option.Type, kvp.Value);
+                        if (res != null)
+                        {
+                            targetOptions = targetOptions.WithChangedOption(new OptionKey(option), res);
+                            continue;
+                        }
+
+
+                    }
+                }
+            }
+            return targetOptions;
+        }
+        public static void ApplyDictionaryOverObject(IDictionary<string, string>? dict, object obj)
+        {
+            if (dict == null || obj == null)
+                return;
+            var objType = obj.GetType();
+
+            foreach (var kvp in dict)
+            {
+                var prop = objType.GetProperty(kvp.Key);
+                if (prop == null)
+                {
+                    var field = objType.GetField(kvp.Key);
+                    if (field != null)
+                    {
+
+                        var res = StringToVal(field.FieldType, kvp.Value);
+                        if (res != null)
+                            field.SetValue(obj, res);
+                    }
+                    continue;
+                }
+                if (prop.CanWrite)
+                {
+                    var type = prop.PropertyType;
+                    var res = StringToVal(type, kvp.Value);
+                    if (res != null)
+                        prop.SetValue(obj, res);
+                }
+            }
+        }
+        private static (TYPE? converted, bool success) StringToVal<TYPE>(String value)
+        {
+            var res = StringToVal(typeof(TYPE), value);
+            if (res == null)
+                return (default(TYPE), false);
+            return ((TYPE)res, true);
+        }
+
+        private static object? StringToVal(Type type, String value)
+        {
+            if (type.IsEnum)
+            {
+                try
+                {
+                    Enum.Parse(type, value, true);
+                }
+                catch { }//if only we had tryparse that took types  but not in 2.0
+            }
+            if (type.IsValueType)
+            {
+                try
+                {
+                    return Convert.ChangeType(value, type);
+                }
+                catch { }
+            }
+
+            if (type == typeof(string))
+                return value;
+            return null;
+        }
+
     }
 }

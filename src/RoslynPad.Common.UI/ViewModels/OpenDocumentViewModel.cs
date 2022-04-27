@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
@@ -420,7 +421,7 @@ namespace RoslynPad.UI
         private async Task FormatDocumentAsync()
         {
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
-            var formattedDocument = await Formatter.FormatAsync(document!).ConfigureAwait(false);
+            var formattedDocument = await Formatter.FormatAsync(document!, MainViewModel.DocumentFormatOptions).ConfigureAwait(false);
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
         }
 
