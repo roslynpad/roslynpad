@@ -266,7 +266,7 @@ namespace RoslynPad.Build
             }
             else
             {
-                if (Platform.FrameworkVersion?.Major < 5)
+                if (Platform.IsFramework || Platform.FrameworkVersion?.Major < 5)
                 {
                     syntaxTrees = syntaxTrees.Add(_moduleInitAttributeSyntax);
                 }
