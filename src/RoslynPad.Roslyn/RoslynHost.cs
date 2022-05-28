@@ -90,8 +90,8 @@ namespace RoslynPad.Roslyn
             preprocessorSymbols: PreprocessorSymbols,
             languageVersion: LanguageVersion.Preview);
 
-        public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
-            documentation: _documentationProviderService.GetDocumentationProvider(location));
+        public MetadataReference CreateMetadataReference(string location, MetadataReferenceProperties properties = default) => MetadataReference.CreateFromFile(location,
+            properties, _documentationProviderService.GetDocumentationProvider(location));
 
         private void OnDiagnosticsUpdated(object? sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
         {
