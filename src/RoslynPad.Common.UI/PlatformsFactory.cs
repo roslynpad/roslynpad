@@ -76,7 +76,7 @@ namespace RoslynPad
             }
             else
             {
-                dotnetPaths = new[] { "/usr/share/dotnet", "/usr/local/share/dotnet" };
+                dotnetPaths = new[] { "/usr/share/dotnet", "/usr/local/share/dotnet", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet") };
                 dotnetExe = "dotnet";
             }
 
