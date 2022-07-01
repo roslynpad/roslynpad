@@ -35,7 +35,6 @@ Open `src\RoslynPad.sln` in Visual Studio 2019.
 * Install .NET Core SDK 6.0
 * Download and unzip `RoslynPadNetCore.zip`.
 * Run `dotnet RoslynPad.dll`
-> Optionaly you can add an Desktop entry based on file `roslynpad.desktop`
 
 ## Features
 
