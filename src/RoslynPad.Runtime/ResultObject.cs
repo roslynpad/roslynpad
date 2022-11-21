@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -90,7 +91,7 @@ namespace RoslynPad.Runtime
                         PopulateChildren(o, targetQuotas, members, headerPrefix);
                         var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                         enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
-                        Children = Children.Concat(new[] { enumerable }).ToList();
+                        Children = (Children ?? Enumerable.Empty<ResultObject>()).Concat(new[] { enumerable }).ToList();
                     }
                     else
                     {
@@ -153,7 +154,7 @@ namespace RoslynPad.Runtime
             catch (TargetInvocationException exception)
             {
                 Header = _member.Name;
-                Value = $"Threw {exception.InnerException.GetType().Name}";
+                Value = $"Threw {exception.InnerException!.GetType().Name}";
                 Children = new List<ResultObject> { ExceptionResultObject.Create(exception.InnerException, _quotas) };
                 return true;
             }
@@ -215,14 +216,15 @@ namespace RoslynPad.Runtime
 
         private static string GetTypeName(Type type)
         {
+            Type? currentType = type;
             var ns = type.Namespace;
             string? typeName = null;
             do
             {
                 var currentName = GetSimpleTypeName(type);
                 typeName = typeName != null ? currentName + "+" + typeName : currentName;
-                type = type.DeclaringType;
-            } while (type != null);
+                currentType = currentType.DeclaringType;
+            } while (currentType != null);
 
             typeName = $"{typeName} ({ns})";
             return typeName;
@@ -326,7 +328,7 @@ namespace RoslynPad.Runtime
                         .FirstOrDefault(x => x.IsConstructedGenericType &&
                                              x.GetGenericTypeDefinition() == typeof(IGrouping<,>));
                     Value = groupingInterface != null
-                        ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface.GetRuntimeProperty("Key").GetValue(e)}>"
+                        ? $"<grouping Count: {items.Count}{hasMore} Key: {groupingInterface?.GetRuntimeProperty("Key")?.GetValue(e)}>"
                         : $"<enumerable Count: {items.Count}{hasMore}>";
                     Children = items;
                 }

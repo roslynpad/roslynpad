@@ -10,19 +10,10 @@ namespace RoslynPad.Formatting
 {
     internal sealed class CodeActionToGlyphConverter : MarkupExtension, IValueConverter
     {
-        public override object ProvideValue(IServiceProvider serviceProvider)
-        {
-            return this;
-        }
+        public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return ((CodeAction)value).GetGlyph().ToImageSource();
-        }
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => (value as CodeAction)?.GetGlyph().ToImageSource();
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }

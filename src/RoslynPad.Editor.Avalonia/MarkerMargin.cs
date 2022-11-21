@@ -76,7 +76,7 @@ namespace RoslynPad.Editor
             InvalidateArrange();
         }
 
-        private void TextViewVisualLinesChanged(object sender, EventArgs e)
+        private void TextViewVisualLinesChanged(object? sender, EventArgs e)
         {
             InvalidateArrange();
         }

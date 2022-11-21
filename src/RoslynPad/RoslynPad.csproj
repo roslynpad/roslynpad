@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(TargetFramework)-windows</TargetFramework>
     <UseWPF>true</UseWPF>
@@ -19,14 +18,13 @@
     <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AvalonLibrary" Version="2.4.0" />
-    <PackageReference Include="Dirkster.AvalonDock" Version="4.60.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="$(DotnetVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
+    <PackageReference Include="AvalonLibrary" />
+    <PackageReference Include="Dirkster.AvalonDock" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
+    <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
   </ItemGroup>
 </Project>

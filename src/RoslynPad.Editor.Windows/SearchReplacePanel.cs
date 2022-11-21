@@ -342,7 +342,7 @@ namespace RoslynPad.Editor
             _textArea.Caret.Show();
         }
 
-        void SearchLayerKeyDown(object sender, KeyEventArgs e)
+        void SearchLayerKeyDown(object? sender, KeyEventArgs e)
         {
             switch (e.Key)
             {
@@ -537,12 +537,12 @@ namespace RoslynPad.Editor
                 CommandBindings.Add(new CommandBinding(SearchCommands.CloseSearchPanel, ExecuteCloseSearchPanel, CanExecuteWithOpenSearchPanel));
             }
 
-            private void ExecuteFind(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteFind(object? sender, ExecutedRoutedEventArgs e)
             {
                 FindOrReplace(isReplaceMode: false);
             }
 
-            private void ExecuteReplace(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteReplace(object? sender, ExecutedRoutedEventArgs e)
             {
                 FindOrReplace(isReplaceMode: true);
             }
@@ -556,7 +556,7 @@ namespace RoslynPad.Editor
                 TextArea.Dispatcher.InvokeAsync(() => _panel.Reactivate(), DispatcherPriority.Input);
             }
 
-            private void CanExecuteWithOpenSearchPanel(object sender, CanExecuteRoutedEventArgs e)
+            private void CanExecuteWithOpenSearchPanel(object? sender, CanExecuteRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                 {
@@ -570,7 +570,7 @@ namespace RoslynPad.Editor
                 }
             }
 
-            private void ExecuteFindNext(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteFindNext(object? sender, ExecutedRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                     return;
@@ -578,7 +578,7 @@ namespace RoslynPad.Editor
                 e.Handled = true;
             }
 
-            private void ExecuteFindPrevious(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteFindPrevious(object? sender, ExecutedRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                     return;
@@ -586,7 +586,7 @@ namespace RoslynPad.Editor
                 e.Handled = true;
             }
 
-            private void ExecuteReplaceNext(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteReplaceNext(object? sender, ExecutedRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                     return;
@@ -594,7 +594,7 @@ namespace RoslynPad.Editor
                 e.Handled = true;
             }
 
-            private void ExecuteReplaceAll(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteReplaceAll(object? sender, ExecutedRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                     return;
@@ -602,7 +602,7 @@ namespace RoslynPad.Editor
                 e.Handled = true;
             }
 
-            private void ExecuteCloseSearchPanel(object sender, ExecutedRoutedEventArgs e)
+            private void ExecuteCloseSearchPanel(object? sender, ExecutedRoutedEventArgs e)
             {
                 if (_panel.IsClosed)
                     return;

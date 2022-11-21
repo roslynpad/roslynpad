@@ -30,13 +30,13 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             //IsVisibleChanged += ExtractInterfaceDialog_IsVisibleChanged;
         }
 
-        //private void ExtractInterfaceDialog_Loaded(object sender, RoutedEventArgs e)
+        //private void ExtractInterfaceDialog_Loaded(object? sender, RoutedEventArgs e)
         //{
         //    interfaceNameTextBox.Focus();
         //    interfaceNameTextBox.SelectAll();
         //}
 
-        //private void ExtractInterfaceDialog_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        //private void ExtractInterfaceDialog_IsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs e)
         //{
         //    if ((bool)e.NewValue)
         //    {
@@ -61,7 +61,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         //        Deselect_All_Click));
         //}
 
-        //private void OK_Click(object sender, RoutedEventArgs e)
+        //private void OK_Click(object? sender, RoutedEventArgs e)
         //{
         //    if (_viewModel.TrySubmit())
         //    {
@@ -69,22 +69,22 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         //    }
         //}
 
-        //private void Cancel_Click(object sender, RoutedEventArgs e)
+        //private void Cancel_Click(object? sender, RoutedEventArgs e)
         //{
         //    DialogResult = false;
         //}
 
-        //private void Select_All_Click(object sender, RoutedEventArgs e)
+        //private void Select_All_Click(object? sender, RoutedEventArgs e)
         //{
         //    _viewModel.SelectAll();
         //}
 
-        //private void Deselect_All_Click(object sender, RoutedEventArgs e)
+        //private void Deselect_All_Click(object? sender, RoutedEventArgs e)
         //{
         //    _viewModel.DeselectAll();
         //}
 
-        //private void SelectAllInTextBox(object sender, RoutedEventArgs e)
+        //private void SelectAllInTextBox(object? sender, RoutedEventArgs e)
         //{
         //    if (e.OriginalSource is TextBox textbox && Mouse.LeftButton == MouseButtonState.Released)
         //    {
@@ -92,7 +92,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         //    }
         //}
 
-        //private void OnListViewPreviewKeyDown(object sender, KeyEventArgs e)
+        //private void OnListViewPreviewKeyDown(object? sender, KeyEventArgs e)
         //{
         //    if (e.Key == Key.Space && e.KeyboardDevice.Modifiers == ModifierKeys.None)
         //    {
@@ -101,7 +101,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
         //    }
         //}
 
-        //private void OnListViewDoubleClick(object sender, MouseButtonEventArgs e)
+        //private void OnListViewDoubleClick(object? sender, MouseButtonEventArgs e)
         //{
         //    if (e.ChangedButton == MouseButton.Left)
         //    {

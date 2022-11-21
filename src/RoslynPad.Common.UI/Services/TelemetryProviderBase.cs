@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 
 namespace RoslynPad.UI
 {
     public abstract class TelemetryProviderBase : ITelemetryProvider
     {
-        private TelemetryClient? _client;
         private Exception? _lastError;
 
         public virtual void Initialize(string version, IApplicationSettings settings)
@@ -18,32 +15,32 @@ namespace RoslynPad.UI
 
                 if (!string.IsNullOrEmpty(instrumentationKey))
                 {
-                    _client = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
+                    //_client = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
 
-                    _client.Context.Component.Version = version;
+                    //_client.Context.Component.Version = version;
 
-                    _client.TrackPageView("Main");
+                    //_client.TrackPageView("Main");
                 }
             }
 
-            if (_client != null)
+            //if (_client != null)
             {
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
                 TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
             }
         }
 
-        protected abstract string GetInstrumentationKey();
+        protected abstract string? GetInstrumentationKey();
 
         private void TaskSchedulerOnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
         {
             HandleException(args.Exception!.Flatten().InnerException!);
         }
 
-        private void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        private void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs args)
         {
             HandleException((Exception)args.ExceptionObject);
-            _client?.Flush();
+            //_client?.Flush();
         }
 
         protected void HandleException(Exception exception)
@@ -53,7 +50,7 @@ namespace RoslynPad.UI
                 return;
             }
 
-            _client?.TrackException(exception);
+            //_client?.TrackException(exception);
             LastError = exception;
         }
 

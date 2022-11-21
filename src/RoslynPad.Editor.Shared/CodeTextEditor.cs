@@ -161,7 +161,7 @@ namespace RoslynPad.Editor
             }
         }
 
-        private async void OnMouseHover(object sender, MouseEventArgs e)
+        private async void OnMouseHover(object? sender, MouseEventArgs e)
         {
             TextViewPosition? position;
             try
@@ -266,7 +266,7 @@ namespace RoslynPad.Editor
 
         public ICodeEditorCompletionProvider? CompletionProvider { get; set; }
 
-        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        private void OnTextEntered(object? sender, TextCompositionEventArgs e)
         {
             _ = ShowCompletion(TriggerMode.Text);
         }
@@ -355,7 +355,7 @@ namespace RoslynPad.Editor
 
         partial void InitializeCompletionWindow();
 
-        private void OnTextEntering(object sender, TextCompositionEventArgs args)
+        private void OnTextEntering(object? sender, TextCompositionEventArgs args)
         {
             if (args.Text?.Length > 0 && _completionWindow != null)
             {
@@ -406,7 +406,7 @@ namespace RoslynPad.Editor
 
             partial void Initialize();
 
-            private void CompletionListOnSelectionChanged(object sender, SelectionChangedEventArgs args)
+            private void CompletionListOnSelectionChanged(object? sender, SelectionChangedEventArgs args)
             {
                 if (!UseHardSelection &&
                     _isSoftSelectionActive && _keyDownArgs?.Handled != true

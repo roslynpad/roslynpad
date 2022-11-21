@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
@@ -9,7 +8,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RoslynPad.Editor.Windows" Version="1.2.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.6.0" />
+    <PackageReference Include="RoslynPad.Editor.Windows" VersionOverride="1.2.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" VersionOverride="3.6.0" />
   </ItemGroup>
 </Project>

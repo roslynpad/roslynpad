@@ -1,9 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <UseWPF>true</UseWPF>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
-    <Version>$(EditorPackageVersion)</Version>
     <Description>Provides a Roslyn-based code editor using AvalonEdit (WPF platform) with completion, diagnostics, and quick actions</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
@@ -12,8 +10,8 @@
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.1.2.30" />
-    <PackageReference Include="System.Reactive.Linq" Version="$(RxVersion)" />
+    <PackageReference Include="AvalonEdit" />
+    <PackageReference Include="System.Reactive.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">

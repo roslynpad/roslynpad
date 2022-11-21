@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.DocumentationComments;
 using Microsoft.CodeAnalysis.ExternalAccess.Pythia.Api;
-using Microsoft.CodeAnalysis.LanguageServices;
+using Microsoft.CodeAnalysis.LanguageService;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
@@ -198,7 +198,7 @@ namespace RoslynPad.Roslyn.QuickInfo
         {
             var descriptionService = workspace.Services.GetLanguageServices(token.Language).GetRequiredService<ISymbolDisplayService>();
 
-            var sections = await descriptionService.ToDescriptionGroupsAsync(workspace, semanticModel, token.SpanStart, symbols.AsImmutable(), cancellationToken).ConfigureAwait(false);
+            var sections = await descriptionService.ToDescriptionGroupsAsync(semanticModel, token.SpanStart, symbols.AsImmutable(), SymbolDescriptionOptions.Default, cancellationToken).ConfigureAwait(false);
 
             var mainDescriptionBuilder = new List<TaggedText>();
             if (sections.ContainsKey(SymbolDescriptionGroups.MainDescription))
@@ -217,14 +217,14 @@ namespace RoslynPad.Roslyn.QuickInfo
                 }
             }
 
-            var anonymousTypesBuilder = new List<TaggedText>();
-            if (sections.ContainsKey(SymbolDescriptionGroups.AnonymousTypes))
+            var structuralTypesBuilder = new List<TaggedText>();
+            if (sections.ContainsKey(SymbolDescriptionGroups.StructuralTypes))
             {
-                var parts = sections[SymbolDescriptionGroups.AnonymousTypes];
+                var parts = sections[SymbolDescriptionGroups.StructuralTypes];
                 if (!parts.IsDefaultOrEmpty)
                 {
-                    anonymousTypesBuilder.AddLineBreak();
-                    anonymousTypesBuilder.AddRange(parts);
+                    structuralTypesBuilder.AddLineBreak();
+                    structuralTypesBuilder.AddRange(parts);
                 }
             }
 
@@ -273,7 +273,7 @@ namespace RoslynPad.Roslyn.QuickInfo
                 mainDescription: mainDescriptionBuilder,
                 documentation: documentationContent,
                 typeParameterMap: typeParameterMapBuilder,
-                anonymousTypes: anonymousTypesBuilder,
+                anonymousTypes: structuralTypesBuilder,
                 usageText: usageTextBuilder,
                 exceptionText: exceptionsTextBuilder);
         }
@@ -324,7 +324,7 @@ namespace RoslynPad.Roslyn.QuickInfo
             var semanticModel = await document.GetSemanticModelForNodeAsync(token.Parent, cancellationToken).ConfigureAwait(false);
             var enclosingType = semanticModel.GetEnclosingNamedType(token.SpanStart, cancellationToken);
 
-            var symbols = semanticModel.GetSemanticInfo(token, document.Project.Solution.Workspace, cancellationToken).GetSymbols(includeType: true);
+            var symbols = semanticModel.GetSemanticInfo(token, document.Project.Solution.Services, cancellationToken).GetSymbols(includeType: true);
 
             var bindableParent = document.GetLanguageService<ISyntaxFactsService>().TryGetBindableParent(token);
             if (bindableParent != null)
@@ -349,7 +349,7 @@ namespace RoslynPad.Roslyn.QuickInfo
 
                 // Couldn't bind the token to specific symbols.  If it's an operator, see if we can at
                 // least bind it to a type.
-                var syntaxFacts = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
+                var syntaxFacts = document.Project.Services.GetRequiredService<ISyntaxFactsService>();
                 if (syntaxFacts.IsOperator(token) && token.Parent != null)
                 {
                     var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);

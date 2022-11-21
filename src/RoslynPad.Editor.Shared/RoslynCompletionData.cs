@@ -50,13 +50,13 @@ namespace RoslynPad.Editor
 
         public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
         {
-            if (_glyph == Glyph.Snippet && CompleteSnippet(textArea, completionSegment, e))
+            if (_glyph == Glyph.Snippet && CompleteSnippet(textArea, completionSegment, e) ||
+                CompletionService.GetService(_document) is not { } completionService)
             {
                 return;
             }
 
-            var changes = await CompletionService.GetService(_document)
-                .GetChangeAsync(_document, _item, null).ConfigureAwait(true);
+            var changes = await completionService.GetChangeAsync(_document, _item, null).ConfigureAwait(true);
 
             var textChange = changes.TextChange;
             var document = textArea.Document;
@@ -144,11 +144,14 @@ namespace RoslynPad.Editor
 
         private async Task RetrieveDescription()
         {
-            if (_description != null)
+            if (_description == null ||
+                CompletionService.GetService(_document) is not { } completionService)
             {
-                var description = await Task.Run(() => CompletionService.GetService(_document).GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
-                _description.Child = description.TaggedParts.ToTextBlock();
+                return;
             }
+
+            var description = await Task.Run(() => completionService.GetDescriptionAsync(_document, _item)).ConfigureAwait(true);
+            _description.Child = description?.TaggedParts.ToTextBlock();
         }
 
         public double Priority { get; private set; }

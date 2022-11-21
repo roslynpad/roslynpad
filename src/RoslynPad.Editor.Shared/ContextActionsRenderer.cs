@@ -93,7 +93,7 @@ namespace RoslynPad.Editor
 
         private void Providers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => StartTimer();
 
-        private async void ContextActionsRenderer_KeyDown(object sender, KeyEventArgs e)
+        private async void ContextActionsRenderer_KeyDown(object? sender, KeyEventArgs e)
         {
             if (!(e.Key == Key.OemPeriod && e.HasModifiers(ModifierKeys.Control))) return;
 
@@ -233,8 +233,8 @@ namespace RoslynPad.Editor
 
         public Func<object, ICommand?>? CommandProvider { get; }
 
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture) => CommandProvider?.Invoke(value);
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value == null ? null : CommandProvider?.Invoke(value);
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }

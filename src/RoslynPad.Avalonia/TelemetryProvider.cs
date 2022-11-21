@@ -14,7 +14,7 @@ namespace RoslynPad
             // Application.Current.DispatcherUnhandledException += OnUnhandledDispatcherException;
         }
 
-        //private void OnUnhandledDispatcherException(object sender, DispatcherUnhandledExceptionEventArgs args)
+        //private void OnUnhandledDispatcherException(object? sender, DispatcherUnhandledExceptionEventArgs args)
         //{
         //    HandleException(args.Exception);
         //    args.Handled = true;

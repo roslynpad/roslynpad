@@ -19,14 +19,13 @@ namespace RoslynPad.UI
 {
     public class MainViewModelBase : NotificationObject
     {
-        private static readonly Version s_currentVersion = new(16, 0);
+        private static readonly Version s_currentVersion = new(17, 0);
         private static readonly string s_currentVersionVariant = "";
 
         private readonly IServiceProvider _serviceProvider;
         private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         private readonly DocumentFileWatcher _documentFileWatcher;
-
 
         private OpenDocumentViewModel? _currentOpenDocument;
         private bool _hasUpdate;

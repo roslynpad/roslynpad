@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>$(LtsTargetFramework)</TargetFramework>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
-    <Version>$(RoslynAssemblyVersion)</Version>
-    <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
     <Description>Provides platform-specific (Avalonia) implementations for UI elements required by the RoslynPad.Roslyn package.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
@@ -13,7 +11,7 @@
     <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />

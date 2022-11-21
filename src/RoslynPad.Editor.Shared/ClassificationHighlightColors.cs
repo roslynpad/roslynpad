@@ -37,6 +37,8 @@ namespace RoslynPad.Editor
             _map = new Lazy<ImmutableDictionary<string, HighlightingColor>>(() => new Dictionary<string, HighlightingColor>
             {
                 [ClassificationTypeNames.ClassName] = AsFrozen(TypeBrush),
+                [ClassificationTypeNames.RecordClassName] = AsFrozen(TypeBrush),
+                [ClassificationTypeNames.RecordStructName] = AsFrozen(TypeBrush),
                 [ClassificationTypeNames.StructName] = AsFrozen(TypeBrush),
                 [ClassificationTypeNames.InterfaceName] = AsFrozen(TypeBrush),
                 [ClassificationTypeNames.DelegateName] = AsFrozen(TypeBrush),

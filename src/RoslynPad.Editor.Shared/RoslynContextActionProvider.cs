@@ -43,8 +43,7 @@ namespace RoslynPad.Editor
             var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
             if (textSpan.End >= text.Length) return Array.Empty<object>();
 
-            var codeFixes = await _codeFixService.GetFixesAsync(document,
-                textSpan, false, cancellationToken).ConfigureAwait(false);
+            var codeFixes = await _codeFixService.StreamFixesAsync(document, textSpan, cancellationToken).ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var codeRefactorings = await _roslynHost.GetService<ICodeRefactoringService>().GetRefactoringsAsync(
                 document,

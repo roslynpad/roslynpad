@@ -23,23 +23,29 @@ namespace RoslynPad.Runtime
         /// <returns></returns>
         public static async Task<SynchronizationContext> CreateWpfDispatcherAsync()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException($"{nameof(CreateWpfDispatcherAsync)} is supported only on Windows");
+            }
+
             var windowsBaseAssembly = Assembly.Load("WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-            var dispatcherType = windowsBaseAssembly.GetType("System.Windows.Threading.Dispatcher", throwOnError: true);
-            var dispatcherSyncContextCtor = windowsBaseAssembly.GetType("System.Windows.Threading.DispatcherSynchronizationContext", throwOnError: true)
-                .GetConstructors().FirstOrDefault(c => c.GetParameters() is var p && p.Length == 1 && p[0].ParameterType.Name == "Dispatcher");
-            var runMethod = (Action)dispatcherType.GetMethod("Run", Array.Empty<Type>()).CreateDelegate(typeof(Action));
-            var currentDispatcherProperty = dispatcherType.GetProperty("CurrentDispatcher");
+            var dispatcherType = windowsBaseAssembly.GetType("System.Windows.Threading.Dispatcher", throwOnError: true) ?? throw new InvalidOperationException();
+            var dispatcherSyncContextCtor = windowsBaseAssembly.GetType("System.Windows.Threading.DispatcherSynchronizationContext", throwOnError: true)!
+                .GetConstructors().FirstOrDefault(c => c.GetParameters() is var p && p.Length == 1 && p[0].ParameterType.Name == "Dispatcher") ?? throw new InvalidOperationException();
+            var runMethod = dispatcherType.GetMethod("Run", Array.Empty<Type>())?.CreateDelegate<Action>() ?? throw new InvalidOperationException();
+            var currentDispatcherProperty = dispatcherType.GetProperty("CurrentDispatcher") ?? throw new InvalidOperationException();
 
             var tcs = new TaskCompletionSource<object>();
 
             var thread = new Thread(() =>
             {
-                var dispatcher = currentDispatcherProperty.GetValue(null);
+                var dispatcher = currentDispatcherProperty.GetValue(null) ?? throw new InvalidOperationException();
                 tcs.SetResult(dispatcher);
                 runMethod();
             });
 
             thread.SetApartmentState(ApartmentState.STA);
+
             thread.IsBackground = true;
             thread.Start();
 
@@ -89,7 +95,7 @@ namespace RoslynPad.Runtime
         [EditorBrowsable(EditorBrowsableState.Never)]
         public struct SynchronizationContextAwaiter : INotifyCompletion
         {
-            private static readonly SendOrPostCallback s_postCallback = state => ((Action)state)();
+            private static readonly SendOrPostCallback s_postCallback = state => ((Action)state!)();
 
             private readonly Task<SynchronizationContext> _task;
 

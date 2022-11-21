@@ -34,7 +34,7 @@ namespace RoslynPad.Roslyn.BraceMatching
                         new TextSpan(token.Span.End - 1, 1));
                 }
 
-                if (token.IsKind(SyntaxKind.InterpolatedStringStartToken, SyntaxKind.InterpolatedVerbatimStringStartToken))
+                if (token.IsKind(SyntaxKind.InterpolatedStringStartToken) || token.IsKind(SyntaxKind.InterpolatedVerbatimStringStartToken))
                 {
                     if (token.Parent is InterpolatedStringExpressionSyntax interpolatedString)
                     {

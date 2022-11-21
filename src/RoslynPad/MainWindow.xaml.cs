@@ -48,7 +48,7 @@ namespace RoslynPad
             LoadDockLayout();
         }
 
-        private async void OnLoaded(object sender, RoutedEventArgs e)
+        private async void OnLoaded(object? sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;
 
@@ -161,14 +161,14 @@ namespace RoslynPad
             Application.Current.Shutdown();
         }
         
-        private async void DockingManager_OnDocumentClosing(object sender, DocumentClosingEventArgs e)
+        private async void DockingManager_OnDocumentClosing(object? sender, DocumentClosingEventArgs e)
         {
             e.Cancel = true;
             var document = (OpenDocumentViewModel)e.Document.Content;
             await _viewModel.CloseDocument(document).ConfigureAwait(false);
         }
 
-        private void ViewErrorDetails_OnClick(object sender, RoutedEventArgs e)
+        private void ViewErrorDetails_OnClick(object? sender, RoutedEventArgs e)
         {
             if (_viewModel.LastError == null) return;
 
@@ -176,7 +176,7 @@ namespace RoslynPad
                 _viewModel.LastError.ToString(), string.Empty, TaskDialogButtons.Close);
         }
 
-        private void ViewUpdateClick(object sender, RoutedEventArgs e)
+        private void ViewUpdateClick(object? sender, RoutedEventArgs e)
         {
             _ = Task.Run(() => Process.Start(new ProcessStartInfo("https://roslynpad.net/") { UseShellExecute = true }));
         }

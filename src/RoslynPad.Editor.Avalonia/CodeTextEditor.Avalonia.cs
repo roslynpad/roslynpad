@@ -48,7 +48,7 @@ namespace RoslynPad.Editor
 
         partial class CustomCompletionWindow
         {
-            private static readonly System.Reflection.PropertyInfo LogicalChildrenProperty = typeof(StyledElement).GetProperty("LogicalChildren", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            private static readonly System.Reflection.PropertyInfo LogicalChildrenProperty = typeof(StyledElement).GetProperty("LogicalChildren", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) ?? throw new InvalidOperationException();
 
             partial void Initialize()
             {
@@ -59,8 +59,8 @@ namespace RoslynPad.Editor
                 // HACK alert - this is due to an Avalonia bug that assumes the parent of a PopupRoot must be a Popup (in our case it's a Window)
                 var toolTip = LogicalChildren.OfType<Avalonia.Controls.Primitives.Popup>().First();
                 LogicalChildren.Remove(toolTip);
-                var logicalChildren = (Avalonia.Collections.IAvaloniaList<Avalonia.LogicalTree.ILogical>)LogicalChildrenProperty.GetValue(TextArea);
-                logicalChildren.Add(toolTip);
+                var logicalChildren = LogicalChildrenProperty.GetValue(TextArea) as Avalonia.Collections.IAvaloniaList<Avalonia.LogicalTree.ILogical>;
+                logicalChildren?.Add(toolTip);
             }
 
             protected override void DetachEvents()

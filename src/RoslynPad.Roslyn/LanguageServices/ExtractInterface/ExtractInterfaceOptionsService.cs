@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.ExtractInterface;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.LanguageServices;
+using Microsoft.CodeAnalysis.LanguageService;
 using Microsoft.CodeAnalysis.Notification;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
@@ -27,16 +29,18 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
             INotificationService notificationService,
             List<ISymbol> extractableMembers,
             string defaultInterfaceName,
-            List<string> allTypeNames,
+            List<string> conflictingTypeNames,
             string defaultNamespace,
             string generatedNameTypeParameterSuffix,
-            string languageName)
+            string languageName,
+            CleanCodeGenerationOptionsProvider fallbackOptions,
+            CancellationToken cancellationToken)
         {
             var viewModel = new ExtractInterfaceDialogViewModel(
                 syntaxFactsService,
                 defaultInterfaceName,
                 extractableMembers,
-                allTypeNames,
+                conflictingTypeNames,
                 defaultNamespace,
                 generatedNameTypeParameterSuffix,
                 languageName,
@@ -50,19 +54,17 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface
                     includedMembers: viewModel.MemberContainers.Where(c => c.IsChecked).Select(c => c.MemberSymbol).AsImmutable(),
                     interfaceName: viewModel.InterfaceName.Trim(),
                     fileName: viewModel.FileName.Trim(),
-                    location: GetLocation(viewModel.Destination))
+                    location: GetLocation(viewModel.Destination),
+                    fallbackOptions)
                 : ExtractInterfaceOptionsResult.Cancelled;
             return Task.FromResult(options);
         }
 
-        private static ExtractInterfaceOptionsResult.ExtractLocation GetLocation(InterfaceDestination destination)
+        private static ExtractInterfaceOptionsResult.ExtractLocation GetLocation(InterfaceDestination destination) => destination switch
         {
-            switch (destination)
-            {
-                case InterfaceDestination.CurrentFile: return ExtractInterfaceOptionsResult.ExtractLocation.SameFile;
-                case InterfaceDestination.NewFile: return ExtractInterfaceOptionsResult.ExtractLocation.NewFile;
-                default: throw new InvalidOperationException();
-            }
-        }
+            InterfaceDestination.CurrentFile => ExtractInterfaceOptionsResult.ExtractLocation.SameFile,
+            InterfaceDestination.NewFile => ExtractInterfaceOptionsResult.ExtractLocation.NewFile,
+            _ => throw new InvalidOperationException(),
+        };
     }
 }
