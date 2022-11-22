@@ -4,49 +4,48 @@ using System.Windows;
 using Microsoft.Win32;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(IOpenFileDialog))]
+internal class OpenFileDialogAdapter : IOpenFileDialog
 {
-    [Export(typeof(IOpenFileDialog))]
-    internal class OpenFileDialogAdapter : IOpenFileDialog
+    private readonly OpenFileDialog _dialog;
+
+    public OpenFileDialogAdapter()
     {
-        private readonly OpenFileDialog _dialog;
+        _dialog = new OpenFileDialog();
+    }
 
-        public OpenFileDialogAdapter()
+    public bool AllowMultiple
+    {
+        get => _dialog.Multiselect;
+        set => _dialog.Multiselect = value;
+    }
+
+    public FileDialogFilter Filter
+    {
+        set => _dialog.Filter = value + string.Empty;
+    }
+
+    public string InitialDirectory
+    {
+        get => _dialog.InitialDirectory;
+        set => _dialog.InitialDirectory = value;
+    }
+
+    public string FileName
+    {
+        get => _dialog.FileName;
+        set => _dialog.FileName = value;
+    }
+
+    public Task<string[]?> ShowAsync()
+    {
+        if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
         {
-            _dialog = new OpenFileDialog();
+            return Task.FromResult<string[]?>(_dialog.FileNames);
         }
 
-        public bool AllowMultiple
-        {
-            get => _dialog.Multiselect;
-            set => _dialog.Multiselect = value;
-        }
-
-        public FileDialogFilter Filter
-        {
-            set => _dialog.Filter = value + string.Empty;
-        }
-
-        public string InitialDirectory
-        {
-            get => _dialog.InitialDirectory;
-            set => _dialog.InitialDirectory = value;
-        }
-
-        public string FileName
-        {
-            get => _dialog.FileName;
-            set => _dialog.FileName = value;
-        }
-
-        public Task<string[]?> ShowAsync()
-        {
-            if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
-            {
-                return Task.FromResult<string[]?>(_dialog.FileNames);
-            }
-
-            return Task.FromResult<string[]?>(null);
-        }
+        return Task.FromResult<string[]?>(null);
     }
 }

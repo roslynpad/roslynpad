@@ -5,74 +5,73 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Text;
 
-namespace RoslynPad.Roslyn
+namespace RoslynPad.Roslyn;
+
+public class RoslynWorkspace : Workspace
 {
-    public class RoslynWorkspace : Workspace
+    public DocumentId? OpenDocumentId { get; private set; }
+    public RoslynHost? RoslynHost { get; }
+
+    public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null)
+        : base(hostServices, workspaceKind)
     {
-        public DocumentId? OpenDocumentId { get; private set; }
-        public RoslynHost? RoslynHost { get; }
+        DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
 
-        public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null)
-            : base(hostServices, workspaceKind)
+        RoslynHost = roslynHost;
+    }
+
+    public new void SetCurrentSolution(Solution solution)
+    {
+        var oldSolution = CurrentSolution;
+        var newSolution = base.SetCurrentSolution(solution);
+        RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
+    }
+
+    public override bool CanOpenDocuments => true;
+
+    public override bool CanApplyChange(ApplyChangesKind feature)
+    {
+        switch (feature)
         {
-            DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
+            case ApplyChangesKind.ChangeDocument:
+            case ApplyChangesKind.ChangeDocumentInfo:
+            case ApplyChangesKind.AddMetadataReference:
+            case ApplyChangesKind.RemoveMetadataReference:
+            case ApplyChangesKind.AddAnalyzerReference:
+            case ApplyChangesKind.RemoveAnalyzerReference:
+                return true;
+            default:
+                return false;
+        }
+    }
 
-            RoslynHost = roslynHost;
+    public void OpenDocument(DocumentId documentId, SourceTextContainer textContainer)
+    {
+        OpenDocumentId = documentId;
+        OnDocumentOpened(documentId, textContainer);
+        OnDocumentContextUpdated(documentId);
+    }
+
+    public event Action<DocumentId, SourceText>? ApplyingTextChange;
+
+    protected override void Dispose(bool finalize)
+    {
+        base.Dispose(finalize);
+
+        ApplyingTextChange = null;
+
+        DiagnosticProvider.Disable(this);
+    }
+
+    protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
+    {
+        if (OpenDocumentId != document)
+        {
+            return;
         }
 
-        public new void SetCurrentSolution(Solution solution)
-        {
-            var oldSolution = CurrentSolution;
-            var newSolution = base.SetCurrentSolution(solution);
-            RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
-        }
+        ApplyingTextChange?.Invoke(document, newText);
 
-        public override bool CanOpenDocuments => true;
-
-        public override bool CanApplyChange(ApplyChangesKind feature)
-        {
-            switch (feature)
-            {
-                case ApplyChangesKind.ChangeDocument:
-                case ApplyChangesKind.ChangeDocumentInfo:
-                case ApplyChangesKind.AddMetadataReference:
-                case ApplyChangesKind.RemoveMetadataReference:
-                case ApplyChangesKind.AddAnalyzerReference:
-                case ApplyChangesKind.RemoveAnalyzerReference:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public void OpenDocument(DocumentId documentId, SourceTextContainer textContainer)
-        {
-            OpenDocumentId = documentId;
-            OnDocumentOpened(documentId, textContainer);
-            OnDocumentContextUpdated(documentId);
-        }
-
-        public event Action<DocumentId, SourceText>? ApplyingTextChange;
-
-        protected override void Dispose(bool finalize)
-        {
-            base.Dispose(finalize);
-
-            ApplyingTextChange = null;
-
-            DiagnosticProvider.Disable(this);
-        }
-
-        protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
-        {
-            if (OpenDocumentId != document)
-            {
-                return;
-            }
-
-            ApplyingTextChange?.Invoke(document, newText);
-
-            OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
-        }
+        OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
     }
 }

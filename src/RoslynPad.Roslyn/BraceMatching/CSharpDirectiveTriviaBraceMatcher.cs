@@ -8,18 +8,17 @@ using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace RoslynPad.Roslyn.BraceMatching
+namespace RoslynPad.Roslyn.BraceMatching;
+
+[ExportBraceMatcher(LanguageNames.CSharp)]
+internal class CSharpDirectiveTriviaBraceMatcher : AbstractDirectiveTriviaBraceMatcher<DirectiveTriviaSyntax, IfDirectiveTriviaSyntax, ElifDirectiveTriviaSyntax, ElseDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>
 {
-    [ExportBraceMatcher(LanguageNames.CSharp)]
-    internal class CSharpDirectiveTriviaBraceMatcher : AbstractDirectiveTriviaBraceMatcher<DirectiveTriviaSyntax, IfDirectiveTriviaSyntax, ElifDirectiveTriviaSyntax, ElseDirectiveTriviaSyntax, EndIfDirectiveTriviaSyntax>
-    {
-        internal override List<DirectiveTriviaSyntax> GetMatchingConditionalDirectives(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
-                => directive.GetMatchingConditionalDirectives(cancellationToken)?.ToList()!;
+    internal override List<DirectiveTriviaSyntax> GetMatchingConditionalDirectives(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
+            => directive.GetMatchingConditionalDirectives(cancellationToken)?.ToList()!;
 
-        internal override DirectiveTriviaSyntax GetMatchingDirective(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
-                => directive.GetMatchingDirective(cancellationToken);
+    internal override DirectiveTriviaSyntax GetMatchingDirective(DirectiveTriviaSyntax directive, CancellationToken cancellationToken)
+            => directive.GetMatchingDirective(cancellationToken);
 
-        internal override TextSpan GetSpanForTagging(DirectiveTriviaSyntax directive)
-                => TextSpan.FromBounds(directive.HashToken.SpanStart, directive.DirectiveNameToken.Span.End);
-    }
+    internal override TextSpan GetSpanForTagging(DirectiveTriviaSyntax directive)
+            => TextSpan.FromBounds(directive.HashToken.SpanStart, directive.DirectiveNameToken.Span.End);
 }

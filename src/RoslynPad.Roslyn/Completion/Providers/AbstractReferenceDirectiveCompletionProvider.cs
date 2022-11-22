@@ -5,52 +5,51 @@ using Microsoft.CodeAnalysis.Scripting.Hosting;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis.PooledObjects;
 
-namespace RoslynPad.Roslyn.Completion.Providers
+namespace RoslynPad.Roslyn.Completion.Providers;
+
+internal abstract class AbstractReferenceDirectiveCompletionProvider : AbstractDirectivePathCompletionProvider
 {
-    internal abstract class AbstractReferenceDirectiveCompletionProvider : AbstractDirectivePathCompletionProvider
+    private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
+        filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+        commitCharacterRules: ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
+        enterKeyRule: EnterKeyRule.Never,
+        selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
+
+    private static readonly char[] s_pathIndicators = new char[] { '/', '\\', ':' };
+
+    private static ImmutableArray<char> GetCommitCharacters()
     {
-        private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
-            filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-            commitCharacterRules: ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
-            enterKeyRule: EnterKeyRule.Never,
-            selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
+        var builder = ArrayBuilder<char>.GetInstance();
 
-        private static readonly char[] s_pathIndicators = new char[] { '/', '\\', ':' };
+        builder.Add('"');
 
-        private static ImmutableArray<char> GetCommitCharacters()
+        if (PathUtilities.IsUnixLikePlatform)
         {
-            var builder = ArrayBuilder<char>.GetInstance();
-
-            builder.Add('"');
-
-            if (PathUtilities.IsUnixLikePlatform)
-            {
-                builder.Add('/');
-            }
-            else
-            {
-                builder.Add('/');
-                builder.Add('\\');
-            }
-
-            builder.Add(',');
-
-            return builder.ToImmutableAndFree();
+            builder.Add('/');
+        }
+        else
+        {
+            builder.Add('/');
+            builder.Add('\\');
         }
 
-        protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
-        {
-            if (GacFileResolver.IsAvailable && pathThroughLastSlash.IndexOfAny(s_pathIndicators) < 0)
-            {
-                var gacHelper = new GlobalAssemblyCacheCompletionHelper(s_rules);
-                context.AddItems(await gacHelper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
-            }
+        builder.Add(',');
 
-            if (pathThroughLastSlash.IndexOf(',') < 0)
-            {
-                var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.Assembly, ImmutableArray.Create(".dll", ".exe"), s_rules);
-                context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
-            }
+        return builder.ToImmutableAndFree();
+    }
+
+    protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
+    {
+        if (GacFileResolver.IsAvailable && pathThroughLastSlash.IndexOfAny(s_pathIndicators) < 0)
+        {
+            var gacHelper = new GlobalAssemblyCacheCompletionHelper(s_rules);
+            context.AddItems(await gacHelper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
+        }
+
+        if (pathThroughLastSlash.IndexOf(',') < 0)
+        {
+            var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.Assembly, ImmutableArray.Create(".dll", ".exe"), s_rules);
+            context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
         }
     }
 }

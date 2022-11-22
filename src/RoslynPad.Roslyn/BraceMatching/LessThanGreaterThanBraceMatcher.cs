@@ -3,14 +3,13 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace RoslynPad.Roslyn.BraceMatching
+namespace RoslynPad.Roslyn.BraceMatching;
+
+[ExportBraceMatcher(LanguageNames.CSharp)]
+internal class LessThanGreaterThanBraceMatcher : AbstractCSharpBraceMatcher
 {
-    [ExportBraceMatcher(LanguageNames.CSharp)]
-    internal class LessThanGreaterThanBraceMatcher : AbstractCSharpBraceMatcher
+    public LessThanGreaterThanBraceMatcher()
+        : base(SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken)
     {
-        public LessThanGreaterThanBraceMatcher()
-            : base(SyntaxKind.LessThanToken, SyntaxKind.GreaterThanToken)
-        {
-        }
     }
 }

@@ -39,342 +39,341 @@ using RoslynPad.Roslyn;
 using System.Reactive.Subjects;
 using System.Linq;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+internal sealed class RoslynSemanticHighlighter : IHighlighter
 {
-    internal sealed class RoslynSemanticHighlighter : IHighlighter
+    private const int CacheSize = 512;
+    private const int DelayInMs = 100;
+    private readonly TextView _textView;
+    private readonly IDocument _document;
+    private readonly DocumentId _documentId;
+    private readonly IRoslynHost _roslynHost;
+    private readonly IClassificationHighlightColors _highlightColors;
+    private readonly List<CachedLine>? _cachedLines;
+    private readonly Subject<HighlightedLine> _subject;
+    private readonly List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
+    private readonly SynchronizationContext? _syncContext;
+
+    private volatile bool _inHighlightingGroup;
+    private int? _updatedLine;
+
+    public RoslynSemanticHighlighter(TextView textView, IDocument document, DocumentId documentId, IRoslynHost roslynHost, IClassificationHighlightColors highlightColors)
     {
-        private const int CacheSize = 512;
-        private const int DelayInMs = 100;
-        private readonly TextView _textView;
-        private readonly IDocument _document;
-        private readonly DocumentId _documentId;
-        private readonly IRoslynHost _roslynHost;
-        private readonly IClassificationHighlightColors _highlightColors;
-        private readonly List<CachedLine>? _cachedLines;
-        private readonly Subject<HighlightedLine> _subject;
-        private readonly List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
-        private readonly SynchronizationContext? _syncContext;
+        _textView = textView ?? throw new ArgumentNullException(nameof(textView));
+        _document = document ?? throw new ArgumentNullException(nameof(document));
+        _documentId = documentId;
+        _roslynHost = roslynHost;
+        _highlightColors = highlightColors;
+        _subject = new Subject<HighlightedLine>();
+        _subject.GroupBy(c => c.DocumentLine.LineNumber).Subscribe(SubscribeToLineGroup);
 
-        private volatile bool _inHighlightingGroup;
-        private int? _updatedLine;
-
-        public RoslynSemanticHighlighter(TextView textView, IDocument document, DocumentId documentId, IRoslynHost roslynHost, IClassificationHighlightColors highlightColors)
+        if (document is TextDocument)
         {
-            _textView = textView ?? throw new ArgumentNullException(nameof(textView));
-            _document = document ?? throw new ArgumentNullException(nameof(document));
-            _documentId = documentId;
-            _roslynHost = roslynHost;
-            _highlightColors = highlightColors;
-            _subject = new Subject<HighlightedLine>();
-            _subject.GroupBy(c => c.DocumentLine.LineNumber).Subscribe(SubscribeToLineGroup);
+            // Use the cache only for the live AvalonEdit document
+            // Highlighting in read-only documents (e.g. search results) does
+            // not need the cache as it does not need to highlight the same line multiple times
+            _cachedLines = new List<CachedLine>();
+        }
 
-            if (document is TextDocument)
+        _changes = new List<(HighlightedLine line, List<HighlightedSection> sections)>();
+        _syncContext = SynchronizationContext.Current;
+    }
+    
+    public void Dispose()
+    {
+        _subject.Dispose();
+    }
+
+    public event HighlightingStateChangedEventHandler? HighlightingStateChanged;
+
+    private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
+    {
+        if (_inHighlightingGroup && line.DocumentLine.LineNumber == _updatedLine)
+        {
+            lock (_changes)
             {
-                // Use the cache only for the live AvalonEdit document
-                // Highlighting in read-only documents (e.g. search results) does
-                // not need the cache as it does not need to highlight the same line multiple times
-                _cachedLines = new List<CachedLine>();
+                _changes.Add((line, sections));
             }
 
-            _changes = new List<(HighlightedLine line, List<HighlightedSection> sections)>();
-            _syncContext = SynchronizationContext.Current;
-        }
-        
-        public void Dispose()
-        {
-            _subject.Dispose();
+            return;
         }
 
-        public event HighlightingStateChangedEventHandler? HighlightingStateChanged;
+        _syncContext?.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
+    }
 
-        private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
+    private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
+    {
+        if (!IsCurrentLine(line))
         {
-            if (_inHighlightingGroup && line.DocumentLine.LineNumber == _updatedLine)
+            return;
+        }
+
+        var lineNumber = line.DocumentLine.LineNumber;
+
+        line.Sections.Clear();
+        foreach (var section in sections)
+            line.Sections.Add(section);
+
+        if (_textView.GetVisualLine(line.DocumentLine.LineNumber) != null)
+        {
+            HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
+        }
+    }
+
+    private bool IsCurrentLine(HighlightedLine line)
+    {
+        return !line.DocumentLine.IsDeleted &&
+               line.Document.Version.CompareAge(_document.Version) == 0 &&
+               _document.GetLineByNumber(line.DocumentLine.LineNumber) is var currentLine &&
+               currentLine?.Length == line.DocumentLine.Length;
+    }
+
+    IDocument IHighlighter.Document => _document;
+
+    IEnumerable<HighlightingColor>? IHighlighter.GetColorStack(int lineNumber) => null;
+
+    public void UpdateHighlightingState(int lineNumber)
+    {
+        if (_inHighlightingGroup && _updatedLine == null)
+        {
+            _updatedLine = lineNumber;
+        }
+    }
+
+    public HighlightedLine HighlightLine(int lineNumber)
+    {
+        var documentLine = _document.GetLineByNumber(lineNumber);
+        var newVersion = _document.Version;
+        CachedLine? cachedLine = null;
+        if (_cachedLines != null)
+        {
+            for (var i = 0; i < _cachedLines.Count; i++)
             {
-                lock (_changes)
+                var line = _cachedLines[i];
+                if (line.DocumentLine != documentLine) continue;
+                if (newVersion == null || !newVersion.BelongsToSameDocumentAs(line.OldVersion))
                 {
-                    _changes.Add((line, sections));
+                    // cannot list changes from old to new: we can't update the cache, so we'll remove it
+                    _cachedLines.RemoveAt(i);
                 }
-
-                return;
-            }
-
-            _syncContext?.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
-        }
-
-        private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
-        {
-            if (!IsCurrentLine(line))
-            {
-                return;
-            }
-
-            var lineNumber = line.DocumentLine.LineNumber;
-
-            line.Sections.Clear();
-            foreach (var section in sections)
-                line.Sections.Add(section);
-
-            if (_textView.GetVisualLine(line.DocumentLine.LineNumber) != null)
-            {
-                HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
-            }
-        }
-
-        private bool IsCurrentLine(HighlightedLine line)
-        {
-            return !line.DocumentLine.IsDeleted &&
-                   line.Document.Version.CompareAge(_document.Version) == 0 &&
-                   _document.GetLineByNumber(line.DocumentLine.LineNumber) is var currentLine &&
-                   currentLine?.Length == line.DocumentLine.Length;
-        }
-
-        IDocument IHighlighter.Document => _document;
-
-        IEnumerable<HighlightingColor>? IHighlighter.GetColorStack(int lineNumber) => null;
-
-        public void UpdateHighlightingState(int lineNumber)
-        {
-            if (_inHighlightingGroup && _updatedLine == null)
-            {
-                _updatedLine = lineNumber;
-            }
-        }
-
-        public HighlightedLine HighlightLine(int lineNumber)
-        {
-            var documentLine = _document.GetLineByNumber(lineNumber);
-            var newVersion = _document.Version;
-            CachedLine? cachedLine = null;
-            if (_cachedLines != null)
-            {
-                for (var i = 0; i < _cachedLines.Count; i++)
+                else
                 {
-                    var line = _cachedLines[i];
-                    if (line.DocumentLine != documentLine) continue;
-                    if (newVersion == null || !newVersion.BelongsToSameDocumentAs(line.OldVersion))
-                    {
-                        // cannot list changes from old to new: we can't update the cache, so we'll remove it
-                        _cachedLines.RemoveAt(i);
-                    }
-                    else
-                    {
-                        cachedLine = line;
-                    }
-                }
-
-                if (cachedLine != null && cachedLine.IsValid && newVersion?.CompareAge(cachedLine.OldVersion) == 0 &&
-                    cachedLine.DocumentLine.Length == documentLine.Length)
-                {
-                    // the file hasn't changed since the cache was created, so just reuse the old highlighted line
-                    return cachedLine.HighlightedLine;
+                    cachedLine = line;
                 }
             }
 
-            var wasInHighlightingGroup = _inHighlightingGroup;
-            if (!_inHighlightingGroup)
+            if (cachedLine != null && cachedLine.IsValid && newVersion?.CompareAge(cachedLine.OldVersion) == 0 &&
+                cachedLine.DocumentLine.Length == documentLine.Length)
             {
-                BeginHighlighting();
-            }
-            try
-            {
-                return DoHighlightLine(documentLine, cachedLine);
-            }
-            finally
-            {
-                if (!wasInHighlightingGroup)
-                    EndHighlighting();
+                // the file hasn't changed since the cache was created, so just reuse the old highlighted line
+                return cachedLine.HighlightedLine;
             }
         }
 
-        private HighlightedLine DoHighlightLine(IDocumentLine documentLine, CachedLine? previousCachedLine)
+        var wasInHighlightingGroup = _inHighlightingGroup;
+        if (!_inHighlightingGroup)
         {
-            var line = new HighlightedLine(_document, documentLine);
-
-            // If we have previous cached data, use it in the meantime since our request is asynchronous
-            if (previousCachedLine != null && previousCachedLine.HighlightedLine is var previousHighlight && 
-                previousHighlight.Sections.Count > 0)
-            {
-                var offsetShift = documentLine.Offset - previousCachedLine.Offset;
-
-                foreach (var section in previousHighlight.Sections)
-                {
-                    var offset = section.Offset + offsetShift;
-
-                    // stop if section is outside the line
-                    if (offset < documentLine.Offset)
-                        continue;
-
-                    if (offset >= documentLine.EndOffset)
-                        break;
-
-                    // clamp section to not be longer than line
-                    int length = Math.Min(section.Length, documentLine.EndOffset - offset);
-                    line.Sections.Add(new HighlightedSection
-                    {
-                        Color = section.Color,
-                        Offset = offset,
-                        Length = length,
-                    });
-                }
-            }
-
-            // since we don't want to block the UI thread
-            // we'll enqueue the request and process it asynchornously
-            _subject.OnNext(line);
-
-            CacheLine(line);
-            return line;
+            BeginHighlighting();
         }
-
-        private void SubscribeToLineGroup(IObservable<HighlightedLine> observable)
+        try
         {
-            var connectible = observable.Throttle(TimeSpan.FromMilliseconds(DelayInMs))
-                .SelectMany(SubscribeToLine)
-                .Replay();
-            connectible.Connect();
+            return DoHighlightLine(documentLine, cachedLine);
         }
-
-        private async Task<object?> SubscribeToLine(HighlightedLine line)
+        finally
         {
-            var document = _roslynHost.GetDocument(_documentId);
-            if (document == null)
-                return null;
+            if (!wasInHighlightingGroup)
+                EndHighlighting();
+        }
+    }
 
-            var documentLine = line.DocumentLine;
-            IEnumerable<ClassifiedSpan> spans;
-            try
-            {
-                spans = await GetClassifiedSpansAsync(document, documentLine).ConfigureAwait(true);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+    private HighlightedLine DoHighlightLine(IDocumentLine documentLine, CachedLine? previousCachedLine)
+    {
+        var line = new HighlightedLine(_document, documentLine);
 
-            // rebuild sections
-            var sections = new List<HighlightedSection>();
-            foreach (var classifiedSpan in spans)
+        // If we have previous cached data, use it in the meantime since our request is asynchronous
+        if (previousCachedLine != null && previousCachedLine.HighlightedLine is var previousHighlight && 
+            previousHighlight.Sections.Count > 0)
+        {
+            var offsetShift = documentLine.Offset - previousCachedLine.Offset;
+
+            foreach (var section in previousHighlight.Sections)
             {
-                var textSpan = AdjustTextSpan(classifiedSpan, documentLine);
-                if (textSpan == null)
-                {
+                var offset = section.Offset + offsetShift;
+
+                // stop if section is outside the line
+                if (offset < documentLine.Offset)
                     continue;
-                }
 
-                sections.Add(new HighlightedSection
+                if (offset >= documentLine.EndOffset)
+                    break;
+
+                // clamp section to not be longer than line
+                int length = Math.Min(section.Length, documentLine.EndOffset - offset);
+                line.Sections.Add(new HighlightedSection
                 {
-                    Color = _highlightColors.GetBrush(classifiedSpan.ClassificationType),
-                    Offset = textSpan.Value.Start,
-                    Length = textSpan.Value.Length
+                    Color = section.Color,
+                    Offset = offset,
+                    Length = length,
                 });
             }
+        }
 
-            // post update on UI thread
-            UpdateHighlightingSections(line, sections);
+        // since we don't want to block the UI thread
+        // we'll enqueue the request and process it asynchornously
+        _subject.OnNext(line);
+
+        CacheLine(line);
+        return line;
+    }
+
+    private void SubscribeToLineGroup(IObservable<HighlightedLine> observable)
+    {
+        var connectible = observable.Throttle(TimeSpan.FromMilliseconds(DelayInMs))
+            .SelectMany(SubscribeToLine)
+            .Replay();
+        connectible.Connect();
+    }
+
+    private async Task<object?> SubscribeToLine(HighlightedLine line)
+    {
+        var document = _roslynHost.GetDocument(_documentId);
+        if (document == null)
+            return null;
+
+        var documentLine = line.DocumentLine;
+        IEnumerable<ClassifiedSpan> spans;
+        try
+        {
+            spans = await GetClassifiedSpansAsync(document, documentLine).ConfigureAwait(true);
+        }
+        catch (Exception)
+        {
             return null;
         }
 
-        private static TextSpan? AdjustTextSpan(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
+        // rebuild sections
+        var sections = new List<HighlightedSection>();
+        foreach (var classifiedSpan in spans)
         {
-            if (classifiedSpan.TextSpan.Start > documentLine.EndOffset)
+            var textSpan = AdjustTextSpan(classifiedSpan, documentLine);
+            if (textSpan == null)
             {
-                return null;
+                continue;
             }
 
-            var result = TextSpan.FromBounds(
-                Math.Max(classifiedSpan.TextSpan.Start, documentLine.Offset),
-                Math.Min(classifiedSpan.TextSpan.End, documentLine.EndOffset));
-
-            return result;
-        }
-
-        private void CacheLine(HighlightedLine line)
-        {
-            if (_cachedLines != null && _document.Version != null)
+            sections.Add(new HighlightedSection
             {
-                _cachedLines.Add(new CachedLine(line, _document.Version));
-
-                // Clean cache once it gets too big
-                if (_cachedLines.Count > CacheSize)
-                {
-                    _cachedLines.RemoveRange(0, CacheSize / 2);
-                }
-            }
+                Color = _highlightColors.GetBrush(classifiedSpan.ClassificationType),
+                Offset = textSpan.Value.Start,
+                Length = textSpan.Value.Length
+            });
         }
 
-        private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(Document document, IDocumentLine documentLine)
-        {
-            if (!documentLine.IsDeleted)
-            {
-                var text = await document.GetTextAsync().ConfigureAwait(false);
-                if (text.Length >= documentLine.Offset + documentLine.TotalLength)
-                {
-                    return await Classifier.GetClassifiedSpansAsync(document,
-                            new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
-                        .ConfigureAwait(false);
-                }
-            }
-
-            return Array.Empty<ClassifiedSpan>();
-        }
-
-        HighlightingColor IHighlighter.DefaultTextColor => _highlightColors.DefaultBrush;
-
-        public void BeginHighlighting()
-        {
-            if (_inHighlightingGroup)
-                throw new InvalidOperationException();
-            _inHighlightingGroup = true;
-        }
-
-        public void EndHighlighting()
-        {
-            _inHighlightingGroup = false;
-            _updatedLine = null;
-
-            lock (_changes)
-            {
-                foreach (var change in _changes)
-                {
-                    UpdateHighlightingSectionsNoCheck(change.line, change.sections);
-                }
-
-                _changes.Clear();
-            }
-        }
-
-        public HighlightingColor? GetNamedColor(string name) => null;
-
-        #region Caching
-
-        // If a line gets edited and we need to display it while no parse information is ready for the
-        // changed file, the line would flicker (semantic highlightings disappear temporarily).
-        // We avoid this issue by storing the semantic highlightings and updating them on document changes
-        // (using anchor movement)
-        private class CachedLine
-        {
-            public readonly HighlightedLine HighlightedLine;
-            public readonly ITextSourceVersion OldVersion;
-            public readonly int Offset;
-
-            /// <summary>
-            /// Gets whether the cache line is valid (no document changes since it was created).
-            /// This field gets set to false when Update() is called.
-            /// </summary>
-            public readonly bool IsValid;
-
-            public IDocumentLine DocumentLine => HighlightedLine.DocumentLine;
-
-            public CachedLine(HighlightedLine highlightedLine, ITextSourceVersion fileVersion)
-            {
-                HighlightedLine = highlightedLine ?? throw new ArgumentNullException(nameof(highlightedLine));
-                OldVersion = fileVersion ?? throw new ArgumentNullException(nameof(fileVersion));
-                IsValid = true;
-                Offset = HighlightedLine.DocumentLine.Offset;
-            }
-        }
-
-        #endregion
+        // post update on UI thread
+        UpdateHighlightingSections(line, sections);
+        return null;
     }
+
+    private static TextSpan? AdjustTextSpan(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
+    {
+        if (classifiedSpan.TextSpan.Start > documentLine.EndOffset)
+        {
+            return null;
+        }
+
+        var result = TextSpan.FromBounds(
+            Math.Max(classifiedSpan.TextSpan.Start, documentLine.Offset),
+            Math.Min(classifiedSpan.TextSpan.End, documentLine.EndOffset));
+
+        return result;
+    }
+
+    private void CacheLine(HighlightedLine line)
+    {
+        if (_cachedLines != null && _document.Version != null)
+        {
+            _cachedLines.Add(new CachedLine(line, _document.Version));
+
+            // Clean cache once it gets too big
+            if (_cachedLines.Count > CacheSize)
+            {
+                _cachedLines.RemoveRange(0, CacheSize / 2);
+            }
+        }
+    }
+
+    private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(Document document, IDocumentLine documentLine)
+    {
+        if (!documentLine.IsDeleted)
+        {
+            var text = await document.GetTextAsync().ConfigureAwait(false);
+            if (text.Length >= documentLine.Offset + documentLine.TotalLength)
+            {
+                return await Classifier.GetClassifiedSpansAsync(document,
+                        new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        return Array.Empty<ClassifiedSpan>();
+    }
+
+    HighlightingColor IHighlighter.DefaultTextColor => _highlightColors.DefaultBrush;
+
+    public void BeginHighlighting()
+    {
+        if (_inHighlightingGroup)
+            throw new InvalidOperationException();
+        _inHighlightingGroup = true;
+    }
+
+    public void EndHighlighting()
+    {
+        _inHighlightingGroup = false;
+        _updatedLine = null;
+
+        lock (_changes)
+        {
+            foreach (var change in _changes)
+            {
+                UpdateHighlightingSectionsNoCheck(change.line, change.sections);
+            }
+
+            _changes.Clear();
+        }
+    }
+
+    public HighlightingColor? GetNamedColor(string name) => null;
+
+    #region Caching
+
+    // If a line gets edited and we need to display it while no parse information is ready for the
+    // changed file, the line would flicker (semantic highlightings disappear temporarily).
+    // We avoid this issue by storing the semantic highlightings and updating them on document changes
+    // (using anchor movement)
+    private class CachedLine
+    {
+        public readonly HighlightedLine HighlightedLine;
+        public readonly ITextSourceVersion OldVersion;
+        public readonly int Offset;
+
+        /// <summary>
+        /// Gets whether the cache line is valid (no document changes since it was created).
+        /// This field gets set to false when Update() is called.
+        /// </summary>
+        public readonly bool IsValid;
+
+        public IDocumentLine DocumentLine => HighlightedLine.DocumentLine;
+
+        public CachedLine(HighlightedLine highlightedLine, ITextSourceVersion fileVersion)
+        {
+            HighlightedLine = highlightedLine ?? throw new ArgumentNullException(nameof(highlightedLine));
+            OldVersion = fileVersion ?? throw new ArgumentNullException(nameof(fileVersion));
+            IsValid = true;
+            Offset = HighlightedLine.DocumentLine.Offset;
+        }
+    }
+
+    #endregion
 }

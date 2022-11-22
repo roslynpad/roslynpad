@@ -5,38 +5,36 @@ using System.Composition;
 using System.IO;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynPad.Roslyn.WorkspaceServices
+namespace RoslynPad.Roslyn.WorkspaceServices;
+
+[ExportWorkspaceServiceFactory(typeof(IDocumentationProviderService), ServiceLayer.Host), Shared]
+internal sealed class DocumentationProviderServiceFactory : IWorkspaceServiceFactory
 {
-    [ExportWorkspaceServiceFactory(typeof(IDocumentationProviderService), ServiceLayer.Host), Shared]
-    internal sealed class DocumentationProviderServiceFactory : IWorkspaceServiceFactory
+    private readonly IDocumentationProviderService _service;
+
+    [ImportingConstructor]
+    public DocumentationProviderServiceFactory(IDocumentationProviderService service) => _service = service;
+
+    public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices) => _service;
+}
+
+[Export(typeof(IDocumentationProviderService)), Shared]
+internal sealed class DocumentationProviderService : IDocumentationProviderService
+{
+    private readonly ConcurrentDictionary<string, DocumentationProvider?> _assemblyPathToDocumentationProviderMap = new();
+
+    public DocumentationProvider? GetDocumentationProvider(string location)
     {
-        private readonly IDocumentationProviderService _service;
+        string? finalPath = Path.ChangeExtension(location, "xml");
 
-        [ImportingConstructor]
-        public DocumentationProviderServiceFactory(IDocumentationProviderService service) => _service = service;
-
-        public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices) => _service;
-    }
-
-    [Export(typeof(IDocumentationProviderService)), Shared]
-    internal sealed class DocumentationProviderService : IDocumentationProviderService
-    {
-        private readonly ConcurrentDictionary<string, DocumentationProvider?> _assemblyPathToDocumentationProviderMap = new();
-
-        public DocumentationProvider? GetDocumentationProvider(string location)
+        return _assemblyPathToDocumentationProviderMap.GetOrAdd(location, _ =>
         {
-            string? finalPath = Path.ChangeExtension(location, "xml");
-
-            return _assemblyPathToDocumentationProviderMap.GetOrAdd(location, _ =>
+            if (!File.Exists(finalPath))
             {
-                if (!File.Exists(finalPath))
-                {
-                    return null;
-                }
+                return null;
+            }
 
-                return XmlDocumentationProvider.CreateFromFile(finalPath);
-            });
-        }
+            return XmlDocumentationProvider.CreateFromFile(finalPath);
+        });
     }
-
 }

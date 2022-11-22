@@ -7,43 +7,42 @@ using Roslyn.Utilities;
 using Microsoft.CodeAnalysis.PooledObjects;
 using System.IO;
 
-namespace RoslynPad.Roslyn.Completion.Providers
+namespace RoslynPad.Roslyn.Completion.Providers;
+
+internal abstract class AbstractLoadDirectiveCompletionProvider : AbstractDirectivePathCompletionProvider
 {
-    internal abstract class AbstractLoadDirectiveCompletionProvider : AbstractDirectivePathCompletionProvider
+    private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
+         filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+         commitCharacterRules: ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
+         enterKeyRule: EnterKeyRule.Never,
+         selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
+
+    private static ImmutableArray<char> GetCommitCharacters()
     {
-        private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
-             filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-             commitCharacterRules: ImmutableArray.Create(CharacterSetModificationRule.Create(CharacterSetModificationKind.Replace, GetCommitCharacters())),
-             enterKeyRule: EnterKeyRule.Never,
-             selectionBehavior: CompletionItemSelectionBehavior.HardSelection);
-
-        private static ImmutableArray<char> GetCommitCharacters()
+        var builder = ArrayBuilder<char>.GetInstance();
+        builder.Add('"');
+        if (PathUtilities.IsUnixLikePlatform)
         {
-            var builder = ArrayBuilder<char>.GetInstance();
-            builder.Add('"');
-            if (PathUtilities.IsUnixLikePlatform)
-            {
-                builder.Add('/');
-            }
-            else
-            {
-                builder.Add('/');
-                builder.Add('\\');
-            }
-
-            return builder.ToImmutableAndFree();
+            builder.Add('/');
+        }
+        else
+        {
+            builder.Add('/');
+            builder.Add('\\');
         }
 
-        protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
-        {
-            var extension = Path.GetExtension(context.Document.FilePath);
-            if (extension == null)
-            {
-                return;
-            }
+        return builder.ToImmutableAndFree();
+    }
 
-            var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.CSharpFile, ImmutableArray.Create(extension), s_rules);
-            context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
+    protected override async Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
+    {
+        var extension = Path.GetExtension(context.Document.FilePath);
+        if (extension == null)
+        {
+            return;
         }
+
+        var helper = GetFileSystemCompletionHelper(context.Document, Microsoft.CodeAnalysis.Glyph.CSharpFile, ImmutableArray.Create(extension), s_rules);
+        context.AddItems(await helper.GetItemsAsync(pathThroughLastSlash, context.CancellationToken).ConfigureAwait(false));
     }
 }

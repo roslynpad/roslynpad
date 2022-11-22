@@ -7,45 +7,44 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.PickMembers;
 
-namespace RoslynPad.Roslyn.LanguageServices.PickMembers
+namespace RoslynPad.Roslyn.LanguageServices.PickMembers;
+
+[ExportWorkspaceService(typeof(IPickMembersService), ServiceLayer.Host), Shared]
+internal class PickMembersService : IPickMembersService
 {
-    [ExportWorkspaceService(typeof(IPickMembersService), ServiceLayer.Host), Shared]
-    internal class PickMembersService : IPickMembersService
+    private readonly ExportFactory<IPickMembersDialog> _dialogFactory;
+
+    [ImportingConstructor]
+    public PickMembersService(ExportFactory<IPickMembersDialog> dialogFactory)
     {
-        private readonly ExportFactory<IPickMembersDialog> _dialogFactory;
-
-        [ImportingConstructor]
-        public PickMembersService(ExportFactory<IPickMembersDialog> dialogFactory)
-        {
-            _dialogFactory = dialogFactory;
-        }
-
-        public PickMembersResult PickMembers(
-            string title, ImmutableArray<ISymbol> members, ImmutableArray<PickMembersOption> options = default, bool selectAll = true)
-        {
-            options = options.NullToEmpty();
-
-            var viewModel = new PickMembersDialogViewModel(members, options);
-            var dialog = _dialogFactory.CreateExport().Value;
-            dialog.Title = title;
-            dialog.ViewModel = viewModel;
-            if (dialog.Show() == true)
-            {
-                return new PickMembersResult(
-                    viewModel.MemberContainers.Where(c => c.IsChecked)
-                                              .Select(c => c.MemberSymbol)
-                                              .ToImmutableArray(), 
-                    options, selectAll);
-            }
-            else
-            {
-                return PickMembersResult.Canceled;
-            }
-        }
+        _dialogFactory = dialogFactory;
     }
 
-    internal interface IPickMembersDialog : IRoslynDialog
+    public PickMembersResult PickMembers(
+        string title, ImmutableArray<ISymbol> members, ImmutableArray<PickMembersOption> options = default, bool selectAll = true)
     {
-        string Title { get; set; }
+        options = options.NullToEmpty();
+
+        var viewModel = new PickMembersDialogViewModel(members, options);
+        var dialog = _dialogFactory.CreateExport().Value;
+        dialog.Title = title;
+        dialog.ViewModel = viewModel;
+        if (dialog.Show() == true)
+        {
+            return new PickMembersResult(
+                viewModel.MemberContainers.Where(c => c.IsChecked)
+                                          .Select(c => c.MemberSymbol)
+                                          .ToImmutableArray(), 
+                options, selectAll);
+        }
+        else
+        {
+            return PickMembersResult.Canceled;
+        }
     }
+}
+
+internal interface IPickMembersDialog : IRoslynDialog
+{
+    string Title { get; set; }
 }

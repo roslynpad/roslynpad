@@ -30,84 +30,83 @@ using CommonBrush = System.Windows.Media.Brush;
 #endif
 using RoslynPad.Roslyn.BraceMatching;
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+public class BraceMatcherHighlightRenderer : IBackgroundRenderer
 {
-    public class BraceMatcherHighlightRenderer : IBackgroundRenderer
+    private readonly TextView _textView;
+    private readonly CommonBrush _backgroundBrush;
+
+    public BraceMatchingResult? LeftOfPosition { get; private set; }
+    public BraceMatchingResult? RightOfPosition { get; private set; }
+
+    public const string BracketHighlight = "Bracket highlight";
+
+    public BraceMatcherHighlightRenderer(TextView textView, IClassificationHighlightColors classificationHighlightColors)
     {
-        private readonly TextView _textView;
-        private readonly CommonBrush _backgroundBrush;
+        _textView = textView ?? throw new ArgumentNullException(nameof(textView));
 
-        public BraceMatchingResult? LeftOfPosition { get; private set; }
-        public BraceMatchingResult? RightOfPosition { get; private set; }
+        _textView.BackgroundRenderers.Add(this);
 
-        public const string BracketHighlight = "Bracket highlight";
+        var brush = classificationHighlightColors
+            .GetBrush(ClassificationHighlightColors.BraceMatchingClassificationTypeName)
+            ?.Background?.GetBrush(null);
 
-        public BraceMatcherHighlightRenderer(TextView textView, IClassificationHighlightColors classificationHighlightColors)
+        if (brush != null)
         {
-            _textView = textView ?? throw new ArgumentNullException(nameof(textView));
-
-            _textView.BackgroundRenderers.Add(this);
-
-            var brush = classificationHighlightColors
-                .GetBrush(ClassificationHighlightColors.BraceMatchingClassificationTypeName)
-                ?.Background?.GetBrush(null);
-
-            if (brush != null)
-            {
-                _backgroundBrush = brush;
-            }
-            else
-            {
-                _backgroundBrush = Brushes.Transparent;
-            }
+            _backgroundBrush = brush;
         }
-
-        public void SetHighlight(BraceMatchingResult? leftOfPosition, BraceMatchingResult? rightOfPosition)
+        else
         {
-            if (LeftOfPosition != leftOfPosition || RightOfPosition != rightOfPosition)
-            {
-                LeftOfPosition = leftOfPosition;
-                RightOfPosition = rightOfPosition;
-                _textView.InvalidateLayer(Layer);
-            }
+            _backgroundBrush = Brushes.Transparent;
         }
+    }
 
-        public KnownLayer Layer => KnownLayer.Selection;
-
-        public void Draw(TextView textView, DrawingContext drawingContext)
+    public void SetHighlight(BraceMatchingResult? leftOfPosition, BraceMatchingResult? rightOfPosition)
+    {
+        if (LeftOfPosition != leftOfPosition || RightOfPosition != rightOfPosition)
         {
-            if (LeftOfPosition == null && RightOfPosition == null)
-                return;
+            LeftOfPosition = leftOfPosition;
+            RightOfPosition = rightOfPosition;
+            _textView.InvalidateLayer(Layer);
+        }
+    }
 
-            var builder = new BackgroundGeometryBuilder
-            {
-                CornerRadius = 1,
+    public KnownLayer Layer => KnownLayer.Selection;
+
+    public void Draw(TextView textView, DrawingContext drawingContext)
+    {
+        if (LeftOfPosition == null && RightOfPosition == null)
+            return;
+
+        var builder = new BackgroundGeometryBuilder
+        {
+            CornerRadius = 1,
 #if !AVALONIA
-                AlignToWholePixels = true
+            AlignToWholePixels = true
 #endif
-            };
+        };
 
-            if (RightOfPosition != null)
-            {
-                builder.AddSegment(textView, new TextSegment { StartOffset = RightOfPosition.Value.LeftSpan.Start, Length = RightOfPosition.Value.LeftSpan.Length });
-                builder.CloseFigure();
-                builder.AddSegment(textView, new TextSegment { StartOffset = RightOfPosition.Value.RightSpan.Start, Length = RightOfPosition.Value.RightSpan.Length });
-                builder.CloseFigure();
-            }
+        if (RightOfPosition != null)
+        {
+            builder.AddSegment(textView, new TextSegment { StartOffset = RightOfPosition.Value.LeftSpan.Start, Length = RightOfPosition.Value.LeftSpan.Length });
+            builder.CloseFigure();
+            builder.AddSegment(textView, new TextSegment { StartOffset = RightOfPosition.Value.RightSpan.Start, Length = RightOfPosition.Value.RightSpan.Length });
+            builder.CloseFigure();
+        }
 
-            if (LeftOfPosition != null)
-            {
-                builder.AddSegment(textView, new TextSegment { StartOffset = LeftOfPosition.Value.LeftSpan.Start, Length = LeftOfPosition.Value.LeftSpan.Length });
-                builder.CloseFigure();
-                builder.AddSegment(textView, new TextSegment { StartOffset = LeftOfPosition.Value.RightSpan.Start, Length = LeftOfPosition.Value.RightSpan.Length });
-                builder.CloseFigure();
-            }
+        if (LeftOfPosition != null)
+        {
+            builder.AddSegment(textView, new TextSegment { StartOffset = LeftOfPosition.Value.LeftSpan.Start, Length = LeftOfPosition.Value.LeftSpan.Length });
+            builder.CloseFigure();
+            builder.AddSegment(textView, new TextSegment { StartOffset = LeftOfPosition.Value.RightSpan.Start, Length = LeftOfPosition.Value.RightSpan.Length });
+            builder.CloseFigure();
+        }
 
-            var geometry = builder.CreateGeometry();
-            if (geometry != null)
-            {
-                drawingContext.DrawGeometry(_backgroundBrush, null, geometry);
-            }
+        var geometry = builder.CreateGeometry();
+        if (geometry != null)
+        {
+            drawingContext.DrawGeometry(_backgroundBrush, null, geometry);
         }
     }
 }

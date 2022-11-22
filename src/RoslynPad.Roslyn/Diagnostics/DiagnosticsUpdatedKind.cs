@@ -1,8 +1,7 @@
-namespace RoslynPad.Roslyn.Diagnostics
+namespace RoslynPad.Roslyn.Diagnostics;
+
+public enum DiagnosticsUpdatedKind
 {
-    public enum DiagnosticsUpdatedKind
-    {
-        DiagnosticsRemoved,
-        DiagnosticsCreated
-    }
+    DiagnosticsRemoved,
+    DiagnosticsCreated
 }

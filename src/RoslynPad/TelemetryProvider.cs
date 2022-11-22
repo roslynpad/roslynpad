@@ -6,26 +6,25 @@ using System.Windows.Threading;
 using Microsoft.Extensions.Configuration;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(ITelemetryProvider)), Shared]
+internal class TelemetryProvider : TelemetryProviderBase
 {
-    [Export(typeof(ITelemetryProvider)), Shared]
-    internal class TelemetryProvider : TelemetryProviderBase
+    public override void Initialize(string version, IApplicationSettings settings)
     {
-        public override void Initialize(string version, IApplicationSettings settings)
-        {
-            base.Initialize(version, settings);
+        base.Initialize(version, settings);
 
-            Application.Current.DispatcherUnhandledException += OnUnhandledDispatcherException;
-        }
-
-        private void OnUnhandledDispatcherException(object? sender, DispatcherUnhandledExceptionEventArgs args)
-        {
-            HandleException(args.Exception);
-            args.Handled = true;
-        }
-        
-        protected override string? GetInstrumentationKey() =>
-            new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
-                .Build()["InstrumentationKey"];
+        Application.Current.DispatcherUnhandledException += OnUnhandledDispatcherException;
     }
+
+    private void OnUnhandledDispatcherException(object? sender, DispatcherUnhandledExceptionEventArgs args)
+    {
+        HandleException(args.Exception);
+        args.Handled = true;
+    }
+    
+    protected override string? GetInstrumentationKey() =>
+        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
+            .Build()["InstrumentationKey"];
 }

@@ -4,10 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynPad.Roslyn.BraceMatching
+namespace RoslynPad.Roslyn.BraceMatching;
+
+internal interface IBraceMatcher
 {
-    internal interface IBraceMatcher
-    {
-        Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken = default);
-    }
+    Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken = default);
 }

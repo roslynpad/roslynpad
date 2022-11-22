@@ -4,17 +4,16 @@ using AvaloniaEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 #endif
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+public interface ICompletionDataEx : ICompletionData
 {
-    public interface ICompletionDataEx : ICompletionData
-    {
-        bool IsSelected { get; }
+    bool IsSelected { get; }
 
-        string SortText { get; }
-    }
+    string SortText { get; }
+}
 
-    public interface IOverloadProviderEx : IOverloadProvider
-    {
-        void Refresh();
-    }
+public interface IOverloadProviderEx : IOverloadProvider
+{
+    void Refresh();
 }

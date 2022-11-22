@@ -3,14 +3,13 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace RoslynPad.Roslyn.BraceMatching
+namespace RoslynPad.Roslyn.BraceMatching;
+
+[ExportBraceMatcher(LanguageNames.CSharp)]
+internal class OpenCloseParenBraceMatcher : AbstractCSharpBraceMatcher
 {
-    [ExportBraceMatcher(LanguageNames.CSharp)]
-    internal class OpenCloseParenBraceMatcher : AbstractCSharpBraceMatcher
+    public OpenCloseParenBraceMatcher()
+        : base(SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken)
     {
-        public OpenCloseParenBraceMatcher()
-            : base(SyntaxKind.OpenParenToken, SyntaxKind.CloseParenToken)
-        {
-        }
     }
 }

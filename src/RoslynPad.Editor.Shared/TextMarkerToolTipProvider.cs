@@ -28,69 +28,68 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 #endif
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+internal sealed class TextMarkerToolTipProvider
 {
-    internal sealed class TextMarkerToolTipProvider
+    private readonly TextMarkerService _textMarkerService;
+    private readonly TextEditor _editor;
+
+    public TextMarkerToolTipProvider(TextMarkerService textMarkerService, TextEditor editor)
     {
-        private readonly TextMarkerService _textMarkerService;
-        private readonly TextEditor _editor;
-
-        public TextMarkerToolTipProvider(TextMarkerService textMarkerService, TextEditor editor)
-        {
-            _textMarkerService = textMarkerService;
-            _editor = editor;
-        }
-
-        public void HandleToolTipRequest(ToolTipRequestEventArgs args)
-        {
-            if (!args.InDocument) return;
-            var offset = _editor.Document.GetOffset(args.LogicalPosition);
-
-            //FoldingManager foldings = _editor.GetService(typeof(FoldingManager)) as FoldingManager;
-            //if (foldings != null)
-            //{
-            //    var foldingsAtOffset = foldings.GetFoldingsAt(offset);
-            //    FoldingSection collapsedSection = foldingsAtOffset.FirstOrDefault(section => section.IsFolded);
-
-            //    if (collapsedSection != null)
-            //    {
-            //        args.SetToolTip(GetTooltipTextForCollapsedSection(args, collapsedSection));
-            //    }
-            //}
-
-            var markersAtOffset = _textMarkerService.GetMarkersAtOffset(offset);
-            var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
-            if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
-            {
-                args.SetToolTip(markerWithToolTip.ToolTip);
-            }
-        }
-
-        //string GetTooltipTextForCollapsedSection(ToolTipRequestEventArgs args, FoldingSection foldingSection)
-        //{
-        //    return ToolTipUtils.GetAlignedText(_editor.Document, foldingSection.StartOffset, foldingSection.EndOffset);
-        //}
+        _textMarkerService = textMarkerService;
+        _editor = editor;
     }
 
-    public sealed class ToolTipRequestEventArgs : RoutedEventArgs
+    public void HandleToolTipRequest(ToolTipRequestEventArgs args)
     {
-        public ToolTipRequestEventArgs()
+        if (!args.InDocument) return;
+        var offset = _editor.Document.GetOffset(args.LogicalPosition);
+
+        //FoldingManager foldings = _editor.GetService(typeof(FoldingManager)) as FoldingManager;
+        //if (foldings != null)
+        //{
+        //    var foldingsAtOffset = foldings.GetFoldingsAt(offset);
+        //    FoldingSection collapsedSection = foldingsAtOffset.FirstOrDefault(section => section.IsFolded);
+
+        //    if (collapsedSection != null)
+        //    {
+        //        args.SetToolTip(GetTooltipTextForCollapsedSection(args, collapsedSection));
+        //    }
+        //}
+
+        var markersAtOffset = _textMarkerService.GetMarkersAtOffset(offset);
+        var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
+        if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
         {
-            RoutedEvent = CodeTextEditor.ToolTipRequestEvent;
+            args.SetToolTip(markerWithToolTip.ToolTip);
         }
+    }
 
-        public bool InDocument { get; set; }
+    //string GetTooltipTextForCollapsedSection(ToolTipRequestEventArgs args, FoldingSection foldingSection)
+    //{
+    //    return ToolTipUtils.GetAlignedText(_editor.Document, foldingSection.StartOffset, foldingSection.EndOffset);
+    //}
+}
 
-        public TextLocation LogicalPosition { get; set; }
+public sealed class ToolTipRequestEventArgs : RoutedEventArgs
+{
+    public ToolTipRequestEventArgs()
+    {
+        RoutedEvent = CodeTextEditor.ToolTipRequestEvent;
+    }
 
-        public int Position { get; set; }
+    public bool InDocument { get; set; }
 
-        public object? ContentToShow { get; set; }
+    public TextLocation LogicalPosition { get; set; }
 
-        public void SetToolTip(object content)
-        {
-            Handled = true;
-            ContentToShow = content ?? throw new ArgumentNullException(nameof(content));
-        }
+    public int Position { get; set; }
+
+    public object? ContentToShow { get; set; }
+
+    public void SetToolTip(object content)
+    {
+        Handled = true;
+        ContentToShow = content ?? throw new ArgumentNullException(nameof(content));
     }
 }

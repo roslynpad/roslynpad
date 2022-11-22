@@ -9,99 +9,98 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace RoslynPad.Roslyn.Completion.Providers
+namespace RoslynPad.Roslyn.Completion.Providers;
+
+[ExportCompletionProvider("ReferenceDirectiveCompletionProvider", LanguageNames.CSharp)]
+internal class ReferenceDirectiveCompletionProvider : AbstractReferenceDirectiveCompletionProvider
 {
-    [ExportCompletionProvider("ReferenceDirectiveCompletionProvider", LanguageNames.CSharp)]
-    internal class ReferenceDirectiveCompletionProvider : AbstractReferenceDirectiveCompletionProvider
+    private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
+        filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+        commitCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+        enterKeyRule: EnterKeyRule.Never,
+        selectionBehavior: CompletionItemSelectionBehavior.SoftSelection);
+
+    private readonly INuGetCompletionProvider _nuGetCompletionProvider;
+
+    [ImportingConstructor]
+    public ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)] INuGetCompletionProvider nuGetCompletionProvider)
     {
-        private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
-            filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-            commitCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-            enterKeyRule: EnterKeyRule.Never,
-            selectionBehavior: CompletionItemSelectionBehavior.SoftSelection);
+        _nuGetCompletionProvider = nuGetCompletionProvider;
+    }
 
-        private readonly INuGetCompletionProvider _nuGetCompletionProvider;
+    private CompletionItem CreateNuGetRoot()
+        => CommonCompletionItem.Create(
+            displayText: ReferenceDirectiveHelper.NuGetPrefix,
+            displayTextSuffix: "",
+            rules: s_rules,
+            glyph: Microsoft.CodeAnalysis.Glyph.NuGet,
+            sortText: "");
 
-        [ImportingConstructor]
-        public ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)] INuGetCompletionProvider nuGetCompletionProvider)
+    protected override Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
+    {
+        if (_nuGetCompletionProvider != null &&
+            pathThroughLastSlash.StartsWith(ReferenceDirectiveHelper.NuGetPrefix, StringComparison.InvariantCultureIgnoreCase))
         {
-            _nuGetCompletionProvider = nuGetCompletionProvider;
+            return ProvideNuGetCompletionsAsync(context, pathThroughLastSlash);
         }
 
-        private CompletionItem CreateNuGetRoot()
-            => CommonCompletionItem.Create(
-                displayText: ReferenceDirectiveHelper.NuGetPrefix,
-                displayTextSuffix: "",
-                rules: s_rules,
-                glyph: Microsoft.CodeAnalysis.Glyph.NuGet,
-                sortText: "");
-
-        protected override Task ProvideCompletionsAsync(CompletionContext context, string pathThroughLastSlash)
+        if (string.IsNullOrEmpty(pathThroughLastSlash))
         {
-            if (_nuGetCompletionProvider != null &&
-                pathThroughLastSlash.StartsWith(ReferenceDirectiveHelper.NuGetPrefix, StringComparison.InvariantCultureIgnoreCase))
-            {
-                return ProvideNuGetCompletionsAsync(context, pathThroughLastSlash);
-            }
-
-            if (string.IsNullOrEmpty(pathThroughLastSlash))
-            {
-                context.AddItem(CreateNuGetRoot());
-            }
-
-            return base.ProvideCompletionsAsync(context, pathThroughLastSlash);
+            context.AddItem(CreateNuGetRoot());
         }
 
-        private async Task ProvideNuGetCompletionsAsync(CompletionContext context, string packageIdAndVersion)
-        {
-            var (id, version) = ReferenceDirectiveHelper.ParseNuGetReference(packageIdAndVersion);
-            var packages = await Task.Run(() => _nuGetCompletionProvider.SearchPackagesAsync(id, exactMatch: version != null, context.CancellationToken), context.CancellationToken).ConfigureAwait(false);
+        return base.ProvideCompletionsAsync(context, pathThroughLastSlash);
+    }
 
-            if (version != null)
+    private async Task ProvideNuGetCompletionsAsync(CompletionContext context, string packageIdAndVersion)
+    {
+        var (id, version) = ReferenceDirectiveHelper.ParseNuGetReference(packageIdAndVersion);
+        var packages = await Task.Run(() => _nuGetCompletionProvider.SearchPackagesAsync(id, exactMatch: version != null, context.CancellationToken), context.CancellationToken).ConfigureAwait(false);
+
+        if (version != null)
+        {
+            if (packages.Count > 0)
             {
-                if (packages.Count > 0)
+                var package = packages[0];
+                var versions = package.Versions;
+                if (!string.IsNullOrWhiteSpace(version))
                 {
-                    var package = packages[0];
-                    var versions = package.Versions;
-                    if (!string.IsNullOrWhiteSpace(version))
-                    {
-                        versions = versions.Where(v => v.StartsWith(version, StringComparison.InvariantCultureIgnoreCase));
-                    }
-
-                    context.AddItems(versions.Select((v, i) =>
-                        CommonCompletionItem.Create(
-                            v,
-                            "",
-                            s_rules,
-                            Microsoft.CodeAnalysis.Glyph.NuGet,
-                            sortText: i.ToString("0000"))));
+                    versions = versions.Where(v => v.StartsWith(version, StringComparison.InvariantCultureIgnoreCase));
                 }
-            }
-            else
-            {
-                context.AddItems(packages.Select((p, i) =>
+
+                context.AddItems(versions.Select((v, i) =>
                     CommonCompletionItem.Create(
-                        $"{ReferenceDirectiveHelper.NuGetPrefix} {p.Id}, ",
-                         "",
+                        v,
+                        "",
                         s_rules,
                         Microsoft.CodeAnalysis.Glyph.NuGet,
                         sortText: i.ToString("0000"))));
             }
         }
-
-        protected override bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken) =>
-            tree.TryGetStringLiteralToken(position, SyntaxKind.ReferenceDirectiveTrivia, out stringLiteral, cancellationToken);
+        else
+        {
+            context.AddItems(packages.Select((p, i) =>
+                CommonCompletionItem.Create(
+                    $"{ReferenceDirectiveHelper.NuGetPrefix} {p.Id}, ",
+                     "",
+                    s_rules,
+                    Microsoft.CodeAnalysis.Glyph.NuGet,
+                    sortText: i.ToString("0000"))));
+        }
     }
 
-    public interface INuGetCompletionProvider
-    {
-        Task<IReadOnlyList<INuGetPackage>> SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken);
-    }
+    protected override bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken) =>
+        tree.TryGetStringLiteralToken(position, SyntaxKind.ReferenceDirectiveTrivia, out stringLiteral, cancellationToken);
+}
 
-    public interface INuGetPackage
-    {
-        string Id { get; }
+public interface INuGetCompletionProvider
+{
+    Task<IReadOnlyList<INuGetPackage>> SearchPackagesAsync(string searchString, bool exactMatch, CancellationToken cancellationToken);
+}
 
-        IEnumerable<string> Versions { get; }
-    }
+public interface INuGetPackage
+{
+    string Id { get; }
+
+    IEnumerable<string> Versions { get; }
 }

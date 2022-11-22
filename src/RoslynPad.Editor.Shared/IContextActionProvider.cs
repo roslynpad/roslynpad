@@ -3,12 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace RoslynPad.Editor
-{
-    public interface IContextActionProvider
-    {
-        Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken);
+namespace RoslynPad.Editor;
 
-        ICommand? GetActionCommand(object action);
-    }
+public interface IContextActionProvider
+{
+    Task<IEnumerable<object>> GetActions(int offset, int length, CancellationToken cancellationToken);
+
+    ICommand? GetActionCommand(object action);
 }

@@ -1,13 +1,12 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace RoslynPad.Resources
+namespace RoslynPad.Resources;
+
+public class Icons : ResourceDictionary
 {
-    public class Icons : ResourceDictionary
+    public Icons()
     {
-        public Icons()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        AvaloniaXamlLoader.Load(this);
     }
 }

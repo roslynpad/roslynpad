@@ -6,60 +6,59 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(IOpenFileDialog))]
+internal class OpenFileDialogAdapter : IOpenFileDialog
 {
-    [Export(typeof(IOpenFileDialog))]
-    internal class OpenFileDialogAdapter : IOpenFileDialog
+    private readonly OpenFileDialog _dialog;
+
+    public OpenFileDialogAdapter()
     {
-        private readonly OpenFileDialog _dialog;
+        _dialog = new OpenFileDialog();
+    }
 
-        public OpenFileDialogAdapter()
-        {
-            _dialog = new OpenFileDialog();
-        }
+    public bool AllowMultiple
+    {
+        get => _dialog.AllowMultiple;
+        set => _dialog.AllowMultiple = value;
+    }
 
-        public bool AllowMultiple
+    public UI.FileDialogFilter Filter
+    {
+        set
         {
-            get => _dialog.AllowMultiple;
-            set => _dialog.AllowMultiple = value;
-        }
+            if (_dialog.Filters == null) return;
 
-        public UI.FileDialogFilter Filter
-        {
-            set
+            _dialog.Filters.Clear();
+            if (value == null)
             {
-                if (_dialog.Filters == null) return;
-
-                _dialog.Filters.Clear();
-                if (value == null)
-                {
-                    return;
-                }
-
-                _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
-                {
-                    Name = value.Header,
-                    Extensions = value.Extensions.ToList()
-                });
+                return;
             }
-        }
 
-        public string InitialDirectory
-        {
-            get => _dialog.Directory ?? string.Empty;
-            set => _dialog.Directory = value;
+            _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
+            {
+                Name = value.Header,
+                Extensions = value.Extensions.ToList()
+            });
         }
+    }
 
-        public string FileName
-        {
-            get => _dialog.InitialFileName ?? string.Empty;
-            set => _dialog.InitialFileName = value;
-        }
+    public string InitialDirectory
+    {
+        get => _dialog.Directory ?? string.Empty;
+        set => _dialog.Directory = value;
+    }
 
-        public async Task<string[]?> ShowAsync()
-        {
-            var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
-            return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
-        }
+    public string FileName
+    {
+        get => _dialog.InitialFileName ?? string.Empty;
+        set => _dialog.InitialFileName = value;
+    }
+
+    public async Task<string[]?> ShowAsync()
+    {
+        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
+        return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
     }
 }

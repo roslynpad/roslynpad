@@ -5,97 +5,96 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynPad.Roslyn.BraceMatching
+namespace RoslynPad.Roslyn.BraceMatching;
+
+internal abstract class AbstractBraceMatcher : IBraceMatcher
 {
-    internal abstract class AbstractBraceMatcher : IBraceMatcher
+    private readonly BraceCharacterAndKind _openBrace;
+    private readonly BraceCharacterAndKind _closeBrace;
+
+    protected AbstractBraceMatcher(
+        BraceCharacterAndKind openBrace,
+        BraceCharacterAndKind closeBrace)
     {
-        private readonly BraceCharacterAndKind _openBrace;
-        private readonly BraceCharacterAndKind _closeBrace;
+        _openBrace = openBrace;
+        _closeBrace = closeBrace;
+    }
 
-        protected AbstractBraceMatcher(
-            BraceCharacterAndKind openBrace,
-            BraceCharacterAndKind closeBrace)
+    private bool TryFindMatchingToken(SyntaxToken token, out SyntaxToken match)
+    {
+        var parent = token.Parent;
+        if (parent == null)
         {
-            _openBrace = openBrace;
-            _closeBrace = closeBrace;
-        }
-
-        private bool TryFindMatchingToken(SyntaxToken token, out SyntaxToken match)
-        {
-            var parent = token.Parent;
-            if (parent == null)
-            {
-                match = default;
-                return false;
-            }
-
-            var braceTokens = (from child in parent.ChildNodesAndTokens()
-                               where child.IsToken
-                               let tok = child.AsToken()
-                               where tok.RawKind == _openBrace.Kind || tok.RawKind == _closeBrace.Kind
-                               where tok.Span.Length > 0
-                               select tok).ToList();
-
-            if (braceTokens.Count == 2 &&
-                braceTokens[0].RawKind == _openBrace.Kind &&
-                braceTokens[1].RawKind == _closeBrace.Kind)
-            {
-                if (braceTokens[0] == token)
-                {
-                    match = braceTokens[1];
-                    return true;
-                }
-                else if (braceTokens[1] == token)
-                {
-                    match = braceTokens[0];
-                    return true;
-                }
-            }
-
             match = default;
             return false;
         }
 
-        public async Task<BraceMatchingResult?> FindBracesAsync(
-            Document document,
-            int position,
-            CancellationToken cancellationToken)
-        {
-            var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-            var token = root!.FindToken(position);
+        var braceTokens = (from child in parent.ChildNodesAndTokens()
+                           where child.IsToken
+                           let tok = child.AsToken()
+                           where tok.RawKind == _openBrace.Kind || tok.RawKind == _closeBrace.Kind
+                           where tok.Span.Length > 0
+                           select tok).ToList();
 
-            var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
-            if (position < text.Length && IsBrace(text[position]))
+        if (braceTokens.Count == 2 &&
+            braceTokens[0].RawKind == _openBrace.Kind &&
+            braceTokens[1].RawKind == _closeBrace.Kind)
+        {
+            if (braceTokens[0] == token)
             {
-                if (token.RawKind == _openBrace.Kind && AllowedForToken(token))
+                match = braceTokens[1];
+                return true;
+            }
+            else if (braceTokens[1] == token)
+            {
+                match = braceTokens[0];
+                return true;
+            }
+        }
+
+        match = default;
+        return false;
+    }
+
+    public async Task<BraceMatchingResult?> FindBracesAsync(
+        Document document,
+        int position,
+        CancellationToken cancellationToken)
+    {
+        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        var token = root!.FindToken(position);
+
+        var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+        if (position < text.Length && IsBrace(text[position]))
+        {
+            if (token.RawKind == _openBrace.Kind && AllowedForToken(token))
+            {
+                var leftToken = token;
+                if (TryFindMatchingToken(leftToken, out var rightToken))
                 {
-                    var leftToken = token;
-                    if (TryFindMatchingToken(leftToken, out var rightToken))
-                    {
-                        return new BraceMatchingResult(leftToken.Span, rightToken.Span);
-                    }
-                }
-                else if (token.RawKind == _closeBrace.Kind && AllowedForToken(token))
-                {
-                    var rightToken = token;
-                    if (TryFindMatchingToken(rightToken, out var leftToken))
-                    {
-                        return new BraceMatchingResult(leftToken.Span, rightToken.Span);
-                    }
+                    return new BraceMatchingResult(leftToken.Span, rightToken.Span);
                 }
             }
-
-            return null;
+            else if (token.RawKind == _closeBrace.Kind && AllowedForToken(token))
+            {
+                var rightToken = token;
+                if (TryFindMatchingToken(rightToken, out var leftToken))
+                {
+                    return new BraceMatchingResult(leftToken.Span, rightToken.Span);
+                }
+            }
         }
 
-        protected virtual bool AllowedForToken(SyntaxToken token)
-        {
-            return true;
-        }
+        return null;
+    }
 
-        private bool IsBrace(char c)
-        {
-            return _openBrace.Character == c || _closeBrace.Character == c;
-        }
+    protected virtual bool AllowedForToken(SyntaxToken token)
+    {
+        return true;
+    }
+
+    private bool IsBrace(char c)
+    {
+        return _openBrace.Character == c || _closeBrace.Character == c;
     }
 }

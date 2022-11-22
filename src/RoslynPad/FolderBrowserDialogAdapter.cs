@@ -3,33 +3,32 @@ using System.Windows;
 using Avalon.Windows.Dialogs;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(IFolderBrowserDialog))]
+internal class FolderBrowserDialogAdapter : IFolderBrowserDialog
 {
-    [Export(typeof(IFolderBrowserDialog))]
-    internal class FolderBrowserDialogAdapter : IFolderBrowserDialog
+    private readonly FolderBrowserDialog _dialog;
+
+    public FolderBrowserDialogAdapter()
     {
-        private readonly FolderBrowserDialog _dialog;
+        _dialog = new FolderBrowserDialog();
+    }
 
-        public FolderBrowserDialogAdapter()
-        {
-            _dialog = new FolderBrowserDialog();
-        }
+    public bool ShowEditBox
+    {
+        get => _dialog.ShowEditBox;
+        set => _dialog.ShowEditBox = value;
+    }
 
-        public bool ShowEditBox
-        {
-            get => _dialog.ShowEditBox;
-            set => _dialog.ShowEditBox = value;
-        }
+    public string SelectedPath
+    {
+        get => _dialog.SelectedPath;
+        set => _dialog.SelectedPath = value;
+    }
 
-        public string SelectedPath
-        {
-            get => _dialog.SelectedPath;
-            set => _dialog.SelectedPath = value;
-        }
-
-        public bool? Show()
-        {
-            return _dialog.ShowDialog(Application.Current.MainWindow);
-        }
+    public bool? Show()
+    {
+        return _dialog.ShowDialog(Application.Current.MainWindow);
     }
 }

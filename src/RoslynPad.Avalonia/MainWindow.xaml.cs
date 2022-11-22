@@ -9,40 +9,39 @@ using Avalonia.Controls.Primitives;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+class MainWindow : Window
 {
-    class MainWindow : Window
+    private readonly MainViewModelBase _viewModel;
+
+    public MainWindow()
     {
-        private readonly MainViewModelBase _viewModel;
+        var services = new ServiceCollection();
+        services.AddLogging(l => l.AddSimpleConsole().AddDebug());
 
-        public MainWindow()
+        var container = new ContainerConfiguration()
+            .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
+            .WithAssembly(Assembly.Load(new AssemblyName("RoslynPad.Common.UI")))
+            .WithAssembly(Assembly.GetEntryAssembly());
+        var locator = container.CreateContainer().GetExport<IServiceProvider>();
+
+        _viewModel = locator.GetRequiredService<MainViewModelBase>();
+        
+        DataContext = _viewModel;
+
+        if (_viewModel.Settings.WindowFontSize.HasValue)
         {
-            var services = new ServiceCollection();
-            services.AddLogging(l => l.AddSimpleConsole().AddDebug());
-
-            var container = new ContainerConfiguration()
-                .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
-                .WithAssembly(Assembly.Load(new AssemblyName("RoslynPad.Common.UI")))
-                .WithAssembly(Assembly.GetEntryAssembly());
-            var locator = container.CreateContainer().GetExport<IServiceProvider>();
-
-            _viewModel = locator.GetRequiredService<MainViewModelBase>();
-            
-            DataContext = _viewModel;
-
-            if (_viewModel.Settings.WindowFontSize.HasValue)
-            {
-                FontSize = _viewModel.Settings.WindowFontSize.Value;
-            }
-
-            AvaloniaXamlLoader.Load(this);
+            FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
 
-        protected override async void OnApplyTemplate(TemplateAppliedEventArgs e)
-        {
-            base.OnApplyTemplate(e);
-            
-            await _viewModel.Initialize().ConfigureAwait(true);
-        }
+        AvaloniaXamlLoader.Load(this);
+    }
+
+    protected override async void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        
+        await _viewModel.Initialize().ConfigureAwait(true);
     }
 }

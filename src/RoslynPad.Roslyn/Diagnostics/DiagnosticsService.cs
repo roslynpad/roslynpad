@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Composition;
 
-namespace RoslynPad.Roslyn.Diagnostics
+namespace RoslynPad.Roslyn.Diagnostics;
+
+[Export(typeof(IDiagnosticService)), Shared]
+internal sealed class DiagnosticsService : IDiagnosticService
 {
-    [Export(typeof(IDiagnosticService)), Shared]
-    internal sealed class DiagnosticsService : IDiagnosticService
+    [ImportingConstructor]
+    public DiagnosticsService(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService inner)
     {
-        [ImportingConstructor]
-        public DiagnosticsService(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService inner)
-        {
-            inner.DiagnosticsUpdated += OnDiagnosticsUpdated;
-        }
-
-        private void OnDiagnosticsUpdated(object? sender, Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs e)
-        {
-            DiagnosticsUpdated?.Invoke(this, new DiagnosticsUpdatedArgs(e));
-        }
-
-        public event EventHandler<DiagnosticsUpdatedArgs>? DiagnosticsUpdated;
+        inner.DiagnosticsUpdated += OnDiagnosticsUpdated;
     }
+
+    private void OnDiagnosticsUpdated(object? sender, Microsoft.CodeAnalysis.Diagnostics.DiagnosticsUpdatedArgs e)
+    {
+        DiagnosticsUpdated?.Invoke(this, new DiagnosticsUpdatedArgs(e));
+    }
+
+    public event EventHandler<DiagnosticsUpdatedArgs>? DiagnosticsUpdated;
 }

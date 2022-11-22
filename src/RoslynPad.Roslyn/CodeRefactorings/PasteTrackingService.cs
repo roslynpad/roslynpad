@@ -2,15 +2,14 @@
 using Microsoft.CodeAnalysis.Text;
 using System.Composition;
 
-namespace RoslynPad.Roslyn.CodeRefactorings
+namespace RoslynPad.Roslyn.CodeRefactorings;
+
+[Export(typeof(IPasteTrackingService)), Shared]
+internal class PasteTrackingService : IPasteTrackingService
 {
-    [Export(typeof(IPasteTrackingService)), Shared]
-    internal class PasteTrackingService : IPasteTrackingService
+    public bool TryGetPastedTextSpan(SourceTextContainer sourceTextContainer, out TextSpan textSpan)
     {
-        public bool TryGetPastedTextSpan(SourceTextContainer sourceTextContainer, out TextSpan textSpan)
-        {
-            textSpan = default;
-            return false;
-        }
+        textSpan = default;
+        return false;
     }
 }

@@ -2,23 +2,22 @@
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynPad.Roslyn
+namespace RoslynPad.Roslyn;
+
+public class DummyScriptMetadataResolver : MetadataReferenceResolver
 {
-    public class DummyScriptMetadataResolver : MetadataReferenceResolver
-    {
-        public static DummyScriptMetadataResolver Instance {  get; } = new DummyScriptMetadataResolver();
+    public static DummyScriptMetadataResolver Instance {  get; } = new DummyScriptMetadataResolver();
 
-        private DummyScriptMetadataResolver() { }
+    private DummyScriptMetadataResolver() { }
 
-        public override bool Equals(object? other) => ReferenceEquals(this, other);
+    public override bool Equals(object? other) => ReferenceEquals(this, other);
 
-        public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 
-        public override bool ResolveMissingAssemblies => false;
+    public override bool ResolveMissingAssemblies => false;
 
-        public override PortableExecutableReference? ResolveMissingAssembly(MetadataReference definition, AssemblyIdentity referenceIdentity) => null;
+    public override PortableExecutableReference? ResolveMissingAssembly(MetadataReference definition, AssemblyIdentity referenceIdentity) => null;
 
-        public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string? baseFilePath, MetadataReferenceProperties properties) =>
-            ImmutableArray<PortableExecutableReference>.Empty;
-    }
+    public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string? baseFilePath, MetadataReferenceProperties properties) =>
+        ImmutableArray<PortableExecutableReference>.Empty;
 }

@@ -6,66 +6,65 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(ISaveFileDialog))]
+internal class SaveFileDialogAdapter : ISaveFileDialog
 {
-    [Export(typeof(ISaveFileDialog))]
-    internal class SaveFileDialogAdapter : ISaveFileDialog
+    private readonly SaveFileDialog _dialog;
+
+    public SaveFileDialogAdapter()
     {
-        private readonly SaveFileDialog _dialog;
+        _dialog = new SaveFileDialog();
+    }
 
-        public SaveFileDialogAdapter()
-        {
-            _dialog = new SaveFileDialog();
-        }
+    public bool OverwritePrompt
+    {
+        get => false;
+        set { }
+    }
 
-        public bool OverwritePrompt
-        {
-            get => false;
-            set { }
-        }
+    public bool AddExtension
+    {
+        get => false;
+        set { }
+    }
 
-        public bool AddExtension
+    public UI.FileDialogFilter Filter
+    {
+        set
         {
-            get => false;
-            set { }
-        }
-
-        public UI.FileDialogFilter Filter
-        {
-            set
+            if (_dialog.Filters == null) return;
+            
+            _dialog.Filters.Clear();
+            if (value == null)
             {
-                if (_dialog.Filters == null) return;
-                
-                _dialog.Filters.Clear();
-                if (value == null)
-                {
-                    return;
-                }
-
-                _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
-                {
-                    Name = value.Header,
-                    Extensions = value.Extensions.ToList()
-                });
+                return;
             }
-        }
 
-        public string DefaultExt
-        {
-            get => _dialog.DefaultExtension ?? string.Empty;
-            set => _dialog.DefaultExtension = value;
+            _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
+            {
+                Name = value.Header,
+                Extensions = value.Extensions.ToList()
+            });
         }
+    }
 
-        public string FileName
-        {
-            get => _dialog.InitialFileName ?? string.Empty;
-            set => _dialog.InitialFileName = value;
-        }
+    public string DefaultExt
+    {
+        get => _dialog.DefaultExtension ?? string.Empty;
+        set => _dialog.DefaultExtension = value;
+    }
 
-        public async Task<string?> ShowAsync()
-        {
-            var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
-            return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
-        }
+    public string FileName
+    {
+        get => _dialog.InitialFileName ?? string.Empty;
+        set => _dialog.InitialFileName = value;
+    }
+
+    public async Task<string?> ShowAsync()
+    {
+        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
+        return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
     }
 }

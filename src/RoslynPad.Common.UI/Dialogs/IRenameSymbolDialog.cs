@@ -1,9 +1,8 @@
-namespace RoslynPad.UI
+namespace RoslynPad.UI;
+
+public interface IRenameSymbolDialog : IDialog
 {
-    public interface IRenameSymbolDialog : IDialog
-    {
-        bool ShouldRename { get; }
-        string? SymbolName { get; set; }
-        void Initialize(string symbolName);
-    }
+    bool ShouldRename { get; }
+    string? SymbolName { get; set; }
+    void Initialize(string symbolName);
 }

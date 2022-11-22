@@ -5,89 +5,88 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RoslynPad.Build
+namespace RoslynPad.Build;
+
+internal class ProcessUtil
 {
-    internal class ProcessUtil
+    public static async Task<ProcessResult> RunProcessAsync(string path, string workingDirectory, string arguments, CancellationToken cancellationToken)
     {
-        public static async Task<ProcessResult> RunProcessAsync(string path, string workingDirectory, string arguments, CancellationToken cancellationToken)
+        var process = new Process
         {
-            var process = new Process
+            StartInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = path,
-                    WorkingDirectory = workingDirectory,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                },
-                EnableRaisingEvents = true,
-            };
+                FileName = path,
+                WorkingDirectory = workingDirectory,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+            },
+            EnableRaisingEvents = true,
+        };
 
-            var exitTcs = new TaskCompletionSource<object?>();
-            process.Exited += (_, _) => exitTcs.TrySetResult(null);
+        var exitTcs = new TaskCompletionSource<object?>();
+        process.Exited += (_, _) => exitTcs.TrySetResult(null);
 
-            using var _ = cancellationToken.Register(() =>
+        using var _ = cancellationToken.Register(() =>
+        {
+            try
             {
-                try
-                {
-                    exitTcs.TrySetCanceled();
-                    process.Kill();
-                }
-                catch { }
-            });
+                exitTcs.TrySetCanceled();
+                process.Kill();
+            }
+            catch { }
+        });
 
-            await Task.Run(() => process.Start()).ConfigureAwait(false);
+        await Task.Run(() => process.Start()).ConfigureAwait(false);
 
-            return new ProcessResult(process, exitTcs);
+        return new ProcessResult(process, exitTcs);
+    }
+
+    public class ProcessResult : IDisposable
+    {
+        private readonly Process _process;
+        private readonly TaskCompletionSource<object?> _exitTcs;
+        private readonly StringBuilder _standardOutput;
+
+        internal ProcessResult(Process process, TaskCompletionSource<object?> exitTcs)
+        {
+            _process = process;
+            _exitTcs = exitTcs;
+            _standardOutput = new StringBuilder();
+
+            _ = Task.Run(ReadStandardErrorAsync);
         }
 
-        public class ProcessResult : IDisposable
+        private async Task ReadStandardErrorAsync() =>
+            StandardError = await _process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+
+        public async IAsyncEnumerable<string> GetStandardOutputLinesAsync()
         {
-            private readonly Process _process;
-            private readonly TaskCompletionSource<object?> _exitTcs;
-            private readonly StringBuilder _standardOutput;
-
-            internal ProcessResult(Process process, TaskCompletionSource<object?> exitTcs)
+            var output = _process.StandardOutput;
+            while (true)
             {
-                _process = process;
-                _exitTcs = exitTcs;
-                _standardOutput = new StringBuilder();
-
-                _ = Task.Run(ReadStandardErrorAsync);
-            }
-
-            private async Task ReadStandardErrorAsync() =>
-                StandardError = await _process.StandardError.ReadToEndAsync().ConfigureAwait(false);
-
-            public async IAsyncEnumerable<string> GetStandardOutputLinesAsync()
-            {
-                var output = _process.StandardOutput;
-                while (true)
+                var line = await output.ReadLineAsync().ConfigureAwait(false);
+                if (line == null)
                 {
-                    var line = await output.ReadLineAsync().ConfigureAwait(false);
-                    if (line == null)
-                    {
-                        await _exitTcs.Task.ConfigureAwait(false);
-                        yield break;
-                    }
+                    await _exitTcs.Task.ConfigureAwait(false);
+                    yield break;
+                }
 
-                    if (!string.IsNullOrWhiteSpace(line))
-                    {
-                        _standardOutput.AppendLine(line);
-                        yield return line;
-                    }
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    _standardOutput.AppendLine(line);
+                    yield return line;
                 }
             }
-
-            public int ExitCode => _process.ExitCode;
-
-            public string StandardOutput => _standardOutput.ToString();
-            public string? StandardError { get; private set; }
-
-            public void Dispose() => _process.Dispose();
         }
+
+        public int ExitCode => _process.ExitCode;
+
+        public string StandardOutput => _standardOutput.ToString();
+        public string? StandardError { get; private set; }
+
+        public void Dispose() => _process.Dispose();
     }
 }

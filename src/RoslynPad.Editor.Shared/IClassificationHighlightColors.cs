@@ -4,12 +4,11 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting;
 #endif
 
-namespace RoslynPad.Editor
-{
-    public interface IClassificationHighlightColors
-    {
-        HighlightingColor DefaultBrush { get; }
+namespace RoslynPad.Editor;
 
-        HighlightingColor GetBrush(string classificationTypeName);
-    }
+public interface IClassificationHighlightColors
+{
+    HighlightingColor DefaultBrush { get; }
+
+    HighlightingColor GetBrush(string classificationTypeName);
 }

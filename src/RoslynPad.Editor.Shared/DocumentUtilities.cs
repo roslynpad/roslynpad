@@ -5,13 +5,12 @@ using System.Windows.Documents;
 using ICSharpCode.AvalonEdit.Document;
 #endif
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+internal static class DocumentUtilities
 {
-    internal static class DocumentUtilities
+    public static int FindPreviousWordStart(this ITextSource textSource, int offset)
     {
-        public static int FindPreviousWordStart(this ITextSource textSource, int offset)
-        {
-            return TextUtilities.GetNextCaretPosition(textSource, offset, LogicalDirection.Backward, CaretPositioningMode.WordStart);
-        }
+        return TextUtilities.GetNextCaretPosition(textSource, offset, LogicalDirection.Backward, CaretPositioningMode.WordStart);
     }
 }

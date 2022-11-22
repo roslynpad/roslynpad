@@ -1,9 +1,8 @@
 using System;
 
-namespace RoslynPad.Roslyn.Diagnostics
+namespace RoslynPad.Roslyn.Diagnostics;
+
+public interface IDiagnosticService
 {
-    public interface IDiagnosticService
-    {
-        event EventHandler<DiagnosticsUpdatedArgs> DiagnosticsUpdated;
-    }
+    event EventHandler<DiagnosticsUpdatedArgs> DiagnosticsUpdated;
 }

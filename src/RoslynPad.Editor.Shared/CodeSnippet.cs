@@ -25,225 +25,224 @@ using AvaloniaEdit.Snippets;
 using ICSharpCode.AvalonEdit.Snippets;
 #endif
 
-namespace RoslynPad.Editor
+namespace RoslynPad.Editor;
+
+internal sealed class CodeSnippet
 {
-    internal sealed class CodeSnippet
+    public CodeSnippet(string name, string description, string text, string keyword)
     {
-        public CodeSnippet(string name, string description, string text, string keyword)
+        Name = name;
+        Text = text;
+        Description = description;
+        Keyword = keyword;
+    }
+
+    public string Name { get; }
+
+    public string Text { get; }
+
+    public string Description { get; }
+
+    public bool HasSelection
+    {
+        get
         {
-            Name = name;
-            Text = text;
-            Description = description;
-            Keyword = keyword;
+            return s_pattern.Matches(Text)
+                .OfType<Match>()
+                .Any(item => item.Value == "${Selection}");
         }
+    }
 
-        public string Name { get; }
+    public string Keyword { get; }
 
-        public string Text { get; }
+    public Snippet CreateAvalonEditSnippet()
+    {
+        return CreateAvalonEditSnippet(Text);
+    }
 
-        public string Description { get; }
+    private static readonly Regex s_pattern = new(@"\$\{([^\}]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        public bool HasSelection
+    public static Snippet CreateAvalonEditSnippet(string snippetText)
+    {
+        if (snippetText == null) throw new ArgumentNullException(nameof(snippetText));
+        var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
+        foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
         {
-            get
-            {
-                return s_pattern.Matches(Text)
-                    .OfType<Match>()
-                    .Any(item => item.Value == "${Selection}");
-            }
-        }
-
-        public string Keyword { get; }
-
-        public Snippet CreateAvalonEditSnippet()
-        {
-            return CreateAvalonEditSnippet(Text);
-        }
-
-        private static readonly Regex s_pattern = new(@"\$\{([^\}]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
-        public static Snippet CreateAvalonEditSnippet(string snippetText)
-        {
-            if (snippetText == null) throw new ArgumentNullException(nameof(snippetText));
-            var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
-            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
-            {
-                var val = match.Groups[1].Value;
-                var equalsSign = val.IndexOf('=');
-                if (equalsSign > 0)
-                {
-                    var name = val.Substring(0, equalsSign);
-                    replaceableElements[name] = new SnippetReplaceableTextElement();
-                }
-            }
-            var snippet = new Snippet();
-            var pos = 0;
-            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
-            {
-                if (pos < match.Index)
-                {
-                    snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos, match.Index - pos) });
-                }
-                snippet.Elements.Add(CreateElementForValue(replaceableElements, match.Groups[1].Value, match.Index, snippetText));
-                pos = match.Index + match.Length;
-            }
-            if (pos < snippetText.Length)
-            {
-                snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos) });
-            }
-            if (!snippet.Elements.Any(e => e is SnippetCaretElement))
-            {
-                var element = snippet.Elements.Select((s, i) => new { s, i }).FirstOrDefault(s => s.s is SnippetSelectionElement);
-                var index = element?.i ?? -1;
-                if (index > -1)
-                    snippet.Elements.Insert(index + 1, new SnippetCaretElement());
-            }
-            return snippet;
-        }
-
-        private static readonly Regex s_functionPattern = new(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant);
-
-        private static SnippetElement CreateElementForValue(Dictionary<string, SnippetReplaceableTextElement> replaceableElements, string val, int offset, string snippetText)
-        {
-            SnippetReplaceableTextElement? srte;
+            var val = match.Groups[1].Value;
             var equalsSign = val.IndexOf('=');
             if (equalsSign > 0)
             {
                 var name = val.Substring(0, equalsSign);
-                if (replaceableElements.TryGetValue(name, out srte))
-                {
-                    srte.Text ??= val.Substring(equalsSign + 1);
-                    return srte;
-                }
+                replaceableElements[name] = new SnippetReplaceableTextElement();
             }
-
-            var element = GetDefaultElement(val, snippetText, offset);
-            if (element != null)
-                return element;
-
-            if (replaceableElements.TryGetValue(val, out srte))
-                return new SnippetBoundElement { TargetElement = srte };
-            var m = s_functionPattern.Match(val);
-            if (m.Success)
+        }
+        var snippet = new Snippet();
+        var pos = 0;
+        foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
+        {
+            if (pos < match.Index)
             {
-                var f = GetFunction(m.Groups[1].Value);
-                if (f != null)
-                {
-                    var innerVal = m.Groups[2].Value;
-                    if (replaceableElements.TryGetValue(innerVal, out srte))
-                        return new FunctionBoundElement { TargetElement = srte, Function = f };
-                    var result2 = GetValue(innerVal);
-                    if (result2 != null)
-                        return new SnippetTextElement { Text = f(result2) };
-                    return new SnippetTextElement { Text = f(innerVal) };
-                }
+                snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos, match.Index - pos) });
             }
-            var result = GetValue(val);
-            if (result != null)
-                return new SnippetTextElement { Text = result };
-            return new SnippetReplaceableTextElement { Text = val }; // ${unknown} -> replaceable element
+            snippet.Elements.Add(CreateElementForValue(replaceableElements, match.Groups[1].Value, match.Index, snippetText));
+            pos = match.Index + match.Length;
         }
-        
-        private static string? GetValue(string propertyName)
+        if (pos < snippetText.Length)
         {
-            if ("ClassName".Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+            snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos) });
+        }
+        if (!snippet.Elements.Any(e => e is SnippetCaretElement))
+        {
+            var element = snippet.Elements.Select((s, i) => new { s, i }).FirstOrDefault(s => s.s is SnippetSelectionElement);
+            var index = element?.i ?? -1;
+            if (index > -1)
+                snippet.Elements.Insert(index + 1, new SnippetCaretElement());
+        }
+        return snippet;
+    }
+
+    private static readonly Regex s_functionPattern = new(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant);
+
+    private static SnippetElement CreateElementForValue(Dictionary<string, SnippetReplaceableTextElement> replaceableElements, string val, int offset, string snippetText)
+    {
+        SnippetReplaceableTextElement? srte;
+        var equalsSign = val.IndexOf('=');
+        if (equalsSign > 0)
+        {
+            var name = val.Substring(0, equalsSign);
+            if (replaceableElements.TryGetValue(name, out srte))
             {
-                var c = GetCurrentClass();
-                if (c != null)
-                {
-                    return c;
-                }
+                srte.Text ??= val.Substring(equalsSign + 1);
+                return srte;
             }
-            //return Core.StringParser.GetValue(propertyName);
-            return null;
         }
 
-        private static SnippetElement? GetDefaultElement(string tag, string snippetText, int position)
+        var element = GetDefaultElement(val, snippetText, offset);
+        if (element != null)
+            return element;
+
+        if (replaceableElements.TryGetValue(val, out srte))
+            return new SnippetBoundElement { TargetElement = srte };
+        var m = s_functionPattern.Match(val);
+        if (m.Success)
         {
-            if ("Selection".Equals(tag, StringComparison.OrdinalIgnoreCase))
+            var f = GetFunction(m.Groups[1].Value);
+            if (f != null)
             {
-                return new SnippetSelectionElement { Indentation = GetWhitespaceBefore(snippetText, position).Length };
+                var innerVal = m.Groups[2].Value;
+                if (replaceableElements.TryGetValue(innerVal, out srte))
+                    return new FunctionBoundElement { TargetElement = srte, Function = f };
+                var result2 = GetValue(innerVal);
+                if (result2 != null)
+                    return new SnippetTextElement { Text = f(result2) };
+                return new SnippetTextElement { Text = f(innerVal) };
             }
-
-            if ("Caret".Equals(tag, StringComparison.OrdinalIgnoreCase))
+        }
+        var result = GetValue(val);
+        if (result != null)
+            return new SnippetTextElement { Text = result };
+        return new SnippetReplaceableTextElement { Text = val }; // ${unknown} -> replaceable element
+    }
+    
+    private static string? GetValue(string propertyName)
+    {
+        if ("ClassName".Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+        {
+            var c = GetCurrentClass();
+            if (c != null)
             {
-                // If a ${Selection} exists, use the ${Caret} only if there is text selected
-                // (if no text is selected, ${Selection} will set the caret
-                return snippetText.Contains("${Selection}", StringComparison.OrdinalIgnoreCase)
-                    ? new SnippetCaretElement(setCaretOnlyIfTextIsSelected: true)
-                    : new SnippetCaretElement();
+                return c;
             }
+        }
+        //return Core.StringParser.GetValue(propertyName);
+        return null;
+    }
 
-            return null;
+    private static SnippetElement? GetDefaultElement(string tag, string snippetText, int position)
+    {
+        if ("Selection".Equals(tag, StringComparison.OrdinalIgnoreCase))
+        {
+            return new SnippetSelectionElement { Indentation = GetWhitespaceBefore(snippetText, position).Length };
         }
 
-        private static string GetWhitespaceBefore(string snippetText, int offset)
+        if ("Caret".Equals(tag, StringComparison.OrdinalIgnoreCase))
         {
-            var start = snippetText.LastIndexOfAny(new[] { '\r', '\n' }, offset) + 1;
-            return snippetText.Substring(start, offset - start);
+            // If a ${Selection} exists, use the ${Caret} only if there is text selected
+            // (if no text is selected, ${Selection} will set the caret
+            return snippetText.Contains("${Selection}", StringComparison.OrdinalIgnoreCase)
+                ? new SnippetCaretElement(setCaretOnlyIfTextIsSelected: true)
+                : new SnippetCaretElement();
         }
 
-        private static string? GetCurrentClass()
-        {
-            // TODO
-            return null;
-        }
+        return null;
+    }
 
-        private static Func<string, string>? GetFunction(string name)
-        {
-            if ("toLower".Equals(name, StringComparison.OrdinalIgnoreCase))
-                return s => s.ToLower();
-            if ("toUpper".Equals(name, StringComparison.OrdinalIgnoreCase))
-                return s => s.ToUpper();
-            if ("toFieldName".Equals(name, StringComparison.OrdinalIgnoreCase))
-                return GetFieldName;
-            if ("toPropertyName".Equals(name, StringComparison.OrdinalIgnoreCase))
-                return GetPropertyName;
-            if ("toParameterName".Equals(name, StringComparison.OrdinalIgnoreCase))
-                return GetParameterName;
-            return null;
-        }
+    private static string GetWhitespaceBefore(string snippetText, int offset)
+    {
+        var start = snippetText.LastIndexOfAny(new[] { '\r', '\n' }, offset) + 1;
+        return snippetText.Substring(start, offset - start);
+    }
 
-        private static string GetPropertyName(string fieldName)
-        {
-            if (string.IsNullOrEmpty(fieldName))
-                return fieldName;
-            if (fieldName.StartsWith("_") && fieldName.Length > 1)
-                return char.ToUpper(fieldName[1]) + fieldName.Substring(2);
-            if (fieldName.StartsWith("m_") && fieldName.Length > 2)
-                return char.ToUpper(fieldName[2]) + fieldName.Substring(3);
-            return char.ToUpper(fieldName[0]) + fieldName.Substring(1);
-        }
+    private static string? GetCurrentClass()
+    {
+        // TODO
+        return null;
+    }
 
-        private static string GetParameterName(string fieldName)
-        {
-            if (string.IsNullOrEmpty(fieldName))
-                return fieldName;
-            if (fieldName.StartsWith("_") && fieldName.Length > 1)
-                return char.ToLower(fieldName[1]) + fieldName.Substring(2);
-            if (fieldName.StartsWith("m_") && fieldName.Length > 2)
-                return char.ToLower(fieldName[2]) + fieldName.Substring(3);
-            return char.ToLower(fieldName[0]) + fieldName.Substring(1);
-        }
+    private static Func<string, string>? GetFunction(string name)
+    {
+        if ("toLower".Equals(name, StringComparison.OrdinalIgnoreCase))
+            return s => s.ToLower();
+        if ("toUpper".Equals(name, StringComparison.OrdinalIgnoreCase))
+            return s => s.ToUpper();
+        if ("toFieldName".Equals(name, StringComparison.OrdinalIgnoreCase))
+            return GetFieldName;
+        if ("toPropertyName".Equals(name, StringComparison.OrdinalIgnoreCase))
+            return GetPropertyName;
+        if ("toParameterName".Equals(name, StringComparison.OrdinalIgnoreCase))
+            return GetParameterName;
+        return null;
+    }
 
-        private static string GetFieldName(string propertyName)
-        {
-            if (string.IsNullOrEmpty(propertyName))
-                return propertyName;
-            var newName = char.ToLower(propertyName[0]) + propertyName.Substring(1);
-            if (newName == propertyName)
-                return "_" + newName;
-            return newName;
-        }
+    private static string GetPropertyName(string fieldName)
+    {
+        if (string.IsNullOrEmpty(fieldName))
+            return fieldName;
+        if (fieldName.StartsWith("_") && fieldName.Length > 1)
+            return char.ToUpper(fieldName[1]) + fieldName.Substring(2);
+        if (fieldName.StartsWith("m_") && fieldName.Length > 2)
+            return char.ToUpper(fieldName[2]) + fieldName.Substring(3);
+        return char.ToUpper(fieldName[0]) + fieldName.Substring(1);
+    }
 
-        private sealed class FunctionBoundElement : SnippetBoundElement
-        {
-            internal Func<string, string>? Function;
+    private static string GetParameterName(string fieldName)
+    {
+        if (string.IsNullOrEmpty(fieldName))
+            return fieldName;
+        if (fieldName.StartsWith("_") && fieldName.Length > 1)
+            return char.ToLower(fieldName[1]) + fieldName.Substring(2);
+        if (fieldName.StartsWith("m_") && fieldName.Length > 2)
+            return char.ToLower(fieldName[2]) + fieldName.Substring(3);
+        return char.ToLower(fieldName[0]) + fieldName.Substring(1);
+    }
 
-            public override string? ConvertText(string input)
-            {
-                return Function?.Invoke(input);
-            }
+    private static string GetFieldName(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return propertyName;
+        var newName = char.ToLower(propertyName[0]) + propertyName.Substring(1);
+        if (newName == propertyName)
+            return "_" + newName;
+        return newName;
+    }
+
+    private sealed class FunctionBoundElement : SnippetBoundElement
+    {
+        internal Func<string, string>? Function;
+
+        public override string? ConvertText(string input)
+        {
+            return Function?.Invoke(input);
         }
     }
 }

@@ -3,18 +3,17 @@
 using System;
 using System.Composition;
 
-namespace RoslynPad.Roslyn.BraceMatching
-{
-    [MetadataAttribute]
-    [AttributeUsage(AttributeTargets.Class)]
-    internal class ExportBraceMatcherAttribute : ExportAttribute
-    {
-        public string Language { get; }
+namespace RoslynPad.Roslyn.BraceMatching;
 
-        public ExportBraceMatcherAttribute(string language)
-            : base(typeof(IBraceMatcher))
-        {
-            Language = language ?? throw new ArgumentNullException(nameof(language));
-        }
+[MetadataAttribute]
+[AttributeUsage(AttributeTargets.Class)]
+internal class ExportBraceMatcherAttribute : ExportAttribute
+{
+    public string Language { get; }
+
+    public ExportBraceMatcherAttribute(string language)
+        : base(typeof(IBraceMatcher))
+    {
+        Language = language ?? throw new ArgumentNullException(nameof(language));
     }
 }

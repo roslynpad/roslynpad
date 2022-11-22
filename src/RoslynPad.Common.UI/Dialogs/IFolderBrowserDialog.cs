@@ -1,9 +1,8 @@
-﻿namespace RoslynPad.UI
+﻿namespace RoslynPad.UI;
+
+public interface IFolderBrowserDialog
 {
-    public interface IFolderBrowserDialog
-    {
-        bool ShowEditBox { get; set; }
-        string SelectedPath { get; set; }
-        bool? Show();
-    }
+    bool ShowEditBox { get; set; }
+    string SelectedPath { get; set; }
+    bool? Show();
 }

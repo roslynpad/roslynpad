@@ -1,20 +1,19 @@
 ﻿using System;
 
-namespace RoslynPad.Build
+namespace RoslynPad.Build;
+
+internal class RestoreResult
 {
-    internal class RestoreResult
+    public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, errors: null);
+
+    public static RestoreResult FromErrors(string[] errors) => new(success: false, errors);
+
+    private RestoreResult(bool success, string[]? errors)
     {
-        public static RestoreResult SuccessResult { get; } = new RestoreResult(success: true, errors: null);
-
-        public static RestoreResult FromErrors(string[] errors) => new(success: false, errors);
-
-        private RestoreResult(bool success, string[]? errors)
-        {
-            Success = success;
-            Errors = errors ?? Array.Empty<string>();
-        }
-
-        public bool Success { get; }
-        public string[] Errors { get; }
+        Success = success;
+        Errors = errors ?? Array.Empty<string>();
     }
+
+    public bool Success { get; }
+    public string[] Errors { get; }
 }

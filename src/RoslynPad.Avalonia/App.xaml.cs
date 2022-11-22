@@ -3,24 +3,23 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using RoslynPad.Resources;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+class App : Application
 {
-    class App : Application
+    public override void OnFrameworkInitializationCompleted()
     {
-        public override void OnFrameworkInitializationCompleted()
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                desktop.MainWindow = new MainWindow();
-            }
-
-            base.OnFrameworkInitializationCompleted();
+            desktop.MainWindow = new MainWindow();
         }
 
-        public override void Initialize()
-        {
-            Resources.MergedDictionaries.Add(new Icons());
-            AvaloniaXamlLoader.Load(this);
-        }
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    public override void Initialize()
+    {
+        Resources.MergedDictionaries.Add(new Icons());
+        AvaloniaXamlLoader.Load(this);
     }
 }

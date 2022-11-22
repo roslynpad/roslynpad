@@ -5,12 +5,11 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 
-namespace RoslynPad.Roslyn.Completion.Providers
+namespace RoslynPad.Roslyn.Completion.Providers;
+
+[ExportCompletionProvider("LoadDirectiveCompletionProvider", LanguageNames.CSharp)]
+internal sealed class LoadDirectiveCompletionProvider : AbstractLoadDirectiveCompletionProvider
 {
-    [ExportCompletionProvider("LoadDirectiveCompletionProvider", LanguageNames.CSharp)]
-    internal sealed class LoadDirectiveCompletionProvider : AbstractLoadDirectiveCompletionProvider
-    {
-        protected override bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken)
-            => tree.TryGetStringLiteralToken(position, SyntaxKind.LoadDirectiveTrivia, out stringLiteral, cancellationToken);
-    }
+    protected override bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken)
+        => tree.TryGetStringLiteralToken(position, SyntaxKind.LoadDirectiveTrivia, out stringLiteral, cancellationToken);
 }

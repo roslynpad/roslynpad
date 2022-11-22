@@ -1,9 +1,8 @@
-﻿namespace RoslynPad.Roslyn
-{
-    public interface IEditorCaretProvider
-    {
-        int CaretPosition { get; }
+﻿namespace RoslynPad.Roslyn;
 
-        bool TryMoveCaret(int position);
-    }
+public interface IEditorCaretProvider
+{
+    int CaretPosition { get; }
+
+    bool TryMoveCaret(int position);
 }
