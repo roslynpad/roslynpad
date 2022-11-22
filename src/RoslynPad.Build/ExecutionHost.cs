@@ -706,9 +706,16 @@ namespace RoslynPad.Build
 
                     cancellationToken.ThrowIfCancellationRequested();
 
+                    // Create a MetadataReferenceProperties with embedInteropTypes to true 
+                    // to integrate MS Office Interop types to the referencing compilation 
+                    // (only required for .Net Core)
+                    var metadataReferenceProperties = new MetadataReferenceProperties(embedInteropTypes: true);
+
                     MetadataReferences = references
                         .Where(r => !string.IsNullOrWhiteSpace(r))
-                        .Select(r => _roslynHost.CreateMetadataReference(r))
+                        .Select(r => Platform.IsCore && r.Contains(@"net20\Microsoft.Office.Interop") 
+                            ? _roslynHost.CreateMetadataReference(r, metadataReferenceProperties) 
+                            : _roslynHost.CreateMetadataReference(r))
                         .ToImmutableArray();
 
                     Analyzers = analyzers
