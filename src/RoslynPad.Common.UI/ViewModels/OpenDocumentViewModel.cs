@@ -347,8 +347,7 @@ namespace RoslynPad.UI
             await dialog.ShowAsync().ConfigureAwait(true);
             if (dialog.ShouldRename)
             {
-                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, dialog.SymbolName ?? string.Empty,
-                    document.Project.Solution.Options).ConfigureAwait(true);
+                var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, new SymbolRenameOptions(), dialog.SymbolName ?? string.Empty).ConfigureAwait(true);
                 var newDocument = newSolution.GetDocument(DocumentId);
                 // TODO: possibly update entire solution
                 host.UpdateDocument(newDocument!);

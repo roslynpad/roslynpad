@@ -65,7 +65,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void OnChanged(object sender, FileSystemEventArgs e)
+        private void OnChanged(object? sender, FileSystemEventArgs e)
         {
             Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.FullPath));
         }
@@ -85,7 +85,7 @@ namespace RoslynPad.UI
             }
         }
 
-        private void OnRenamed(object sender, RenamedEventArgs e)
+        private void OnRenamed(object? sender, RenamedEventArgs e)
         {
             Publish(new DocumentFileChanged(ToDocumentFileChangeType(e.ChangeType), e.OldFullPath, e.FullPath));
         }

@@ -1,22 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <InternalsAssemblyNames>Microsoft.CodeAnalysis.CSharp;Microsoft.CodeAnalysis.Features;Microsoft.CodeAnalysis.CSharp.Features;Microsoft.CodeAnalysis.Scripting;Microsoft.CodeAnalysis.CSharp.Scripting;Microsoft.CodeAnalysis.Workspaces;Microsoft.CodeAnalysis.CSharp.Workspaces;Microsoft.CodeAnalysis.Extensions;Microsoft.CodeAnalysis.PooledObjects</InternalsAssemblyNames>
-    <Version>$(RoslynAssemblyVersion)</Version>
-    <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
+    <TargetFramework>$(LtsTargetFramework)</TargetFramework>
+    <InternalsAssemblyNames>Microsoft.CodeAnalysis.CSharp;Microsoft.CodeAnalysis.Features;Microsoft.CodeAnalysis.CSharp.Features;Microsoft.CodeAnalysis.Scripting;Microsoft.CodeAnalysis.CSharp.Scripting;Microsoft.CodeAnalysis.Workspaces;Microsoft.CodeAnalysis.CSharp.Workspaces;Microsoft.CodeAnalysis.Extensions;Microsoft.CodeAnalysis.PooledObjects;Microsoft.CodeAnalysis.LanguageServer.Protocol</InternalsAssemblyNames>
     <Description>Exposes many Roslyn editor services that are currently internal. The version of this package corresponds to the Roslyn packages.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.5.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynPackageVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynPackageVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynPackageVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynPackageVersion)" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(DotNetVersion)" />
-    <PackageReference Include="System.Collections.Immutable" Version="$(DotNetVersion)" />
-    <PackageReference Include="System.Composition" Version="$(DotNetVersion)" />
-    <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
+  </ItemGroup>
+  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
+    <MSBuild Projects="@(ProjectReference)" Targets="GetLibReferences">
+      <Output ItemName="LibReference" TaskParameter="TargetOutputs" /> 
+    </MSBuild>
+    <ItemGroup>
+      <Reference Include="@(LibReference)" />
+      <Content Include="@(LibReference)" PackagePath="lib/$(TargetFramework)" Pack="true" />
+    </ItemGroup>
+  </Target>
+  <ItemGroup>
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Composition" />
+    <PackageReference Include="System.Linq.Async" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
   </ItemGroup>
 </Project>

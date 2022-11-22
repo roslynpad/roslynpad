@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery;
-using Microsoft.CodeAnalysis.LanguageServices;
+using Microsoft.CodeAnalysis.LanguageService;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 
@@ -23,7 +23,7 @@ namespace RoslynPad.Roslyn.Rename
         public static async Task<ISymbol?> GetRenameSymbol(
             Document document, SyntaxToken triggerToken, CancellationToken cancellationToken)
         {
-            var syntaxFactsService = document.Project.LanguageServices.GetRequiredService<ISyntaxFactsService>();
+            var syntaxFactsService = document.Project.Services.GetRequiredService<ISyntaxFactsService>();
             if (syntaxFactsService.IsReservedOrContextualKeyword(triggerToken))
             {
                 return null;
@@ -61,7 +61,7 @@ namespace RoslynPad.Roslyn.Rename
             // RenameOverloads option should be forced on.
             var forceRenameOverloads = tokenRenameInfo.IsMemberGroup;
 
-            var symbol = await RenameLocations.ReferenceProcessing.TryGetRenamableSymbolAsync(document, triggerToken.SpanStart, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var symbol = await RenameUtilities.TryGetRenamableSymbolAsync(document, triggerToken.SpanStart, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (symbol == null)
             {
                 return null;

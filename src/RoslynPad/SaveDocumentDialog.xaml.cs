@@ -37,7 +37,7 @@ namespace RoslynPad
             Loaded += OnLoaded;
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs routedEventArgs)
+        private void OnLoaded(object? sender, RoutedEventArgs routedEventArgs)
         {
             if (AllowNameEdit)
             {
@@ -50,9 +50,11 @@ namespace RoslynPad
             SetSaveButtonStatus();
         }
 
-        private void DocumentName_TextChanged(object sender, TextChangedEventArgs e)
+        private void DocumentName_TextChanged(object? sender, TextChangedEventArgs e)
         {
-            var textBox = (TextBox)sender;
+            var textBox = sender as TextBox;
+            if (textBox == null) return;
+
             var invalidChars = Path.GetInvalidFileNameChars();
             foreach (var c in e.Changes)
             {
@@ -176,29 +178,29 @@ namespace RoslynPad
             }
         }
 
-        private void Overwrite_Click(object sender, RoutedEventArgs e)
+        private void Overwrite_Click(object? sender, RoutedEventArgs e)
         {
             Result = SaveResult.Save;
             Close();
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private void Save_Click(object? sender, RoutedEventArgs e)
         {
             PerformSave();
         }
 
-        private void DontSave_Click(object sender, RoutedEventArgs e)
+        private void DontSave_Click(object? sender, RoutedEventArgs e)
         {
             Result = SaveResult.DontSave;
             Close();
         }
 
-        private void Cancel_Click(object sender, RoutedEventArgs e)
+        private void Cancel_Click(object? sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void DocumentText_KeyDown(object sender, KeyEventArgs e)
+        private void DocumentText_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && SaveButton.IsEnabled)
             {

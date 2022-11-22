@@ -60,18 +60,18 @@ namespace RoslynPad
             }
         }
 
-        private void Rename_Click(object sender, RoutedEventArgs e)
+        private void Rename_Click(object? sender, RoutedEventArgs e)
         {
             ShouldRename = true;
             Close();
         }
 
-        private void Cancel_Click(object sender, RoutedEventArgs e)
+        private void Cancel_Click(object? sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void SymbolText_KeyDown(object sender, KeyEventArgs e)
+        private void SymbolText_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && RenameButton.IsEnabled)
             {

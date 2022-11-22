@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.SignatureHelp;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.SignatureHelp
@@ -43,7 +44,7 @@ namespace RoslynPad.Roslyn.SignatureHelp
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var currentItems = await provider.GetItemsAsync(document, position, trigger.Inner, cancellationToken).ConfigureAwait(false);
+                var currentItems = await provider.GetItemsAsync(document, position, trigger.Inner, SignatureHelpOptions.Default, cancellationToken).ConfigureAwait(false);
                 if (currentItems != null && currentItems.ApplicableSpan.IntersectsWith(position))
                 {
                     // If another provider provides sig help items, then only take them if they

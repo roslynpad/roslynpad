@@ -53,12 +53,12 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
             //IsVisibleChanged += ChangeSignatureDialog_IsVisibleChanged;
         }
 
-        //private void ChangeSignatureDialog_Loaded(object sender, RoutedEventArgs e)
+        //private void ChangeSignatureDialog_Loaded(object? sender, RoutedEventArgs e)
         //{
         //    Members.Focus();
         //}
 
-        //private void ChangeSignatureDialog_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        //private void ChangeSignatureDialog_IsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs e)
         //{
         //    if ((bool)e.NewValue)
         //    {
@@ -66,7 +66,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    }
         //}
 
-        //private void OK_Click(object sender, RoutedEventArgs e)
+        //private void OK_Click(object? sender, RoutedEventArgs e)
         //{
         //    if (_viewModel.TrySubmit())
         //    {
@@ -74,12 +74,12 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    }
         //}
 
-        //private void Cancel_Click(object sender, RoutedEventArgs e)
+        //private void Cancel_Click(object? sender, RoutedEventArgs e)
         //{
         //    DialogResult = false;
         //}
 
-        //private void MoveUp_Click(object sender, EventArgs e)
+        //private void MoveUp_Click(object? sender, EventArgs e)
         //{
         //    int oldSelectedIndex = Members.SelectedIndex;
         //    if (_viewModel.CanMoveUp && oldSelectedIndex >= 0)
@@ -92,7 +92,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void MoveDown_Click(object sender, EventArgs e)
+        //private void MoveDown_Click(object? sender, EventArgs e)
         //{
         //    int oldSelectedIndex = Members.SelectedIndex;
         //    if (_viewModel.CanMoveDown && oldSelectedIndex >= 0)
@@ -105,7 +105,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void Remove_Click(object sender, RoutedEventArgs e)
+        //private void Remove_Click(object? sender, RoutedEventArgs e)
         //{
         //    if (_viewModel.CanRemove)
         //    {
@@ -116,7 +116,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void Restore_Click(object sender, RoutedEventArgs e)
+        //private void Restore_Click(object? sender, RoutedEventArgs e)
         //{
         //    if (_viewModel.CanRestore)
         //    {
@@ -155,7 +155,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    //}
         //}
 
-        //private void MoveSelectionUp_Click(object sender, EventArgs e)
+        //private void MoveSelectionUp_Click(object? sender, EventArgs e)
         //{
         //    int oldSelectedIndex = Members.SelectedIndex;
         //    if (oldSelectedIndex > 0)
@@ -170,7 +170,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void MoveSelectionDown_Click(object sender, EventArgs e)
+        //private void MoveSelectionDown_Click(object? sender, EventArgs e)
         //{
         //    int oldSelectedIndex = Members.SelectedIndex;
         //    if (oldSelectedIndex >= 0 && oldSelectedIndex < Members.Items.Count - 1)
@@ -181,7 +181,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void Members_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        //private void Members_GotKeyboardFocus(object? sender, KeyboardFocusChangedEventArgs e)
         //{
         //    if (Members.SelectedIndex == -1)
         //    {
@@ -191,7 +191,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
         //    SetFocusToSelectedRow();
         //}
 
-        //private void ToggleRemovedState(object sender, ExecutedRoutedEventArgs e)
+        //private void ToggleRemovedState(object? sender, ExecutedRoutedEventArgs e)
         //{
         //    if (_viewModel.CanRemove)
         //    {

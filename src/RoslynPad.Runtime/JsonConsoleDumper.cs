@@ -239,7 +239,7 @@ namespace RoslynPad.Runtime
                 _header = header;
             }
 
-            public override void Write(string value)
+            public override void Write(string? value)
             {
                 if (string.Equals(Environment.NewLine, value, StringComparison.Ordinal))
                 {
@@ -287,7 +287,7 @@ namespace RoslynPad.Runtime
 
             public override void Write(char value) => Dump(value);
 
-            private void Dump(object value) => _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
+            private void Dump(object? value) => _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
         }
 
         private class ConsoleReader : TextReader

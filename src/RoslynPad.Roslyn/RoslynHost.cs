@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
+using Roslyn.Utilities;
 
 namespace RoslynPad.Roslyn
 {
@@ -33,6 +34,16 @@ namespace RoslynPad.Roslyn
                 // RoslynPad.Roslyn
                 typeof(RoslynHost).Assembly);
 
+        internal static readonly ImmutableArray<Type> DefaultCompositionTypes =
+            DefaultCompositionAssemblies.SelectMany(t => t.DefinedTypes).Select(t => t.AsType())
+            .Concat(GetDiagnosticCompositionTypes())
+            .ToImmutableArray();
+
+        private static IEnumerable<Type> GetDiagnosticCompositionTypes() => MetadataUtil.LoadTypesByNamespaces(
+            typeof(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService).Assembly,
+            "Microsoft.CodeAnalysis.Diagnostics",
+            "Microsoft.CodeAnalysis.CodeFixes");
+
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly IDocumentationProviderService _documentationProviderService;
@@ -53,16 +64,12 @@ namespace RoslynPad.Roslyn
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
             _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
 
-            var assemblies = GetDefaultCompositionAssemblies();
+            var partTypes = GetDefaultCompositionTypes();
 
             if (additionalAssemblies != null)
             {
-                assemblies = assemblies.Concat(additionalAssemblies);
+                partTypes = partTypes.Concat(additionalAssemblies.SelectMany(a => a.DefinedTypes).Select(t => t.AsType()));
             }
-
-            var partTypes = assemblies
-                .SelectMany(x => x.DefinedTypes)
-                .Select(x => x.AsType());
 
             _compositionContext = new ContainerConfiguration()
                 .WithParts(partTypes)
@@ -83,8 +90,7 @@ namespace RoslynPad.Roslyn
 
         public Func<string, DocumentationProvider> DocumentationProviderFactory => _documentationProviderService.GetDocumentationProvider;
 
-        protected virtual IEnumerable<Assembly> GetDefaultCompositionAssemblies() =>
-            DefaultCompositionAssemblies;
+        protected virtual IEnumerable<Type> GetDefaultCompositionTypes() => DefaultCompositionTypes;
 
         protected virtual ParseOptions CreateDefaultParseOptions() => new CSharpParseOptions(
             preprocessorSymbols: PreprocessorSymbols,

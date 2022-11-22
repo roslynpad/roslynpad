@@ -52,7 +52,7 @@ namespace RoslynPad
             Col.Text = Editor.TextArea.Caret.Column.ToString();
         }
 
-        private void EditorOnPreviewMouseWheel(object sender, MouseWheelEventArgs args)
+        private void EditorOnPreviewMouseWheel(object? sender, MouseWheelEventArgs args)
         {
             if (_viewModel == null)
             {
@@ -65,7 +65,7 @@ namespace RoslynPad
             }
         }
 
-        private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
+        private async void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
             BindingOperations.EnableCollectionSynchronization(_viewModel.Results, _viewModel.Results);
@@ -169,7 +169,7 @@ namespace RoslynPad
             }
         }
 
-        private void Editor_OnLoaded(object sender, RoutedEventArgs e)
+        private void Editor_OnLoaded(object? sender, RoutedEventArgs e)
         {
             _ = Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
         }
@@ -182,7 +182,7 @@ namespace RoslynPad
             }
         }
 
-        private void OnTreeViewKeyDown(object sender, KeyEventArgs e)
+        private void OnTreeViewKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
             {
@@ -201,7 +201,7 @@ namespace RoslynPad
             }
         }
 
-        private void OnTreeViewDoubleClick(object sender, MouseButtonEventArgs e)
+        private void OnTreeViewDoubleClick(object? sender, MouseButtonEventArgs e)
         {
             TryJumpToLine(e.OriginalSource);
         }
@@ -218,17 +218,17 @@ namespace RoslynPad
             _ = Dispatcher.InvokeAsync(() => Editor.Focus());
         }
 
-        private void CopyCommand(object sender, ExecutedRoutedEventArgs e)
+        private void CopyCommand(object? sender, ExecutedRoutedEventArgs e)
         {
             CopyToClipboard(e.OriginalSource);
         }
 
-        private void CopyClick(object sender, RoutedEventArgs e)
+        private void CopyClick(object? sender, RoutedEventArgs e)
         {
             CopyToClipboard(sender);
         }
 
-        private void CopyToClipboard(object sender)
+        private void CopyToClipboard(object? sender)
         {
             var result = (sender as FrameworkElement)?.DataContext as IResultObject ??
                         _contextMenuResultObject;
@@ -239,7 +239,7 @@ namespace RoslynPad
             }
         }
 
-        private void CopyAllClick(object sender, RoutedEventArgs e)
+        private void CopyAllClick(object? sender, RoutedEventArgs e)
         {
             var withChildren = ReferenceEquals(sender, CopyAllValuesWithChildren);
 
@@ -268,7 +268,7 @@ namespace RoslynPad
             }
         }
 
-        private void ResultTree_OnContextMenuOpening(object sender, ContextMenuEventArgs e)
+        private void ResultTree_OnContextMenuOpening(object? sender, ContextMenuEventArgs e)
         {
             // keyboard-activated
             if (e.CursorLeft < 0 || e.CursorTop < 0)
@@ -285,7 +285,7 @@ namespace RoslynPad
             CopyValueWithChildren.IsEnabled = isResult;
         }
 
-        private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        private void SearchTerm_OnPreviewKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Down && _viewModel.NuGet.Packages?.Any() == true)
             {
@@ -302,12 +302,12 @@ namespace RoslynPad
             }
         }
 
-        private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
+        private void ScrollViewer_OnScrollChanged(object? sender, ScrollChangedEventArgs e)
         {
             HeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
         }
 
-        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void OnTabSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (ILViewerTab.IsSelected && ILViewerTab.Content == null)
             {

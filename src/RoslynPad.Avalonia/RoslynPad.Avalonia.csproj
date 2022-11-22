@@ -14,9 +14,9 @@
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />

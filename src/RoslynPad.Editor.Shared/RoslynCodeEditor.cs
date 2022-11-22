@@ -242,7 +242,13 @@ namespace RoslynPad.Editor
         {
             _textMarkerService.RemoveAll(marker => Equals(args.Id, marker.Tag));
 
-            if (args.Kind != DiagnosticsUpdatedKind.DiagnosticsCreated)
+            if (_roslynHost == null || _documentId == null || args.Kind != DiagnosticsUpdatedKind.DiagnosticsCreated)
+            {
+                return;
+            }
+
+            var document = _roslynHost.GetDocument(_documentId);
+            if (document == null || !document.TryGetText(out var sourceText))
             {
                 return;
             }
@@ -254,7 +260,7 @@ namespace RoslynPad.Editor
                     continue;
                 }
 
-                var span = diagnosticData.GetTextSpan();
+                var span = diagnosticData.GetTextSpan(sourceText);
                 if (span == null)
                 {
                     continue;

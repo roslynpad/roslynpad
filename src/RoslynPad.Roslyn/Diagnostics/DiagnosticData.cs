@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.Diagnostics
@@ -25,19 +25,12 @@ namespace RoslynPad.Roslyn.Diagnostics
         public bool IsSuppressed => _inner.IsSuppressed;
         public ProjectId? ProjectId => _inner.ProjectId;
         public DocumentId? DocumentId => _inner.DocumentId;
-        public bool HasTextSpan => _inner.HasTextSpan;
 
-        public TextSpan? GetTextSpan() => _inner.GetTextSpan();
-
-        public DiagnosticDataLocation? DataLocation { get; }
-        public IReadOnlyCollection<DiagnosticDataLocation> AdditionalLocations { get; }
+        public TextSpan? GetTextSpan(SourceText sourceText) => _inner.DataLocation.MappedFileSpan.GetClampedTextSpan(sourceText);
 
         internal DiagnosticData(Microsoft.CodeAnalysis.Diagnostics.DiagnosticData inner)
         {
             _inner = inner;
-            DataLocation = inner.DataLocation != null ? new DiagnosticDataLocation(inner.DataLocation) : null;
-            AdditionalLocations = inner.AdditionalLocations
-                .Select(x => new DiagnosticDataLocation(x)).ToImmutableArray();
         }
     }
 }

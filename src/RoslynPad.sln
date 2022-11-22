@@ -35,10 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Avalonia", "Rosly
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Build", "RoslynPad.Build\RoslynPad.Build.csproj", "{561DF8E8-68D0-41B0-8268-51213C466E1C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestoreHelper", "RestoreHelper\RestoreHelper.csproj", "{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}"
+EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems*{7fb0604b-44cd-4db1-99c5-e89ea6c20aec}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -134,6 +133,14 @@ Global
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|x64.ActiveCfg = Release|Any CPU
 		{561DF8E8-68D0-41B0-8268-51213C466E1C}.Release|x64.Build.0 = Release|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Debug|x64.Build.0 = Debug|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Release|x64.ActiveCfg = Release|Any CPU
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -149,8 +156,12 @@ Global
 		{8A9BFF57-9025-4BBC-B77C-C85937528210} = {09BCD791-CCF8-48DB-98E4-6B18105D2DDB}
 		{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4} = {09BCD791-CCF8-48DB-98E4-6B18105D2DDB}
 		{561DF8E8-68D0-41B0-8268-51213C466E1C} = {E219D424-5BAA-483A-BFE6-679BA2A3C9B0}
+		{A00977C6-5C07-4B08-9524-FD4F9DE94BD7} = {33A4C07C-3BBB-4BA5-8A4E-CC22883B8ED5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E595517-397C-4164-83BB-D80FC9B19D36}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		RoslynPad.Editor.Shared\RoslynPad.Editor.Shared.projitems*{7fb0604b-44cd-4db1-99c5-e89ea6c20aec}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

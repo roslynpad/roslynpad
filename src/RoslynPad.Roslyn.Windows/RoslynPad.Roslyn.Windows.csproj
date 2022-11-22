@@ -1,10 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <UseWPF>true</UseWPF>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
-    <Version>$(RoslynAssemblyVersion)</Version>
-    <PackageVersion>$(RoslynPackageVersion)</PackageVersion>
     <Description>Provides platform-specific (WPF) implementations for UI elements required by the RoslynPad.Roslyn package.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>

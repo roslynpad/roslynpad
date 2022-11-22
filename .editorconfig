@@ -165,6 +165,7 @@ dotnet_diagnostic.CA2007.severity = error
 dotnet_diagnostic.IDE0042.severity = none
 dotnet_diagnostic.IDE0058.severity = none
 dotnet_diagnostic.VSTHRD100.severity = none
+dotnet_diagnostic.VSTHRD110.severity = none
 dotnet_diagnostic.VSTHRD200.severity = none
 
 # XAML

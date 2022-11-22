@@ -23,12 +23,12 @@ namespace RoslynPad
             DataContextChanged += OnDataContextChanged;
         }
 
-        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs e)
         {
             _viewModel = (MainViewModel)e.NewValue;
         }
 
-        private void OnDocumentClick(object sender, MouseButtonEventArgs e)
+        private void OnDocumentClick(object? sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
@@ -36,7 +36,7 @@ namespace RoslynPad
             }
         }
 
-        private void OnDocumentKeyDown(object sender, KeyEventArgs e)
+        private void OnDocumentKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
@@ -50,7 +50,7 @@ namespace RoslynPad
             _viewModel.OpenDocument(documentViewModel);
         }
 
-        private void DocumentsContextMenu_OpenFolder_Click(object sender, RoutedEventArgs e)
+        private void DocumentsContextMenu_OpenFolder_Click(object? sender, RoutedEventArgs e)
         {
             if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel)
             {
@@ -65,7 +65,7 @@ namespace RoslynPad
             }
         }
 
-        private void Search_OnKeyDown(object sender, KeyEventArgs e)
+        private void Search_OnKeyDown(object? sender, KeyEventArgs e)
         {
             switch (e.Key)
             {

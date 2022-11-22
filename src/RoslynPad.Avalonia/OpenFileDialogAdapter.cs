@@ -28,6 +28,8 @@ namespace RoslynPad
         {
             set
             {
+                if (_dialog.Filters == null) return;
+
                 _dialog.Filters.Clear();
                 if (value == null)
                 {
@@ -54,10 +56,10 @@ namespace RoslynPad
             set => _dialog.InitialFileName = value;
         }
 
-        public Task<string[]?> ShowAsync()
+        public async Task<string[]?> ShowAsync()
         {
-            var active = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.First(w => w.IsActive);
-            return _dialog.ShowAsync(active!);
+            var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
+            return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
         }
     }
 }

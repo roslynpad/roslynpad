@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>RoslynPad.UI</RootNamespace>
   </PropertyGroup>
@@ -11,12 +10,9 @@
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
-    <PackageReference Include="NuGet.Commands" Version="5.11.3" />
-    <PackageReference Include="System.ComponentModel" Version="4.3.0" />
-    <PackageReference Include="System.IO.FileSystem.Watcher" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageReference Include="System.Reactive.Core" Version="$(RxVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
+    <PackageReference Include="NuGet.Commands" />
+    <PackageReference Include="System.Reactive.Core" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 </Project>

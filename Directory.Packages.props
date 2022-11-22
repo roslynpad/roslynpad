@@ -1,0 +1,47 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DotNetVersion>7.0.0</DotNetVersion>
+    <RoslynVersion>4.4.0</RoslynVersion>
+    <RoslynPrivateVersion>4.4.0-6.22561.11</RoslynPrivateVersion>
+    <AvaloniaVersion>0.10.18</AvaloniaVersion>
+    <RxVersion>5.0.0</RxVersion>
+    <NuGetVersion>6.4.0</NuGetVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="AvalonEdit" Version="6.1.3.50" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="0.10.12.2" />
+    <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="AvalonLibrary" Version="3.0.0" />
+    <PackageVersion Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.0.0-beta.5" />
+    <PackageVersion Include="Dirkster.AvalonDock" Version="4.70.3" />
+    <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.5.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(DotnetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
+    <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
+    <PackageVersion Include="Nerdbank.Streams" Version="2.9.112" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageVersion Include="NuGet.Commands" Version="$(NuGetVersion)" />
+    <PackageVersion Include="NuGet.Versioning" Version="$(NuGetVersion)" />
+    <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
+    <PackageVersion Include="System.Reactive.Core" Version="$(RxVersion)" />
+    <PackageVersion Include="System.Reactive.Linq" Version="$(RxVersion)" />
+    <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="$(DotnetVersion)" />
+    <PackageVersion Include="System.Reflection.Metadata" Version="$(DotnetVersion)" />
+    <PackageVersion Include="System.Composition" Version="$(DotnetVersion)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
+    <PackageVersion Include="xunit" Version="2.4.2" />
+  </ItemGroup>
+</Project>

@@ -20,7 +20,7 @@ namespace RoslynPad.Roslyn.Completion
 
         public bool MatchesFilterText(CompletionItem item, string filterText)
         {
-            return _inner.MatchesPattern(item.FilterText, filterText, CultureInfo.InvariantCulture);
+            return _inner.MatchesPattern(item, filterText, CultureInfo.InvariantCulture);
         }
     }
 }

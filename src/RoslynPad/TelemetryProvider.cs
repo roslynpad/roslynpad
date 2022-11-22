@@ -18,13 +18,13 @@ namespace RoslynPad
             Application.Current.DispatcherUnhandledException += OnUnhandledDispatcherException;
         }
 
-        private void OnUnhandledDispatcherException(object sender, DispatcherUnhandledExceptionEventArgs args)
+        private void OnUnhandledDispatcherException(object? sender, DispatcherUnhandledExceptionEventArgs args)
         {
             HandleException(args.Exception);
             args.Handled = true;
         }
         
-        protected override string GetInstrumentationKey() =>
+        protected override string? GetInstrumentationKey() =>
             new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
                 .Build()["InstrumentationKey"];
     }

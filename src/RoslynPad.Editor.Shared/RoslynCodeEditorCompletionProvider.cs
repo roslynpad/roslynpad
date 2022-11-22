@@ -43,7 +43,7 @@ namespace RoslynPad.Editor
                 }
 
                 var completionService = CompletionService.GetService(document);
-                completionService.GetCompletionsAsync(document, 0);
+                completionService?.GetCompletionsAsync(document, 0);
 
                 var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
                 signatureHelpProvider.GetItemsAsync(document, 0,
@@ -84,23 +84,22 @@ namespace RoslynPad.Editor
                 }
             }
 
-            if (overloadProvider == null)
+            if (overloadProvider == null && CompletionService.GetService(document) is { } completionService)
             {
-                var completionService = CompletionService.GetService(document);
                 var completionTrigger = GetCompletionTrigger(triggerChar);
                 var data = await completionService.GetCompletionsAsync(
                     document,
                     position,
                     completionTrigger
                     ).ConfigureAwait(false);
-                if (data != null && data.Items.Any())
+                if (data != null && data.ItemsList.Any())
                 {
                     useHardSelection = data.SuggestionModeItem == null;
                     var helper = CompletionHelper.GetHelper(document, completionService);
                     var text = await document.GetTextAsync().ConfigureAwait(false);
                     var textSpanToText = new Dictionary<TextSpan, string>();
 
-                    completionData = data.Items
+                    completionData = data.ItemsList
                         .Where(item => MatchesFilterText(helper, item, text, textSpanToText))
                         .Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager))
                             .ToArray<ICompletionDataEx>();

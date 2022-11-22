@@ -1,24 +1,16 @@
 <Project>
   <PropertyGroup>
-    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-  </PropertyGroup>
-  <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
-    <DefaultTargetFramework>net6.0</DefaultTargetFramework>
-    <TargetFrameworks Condition=" $(MSBuildProjectName.EndsWith('Windows')) ">$(DefaultTargetFramework)-windows;net48</TargetFrameworks>
-    <TargetFramework Condition=" '$(TargetFrameworks)' == '' and $(MSBuildProjectName.Contains('Windows')) ">$(DefaultTargetFramework)-windows</TargetFramework>
+    <DefaultTargetFramework>net7.0</DefaultTargetFramework>
+    <LtsTargetFramework>net6.0</LtsTargetFramework>
+    <TargetFramework Condition=" $(MSBuildProjectName.Contains('Windows')) ">$(DefaultTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <EditorPackageVersion>1.3.0</EditorPackageVersion>
-    <RoslynPackageVersion>4.0.1</RoslynPackageVersion>
-    <RoslynAssemblyVersion>4.0.1.0</RoslynAssemblyVersion>
-    <AvaloniaVersion>0.10.10</AvaloniaVersion>
-    <AvaloniaEditVersion>0.10.9</AvaloniaEditVersion>
-    <DotNetVersion>[6.0.*,6.0.0]</DotNetVersion>
-    <RxVersion>5.0.0</RxVersion>
-    <LangVersion>9.0</LangVersion>
+    <Version>4.4.0</Version>
+    <AvaloniaEditVersion>0.10.12.2</AvaloniaEditVersion>
+    <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>
     <Authors>Eli Arbel</Authors>
@@ -31,12 +23,4 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
 </Project>
