@@ -51,8 +51,8 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
     private readonly IRoslynHost _roslynHost;
     private readonly IClassificationHighlightColors _highlightColors;
     private readonly List<CachedLine>? _cachedLines;
-    private readonly Subject<HighlightedLine> _subject;
-    private readonly List<(HighlightedLine line, List<HighlightedSection> sections)> _changes;
+    private readonly Subject<FrozenLine> _subject;
+    private readonly List<(FrozenLine line, List<HighlightedSection> sections)> _changes;
     private readonly SynchronizationContext? _syncContext;
 
     private volatile bool _inHighlightingGroup;
@@ -65,8 +65,8 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         _documentId = documentId;
         _roslynHost = roslynHost;
         _highlightColors = highlightColors;
-        _subject = new Subject<HighlightedLine>();
-        _subject.GroupBy(c => c.DocumentLine.LineNumber).Subscribe(SubscribeToLineGroup);
+        _subject = new Subject<FrozenLine>();
+        _subject.GroupBy(c => c.LineNumber).Subscribe(SubscribeToLineGroup);
 
         if (document is TextDocument)
         {
@@ -76,10 +76,10 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
             _cachedLines = new List<CachedLine>();
         }
 
-        _changes = new List<(HighlightedLine line, List<HighlightedSection> sections)>();
+        _changes = new List<(FrozenLine line, List<HighlightedSection> sections)>();
         _syncContext = SynchronizationContext.Current;
     }
-    
+
     public void Dispose()
     {
         _subject.Dispose();
@@ -87,9 +87,9 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
 
     public event HighlightingStateChangedEventHandler? HighlightingStateChanged;
 
-    private void UpdateHighlightingSections(HighlightedLine line, List<HighlightedSection> sections)
+    private void UpdateHighlightingSections(FrozenLine line, List<HighlightedSection> sections)
     {
-        if (_inHighlightingGroup && line.DocumentLine.LineNumber == _updatedLine)
+        if (_inHighlightingGroup && line.LineNumber == _updatedLine)
         {
             lock (_changes)
             {
@@ -102,31 +102,33 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         _syncContext?.Post(o => UpdateHighlightingSectionsNoCheck(line, sections), null);
     }
 
-    private void UpdateHighlightingSectionsNoCheck(HighlightedLine line, List<HighlightedSection> sections)
+    private void UpdateHighlightingSectionsNoCheck(FrozenLine line, List<HighlightedSection> sections)
     {
         if (!IsCurrentLine(line))
         {
             return;
         }
 
-        var lineNumber = line.DocumentLine.LineNumber;
+        var lineNumber = line.LineNumber;
 
-        line.Sections.Clear();
+        line.HighlightedLine.Sections.Clear();
         foreach (var section in sections)
-            line.Sections.Add(section);
+        {
+            line.HighlightedLine.Sections.Add(section);
+        }
 
-        if (_textView.GetVisualLine(line.DocumentLine.LineNumber) != null)
+        if (_textView.GetVisualLine(line.LineNumber) != null)
         {
             HighlightingStateChanged?.Invoke(lineNumber, lineNumber);
         }
     }
 
-    private bool IsCurrentLine(HighlightedLine line)
+    private bool IsCurrentLine(FrozenLine line)
     {
-        return !line.DocumentLine.IsDeleted &&
-               line.Document.Version.CompareAge(_document.Version) == 0 &&
-               _document.GetLineByNumber(line.DocumentLine.LineNumber) is var currentLine &&
-               currentLine?.Length == line.DocumentLine.Length;
+        return !line.IsDeleted &&
+               line.HighlightedLine.Document.Version.CompareAge(_document.Version) == 0 &&
+               _document.GetLineByNumber(line.LineNumber) is var currentLine &&
+               currentLine?.Length == line.Length;
     }
 
     IDocument IHighlighter.Document => _document;
@@ -192,7 +194,7 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         var line = new HighlightedLine(_document, documentLine);
 
         // If we have previous cached data, use it in the meantime since our request is asynchronous
-        if (previousCachedLine != null && previousCachedLine.HighlightedLine is var previousHighlight && 
+        if (previousCachedLine != null && previousCachedLine.HighlightedLine is var previousHighlight &&
             previousHighlight.Sections.Count > 0)
         {
             var offsetShift = documentLine.Offset - previousCachedLine.Offset;
@@ -221,13 +223,13 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
 
         // since we don't want to block the UI thread
         // we'll enqueue the request and process it asynchornously
-        _subject.OnNext(line);
+        _subject.OnNext(new FrozenLine(line));
 
         CacheLine(line);
         return line;
     }
 
-    private void SubscribeToLineGroup(IObservable<HighlightedLine> observable)
+    private void SubscribeToLineGroup(IObservable<FrozenLine> observable)
     {
         var connectible = observable.Throttle(TimeSpan.FromMilliseconds(DelayInMs))
             .SelectMany(SubscribeToLine)
@@ -235,17 +237,16 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         connectible.Connect();
     }
 
-    private async Task<object?> SubscribeToLine(HighlightedLine line)
+    private async Task<object?> SubscribeToLine(FrozenLine line)
     {
         var document = _roslynHost.GetDocument(_documentId);
         if (document == null)
             return null;
 
-        var documentLine = line.DocumentLine;
         IEnumerable<ClassifiedSpan> spans;
         try
         {
-            spans = await GetClassifiedSpansAsync(document, documentLine).ConfigureAwait(true);
+            spans = await GetClassifiedSpansAsync(document, line).ConfigureAwait(true);
         }
         catch (Exception)
         {
@@ -256,7 +257,7 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         var sections = new List<HighlightedSection>();
         foreach (var classifiedSpan in spans)
         {
-            var textSpan = AdjustTextSpan(classifiedSpan, documentLine);
+            var textSpan = AdjustTextSpan(classifiedSpan, line);
             if (textSpan == null)
             {
                 continue;
@@ -275,16 +276,16 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         return null;
     }
 
-    private static TextSpan? AdjustTextSpan(ClassifiedSpan classifiedSpan, IDocumentLine documentLine)
+    private static TextSpan? AdjustTextSpan(ClassifiedSpan classifiedSpan, FrozenLine line)
     {
-        if (classifiedSpan.TextSpan.Start > documentLine.EndOffset)
+        if (classifiedSpan.TextSpan.Start > line.EndOffset)
         {
             return null;
         }
 
         var result = TextSpan.FromBounds(
-            Math.Max(classifiedSpan.TextSpan.Start, documentLine.Offset),
-            Math.Min(classifiedSpan.TextSpan.End, documentLine.EndOffset));
+            Math.Max(classifiedSpan.TextSpan.Start, line.Offset),
+            Math.Min(classifiedSpan.TextSpan.End, line.EndOffset));
 
         return result;
     }
@@ -303,15 +304,15 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         }
     }
 
-    private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(Document document, IDocumentLine documentLine)
+    private async Task<IEnumerable<ClassifiedSpan>> GetClassifiedSpansAsync(Document document, FrozenLine line)
     {
-        if (!documentLine.IsDeleted)
+        if (!line.IsDeleted)
         {
             var text = await document.GetTextAsync().ConfigureAwait(false);
-            if (text.Length >= documentLine.Offset + documentLine.TotalLength)
+            if (text.Length >= line.Offset + line.TotalLength)
             {
                 return await Classifier.GetClassifiedSpansAsync(document,
-                        new TextSpan(documentLine.Offset, documentLine.TotalLength), CancellationToken.None)
+                        new TextSpan(line.Offset, line.TotalLength), CancellationToken.None)
                     .ConfigureAwait(false);
             }
         }
@@ -346,8 +347,6 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
 
     public HighlightingColor? GetNamedColor(string name) => null;
 
-    #region Caching
-
     // If a line gets edited and we need to display it while no parse information is ready for the
     // changed file, the line would flicker (semantic highlightings disappear temporarily).
     // We avoid this issue by storing the semantic highlightings and updating them on document changes
@@ -375,5 +374,30 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         }
     }
 
-    #endregion
+    private class FrozenLine
+    {
+        public FrozenLine(HighlightedLine line)
+        {
+            HighlightedLine = line;
+            
+            var documentLine = line.DocumentLine;
+            TotalLength = documentLine.TotalLength;
+            DelimiterLength = documentLine.DelimiterLength;
+            LineNumber = documentLine.LineNumber;
+            IsDeleted = documentLine.IsDeleted;
+            Offset = documentLine.Offset;
+            Length = documentLine.Length;
+            EndOffset = documentLine.EndOffset;
+        }
+
+        public HighlightedLine HighlightedLine { get; }
+        
+        public int TotalLength { get; }
+        public int DelimiterLength { get; }
+        public int LineNumber { get; }
+        public bool IsDeleted { get; }
+        public int Offset { get; }
+        public int Length { get; }
+        public int EndOffset { get; }
+    }
 }

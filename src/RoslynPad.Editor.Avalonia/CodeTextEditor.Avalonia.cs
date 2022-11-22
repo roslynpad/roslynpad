@@ -4,7 +4,6 @@ using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.Editing;
 using System;
-using System.Linq;
 
 namespace RoslynPad.Editor;
 
@@ -24,51 +23,33 @@ public partial class CodeTextEditor : IStyleable
 
     partial void InitializeToolTip()
     {
-        if (_toolTip != null)
+        if (_toolTip == null)
         {
-            ToolTip.SetShowDelay(this, 0);
-            ToolTip.SetTip(this, _toolTip);
-            _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
-            {
-                if (c.NewValue as bool? != true)
-                {
-                    _toolTip = null;
-                }
-            });
+            return;
         }
+
+        ToolTip.SetShowDelay(this, 0);
+        ToolTip.SetTip(this, _toolTip);
+        _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
+        {
+            if (c.NewValue as bool? != true)
+            {
+                _toolTip = null;
+            }
+        });
     }
 
     partial void AfterToolTipOpen()
     {
-        if (_toolTip != null)
-        {
-            _toolTip.InvalidateVisual();
-        }
+        _toolTip?.InvalidateVisual();
     }
 
     partial class CustomCompletionWindow
     {
-        private static readonly System.Reflection.PropertyInfo LogicalChildrenProperty = typeof(StyledElement).GetProperty("LogicalChildren", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) ?? throw new InvalidOperationException();
-
         partial void Initialize()
         {
             CompletionList.ListBox.BorderThickness = new Thickness(1);
-            CompletionList.ListBox.PointerPressed +=
-                (o, e) => _isSoftSelectionActive = false;
-
-            // HACK alert - this is due to an Avalonia bug that assumes the parent of a PopupRoot must be a Popup (in our case it's a Window)
-            var toolTip = LogicalChildren.OfType<Avalonia.Controls.Primitives.Popup>().First();
-            LogicalChildren.Remove(toolTip);
-            var logicalChildren = LogicalChildrenProperty.GetValue(TextArea) as Avalonia.Collections.IAvaloniaList<Avalonia.LogicalTree.ILogical>;
-            logicalChildren?.Add(toolTip);
-        }
-
-        protected override void DetachEvents()
-        {
-            // TODO: temporary workaround until SetParent(null) is removed
-            var selected = CompletionList.SelectedItem;
-            base.DetachEvents();
-            CompletionList.SelectedItem = selected;
+            CompletionList.ListBox.PointerPressed += (o, e) => _isSoftSelectionActive = false;
         }
     }
 }
