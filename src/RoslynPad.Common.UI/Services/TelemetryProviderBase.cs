@@ -1,33 +1,35 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Extensions.Logging;
 
 namespace RoslynPad.UI;
 
 public abstract class TelemetryProviderBase : ITelemetryProvider
 {
     private Exception? _lastError;
+    private ILoggerFactory? _loggerFactory;
+    private ILogger? _logger;
 
     public virtual void Initialize(string version, IApplicationSettings settings)
     {
-        if (settings.Values.SendErrors)
+        if (!settings.Values.SendErrors ||
+            (GetInstrumentationKey() is var instrumentationKey && string.IsNullOrEmpty(instrumentationKey)))
         {
-            var instrumentationKey = GetInstrumentationKey();
-
-            if (!string.IsNullOrEmpty(instrumentationKey))
-            {
-                //_client = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
-
-                //_client.Context.Component.Version = version;
-
-                //_client.TrackPageView("Main");
-            }
+            return;
         }
 
-        //if (_client != null)
+        _loggerFactory = LoggerFactory.Create(builder =>
         {
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
-        }
+            builder.AddOpenTelemetry(options =>
+                options.AddAzureMonitorLogExporter(o => o.ConnectionString = "InstrumentationKey=" + instrumentationKey));
+        });
+
+        _logger = _loggerFactory.CreateLogger(nameof(RoslynPad));
+        _logger.LogInformation(nameof(Initialize));
+
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
     }
 
     protected abstract string? GetInstrumentationKey();
@@ -40,7 +42,6 @@ public abstract class TelemetryProviderBase : ITelemetryProvider
     private void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs args)
     {
         HandleException((Exception)args.ExceptionObject);
-        //_client?.Flush();
     }
 
     protected void HandleException(Exception exception)
@@ -50,7 +51,7 @@ public abstract class TelemetryProviderBase : ITelemetryProvider
             return;
         }
 
-        //_client?.TrackException(exception);
+        _logger?.LogError(exception, exception.Message);
         LastError = exception;
     }
 

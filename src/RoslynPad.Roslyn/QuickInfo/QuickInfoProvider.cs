@@ -76,7 +76,7 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
             var deferredContent = await BuildContentAsync(document, token, cancellationToken).ConfigureAwait(false);
             if (deferredContent != null)
             {
-                return new QuickInfoItem(token.Span, () => deferredContent.Create());
+                return new QuickInfoItem(token.Span, deferredContent.Create);
             }
         }
 

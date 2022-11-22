@@ -84,7 +84,7 @@ internal static class IOUtilities
     {
         var lines = PerformIO(() => File.ReadLines(path), Array.Empty<string>());
         using var enumerator = lines.GetEnumerator();
-        while (PerformIO(() => enumerator.MoveNext()))
+        while (PerformIO(enumerator.MoveNext))
         {
             yield return enumerator.Current;
         }
@@ -105,7 +105,7 @@ internal static class IOUtilities
             Array.Empty<string>());
 
         using var enumerator = files.GetEnumerator();
-        while (PerformIO(() => enumerator.MoveNext()))
+        while (PerformIO(enumerator.MoveNext))
         {
             yield return enumerator.Current;
         }
@@ -117,7 +117,7 @@ internal static class IOUtilities
             Array.Empty<string>());
 
         using var enumerator = directories.GetEnumerator();
-        while (PerformIO(() => enumerator.MoveNext()))
+        while (PerformIO(enumerator.MoveNext))
         {
             yield return enumerator.Current;
         }

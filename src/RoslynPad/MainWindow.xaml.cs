@@ -70,7 +70,7 @@ public partial class MainWindow
 
             try
             {
-                await Task.Run(() => _viewModel.OnExit()).ConfigureAwait(true);
+                await Task.Run(_viewModel.OnExit).ConfigureAwait(true);
             }
             catch
             {

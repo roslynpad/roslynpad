@@ -154,7 +154,7 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
                 SaveButton.Visibility = Visibility.Collapsed;
                 OverwriteButton.Visibility = Visibility.Visible;
                 DocumentTextBox.IsEnabled = false;
-                _ = Dispatcher.InvokeAsync(() => OverwriteButton.Focus());
+                _ = Dispatcher.InvokeAsync(OverwriteButton.Focus);
             }
             else
             {

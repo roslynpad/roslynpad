@@ -27,7 +27,7 @@ public class ServiceCollectionExportDescriptorProvider : ExportDescriptorProvide
         }
 
         yield return new ExportDescriptorPromise(contract, nameof(ServiceCollectionExportDescriptorProvider),
-            service.Lifetime != ServiceLifetime.Transient, () => Array.Empty<CompositionDependency>(),
+            service.Lifetime != ServiceLifetime.Transient, Array.Empty<CompositionDependency>,
             _ => ExportDescriptor.Create((_, _) => _serviceProvider.GetService(contract.ContractType),
                 new Dictionary<string, object>()));
     }

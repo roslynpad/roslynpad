@@ -99,7 +99,7 @@ public class RoslynCodeEditor : CodeTextEditor
 
         _documentId = creatingDocumentArgs.DocumentId ??
             roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory, sourceCodeKind,
-                args => ProcessDiagnostics(args), text => avalonEditTextContainer.UpdateText(text)));
+                ProcessDiagnostics, avalonEditTextContainer.UpdateText));
 
         AppendText(documentText);
         Document.UndoStack.ClearAll();

@@ -469,7 +469,7 @@ internal partial class ExecutionHost : IExecutionHost
         if (diagnostics.Length > 0)
         {
             CompilationErrors?.Invoke(diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Id))
-                .Select(d => GetCompilationErrorResultObject(d)).ToImmutableArray());
+                .Select(GetCompilationErrorResultObject).ToImmutableArray());
         }
     }
 
@@ -708,7 +708,7 @@ internal partial class ExecutionHost : IExecutionHost
 
                 MetadataReferences = references
                     .Where(r => !string.IsNullOrWhiteSpace(r))
-                    .Select(r => _roslynHost.CreateMetadataReference(r))
+                    .Select(_roslynHost.CreateMetadataReference)
                     .ToImmutableArray();
 
                 Analyzers = analyzers

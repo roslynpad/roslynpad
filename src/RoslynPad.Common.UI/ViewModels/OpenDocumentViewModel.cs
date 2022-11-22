@@ -155,7 +155,7 @@ public class OpenDocumentViewModel : NotificationObject
         _restoreSuccessful = true; // initially set to true so we can immediately start running and wait for restore
         _dispatcher = appDispatcher;
 
-        OpenBuildPathCommand = commands.Create(() => OpenBuildPath());
+        OpenBuildPathCommand = commands.Create(OpenBuildPath);
         SaveCommand = commands.CreateAsync(() => SaveAsync(promptSave: false));
         RunCommand = commands.CreateAsync(RunAsync, () => !IsRunning && RestoreSuccessful && Platform != null);
         TerminateCommand = commands.CreateAsync(TerminateAsync, () => Platform != null);
@@ -261,7 +261,7 @@ public class OpenDocumentViewModel : NotificationObject
         {
             if (SetProperty(ref _restoreSuccessful, value))
             {
-                _dispatcher.InvokeAsync(() => RunCommand.RaiseCanExecuteChanged());
+                _dispatcher.InvokeAsync(RunCommand.RaiseCanExecuteChanged);
             }
         }
     }
@@ -631,7 +631,7 @@ public class OpenDocumentViewModel : NotificationObject
         {
             if (SetProperty(ref _isRunning, value))
             {
-                _dispatcher.InvokeAsync(() => RunCommand.RaiseCanExecuteChanged());
+                _dispatcher.InvokeAsync(RunCommand.RaiseCanExecuteChanged);
             }
         }
     }

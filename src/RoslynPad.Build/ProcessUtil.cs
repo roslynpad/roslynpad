@@ -39,7 +39,7 @@ internal class ProcessUtil
             catch { }
         });
 
-        await Task.Run(() => process.Start()).ConfigureAwait(false);
+        await Task.Run(process.Start).ConfigureAwait(false);
 
         return new ProcessResult(process, exitTcs);
     }

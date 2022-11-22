@@ -171,7 +171,7 @@ public partial class DocumentView : IDisposable
 
     private void Editor_OnLoaded(object? sender, RoutedEventArgs e)
     {
-        _ = Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
+        _ = Dispatcher.InvokeAsync(Editor.Focus, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     public void Dispose()
@@ -215,7 +215,7 @@ public partial class DocumentView : IDisposable
         Editor.TextArea.Caret.Column = result.Column;
         Editor.ScrollToLine(result.Line);
 
-        _ = Dispatcher.InvokeAsync(() => Editor.Focus());
+        _ = Dispatcher.InvokeAsync(Editor.Focus);
     }
 
     private void CopyCommand(object? sender, ExecutedRoutedEventArgs e)

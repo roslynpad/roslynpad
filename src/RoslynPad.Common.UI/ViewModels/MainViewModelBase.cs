@@ -81,7 +81,7 @@ public class MainViewModelBase : NotificationObject
         OpenFileCommand = commands.CreateAsync(OpenFile);
         CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
         CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
-        ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
+        ClearErrorCommand = commands.Create(_telemetryProvider.ClearLastError);
         ReportProblemCommand = commands.Create(ReportProblem);
         EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
@@ -168,9 +168,9 @@ public class MainViewModelBase : NotificationObject
     private IEnumerable<OpenDocumentViewModel> LoadAutoSavedDocuments(string root)
     {
         return IOUtilities.EnumerateFilesRecursive(root, $"*{DocumentViewModel.AutoSaveSuffix}.*")
-            .Select(d => DocumentViewModel.FromPath(d))
-            .Where(d => IsRelevantDocument(d))
-            .Select(d => GetOpenDocumentViewModel(d));
+            .Select(DocumentViewModel.FromPath)
+            .Where(IsRelevantDocument)
+            .Select(GetOpenDocumentViewModel);
     }
 
     private OpenDocumentViewModel GetOpenDocumentViewModel(DocumentViewModel? documentViewModel = null)

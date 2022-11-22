@@ -26,7 +26,7 @@ internal static class MSBuildHelper
 
     private static XElement References(IEnumerable<LibraryRef> references) =>
         new("ItemGroup",
-            references.Select(reference => Reference(reference)).ToArray());
+            references.Select(Reference).ToArray());
 
     private static XElement Reference(LibraryRef reference)
     {
