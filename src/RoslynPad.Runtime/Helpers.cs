@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +24,7 @@ namespace RoslynPad.Runtime
         /// <returns></returns>
         public static async Task<SynchronizationContext> CreateWpfDispatcherAsync()
         {
-            if (!OperatingSystem.IsWindows())
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 throw new PlatformNotSupportedException($"{nameof(CreateWpfDispatcherAsync)} is supported only on Windows");
             }
@@ -32,7 +33,7 @@ namespace RoslynPad.Runtime
             var dispatcherType = windowsBaseAssembly.GetType("System.Windows.Threading.Dispatcher", throwOnError: true) ?? throw new InvalidOperationException();
             var dispatcherSyncContextCtor = windowsBaseAssembly.GetType("System.Windows.Threading.DispatcherSynchronizationContext", throwOnError: true)!
                 .GetConstructors().FirstOrDefault(c => c.GetParameters() is var p && p.Length == 1 && p[0].ParameterType.Name == "Dispatcher") ?? throw new InvalidOperationException();
-            var runMethod = dispatcherType.GetMethod("Run", Array.Empty<Type>())?.CreateDelegate<Action>() ?? throw new InvalidOperationException();
+            var runMethod = dispatcherType.GetMethod("Run", Array.Empty<Type>())?.CreateDelegate(typeof(Action)) as Action ?? throw new InvalidOperationException();
             var currentDispatcherProperty = dispatcherType.GetProperty("CurrentDispatcher") ?? throw new InvalidOperationException();
 
             var tcs = new TaskCompletionSource<object>();

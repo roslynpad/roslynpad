@@ -29,7 +29,7 @@ namespace RoslynPad.Build
     /// <summary>
     /// An <see cref="IExecutionHost"/> implementation that compiles to disk and executes in separated processes.
     /// </summary>
-    internal class ExecutionHost : IExecutionHost
+    internal partial class ExecutionHost : IExecutionHost
     {
         private static readonly JsonSerializerOptions s_serializerOptions = new()
         {
@@ -242,7 +242,7 @@ namespace RoslynPad.Build
 
         private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel)
         {
-            Platform platform = Platform.Architecture == Architecture.X86
+            var platform = Platform.Architecture == Architecture.X86
                 ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
                 : Microsoft.CodeAnalysis.Platform.AnyCpu;
 
@@ -678,7 +678,7 @@ namespace RoslynPad.Build
 
                     RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
                 }
-                catch (Exception ex) when (!(ex is OperationCanceledException))
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     _logger.LogWarning(ex, "Restore error");
                     RestoreCompleted?.Invoke(RestoreResult.FromErrors(new[] { ex.Message }));
@@ -695,7 +695,7 @@ namespace RoslynPad.Build
                         return null;
                     }
 
-                    var match = Regex.Match(line, @"[A-Z0-9]{9,}");
+                    var match = DeviceCodeMatcher().Match(line);
                     return match.Success ? match.Value : null;
                 }
 
@@ -755,7 +755,7 @@ namespace RoslynPad.Build
                     {
                         for (var i = 0; i < errors.Length; i++)
                         {
-                            var match = Regex.Match(errors[i], @"(?<=\: error )[^\]]+");
+                            var match = ErrorMatcher().Match(errors[i]);
                             if (match.Success)
                             {
                                 errors[i] = match.Value;
@@ -808,5 +808,10 @@ namespace RoslynPad.Build
 
             public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) => throw new NotSupportedException();
         }
+
+        [GeneratedRegex("[A-Z0-9]{9,}")]
+        private static partial Regex DeviceCodeMatcher();
+        [GeneratedRegex("(?<=\\: error )[^\\]]+")]
+        private static partial Regex ErrorMatcher();
     }
 }

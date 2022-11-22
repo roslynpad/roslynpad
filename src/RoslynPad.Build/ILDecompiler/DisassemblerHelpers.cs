@@ -335,7 +335,7 @@ namespace RoslynPad.Build.ILDecompiler
                         }
                         else
                         {
-                            if (!type.IsDefinition && type.Scope != null && !(type is TypeSpecification))
+                            if (!type.IsDefinition && type.Scope != null && type is not TypeSpecification)
                                 writer.Write("[{0}]", Escape(type.Scope.Name));
                             writer.WriteReference(Escape(type.FullName), type);
                         }

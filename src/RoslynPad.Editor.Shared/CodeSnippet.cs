@@ -112,8 +112,7 @@ namespace RoslynPad.Editor
                 var name = val.Substring(0, equalsSign);
                 if (replaceableElements.TryGetValue(name, out srte))
                 {
-                    if (srte.Text == null)
-                        srte.Text = val.Substring(equalsSign + 1);
+                    srte.Text ??= val.Substring(equalsSign + 1);
                     return srte;
                 }
             }
@@ -170,7 +169,7 @@ namespace RoslynPad.Editor
             {
                 // If a ${Selection} exists, use the ${Caret} only if there is text selected
                 // (if no text is selected, ${Selection} will set the caret
-                return snippetText.IndexOf("${Selection}", StringComparison.OrdinalIgnoreCase) >= 0
+                return snippetText.Contains("${Selection}", StringComparison.OrdinalIgnoreCase)
                     ? new SnippetCaretElement(setCaretOnlyIfTextIsSelected: true)
                     : new SnippetCaretElement();
             }

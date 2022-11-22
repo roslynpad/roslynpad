@@ -2,8 +2,6 @@
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 
-#pragma warning disable RS1024
-
 namespace RoslynPad.Roslyn
 {
     public class DummyScriptMetadataResolver : MetadataReferenceResolver

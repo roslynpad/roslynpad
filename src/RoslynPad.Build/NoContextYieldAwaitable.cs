@@ -2,8 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#pragma warning disable CA1822
-
 namespace RoslynPad.Build
 {
     /// <summary>

@@ -94,10 +94,9 @@ namespace RoslynPad
                 var collectionView = new ListCollectionView(list)
                 {
                     IsLiveFiltering = true,
-                    LiveFilteringProperties = { FilterProperty }
+                    LiveFilteringProperties = { FilterProperty },
+                    Filter = Filter
                 };
-
-                collectionView.Filter = Filter;
 
                 return collectionView;
             }

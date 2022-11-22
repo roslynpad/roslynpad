@@ -10,7 +10,7 @@ using RoslynPad.Build;
 namespace RoslynPad.UI
 {
     [DebuggerDisplay("{Name}:{IsFolder}")]
-    public class DocumentViewModel : NotificationObject
+    public partial class DocumentViewModel : NotificationObject
     {
         internal const string AutoSaveSuffix = ".autosave";
         
@@ -34,8 +34,7 @@ namespace RoslynPad.UI
             IsAutoSave = nameWithoutExtension.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
             if (IsAutoSave)
             {
-                Name = nameWithoutExtension.Substring(0, nameWithoutExtension.Length - AutoSaveSuffix.Length) +
-                    System.IO.Path.GetExtension(Name);
+                Name = string.Concat(nameWithoutExtension.AsSpan(0, nameWithoutExtension.Length - AutoSaveSuffix.Length), System.IO.Path.GetExtension(Name));
             }
 
             IsSearchMatch = true;
@@ -193,7 +192,7 @@ namespace RoslynPad.UI
         }
 
         private string OrderByName =>
-            _orderByName ??= Regex.Replace(Name, "[0-9]+", m => m.Value.PadLeft(100, '0'));
+            _orderByName ??= NumberRegex().Replace(Name, m => m.Value.PadLeft(100, '0'));
 
         internal void AddChild(DocumentViewModel documentViewModel)
         {
@@ -212,5 +211,8 @@ namespace RoslynPad.UI
 
             Children.Insert(insertIndex, documentViewModel);
         }
+
+        [GeneratedRegex("[0-9]+")]
+        private static partial Regex NumberRegex();
     }
 }

@@ -299,8 +299,7 @@ namespace RoslynPad.Build.ILDecompiler
                 return IsAnonymousType(git) || git.GenericArguments.Any(t => t.ContainsAnonymousType());
             }
 
-            var typeSpec = type as TypeSpecification;
-            return typeSpec != null && typeSpec.ElementType.ContainsAnonymousType();
+            return type is TypeSpecification typeSpec && typeSpec.ElementType.ContainsAnonymousType();
         }
 
         public static string? GetDefaultMemberName(this TypeDefinition type)
