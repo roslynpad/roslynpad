@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(LtsTargetFramework)</TargetFramework>
-    <InternalsAssemblyNames>Microsoft.CodeAnalysis.CSharp;Microsoft.CodeAnalysis.Features;Microsoft.CodeAnalysis.CSharp.Features;Microsoft.CodeAnalysis.Scripting;Microsoft.CodeAnalysis.CSharp.Scripting;Microsoft.CodeAnalysis.Workspaces;Microsoft.CodeAnalysis.CSharp.Workspaces;Microsoft.CodeAnalysis.Extensions;Microsoft.CodeAnalysis.PooledObjects;Microsoft.CodeAnalysis.LanguageServer.Protocol</InternalsAssemblyNames>
     <Description>Exposes many Roslyn editor services that are currently internal. The version of this package corresponds to the Roslyn packages.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
@@ -27,5 +26,15 @@
     <PackageReference Include="System.Composition" />
     <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Features" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Scripting" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Workspaces" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
   </ItemGroup>
 </Project>
