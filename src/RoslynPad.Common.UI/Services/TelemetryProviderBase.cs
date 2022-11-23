@@ -13,6 +13,9 @@ public abstract class TelemetryProviderBase : ITelemetryProvider
 
     public virtual void Initialize(string version, IApplicationSettings settings)
     {
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
+
         if (!settings.Values.SendErrors ||
             (GetInstrumentationKey() is var instrumentationKey && string.IsNullOrEmpty(instrumentationKey)))
         {
@@ -27,9 +30,6 @@ public abstract class TelemetryProviderBase : ITelemetryProvider
 
         _logger = _loggerFactory.CreateLogger(nameof(RoslynPad));
         _logger.LogInformation(nameof(Initialize));
-
-        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-        TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
     }
 
     protected abstract string? GetInstrumentationKey();

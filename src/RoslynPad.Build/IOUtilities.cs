@@ -123,6 +123,21 @@ internal static class IOUtilities
         }
     }
 
+    public static void DirectoryCopy(string source, string destination, bool overwrite)
+    {
+        foreach (var file in EnumerateFiles(source))
+        {
+            var destinationFile = Path.Combine(destination, Path.GetFileName(file));
+            FileCopy(file, destinationFile, overwrite);
+        }
+
+        foreach (var directory in EnumerateDirectories(source))
+        {
+            var destinationDirectory = Path.Combine(destination, Path.GetFileName(directory));
+            DirectoryCopy(directory, destinationDirectory, overwrite);
+        }
+    }
+
     public static void FileCopy(string source, string destination, bool overwrite)
     {
         const int ERROR_ENCRYPTION_FAILED = unchecked((int)0x80071770);

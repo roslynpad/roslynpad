@@ -85,6 +85,7 @@ public class MainViewModelBase : NotificationObject
         ReportProblemCommand = commands.Create(ReportProblem);
         EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
+        ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
 
         _editorFontSize = Settings.EditorFontSize;
 
@@ -92,6 +93,11 @@ public class MainViewModelBase : NotificationObject
 
         OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
         OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
+    }
+
+    private void ClearRestoreCache()
+    {
+        IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "roslynpad", "restore"), recursive: true));
     }
 
     public async Task Initialize()
@@ -300,6 +306,8 @@ public class MainViewModelBase : NotificationObject
     public IDelegateCommand<OpenDocumentViewModel> CloseDocumentCommand { get; }
 
     public IDelegateCommand ToggleOptimizationCommand { get; }
+    
+    public IDelegateCommand ClearRestoreCacheCommand { get; }
 
     public void OpenDocument(DocumentViewModel document)
     {
@@ -403,7 +411,7 @@ public class MainViewModelBase : NotificationObject
     public async Task OnExit()
     {
         await AutoSaveOpenDocuments().ConfigureAwait(false);
-        IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "RoslynPad"), recursive: true));
+        IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "roslynpad", "build"), recursive: true));
     }
 
     public Exception? LastError

@@ -4,9 +4,11 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -42,13 +44,19 @@ internal partial class ExecutionHost : IExecutionHost
         }
     };
 
+    private static readonly ImmutableArray<string> s_binFilesToRename = ImmutableArray.Create(
+        "{0}.deps.json",
+        "{0}.runtimeconfig.json",
+        "{0}.exe.config"
+    );
+
     private static readonly ImmutableArray<byte> s_newLine = Encoding.UTF8.GetBytes(Environment.NewLine).ToImmutableArray();
 
     private readonly ExecutionHostParameters _parameters;
     private readonly IRoslynHost _roslynHost;
     private readonly ILogger _logger;
     private readonly IAnalyzerAssemblyLoader _analyzerAssemblyLoader;
-    private readonly HashSet<LibraryRef> _libraries;
+    private readonly SortedSet<LibraryRef> _libraries;
     private readonly ImmutableArray<string> _imports;
     private readonly SemaphoreSlim _lock;
     private readonly SyntaxTree _scriptInitSyntax;
@@ -56,6 +64,7 @@ internal partial class ExecutionHost : IExecutionHost
     private readonly SyntaxTree _moduleInitSyntax;
     private readonly SyntaxTree _importsSyntax;
     private readonly LibraryRef _runtimeAssemblyLibraryRef;
+    private readonly string _restorePath;
     private CancellationTokenSource? _executeCts;
     private Task? _restoreTask;
     private CancellationTokenSource? _restoreCts;
@@ -115,7 +124,7 @@ internal partial class ExecutionHost : IExecutionHost
         _roslynHost = roslynHost;
         _logger = logger;
         _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
-        _libraries = new HashSet<LibraryRef>();
+        _libraries = new();
         _imports = parameters.Imports;
 
         _lock = new SemaphoreSlim(1, 1);
@@ -129,6 +138,8 @@ internal partial class ExecutionHost : IExecutionHost
         MetadataReferences = ImmutableArray<MetadataReference>.Empty;
 
         _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "RoslynPad.Runtime.dll"));
+
+        _restorePath = Path.Combine(Path.GetTempPath(), "roslynpad", "restore");
     }
 
     public event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
@@ -177,6 +188,8 @@ internal partial class ExecutionHost : IExecutionHost
         }
     }
 
+    public void ClearRestoreCache() => Directory.Delete(_restorePath);
+
     public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
     {
         _logger.LogInformation("Start ExecuteAsync");
@@ -196,7 +209,7 @@ internal partial class ExecutionHost : IExecutionHost
 
             var script = CreateCompiler(code, optimizationLevel);
 
-            _assemblyPath = Path.Combine(BuildPath, "bin", $"{Name}.{ExecutableExtension}");
+            _assemblyPath = Path.Combine(BuildPath, $"{Name}.{ExecutableExtension}");
 
             var diagnostics = script.CompileAndSaveAssembly(_assemblyPath, cancellationToken);
             var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
@@ -642,40 +655,53 @@ internal partial class ExecutionHost : IExecutionHost
 
             try
             {
-                if (File.Exists(_parameters.NuGetConfigPath))
+                var projBuildResult = await BuildCsproj().ConfigureAwait(false);
+
+                if (!projBuildResult.markerExists)
                 {
-                    File.Copy(_parameters.NuGetConfigPath, Path.Combine(BuildPath, "nuget.config"), overwrite: true);
+                    await BuildGlobalJson(projBuildResult.hashedRestorePath).ConfigureAwait(false);
+                    File.Copy(_parameters.NuGetConfigPath, Path.Combine(projBuildResult.hashedRestorePath, "nuget.config"), overwrite: true);
+
+                    var errorsPath = Path.Combine(projBuildResult.hashedRestorePath, "errors.log");
+                    File.Delete(errorsPath);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var buildArgs = $" --interactive -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{projBuildResult.csprojPath}\"";
+                    using var restoeResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath, $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
+
+                    await foreach (var line in restoeResult.GetStandardOutputLinesAsync().ConfigureAwait(false))
+                    {
+                        var trimmed = line.Trim();
+                        var deviceCode = GetDeviceCode(trimmed);
+                        if (deviceCode != null)
+                        {
+                            RestoreMessage?.Invoke(new RestoreResultObject(trimmed, "Warning", deviceCode));
+                        }
+                    }
+
+                    if (restoeResult.ExitCode != 0)
+                    {
+                        var errors = await GetErrorsAsync(errorsPath, restoeResult, cancellationToken).ConfigureAwait(false);
+                        RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
+                        return;
+                    }
+
+                    await File.WriteAllTextAsync(projBuildResult.markerPath, string.Empty, cancellationToken).ConfigureAwait(false);
                 }
 
-                await BuildGlobalJson().ConfigureAwait(false);
-                var csprojPath = await BuildCsproj().ConfigureAwait(false);
-
-                var errorsPath = Path.Combine(BuildPath, "errors.log");
-                File.Delete(errorsPath);
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                using var result = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath, $"build -nologo -p:nugetinteractive=true -flp:errorsonly;logfile=\"{errorsPath}\" \"{csprojPath}\"", cancellationToken).ConfigureAwait(false);
-
-                await foreach (var line in result.GetStandardOutputLinesAsync())
+                IOUtilities.DirectoryCopy(Path.Combine(projBuildResult.hashedRestorePath, "bin"), BuildPath, overwrite: true);
+                foreach (var fileToRename in s_binFilesToRename)
                 {
-                    var trimmed = line.Trim();
-                    var deviceCode = GetDeviceCode(trimmed);
-                    if (deviceCode != null)
+                    var originalFile = Path.Combine(BuildPath, string.Format(fileToRename, "restore"));
+                    var newFile = Path.Combine(BuildPath, string.Format(fileToRename, Name));
+                    if (File.Exists(originalFile))
                     {
-                        RestoreMessage?.Invoke(new RestoreResultObject(trimmed, "Warning", deviceCode));
+                        File.Move(originalFile, newFile, overwrite: true);
                     }
                 }
 
-                if (result.ExitCode != 0)
-                {
-                    var errors = await GetErrorsAsync(errorsPath, result, cancellationToken).ConfigureAwait(false);
-                    RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
-                    return;
-                }
-
-                await ReadReferences(cancellationToken).ConfigureAwait(false);
-
+                await ReadReferencesAsync(projBuildResult.hashedRestorePath, cancellationToken).ConfigureAwait(false);
                 RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -699,10 +725,10 @@ internal partial class ExecutionHost : IExecutionHost
                 return match.Success ? match.Value : null;
             }
 
-            async Task ReadReferences(CancellationToken cancellationToken)
+            async Task ReadReferencesAsync(string restorePath, CancellationToken cancellationToken)
             {
-                var references = await ReadPathsFile(MSBuildHelper.ReferencesFile, cancellationToken).ConfigureAwait(false);
-                var analyzers = await ReadPathsFile(MSBuildHelper.AnalyzersFile, cancellationToken).ConfigureAwait(false);
+                var references = await ReadPathsFile(restorePath, MSBuildHelper.ReferencesFile, cancellationToken).ConfigureAwait(false);
+                var analyzers = await ReadPathsFile(restorePath, MSBuildHelper.AnalyzersFile, cancellationToken).ConfigureAwait(false);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -718,7 +744,7 @@ internal partial class ExecutionHost : IExecutionHost
             }
         }
 
-        async Task BuildGlobalJson()
+        async Task BuildGlobalJson(string restorePath)
         {
             if (Platform?.IsCore != true)
             {
@@ -726,19 +752,30 @@ internal partial class ExecutionHost : IExecutionHost
             }
 
             var globalJson = $@"{{ ""sdk"": {{ ""version"": ""{Platform.FrameworkVersion}"" }} }}";
-            await File.WriteAllTextAsync(Path.Combine(BuildPath, "global.json"), globalJson).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(restorePath, "global.json"), globalJson).ConfigureAwait(false);
         }
 
-        async Task<string> BuildCsproj()
+        async Task<(string hashedRestorePath, string csprojPath, string markerPath, bool markerExists)> BuildCsproj()
         {
             var csproj = MSBuildHelper.CreateCsproj(
                 Platform.IsCore,
                 Platform.TargetFrameworkMoniker,
                 _libraries);
-            var csprojPath = Path.Combine(BuildPath, $"{Name}.csproj");
 
-            await Task.Run(() => csproj.Save(csprojPath)).ConfigureAwait(false);
-            return csprojPath;
+            var hash = GetHash(csproj.ToString(System.Xml.Linq.SaveOptions.DisableFormatting));
+            var hashedRestorePath = Path.Combine(_restorePath, hash);
+            Directory.CreateDirectory(hashedRestorePath);
+
+            var csprojPath = Path.Combine(hashedRestorePath, $"restore.csproj");
+            var markerPath = Path.Combine(hashedRestorePath, ".restored");
+            var markerExists = File.Exists(markerPath);
+
+            if (!markerExists)
+            {
+                await Task.Run(() => csproj.Save(csprojPath)).ConfigureAwait(false);
+            }
+
+            return (hashedRestorePath, csprojPath, markerPath, markerExists);
         }
 
         static async Task<string[]> GetErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
@@ -774,12 +811,27 @@ internal partial class ExecutionHost : IExecutionHost
                 new[] { result.StandardOutput, result.StandardError! };
         }
 
-        async Task<string[]> ReadPathsFile(string file, CancellationToken cancellationToken)
+        async Task<string[]> ReadPathsFile(string restorePath, string file, CancellationToken cancellationToken)
         {
-            var path = Path.Combine(BuildPath, file);
+            var path = Path.Combine(restorePath, file);
             var paths = await File.ReadAllLinesAsync(path, cancellationToken).ConfigureAwait(false);
             return paths;
         }
+    }
+
+    private static string GetHash(string s)
+    {
+        Span<byte> hash = stackalloc byte[32];
+        SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()), hash);
+
+        Span<char> formatted = stackalloc char[64];
+
+        for (int i = 0; i < hash.Length; i++)
+        {
+            hash[i].TryFormat(formatted[(i * 2)..], out _, "x2", CultureInfo.InvariantCulture);
+        }
+
+        return new string(formatted);
     }
 
     private class BooleanConverter : JsonConverter<bool>

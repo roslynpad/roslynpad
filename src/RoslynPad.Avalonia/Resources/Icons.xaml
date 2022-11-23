@@ -575,4 +575,13 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="ClearContent">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#212121" Geometry="F1M1,13H15v1H1Zm0-2H15V10H1ZM8,8h7V7H8ZM8,5h7V4H8ZM8,1V2h7V1Z" />
+                <GeometryDrawing Brush="#c50b17" Geometry="F1M4.707,4,6.854,6.146l-.708.708L4,4.707,1.854,6.854l-.708-.708L3.293,4,1.146,1.854l.708-.708L4,3.293,6.146,1.146l.708.708Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

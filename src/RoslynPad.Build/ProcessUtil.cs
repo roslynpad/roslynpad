@@ -62,6 +62,8 @@ internal class ProcessUtil
         private async Task ReadStandardErrorAsync() =>
             StandardError = await _process.StandardError.ReadToEndAsync().ConfigureAwait(false);
 
+        public Task WaitForExitAsync() => _exitTcs.Task;
+
         public async IAsyncEnumerable<string> GetStandardOutputLinesAsync()
         {
             var output = _process.StandardOutput;

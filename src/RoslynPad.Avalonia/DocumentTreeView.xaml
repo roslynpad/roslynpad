@@ -141,6 +141,15 @@
                                Width="16"
                                Height="16" />
                 </Button>
+                <Button Grid.Column="4"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Command="{Binding ClearRestoreCacheCommand, Mode=OneTime}"
+                        ToolTip.Tip="Clear Restore Cache">
+                    <Image Source="{DynamicResource ClearContent}"
+                               Width="16"
+                               Height="16" />
+                </Button>
             </Grid>
         </Border>
     </Grid>

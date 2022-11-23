@@ -26,6 +26,7 @@ internal interface IExecutionHost
     event Action<RestoreResultObject>? RestoreMessage;
     event Action<ProgressResultObject>? ProgressChanged;
 
+    void ClearRestoreCache();
     Task UpdateReferencesAsync(bool alwaysRestore);
     Task SendInputAsync(string input);
     Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel);

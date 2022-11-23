@@ -164,6 +164,13 @@
                        Width="16"
                        Height="16" />
             </Button>
+            <Button ToolTip="Clear Restore Cache"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding ClearRestoreCacheCommand, Mode=OneTime}">
+                <Image Source="{StaticResource ClearContent}"
+                       Width="16"
+                       Height="16" />
+            </Button>
         </ToolBar>
 
     </Grid>
