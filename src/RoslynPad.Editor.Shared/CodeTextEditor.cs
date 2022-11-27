@@ -175,7 +175,7 @@ public partial class CodeTextEditor : TextEditor
             return;
         }
         var args = new ToolTipRequestEventArgs { InDocument = position.HasValue };
-        if (!position.HasValue || position.Value.Location.IsEmpty)
+        if (!position.HasValue || position.Value.Location.IsEmpty || position.Value.IsAtEndOfLine)
         {
             return;
         }
