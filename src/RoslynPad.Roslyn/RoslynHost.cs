@@ -13,6 +13,8 @@ using System.Reflection;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Roslyn.Utilities;
+using System.IO;
+using Microsoft.CodeAnalysis.Editor.CSharp;
 
 namespace RoslynPad.Roslyn;
 
@@ -37,12 +39,17 @@ public class RoslynHost : IRoslynHost
     internal static readonly ImmutableArray<Type> DefaultCompositionTypes =
         DefaultCompositionAssemblies.SelectMany(t => t.DefinedTypes).Select(t => t.AsType())
         .Concat(GetDiagnosticCompositionTypes())
+        .Concat(GetEditorFeaturesTypes())
         .ToImmutableArray();
 
     private static IEnumerable<Type> GetDiagnosticCompositionTypes() => MetadataUtil.LoadTypesByNamespaces(
         typeof(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService).Assembly,
         "Microsoft.CodeAnalysis.Diagnostics",
         "Microsoft.CodeAnalysis.CodeFixes");
+
+    private static IEnumerable<Type> GetEditorFeaturesTypes() => MetadataUtil.LoadTypesBy(
+        typeof(CSharpEditorResources).Assembly, t => t.Name.EndsWith("OptionsStorage", StringComparison.Ordinal))
+        .SelectMany(t => t.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic).Where(t => t.IsDefined(typeof(ExportLanguageServiceAttribute))));
 
     private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
     private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
@@ -54,10 +61,12 @@ public class RoslynHost : IRoslynHost
     public ImmutableArray<MetadataReference> DefaultReferences { get; }
     public ImmutableArray<string> DefaultImports { get; }
     public ImmutableArray<string> DisabledDiagnostics { get; }
+    public ImmutableArray<string> AnalyzerConfigFiles { get; }
 
     public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
         RoslynHostReferences? references = null,
-        ImmutableArray<string>? disabledDiagnostics = null)
+        ImmutableArray<string>? disabledDiagnostics = null,
+        ImmutableArray<string>? analyzerConfigFiles = null)
     {
         if (references == null) references = RoslynHostReferences.Empty;
 
@@ -85,6 +94,7 @@ public class RoslynHost : IRoslynHost
         DefaultImports = references.Imports;
 
         DisabledDiagnostics = disabledDiagnostics ?? ImmutableArray<string>.Empty;
+        AnalyzerConfigFiles = analyzerConfigFiles ?? ImmutableArray<string>.Empty;
         GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
     }
 
@@ -275,6 +285,7 @@ public class RoslynHost : IRoslynHost
     protected virtual Project CreateProject(Solution solution, DocumentCreationArgs args, CompilationOptions compilationOptions, Project? previousProject = null)
     {
         var name = args.Name ?? "New";
+        var path = Path.Combine(args.WorkingDirectory, name);
         var id = ProjectId.CreateNewId(name);
 
         var parseOptions = ParseOptions.WithKind(args.SourceCodeKind);
@@ -285,17 +296,25 @@ public class RoslynHost : IRoslynHost
             compilationOptions = compilationOptions.WithScriptClassName(name);
         }
 
+        var analyzerConfigDocuments = AnalyzerConfigFiles.Where(File.Exists).Select(file => DocumentInfo.Create(
+            DocumentId.CreateNewId(id, debugName: file),
+            name: file,
+            loader: new FileTextLoader(file, defaultEncoding: null),
+            filePath: file));
+
         solution = solution.AddProject(ProjectInfo.Create(
             id,
             VersionStamp.Create(),
             name,
             name,
             LanguageNames.CSharp,
+            filePath: path,
             isSubmission: isScript,
             parseOptions: parseOptions,
             compilationOptions: compilationOptions,
             metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences,
-            projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null));
+            projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null)
+            .WithAnalyzerConfigDocuments(analyzerConfigDocuments));
 
         var project = solution.GetProject(id)!;
 

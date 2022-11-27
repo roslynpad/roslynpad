@@ -16,7 +16,7 @@ using RoslynPad.Roslyn;
 
 namespace RoslynPad.Editor;
 
-public sealed class AvalonEditTextContainer : SourceTextContainer, IEditorCaretProvider, IDisposable
+public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
 {
     private SourceText _currentText;
     private bool _updatding;
@@ -105,17 +105,6 @@ public sealed class AvalonEditTextContainer : SourceTextContainer, IEditorCaretP
             if (editor != null)
                 editor.CaretOffset = caretOffset;
         }
-    }
-
-    int IEditorCaretProvider.CaretPosition => Editor?.CaretOffset ?? 0;
-
-    bool IEditorCaretProvider.TryMoveCaret(int position)
-    {
-        if (Editor != null)
-        {
-            Editor.CaretOffset = position;
-        }
-        return true;
     }
 
     private class AvalonEditSourceText : SourceText

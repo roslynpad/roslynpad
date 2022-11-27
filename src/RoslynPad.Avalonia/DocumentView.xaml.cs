@@ -55,9 +55,9 @@ class DocumentView : UserControl, IDisposable
 
         var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 
-        var documentId = _editor.Initialize(viewModel.MainViewModel.RoslynHost,
+        var documentId = await _editor.InitializeAsync(viewModel.MainViewModel.RoslynHost,
             new ClassificationHighlightColors(),
-            viewModel.WorkingDirectory, documentText, viewModel.SourceCodeKind);
+            viewModel.WorkingDirectory, documentText, viewModel.SourceCodeKind).ConfigureAwait(true);
 
         viewModel.Initialize(documentId, OnError,
             () => new TextSpan(_editor.SelectionStart, _editor.SelectionLength),

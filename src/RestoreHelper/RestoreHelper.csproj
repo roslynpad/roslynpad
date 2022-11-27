@@ -15,10 +15,12 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" Version="$(RoslynPrivateVersion)" GeneratePathProperty="true" IncludeAssets="none" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.EditorFeatures" Version="$(RoslynPrivateVersion)" GeneratePathProperty="true" IncludeAssets="none" PrivateAssets="all" />
   </ItemGroup>
   <Target Name="GetLibReferences" Outputs="@(Reference)">
     <ItemGroup>
       <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/netcoreapp3.1/*.dll" />
+      <Reference Include="$(PkgMicrosoft_CodeAnalysis_CSharp_EditorFeatures)/lib/netcoreapp3.1/*.dll" />
     </ItemGroup>
   </Target>
 </Project>

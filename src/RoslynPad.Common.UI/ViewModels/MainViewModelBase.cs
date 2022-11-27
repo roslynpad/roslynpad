@@ -35,6 +35,7 @@ public class MainViewModelBase : NotificationObject
     private bool _isInitialized;
     private DocumentViewModel _documentRoot;
     private DocumentWatcher _documentWatcher;
+    private readonly string _editorConfigPath;
 
     public IApplicationSettingsValues Settings { get; }
 
@@ -66,6 +67,7 @@ public class MainViewModelBase : NotificationObject
         _documentFileWatcher = documentFileWatcher;
 
         settings.LoadDefault();
+        _editorConfigPath = Path.Combine(settings.GetDefaultDocumentPath(), ".editorconfig");
         Settings = settings.Values;
 
         _telemetryProvider.Initialize(s_currentVersion.ToString(), settings);
@@ -123,7 +125,8 @@ public class MainViewModelBase : NotificationObject
     {
         RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
             RoslynHostReferences.NamespaceDefault.With(imports: new[] { "RoslynPad.Runtime" }),
-            disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097")))
+            disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097"),
+            analyzerConfigFiles: ImmutableArray.Create(_editorConfigPath)))
             .ConfigureAwait(true);
 
         OpenDocumentFromCommandLine();

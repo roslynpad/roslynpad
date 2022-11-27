@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.Options;
 
 namespace RoslynPad.Roslyn.CodeFixes;
 
@@ -13,16 +14,19 @@ namespace RoslynPad.Roslyn.CodeFixes;
 internal sealed class CodeFixService : ICodeFixService
 {
     private readonly Microsoft.CodeAnalysis.CodeFixes.ICodeFixService _inner;
+    private readonly IGlobalOptionService _globalOption;
 
     [ImportingConstructor]
-    public CodeFixService(Microsoft.CodeAnalysis.CodeFixes.ICodeFixService inner)
+    public CodeFixService(Microsoft.CodeAnalysis.CodeFixes.ICodeFixService inner, IGlobalOptionService globalOption)
     {
         _inner = inner;
+        _globalOption = globalOption;
     }
 
     public IAsyncEnumerable<CodeFixCollection> StreamFixesAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
     {
-        var result = _inner.StreamFixesAsync(document, textSpan, CodeActionRequestPriority.Normal, CodeActionOptionsProviders.GetOptionsProvider(new CodeFixContext()), isBlocking: false, _ => null, cancellationToken);
+        var options = _globalOption.GetCodeActionOptionsProvider();
+        var result = _inner.StreamFixesAsync(document, textSpan, options, isBlocking: false, cancellationToken);
         return result.Select(x => new CodeFixCollection(x));
     }
 

@@ -6,6 +6,7 @@ using RoslynPad.Roslyn.QuickInfo;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.Formatting;
 #if AVALONIA
 using Avalonia;
 using Avalonia.Interactivity;
@@ -82,7 +83,7 @@ public class RoslynCodeEditor : CodeTextEditor
         RaiseEvent(e);
     }
 
-    public DocumentId Initialize(IRoslynHost roslynHost, IClassificationHighlightColors highlightColors, string workingDirectory, string documentText, SourceCodeKind sourceCodeKind)
+    public async ValueTask<DocumentId> InitializeAsync(IRoslynHost roslynHost, IClassificationHighlightColors highlightColors, string workingDirectory, string documentText, SourceCodeKind sourceCodeKind)
     {
         _roslynHost = roslynHost ?? throw new ArgumentNullException(nameof(roslynHost));
         _classificationHighlightColors = highlightColors ?? throw new ArgumentNullException(nameof(highlightColors));
@@ -100,6 +101,13 @@ public class RoslynCodeEditor : CodeTextEditor
         _documentId = creatingDocumentArgs.DocumentId ??
             roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory, sourceCodeKind,
                 ProcessDiagnostics, avalonEditTextContainer.UpdateText));
+
+        if (roslynHost.GetDocument(_documentId) is { } document)
+        {
+            var options = await document.GetOptionsAsync().ConfigureAwait(true);
+            Options.IndentationSize = options.GetOption(FormattingOptions.IndentationSize);
+            Options.ConvertTabsToSpaces = !options.GetOption(FormattingOptions.UseTabs);
+        }
 
         AppendText(documentText);
         Document.UndoStack.ClearAll();

@@ -82,8 +82,8 @@ public partial class DocumentView : IDisposable
 
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
-        var documentId = Editor.Initialize(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
-            _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
+        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
+            _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind).ConfigureAwait(true);
 
         _viewModel.Initialize(documentId, OnError,
             () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
