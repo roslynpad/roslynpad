@@ -2,7 +2,7 @@
 
 namespace RoslynPad.Roslyn.BraceMatching;
 
-internal struct BraceCharacterAndKind
+internal readonly struct BraceCharacterAndKind
 {
     public char Character { get; }
     public int Kind { get; }

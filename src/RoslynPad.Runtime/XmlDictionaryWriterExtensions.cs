@@ -43,7 +43,7 @@ internal static class XmlDictionaryWriterExtensions
         jsonWriter.WriteEndElement();
     }
 
-    public struct ElementDisposer : IDisposable
+    public readonly struct ElementDisposer : IDisposable
     {
         private readonly XmlDictionaryWriter _writer;
 

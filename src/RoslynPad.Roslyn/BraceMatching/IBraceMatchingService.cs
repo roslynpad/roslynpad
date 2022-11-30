@@ -13,7 +13,7 @@ public interface IBraceMatchingService
     Task<BraceMatchingResult?> GetMatchingBracesAsync(Document document, int position, CancellationToken cancellationToken = default);
 }
 
-public struct BraceMatchingResult : IEquatable<BraceMatchingResult>
+public readonly struct BraceMatchingResult : IEquatable<BraceMatchingResult>
 {
     public TextSpan LeftSpan { get; }
     public TextSpan RightSpan { get; }

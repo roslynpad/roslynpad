@@ -45,7 +45,7 @@ public static class ObjectExtensions
     internal delegate void DumpDelegate(in DumpData data);
 }
 
-internal struct DumpData
+internal readonly struct DumpData
 {
     public object? Object { get; }
     public string? Header { get; }

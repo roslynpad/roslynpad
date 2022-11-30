@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Threading;
 using Microsoft.CodeAnalysis.PooledObjects;
 

@@ -85,7 +85,7 @@ internal sealed class AggregateSignatureHelpProvider : ISignatureHelpProvider
         return bestItems == null || currentTextSpan?.Start > bestItems.ApplicableSpan.Start;
     }
 
-    private struct SignatureHelpSelection
+    private readonly struct SignatureHelpSelection
     {
         public SignatureHelpSelection(SignatureHelpItem selectedItem, bool userSelected, int? selectedParameter)
         {

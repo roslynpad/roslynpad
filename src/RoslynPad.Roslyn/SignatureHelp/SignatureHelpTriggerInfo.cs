@@ -1,6 +1,6 @@
 namespace RoslynPad.Roslyn.SignatureHelp;
 
-public struct SignatureHelpTriggerInfo
+public readonly struct SignatureHelpTriggerInfo
 {
     internal Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpTriggerInfo Inner { get; }
 

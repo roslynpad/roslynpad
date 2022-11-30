@@ -12,7 +12,6 @@ using ICSharpCode.AvalonEdit.Document;
 #endif
 using Microsoft.CodeAnalysis.Text;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;
-using RoslynPad.Roslyn;
 
 namespace RoslynPad.Editor;
 
