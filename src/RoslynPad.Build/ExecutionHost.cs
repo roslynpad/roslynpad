@@ -836,27 +836,33 @@ internal partial class ExecutionHost : IExecutionHost
 
     private class BooleanConverter : JsonConverter<bool>
     {
-        public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            Utf8Parser.TryParse(reader.ValueSpan, out bool value, out _)
-                ? value : throw new FormatException();
+        public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using var span = reader.GetSpan();
+            return Utf8Parser.TryParse(span.Span, out bool value, out _) ? value : throw new FormatException();
+        }
 
         public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) => throw new NotSupportedException();
     }
 
     private class Int32Converter : JsonConverter<int>
     {
-        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            Utf8Parser.TryParse(reader.ValueSpan, out int value, out _)
-                ? value : throw new FormatException();
+        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using var span = reader.GetSpan();
+            return Utf8Parser.TryParse(span.Span, out int value, out _) ? value : throw new FormatException();
+        }
 
         public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options) => throw new NotSupportedException();
     }
 
     private class DoubleConverter : JsonConverter<double>
     {
-        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            Utf8Parser.TryParse(reader.ValueSpan, out double value, out _)
-                ? value : throw new FormatException();
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using var span = reader.GetSpan();
+            return Utf8Parser.TryParse(span.Span, out double value, out _) ? value : throw new FormatException();
+        }
 
         public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) => throw new NotSupportedException();
     }
