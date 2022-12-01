@@ -4,17 +4,13 @@
     <AssemblyName>RoslynPad</AssemblyName>
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <IsAvaloniaProject>True</IsAvaloniaProject>
   </PropertyGroup>
   <ItemGroup>
-    <AvaloniaResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.ThemeManager" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
   </ItemGroup>

@@ -17,8 +17,11 @@ public class DocumentTreeView : UserControl
     {
         AvaloniaXamlLoader.Load(this);
         var treeView = this.Find<TreeView>("Tree");
-        treeView.ItemContainerGenerator.Materialized += ItemContainerGenerator_Materialized;
-        treeView.ItemContainerGenerator.Dematerialized += ItemContainerGenerator_Dematerialized;
+        if (treeView != null)
+        {
+            treeView.ItemContainerGenerator.Materialized += ItemContainerGenerator_Materialized;
+            treeView.ItemContainerGenerator.Dematerialized += ItemContainerGenerator_Dematerialized;
+        }
     }
 
     private void ItemContainerGenerator_Materialized(object? sender, Avalonia.Controls.Generators.ItemContainerEventArgs e)

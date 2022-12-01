@@ -9,7 +9,6 @@
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Version>4.4.0</Version>
-    <AvaloniaEditVersion>0.10.12.2</AvaloniaEditVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>

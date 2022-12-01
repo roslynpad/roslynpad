@@ -1,28 +1,20 @@
-﻿using System.Composition;
+﻿using System.Collections.Generic;
+using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage.FileIO;
+using Avalonia.Platform.Storage;
 using RoslynPad.UI;
+using System;
 
 namespace RoslynPad;
 
 [Export(typeof(ISaveFileDialog))]
 internal class SaveFileDialogAdapter : ISaveFileDialog
 {
-    private readonly SaveFileDialog _dialog;
-
-    public SaveFileDialogAdapter()
-    {
-        _dialog = new SaveFileDialog();
-    }
-
-    public bool OverwritePrompt
-    {
-        get => false;
-        set { }
-    }
+    public bool OverwritePrompt { get; set; }
 
     public bool AddExtension
     {
@@ -30,41 +22,37 @@ internal class SaveFileDialogAdapter : ISaveFileDialog
         set { }
     }
 
-    public UI.FileDialogFilter Filter
-    {
-        set
-        {
-            if (_dialog.Filters == null) return;
-            
-            _dialog.Filters.Clear();
-            if (value == null)
-            {
-                return;
-            }
+    public UI.FileDialogFilter? Filter { get; set; }
 
-            _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
-            {
-                Name = value.Header,
-                Extensions = value.Extensions.ToList()
-            });
-        }
-    }
+    public string DefaultExt { get; set; } = string.Empty;
 
-    public string DefaultExt
-    {
-        get => _dialog.DefaultExtension ?? string.Empty;
-        set => _dialog.DefaultExtension = value;
-    }
-
-    public string FileName
-    {
-        get => _dialog.InitialFileName ?? string.Empty;
-        set => _dialog.InitialFileName = value;
-    }
+    public string FileName { get; set; } = string.Empty;
 
     public async Task<string?> ShowAsync()
     {
-        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
-        return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
+        var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
+
+        if (window == null)
+        {
+            return null;
+        }
+
+        var options = new FilePickerSaveOptions
+        {
+            DefaultExtension = DefaultExt,
+            ShowOverwritePrompt = OverwritePrompt,
+            SuggestedFileName = FileName,
+        };
+
+        if (Filter != null)
+        {
+            options.FileTypeChoices = new[]
+            {
+                new FilePickerFileType(Filter.Header) { Patterns = Filter.Extensions.AsReadOnly() }
+            };
+        }
+
+        var file = await window.StorageProvider.SaveFilePickerAsync(options).ConfigureAwait(false);
+        return file?.TryGetUri(out var uri) == true ? uri.LocalPath : null;
     }
 }

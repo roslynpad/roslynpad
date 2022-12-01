@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
+using Avalonia.Platform.Storage.FileIO;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -11,54 +13,40 @@ namespace RoslynPad;
 [Export(typeof(IOpenFileDialog))]
 internal class OpenFileDialogAdapter : IOpenFileDialog
 {
-    private readonly OpenFileDialog _dialog;
+    public bool AllowMultiple { get; set; }
 
-    public OpenFileDialogAdapter()
-    {
-        _dialog = new OpenFileDialog();
-    }
+    public UI.FileDialogFilter? Filter { get; set; }
 
-    public bool AllowMultiple
-    {
-        get => _dialog.AllowMultiple;
-        set => _dialog.AllowMultiple = value;
-    }
+    public string InitialDirectory { get; set; } = string.Empty;
 
-    public UI.FileDialogFilter Filter
-    {
-        set
-        {
-            if (_dialog.Filters == null) return;
-
-            _dialog.Filters.Clear();
-            if (value == null)
-            {
-                return;
-            }
-
-            _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
-            {
-                Name = value.Header,
-                Extensions = value.Extensions.ToList()
-            });
-        }
-    }
-
-    public string InitialDirectory
-    {
-        get => _dialog.Directory ?? string.Empty;
-        set => _dialog.Directory = value;
-    }
-
-    public string FileName
-    {
-        get => _dialog.InitialFileName ?? string.Empty;
-        set => _dialog.InitialFileName = value;
-    }
+    public string FileName { get; set; } = string.Empty;
 
     public async Task<string[]?> ShowAsync()
     {
-        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
-        return active == null ? null : await _dialog.ShowAsync(active).ConfigureAwait(true);
+        var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
+
+        if (window == null)
+        {
+            return null;
+        }
+
+        var options = new FilePickerOpenOptions
+        {
+            AllowMultiple = AllowMultiple,
+            SuggestedStartLocation = new BclStorageFolder(InitialDirectory),
+        };
+
+        if (Filter != null)
+        {
+            options.FileTypeFilter = new[]
+            {
+                new FilePickerFileType(Filter.Header) { Patterns = Filter.Extensions.AsReadOnly() }
+            };
+        }
+
+        var file = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
+
+        return file.Select(f => { f.TryGetUri(out var uri); return uri?.LocalPath!; })
+            .Where(f => f != null).ToArray();
     }
 }

@@ -46,5 +46,5 @@ internal class PickMembersService : IPickMembersService
 
 internal interface IPickMembersDialog : IRoslynDialog
 {
-    string Title { get; set; }
+    string? Title { get; set; }
 }

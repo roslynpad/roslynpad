@@ -81,7 +81,7 @@
                        Width="16"
                        Height="16" />
             </Button>
-            <DropDown Items="{Binding AvailablePlatforms, Mode=OneTime}"
+            <ComboBox Items="{Binding AvailablePlatforms, Mode=OneTime}"
                       SelectedItem="{Binding Platform}" />
             <Button ToolTip.Tip="Set platform as default"
                     Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}">

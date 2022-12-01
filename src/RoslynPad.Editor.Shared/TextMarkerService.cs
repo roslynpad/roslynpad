@@ -174,16 +174,12 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
                         element.TextRunProperties.SetForegroundBrush(foregroundBrush);
                     }
                     var tf = element.TextRunProperties.Typeface;
-#if AVALONIA
-                    element.TextRunProperties.Typeface = tf;
-#else
                     element.TextRunProperties.SetTypeface(new Typeface(
                         tf.FontFamily,
                         marker.FontStyle ?? tf.Style,
                         marker.FontWeight ?? tf.Weight,
                         tf.Stretch
                     ));
-#endif
                 }
             );
         }

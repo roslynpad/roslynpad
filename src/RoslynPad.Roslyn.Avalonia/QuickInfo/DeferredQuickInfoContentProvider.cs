@@ -190,7 +190,7 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
             {
                 Width = 16,
                 Height = 16,
-                Source = Glyph.ToImageSource()
+                Source = Glyph.ToImageSource()!
             };
             return image;
         }

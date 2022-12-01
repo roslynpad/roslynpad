@@ -18,8 +18,7 @@ class DocumentView : UserControl, IDisposable
     {
         AvaloniaXamlLoader.Load(this);
 
-        _editor = this.FindControl<RoslynCodeEditor>("Editor");
-
+        _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
         _editor.FontFamily = GetPlatformFontFamily();
 
         DataContextChanged += OnDataContextChanged;
