@@ -134,6 +134,7 @@ internal static class IOUtilities
         foreach (var directory in EnumerateDirectories(source))
         {
             var destinationDirectory = Path.Combine(destination, Path.GetFileName(directory));
+            Directory.CreateDirectory(destinationDirectory);
             DirectoryCopy(directory, destinationDirectory, overwrite);
         }
     }
