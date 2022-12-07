@@ -4,6 +4,7 @@
     <AssemblyName>RoslynPad</AssemblyName>
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
+    <Version>$(RoslynPadVersion)</Version>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Resources\RoslynPad.ico" />

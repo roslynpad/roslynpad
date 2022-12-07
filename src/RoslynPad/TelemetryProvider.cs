@@ -23,8 +23,4 @@ internal class TelemetryProvider : TelemetryProviderBase
         HandleException(args.Exception);
         args.Handled = true;
     }
-    
-    protected override string? GetInstrumentationKey() =>
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true)
-            .Build()["InstrumentationKey"];
 }

@@ -7,6 +7,7 @@
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
     <NoWarn>1701;1702</NoWarn>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>$(RoslynPadVersion)</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="**\*.xshd" />
@@ -20,7 +21,6 @@
   <ItemGroup>
     <PackageReference Include="AvalonLibrary" />
     <PackageReference Include="Dirkster.AvalonDock" />
-    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />

@@ -8,8 +8,8 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Avalonia" NoWarn="NU5104" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" NoWarn="NU5104" />
     <PackageReference Include="System.Reactive.Linq" />
   </ItemGroup>
   <ItemGroup>

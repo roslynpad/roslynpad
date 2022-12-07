@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/RoslynPad.Avalonia/bin/Debug/netcoreapp3.1/RoslynPad.dll",
+            "program": "${workspaceFolder}/src/RoslynPad.Avalonia/bin/Debug/net7.0/RoslynPad.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

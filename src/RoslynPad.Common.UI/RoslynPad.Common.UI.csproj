@@ -10,7 +10,6 @@
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
     <PackageReference Include="NuGet.Commands" />
     <PackageReference Include="System.Reactive.Core" />
     <PackageReference Include="Microsoft.Extensions.Logging" />

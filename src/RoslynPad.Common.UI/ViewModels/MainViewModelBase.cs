@@ -19,8 +19,7 @@ namespace RoslynPad.UI;
 
 public class MainViewModelBase : NotificationObject
 {
-    private static readonly Version s_currentVersion = new(17, 0);
-    private static readonly string s_currentVersionVariant = "";
+    private static readonly Version s_currentVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version();
 
     private readonly IServiceProvider _serviceProvider;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -196,12 +195,7 @@ public class MainViewModelBase : NotificationObject
             var currentVersion = s_currentVersion.Minor <= 0 && s_currentVersion.Build <= 0
                 ? s_currentVersion.Major.ToString()
                 : s_currentVersion.ToString();
-            var title = "RoslynPad " + currentVersion;
-            if (!string.IsNullOrEmpty(s_currentVersionVariant))
-            {
-                title += "-" + s_currentVersionVariant;
-            }
-            return title;
+            return "RoslynPad " + currentVersion;
         }
     }
 

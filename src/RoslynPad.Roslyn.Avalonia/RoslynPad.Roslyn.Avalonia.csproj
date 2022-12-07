@@ -9,7 +9,7 @@
     <AvaloniaResource Include="**\*.png" Exclude="obj\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia" NoWarn="NU5104" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />

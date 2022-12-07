@@ -18,7 +18,6 @@
     <PackageVersion Include="Avalonia.ThemeManager" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvalonLibrary" Version="3.0.0" />
-    <PackageVersion Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.0.0-beta.5" />
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.70.3" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />

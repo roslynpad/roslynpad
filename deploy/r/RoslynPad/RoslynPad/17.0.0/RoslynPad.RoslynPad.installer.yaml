@@ -1,0 +1,13 @@
+# Created with YamlCreate.ps1 v2.2.1 $debug=NVS0.CRLF.7-3-0.Win32NT
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.2.0.schema.json
+
+PackageIdentifier: RoslynPad.RoslynPad
+PackageVersion: 17.0.0
+InstallerLocale: en-US
+InstallerType: portable
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/17/RoslynPad.zip
+  InstallerSha256: F05AB0A63E39509AF05B5636A0FB2A35E1B257A328E89F4106CECA5176C911C1
+ManifestType: installer
+ManifestVersion: 1.2.0
