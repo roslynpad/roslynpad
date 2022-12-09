@@ -45,6 +45,8 @@ public partial class CodeTextEditor : TextEditor
 
     public CodeTextEditor()
     {
+        ShowLineNumbers = true;
+
         Options = new TextEditorOptions
         {
             ConvertTabsToSpaces = true,

@@ -2,7 +2,6 @@
 using Avalonia.Controls;
 using Avalonia.Styling;
 using AvaloniaEdit;
-using AvaloniaEdit.Editing;
 using System;
 
 namespace RoslynPad.Editor;
@@ -13,10 +12,6 @@ public partial class CodeTextEditor : IStyleable
 
     partial void Initialize()
     {
-        var lineMargin = new LineNumberMargin { Margin = new Thickness(0, 0, 10, 0) };
-        lineMargin[~TextBlock.ForegroundProperty] = this[~LineNumbersForegroundProperty];
-        TextArea.LeftMargins.Insert(0, lineMargin);
-
         PointerHover += OnMouseHover;
         PointerHoverStopped += OnMouseHoverStopped;
     }

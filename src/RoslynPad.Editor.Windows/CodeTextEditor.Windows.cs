@@ -10,8 +10,6 @@ partial class CodeTextEditor
 
     partial void Initialize()
     {
-        ShowLineNumbers = true;
-
         MouseHover += OnMouseHover;
         MouseHoverStopped += OnMouseHoverStopped;
 

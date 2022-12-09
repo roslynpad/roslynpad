@@ -214,7 +214,13 @@ public class RoslynHost : IRoslynHost
 
     private DocumentId AddDocument(RoslynWorkspace workspace, DocumentCreationArgs args, Document? previousDocument = null)
     {
-        var solution = workspace.CurrentSolution.AddAnalyzerReferences(GetSolutionAnalyzerReferences());
+        var solution = workspace.CurrentSolution;
+
+        if (previousDocument == null)
+        { 
+            solution = solution.AddAnalyzerReferences(GetSolutionAnalyzerReferences());
+        }
+
         var project = CreateProject(solution, args,
             CreateCompilationOptions(args, previousDocument == null), previousDocument?.Project);
         var document = CreateDocument(project, args);
