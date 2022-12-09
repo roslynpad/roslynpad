@@ -1,14 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-    <NoWarn>1701;1702</NoWarn>
-    <Nullable>disable</Nullable>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RoslynPad.Editor.Windows" VersionOverride="1.2.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" VersionOverride="3.6.0" />
+    <PackageReference Include="RoslynPad.Editor.Windows" VersionOverride="4.4.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" VersionOverride="4.4.0" />
   </ItemGroup>
 </Project>
