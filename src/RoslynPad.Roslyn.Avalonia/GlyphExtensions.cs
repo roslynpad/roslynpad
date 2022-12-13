@@ -8,13 +8,13 @@ public static class GlyphExtensions
 {
     public static IGlyphService GlyphService { get; set; } = new DefaultGlyphService();
 
-    public static DrawingImage? ToImageSource(this Glyph glyph) => GlyphService.GetGlyphImage(glyph);
+    public static DrawingImage? ToImageSource(this Glyph glyph) => GlyphService.GetGlyphImage(glyph) as DrawingImage;
 
     private class DefaultGlyphService : IGlyphService
     {
         private readonly Glyphs _glyphs = new();
 
-        public DrawingImage? GetGlyphImage(Glyph glyph)
+        public object? GetGlyphImage(Glyph glyph)
         {
             if (_glyphs.TryGetValue(glyph.ToString(), out var glyphImage) && glyphImage is Drawing drawing)
             {
