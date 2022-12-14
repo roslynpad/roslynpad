@@ -6,19 +6,14 @@ namespace RoslynPad.Roslyn;
 
 public static class GlyphExtensions
 {
-    private static readonly GlyphService _service = new();
+    public static IGlyphService GlyphService { get; set; } = new DefaultGlyphService();
 
-    public static ImageSource? ToImageSource(this Glyph glyph) => _service.GetGlyphImage(glyph);
+    public static ImageSource? ToImageSource(this Glyph glyph) => GlyphService.GetGlyphImage(glyph) as ImageSource;
 
-    private class GlyphService
+    private class DefaultGlyphService : IGlyphService
     {
-        private readonly Glyphs _glyphs;
+        private readonly Glyphs _glyphs = new();
 
-        public GlyphService()
-        {
-            _glyphs = new Glyphs();
-        }
-
-        public ImageSource? GetGlyphImage(Glyph glyph) => _glyphs[glyph] as ImageSource;
+        public object? GetGlyphImage(Glyph glyph) => _glyphs[glyph] as ImageSource;
     }
 }
