@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(LtsTargetFramework)-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
     <RootNamespace>RoslynPad.Roslyn</RootNamespace>
     <Description>Provides platform-specific (WPF) implementations for UI elements required by the RoslynPad.Roslyn package.</Description>
     <IsPackable>true</IsPackable>

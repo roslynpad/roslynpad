@@ -29,6 +29,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotnetVersion)" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.9.112" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />

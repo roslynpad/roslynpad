@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(LtsTargetFramework)-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
     <Description>Provides a Roslyn-based code editor using AvalonEdit (WPF platform) with completion, diagnostics, and quick actions</Description>
     <IsPackable>true</IsPackable>
