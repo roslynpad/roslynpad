@@ -3,7 +3,7 @@
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
     <DefaultTargetFramework>net7.0</DefaultTargetFramework>
     <LtsTargetFramework>net6.0</LtsTargetFramework>
-    <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) or '$(MSBuildProjectName)' == 'RoslynPad' ">true</UseWPF>
+    <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) ">true</UseWPF>
     <TargetFramework Condition=" '$(UseWPF)' == 'true' ">$(LtsTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <Features>strict</Features>
@@ -19,6 +19,7 @@
     <RepositoryUrl>https://github.com/roslynpad/roslynpad</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>Roslyn;RoslynPad</PackageTags>
+    <PackageIcon>RoslynPad.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -27,7 +28,10 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition=" $(MSBuildProjectName.Contains('RoslynPad')) ">
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\src\RoslynPad\Resources\RoslynPad.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
