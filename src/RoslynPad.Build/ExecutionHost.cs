@@ -695,6 +695,7 @@ internal partial class ExecutionHost : IExecutionHost
                 if (projBuildResult.markerPath is not null)
                 {
                     IOUtilities.DirectoryCopy(Path.Combine(projBuildResult.restorePath, "bin"), BuildPath, overwrite: true);
+                    await File.WriteAllTextAsync(Path.Combine(BuildPath, Path.GetFileName(projBuildResult.restorePath)), string.Empty, cancellationToken).ConfigureAwait(false);
 
                     foreach (var fileToRename in s_binFilesToRename)
                     {
@@ -774,7 +775,7 @@ internal partial class ExecutionHost : IExecutionHost
 
             if (UseCache)
             {
-                var hash = GetHash(csproj.ToString(System.Xml.Linq.SaveOptions.DisableFormatting));
+                var hash = GetHash(csproj.ToString(System.Xml.Linq.SaveOptions.DisableFormatting), Platform.Description);
                 var hashedRestorePath = Path.Combine(_restorePath, hash);
                 Directory.CreateDirectory(hashedRestorePath);
 
@@ -856,19 +857,14 @@ internal partial class ExecutionHost : IExecutionHost
         }
     }
 
-    private static string GetHash(string s)
+    private static string GetHash(string a, string b)
     {
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()), hash);
-
-        Span<char> formatted = stackalloc char[64];
-
-        for (int i = 0; i < hash.Length; i++)
-        {
-            hash[i].TryFormat(formatted[(i * 2)..], out _, "x2", CultureInfo.InvariantCulture);
-        }
-
-        return new string(formatted);
+        Span<byte> hashBuffer = stackalloc byte[32];
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData(MemoryMarshal.AsBytes(a.AsSpan()));
+        hash.AppendData(MemoryMarshal.AsBytes(b.AsSpan()));
+        hash.TryGetHashAndReset(hashBuffer, out _);
+        return Convert.ToHexString(hashBuffer);
     }
 
     private class BooleanConverter : JsonConverter<bool>

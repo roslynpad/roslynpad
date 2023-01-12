@@ -10,6 +10,8 @@ public class ExecutionPlatform
     internal NuGetVersion? FrameworkVersion { get; }
     internal Architecture Architecture { get; }
     internal bool IsCore { get; }
+    internal string Description { get; }
+
     internal bool IsFramework => !IsCore;
 
     internal ExecutionPlatform(string name, string targetFrameworkMoniker, NuGetVersion? frameworkVersion, Architecture architecture, bool isCore)
@@ -19,7 +21,8 @@ public class ExecutionPlatform
         FrameworkVersion = frameworkVersion;
         Architecture = architecture;
         IsCore = isCore;
+        Description = $"{Name} {FrameworkVersion}";
     }
 
-    public override string ToString() => $"{Name} {FrameworkVersion}";
+    public override string ToString() => Description;
 }
