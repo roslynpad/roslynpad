@@ -24,7 +24,7 @@ RoslynPad is also available as NuGet packages which allow you to use Roslyn serv
 
 `RoslynPad.Roslyn*` package versions must correspond to Roslyn's.
 
-[Code samples](https://github.com/aelij/RoslynPad/tree/master/samples)
+[Code samples](https://github.com/aelij/RoslynPad/tree/main/samples)
 
 ## Building
 
