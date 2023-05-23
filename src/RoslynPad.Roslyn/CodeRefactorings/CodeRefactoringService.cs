@@ -33,7 +33,7 @@ internal sealed class CodeRefactoringService : ICodeRefactoringService
     {
         var options = _globalOption.GetCodeActionOptionsProvider();
         var result = await _inner.GetRefactoringsAsync(document, textSpan, CodeActionRequestPriority.Normal,
-            options, isBlocking: false, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
+            options, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
         return result.Select(x => new CodeRefactoring(x)).ToArray();
     }
 }

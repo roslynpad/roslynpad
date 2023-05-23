@@ -26,7 +26,7 @@ internal sealed class CodeFixService : ICodeFixService
     public IAsyncEnumerable<CodeFixCollection> StreamFixesAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
     {
         var options = _globalOption.GetCodeActionOptionsProvider();
-        var result = _inner.StreamFixesAsync(document, textSpan, options, isBlocking: false, cancellationToken);
+        var result = _inner.StreamFixesAsync(document, textSpan, options, cancellationToken);
         return result.Select(x => new CodeFixCollection(x));
     }
 

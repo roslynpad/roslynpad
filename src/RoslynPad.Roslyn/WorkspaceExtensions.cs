@@ -7,15 +7,9 @@ namespace RoslynPad.Roslyn;
 /// </summary>
 public static class WorkspaceExtensions
 {
-    public static void EnableDiagnostics(this Workspace workspace, DiagnosticOptions options)
+    public static void EnableDiagnostics(this Workspace workspace)
     {
-        var diagnosticProviderOptions = (DiagnosticProvider.Options)0;
-        if ((options & DiagnosticOptions.Syntax) != 0)
-            diagnosticProviderOptions |= DiagnosticProvider.Options.Syntax;
-        if ((options & DiagnosticOptions.Semantic) != 0)
-            diagnosticProviderOptions |= DiagnosticProvider.Options.Semantic;
-
-        DiagnosticProvider.Enable(workspace, diagnosticProviderOptions);
+        DiagnosticProvider.Enable(workspace);
     }
 
     public static void DisableDiagnostics(this Workspace workspace)

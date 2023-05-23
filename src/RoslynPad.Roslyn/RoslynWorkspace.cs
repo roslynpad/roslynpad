@@ -15,7 +15,7 @@ public class RoslynWorkspace : Workspace
     public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null)
         : base(hostServices, workspaceKind)
     {
-        DiagnosticProvider.Enable(this, DiagnosticProvider.Options.Semantic);
+        DiagnosticProvider.Enable(this);
 
         RoslynHost = roslynHost;
     }

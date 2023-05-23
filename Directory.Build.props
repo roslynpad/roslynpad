@@ -9,8 +9,8 @@
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <Version>4.4.0</Version>
-    <RoslynPadVersion>17.0.0</RoslynPadVersion>
+    <Version>4.7.0-1.final</Version>
+    <RoslynPadVersion>18.0.0</RoslynPadVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>

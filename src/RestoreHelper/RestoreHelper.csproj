@@ -8,6 +8,7 @@
       https://pkgs.dev.azure.com/azure-public/vside/_packaging/vs-impl/nuget/v3/index.json;
       https://api.nuget.org/v3/index.json
     </RestoreSources>
+    <NoWarn>$(NoWarn);NU1603;NU1605</NoWarn>
   </PropertyGroup>
   <!--
     Unfortunately we can't use the public feed version because it doesn't contain `LanguageServer.Protocol`.
@@ -19,8 +20,8 @@
   </ItemGroup>
   <Target Name="GetLibReferences" Outputs="@(Reference)">
     <ItemGroup>
-      <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/netcoreapp3.1/*.dll" />
-      <Reference Include="$(PkgMicrosoft_CodeAnalysis_CSharp_EditorFeatures)/lib/netcoreapp3.1/*.dll" />
+      <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/net6.0/*.dll" />
+      <Reference Include="$(PkgMicrosoft_CodeAnalysis_CSharp_EditorFeatures)/lib/net6.0/*.dll" />
     </ItemGroup>
   </Target>
 </Project>

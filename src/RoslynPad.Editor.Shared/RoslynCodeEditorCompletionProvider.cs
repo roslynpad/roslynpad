@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -95,12 +96,11 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
             if (data != null && data.ItemsList.Any())
             {
                 useHardSelection = data.SuggestionModeItem == null;
-                var helper = CompletionHelper.GetHelper(document, completionService);
                 var text = await document.GetTextAsync().ConfigureAwait(false);
                 var textSpanToText = new Dictionary<TextSpan, string>();
 
                 completionData = data.ItemsList
-                    .Where(item => MatchesFilterText(helper, item, text, textSpanToText))
+                    .Where(item => MatchesFilterText(completionService, document, item, text, textSpanToText))
                     .Select(item => new RoslynCompletionData(document, item, triggerChar, _snippetService.SnippetManager))
                         .ToArray<ICompletionDataEx>();
             }
@@ -113,11 +113,11 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
         return new CompletionResult(completionData, overloadProvider, useHardSelection);
     }
 
-    private static bool MatchesFilterText(CompletionHelper helper, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)
+    private static bool MatchesFilterText(CompletionService completionService, Document document, CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)
     {
         var filterText = GetFilterText(item, text, textSpanToText);
         if (string.IsNullOrEmpty(filterText)) return true;
-        return helper.MatchesFilterText(item, filterText);
+        return completionService.FilterItems(document, ImmutableArray.Create(item), filterText).Length > 0;
     }
 
     private static string GetFilterText(CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)

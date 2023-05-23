@@ -4,10 +4,9 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetVersion>7.0.1</DotNetVersion>
     <DotNetExtensionsVersion>7.0.0</DotNetExtensionsVersion>
-    <RoslynVersion>4.4.0</RoslynVersion>
-    <RoslynPrivateVersion>4.4.0-6.22561.11</RoslynPrivateVersion>
+    <RoslynVersion>4.7.0-1.final</RoslynVersion>
+    <RoslynPrivateVersion>4.7.0-1.23226.11</RoslynPrivateVersion>
     <AvaloniaVersion>11.0.0-preview4</AvaloniaVersion>
     <RxVersion>5.0.0</RxVersion>
     <NuGetVersion>6.4.0</NuGetVersion>
