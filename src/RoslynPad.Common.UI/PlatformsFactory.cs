@@ -76,7 +76,7 @@ internal class PlatformsFactory : IPlatformsFactory
         }
         else
         {
-            dotnetPaths = new[] { "/usr/share/dotnet", "/usr/local/share/dotnet", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet") };
+            dotnetPaths = new[] { "/usr/lib64/dotnet", "/usr/share/dotnet", "/usr/local/share/dotnet", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet") };
             dotnetExe = "dotnet";
         }
 
