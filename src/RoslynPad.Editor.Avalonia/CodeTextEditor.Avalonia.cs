@@ -1,14 +1,13 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Styling;
 using AvaloniaEdit;
 using System;
 
 namespace RoslynPad.Editor;
 
-public partial class CodeTextEditor : IStyleable
+public partial class CodeTextEditor
 {
-    Type IStyleable.StyleKey => typeof(TextEditor);
+    protected override Type StyleKeyOverride => typeof(TextEditor);
 
     partial void Initialize()
     {

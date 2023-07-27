@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using Avalonia.Platform.Storage.FileIO;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -33,7 +32,7 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
         var options = new FilePickerOpenOptions
         {
             AllowMultiple = AllowMultiple,
-            SuggestedStartLocation = new BclStorageFolder(InitialDirectory),
+            SuggestedStartLocation = await window.StorageProvider.TryGetFolderFromPathAsync(InitialDirectory).ConfigureAwait(false),
         };
 
         if (Filter != null)
@@ -46,7 +45,6 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
 
         var file = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
 
-        return file.Select(f => { f.TryGetUri(out var uri); return uri?.LocalPath!; })
-            .Where(f => f != null).ToArray();
+        return file.Select(f => f.Path.ToString()).ToArray();
     }
 }

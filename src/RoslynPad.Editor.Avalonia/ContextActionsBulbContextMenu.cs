@@ -1,51 +1,32 @@
-using Avalonia.Controls;
-using Avalonia.Styling;
 using System.Linq;
+using Avalonia.Controls;
 using Avalonia.Data;
-using Avalonia.Controls.Primitives;
-using System.Reflection;
-using System;
+using Avalonia.Styling;
 
 namespace RoslynPad.Editor;
 
-internal class ContextActionsBulbContextMenu : ContextMenu, IStyleable
+internal class ContextActionsBulbContextMenu : MenuFlyout
 {
     private readonly ActionCommandConverter _converter;
-
-    private bool _opened;
 
     public ContextActionsBulbContextMenu(ActionCommandConverter converter)
     {
         _converter = converter;
-        Styles.Add(CreateItemContainerStyle());
+        Placement = PlacementMode.Right;
     }
 
-    Type IStyleable.StyleKey => typeof(ContextMenu);
-
-    private Style CreateItemContainerStyle()
+    private Style CreateItemContainerStyle() => new(s => s.OfType<MenuItem>())
     {
-        var style = new Style(s => s.OfType<MenuItem>());
-        style.Setters.Add(new Setter(MenuItem.CommandProperty,
-            new Binding { Converter = _converter }));
-        return style;
-    }
-
-    public new void Open(Control control)
-    {
-        base.Open(control);
-
-        // workaroud for Avalonia's lack of placement option
-        if (!_opened)
+        Setters =
         {
-            _opened = true;
-
-            if (typeof(ContextMenu).GetField("_popup", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(this) is Popup popup)
-            {
-                popup.PlacementMode = PlacementMode.Right;
-            }
-
-            base.Close();
-            base.Open(control);
+            new Setter(MenuItem.CommandProperty, new Binding { Converter = _converter })
         }
+    };
+
+    protected override Control CreatePresenter()
+    {
+        var presenter = base.CreatePresenter();
+        presenter.Styles.Add(CreateItemContainerStyle());
+        return presenter;
     }
 }

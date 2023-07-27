@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
@@ -10,13 +9,13 @@ using RoslynPad.UI;
 
 namespace RoslynPad;
 
-class DocumentView : UserControl, IDisposable
+partial class DocumentView : UserControl, IDisposable
 {
     private readonly RoslynCodeEditor _editor;
 
     public DocumentView()
     {
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
 
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
         _editor.FontFamily = GetPlatformFontFamily();

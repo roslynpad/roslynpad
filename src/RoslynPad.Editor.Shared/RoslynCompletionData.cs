@@ -9,7 +9,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using Avalonia.Media;
 using CommonTextEventArgs = Avalonia.Input.TextInputEventArgs;
-using CommonImage = Avalonia.Media.Imaging.IBitmap;
+using CommonImage = Avalonia.Media.IImage;
 #else
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -83,11 +83,15 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
     private bool CompleteSnippet(TextArea textArea, ISegment completionSegment, EventArgs e)
     {
         char? completionChar = null;
-        var txea = e as CommonTextEventArgs;
-        if (txea != null && txea.Text?.Length > 0)
-            completionChar = txea.Text[0];
+        var textArgs = e as CommonTextEventArgs;
+        if (textArgs != null && textArgs.Text?.Length > 0)
+        {
+            completionChar = textArgs.Text[0];
+        }
         else if (e is KeyEventArgs kea && kea.Key == Key.Tab)
+        {
             completionChar = '\t';
+        }
 
         if (completionChar == '\t')
         {
@@ -100,9 +104,9 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
                     textArea.Document.Remove(completionSegment.Offset, completionSegment.Length);
                     editorSnippet.Insert(textArea);
                 }
-                if (txea != null)
+                if (textArgs != null)
                 {
-                    txea.Handled = true;
+                    textArgs.Handled = true;
                 }
 
                 return true;

@@ -24,7 +24,7 @@ public class AppDispatcher : IAppDispatcher
 
     private Task InternalInvoke(Action action, AppDispatcherPriority priority, CancellationToken cancellationToken)
     {
-        return Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority));
+        return Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority), cancellationToken).GetTask();
     }
 
     private DispatcherPriority ConvertPriority(AppDispatcherPriority priority)

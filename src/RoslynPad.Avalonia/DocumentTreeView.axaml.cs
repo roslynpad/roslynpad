@@ -1,50 +1,26 @@
 ﻿using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using RoslynPad.UI;
+using Avalonia.VisualTree;
+using System.Linq;
 
 namespace RoslynPad;
 
-public class DocumentTreeView : UserControl
+public partial class DocumentTreeView : UserControl
 {
-    private MainViewModel _viewModel;
+    private MainViewModel? _viewModel;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public DocumentTreeView()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
         var treeView = this.Find<TreeView>("Tree");
         if (treeView != null)
         {
-            treeView.ItemContainerGenerator.Materialized += ItemContainerGenerator_Materialized;
-            treeView.ItemContainerGenerator.Dematerialized += ItemContainerGenerator_Dematerialized;
-        }
-    }
-
-    private void ItemContainerGenerator_Materialized(object? sender, Avalonia.Controls.Generators.ItemContainerEventArgs e)
-    {
-        foreach (var item in e.Containers)
-        {
-            if (item.ContainerControl is TreeViewItem treeViewItem)
-            {
-                treeViewItem.DoubleTapped += OnDocumentClick;
-                treeViewItem.KeyDown += OnDocumentKeyDown;
-            }
-        }
-    }
-
-    private void ItemContainerGenerator_Dematerialized(object? sender, Avalonia.Controls.Generators.ItemContainerEventArgs e)
-    {
-        foreach (var item in e.Containers)
-        {
-            if (item.ContainerControl is TreeViewItem treeViewItem)
-            {
-                treeViewItem.DoubleTapped -= OnDocumentClick;
-                treeViewItem.KeyDown -= OnDocumentKeyDown;
-            }
+            treeView.DoubleTapped += OnDocumentClick;
+            treeView.KeyDown += OnDocumentKeyDown;
         }
     }
 
@@ -52,7 +28,6 @@ public class DocumentTreeView : UserControl
     {
         _viewModel = DataContext as MainViewModel ?? throw new InvalidOperationException("DataContext is null");
     }
-
 
     private void OnDocumentClick(object? sender, RoutedEventArgs e)
     {
@@ -69,9 +44,13 @@ public class DocumentTreeView : UserControl
 
     private void OpenDocument(object? source)
     {
-        if ((source as Control)?.DataContext is DocumentViewModel documentViewModel)
+        var item = (source as Visual)?.GetSelfAndVisualAncestors()
+                .OfType<TreeViewItem>()
+                .FirstOrDefault();
+
+        if (item?.DataContext is DocumentViewModel documentViewModel)
         {
-            _viewModel.OpenDocument(documentViewModel);
+            _viewModel?.OpenDocument(documentViewModel);
         }
     }
 }

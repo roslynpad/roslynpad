@@ -1,17 +1,16 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-using RoslynPad.UI;
-using System;
+﻿using System;
 using System.Composition.Hosting;
 using System.Reflection;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RoslynPad.UI;
 
 namespace RoslynPad;
 
-class MainWindow : Window
+partial class MainWindow : Window
 {
     private readonly MainViewModelBase _viewModel;
 
@@ -35,7 +34,7 @@ class MainWindow : Window
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
 
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
     }
 
     protected override async void OnApplyTemplate(TemplateAppliedEventArgs e)

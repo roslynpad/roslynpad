@@ -8,10 +8,10 @@
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn">
     <Application.Styles>
-        <FluentTheme Mode="Light"/>
-        <StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+      <FluentTheme />
+      <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 
-        <Style Selector="cc|CompletionList">
+      <Style Selector="cc|CompletionList">
             <Setter Property="Template">
                 <ControlTemplate>
                     <cc:CompletionListBox Name="PART_ListBox">

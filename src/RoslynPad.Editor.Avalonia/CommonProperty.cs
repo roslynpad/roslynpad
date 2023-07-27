@@ -10,11 +10,13 @@ public static class CommonProperty
         Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
         where TOwner : AvaloniaObject
     {
+#pragma warning disable AVP1001 // The same AvaloniaProperty should not be registered twice
         var property = AvaloniaProperty.Register<TOwner, TValue>(name, defaultValue!,
             options.Has(PropertyOptions.Inherits),
             options.Has(PropertyOptions.BindsTwoWay)
                 ? Avalonia.Data.BindingMode.TwoWay
                 : Avalonia.Data.BindingMode.OneWay);
+#pragma warning restore AVP1001 // The same AvaloniaProperty should not be registered twice
 
         if (options.Has(PropertyOptions.AffectsRender))
         {

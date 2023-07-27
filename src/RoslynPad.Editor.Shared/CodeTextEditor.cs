@@ -68,12 +68,12 @@ public partial class CodeTextEditor : TextEditor
         }
 
         var contextMenu = new ContextMenu();
-        contextMenu.SetItems(new[]
+        contextMenu.ItemsSource = new[]
         {
             new MenuItem { Command = ApplicationCommands.Cut },
             new MenuItem { Command = ApplicationCommands.Copy },
             new MenuItem { Command = ApplicationCommands.Paste }
-        });
+        };
         ContextMenu = contextMenu;
 
         Initialize();

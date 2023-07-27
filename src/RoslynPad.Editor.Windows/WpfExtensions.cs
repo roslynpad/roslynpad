@@ -59,9 +59,6 @@ internal static class WpfExtensions
     public static void Close(this ToolTip toolTip, FrameworkElement control) => toolTip.IsOpen = false;
     public static void SetContent(this ToolTip toolTip, Control control, object content) => toolTip.Content = content;
 
-    public static void SetItems(this ItemsControl itemsControl, System.Collections.IEnumerable enumerable) => 
-        itemsControl.ItemsSource = enumerable;
-
     public static void Open(this ContextMenu contextMenu, FrameworkElement element)
     {
         contextMenu.PlacementTarget = element;

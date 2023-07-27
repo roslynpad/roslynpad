@@ -61,7 +61,7 @@
         </Border>
 
         <Grid>
-            <TabControl Items="{Binding OpenDocuments}"
+            <TabControl ItemsSource="{Binding OpenDocuments}"
                         SelectedItem="{Binding CurrentOpenDocument}">
                 <TabControl.ItemTemplate>
                     <DataTemplate>

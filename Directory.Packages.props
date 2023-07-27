@@ -5,15 +5,15 @@
   </PropertyGroup>
   <PropertyGroup>
     <DotNetExtensionsVersion>7.0.0</DotNetExtensionsVersion>
-    <RoslynVersion>4.7.0-1.final</RoslynVersion>
-    <RoslynPrivateVersion>4.7.0-1.23226.11</RoslynPrivateVersion>
-    <AvaloniaVersion>11.0.0-preview4</AvaloniaVersion>
-    <RxVersion>5.0.0</RxVersion>
-    <NuGetVersion>6.4.0</NuGetVersion>
+    <RoslynVersion>4.7.0-2.final</RoslynVersion>
+    <RoslynPrivateVersion>4.7.0-2.23280.4</RoslynPrivateVersion>
+    <AvaloniaVersion>11.0.0</AvaloniaVersion>
+    <RxVersion>6.0.0</RxVersion>
+    <NuGetVersion>6.6.1</NuGetVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AvalonEdit" Version="6.2.0.78" />
-    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.0-preview2" />
+    <PackageVersion Include="AvalonEdit" Version="6.3.0.90" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.0" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.ThemeManager" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
@@ -29,11 +29,12 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
-    <PackageVersion Include="Mono.Cecil" Version="0.11.4" />
-    <PackageVersion Include="Nerdbank.Streams" Version="2.9.112" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="17.6.11" />
+    <PackageVersion Include="Mono.Cecil" Version="0.11.5" />
+    <PackageVersion Include="Nerdbank.Streams" Version="2.10.69" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="NuGet.Commands" Version="$(NuGetVersion)" />
     <PackageVersion Include="NuGet.Versioning" Version="$(NuGetVersion)" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
@@ -42,8 +43,8 @@
     <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="7.0.0" />
     <PackageVersion Include="System.Reflection.Metadata" Version="7.0.0" />
     <PackageVersion Include="System.Composition" Version="7.0.0" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.0" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
-    <PackageVersion Include="xunit" Version="2.4.2" />
+    <PackageVersion Include="xunit" Version="2.5.0" />
   </ItemGroup>
 </Project>

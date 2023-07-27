@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using System;
 using System.Collections.Generic;
 
@@ -11,14 +12,14 @@ namespace RoslynPad.Editor;
 
 internal static class AvaloniaExtensions
 {
-    public static T? FindAncestorByType<T>(this IControl control)
-        where T : class, IControl
+    public static T? FindAncestorByType<T>(this Control control)
+        where T : Control
     {
-        IControl? result = control;
+        Control? result = control;
 
         while (result != null && !(result is T))
         {
-            result = result.Parent;
+            result = result.Parent as Control;
         }
 
         return result as T;
@@ -26,13 +27,13 @@ internal static class AvaloniaExtensions
 
     public static Window? GetWindow(this Control c) => c.FindAncestorByType<Window>();
 
-    public static Dispatcher GetDispatcher(this IControl o) => Dispatcher.UIThread;
+    public static Dispatcher GetDispatcher(this Control o) => Dispatcher.UIThread;
 
-    public static Size GetRenderSize(this IControl element) => element.Bounds.Size;
+    public static Size GetRenderSize(this Control element) => element.Bounds.Size;
 
-    public static void HookupLoadedUnloadedAction(this IControl element, Action<bool> action)
+    public static void HookupLoadedUnloadedAction(this Control element, Action<bool> action)
     {
-        if (element.IsAttachedToVisualTree)
+        if (element.IsAttachedToVisualTree())
         {
             action(true);
         }
@@ -51,7 +52,7 @@ internal static class AvaloniaExtensions
         topLevel.PositionChanged -= handler;
     }
 
-    public static IBrush AsFrozen(this IMutableBrush freezable)
+    public static IBrush AsFrozen(this IBrush freezable)
     {
         return freezable.ToImmutable();
     }
@@ -90,6 +91,5 @@ internal static class AvaloniaExtensions
 
     public static void SetContent(this ToolTip toolTip, Control control, object content) => ToolTip.SetTip(control, content);
 
-    public static void SetItems(this ItemsControl itemsControl, System.Collections.IEnumerable enumerable) =>
-        itemsControl.Items = enumerable;
+    public static void Open(this FlyoutBase flyout, Control control) => flyout.ShowAt(control);
 }

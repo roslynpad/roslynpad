@@ -20,6 +20,7 @@ public class ClassificationHighlightColors : IClassificationHighlightColors
 
     public HighlightingColor TypeBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Teal) };
     public HighlightingColor MethodBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Olive) };
+    public HighlightingColor ParameterBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkBlue) };
     public HighlightingColor CommentBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Green) };
     public HighlightingColor XmlCommentBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Gray) };
     public HighlightingColor KeywordBrush { get; protected set; } = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Blue) };
@@ -46,6 +47,8 @@ public class ClassificationHighlightColors : IClassificationHighlightColors
             [ClassificationTypeNames.ModuleName] = AsFrozen(TypeBrush),
             [ClassificationTypeNames.TypeParameterName] = AsFrozen(TypeBrush),
             [ClassificationTypeNames.MethodName] = AsFrozen(MethodBrush),
+            [ClassificationTypeNames.ExtensionMethodName] = AsFrozen(MethodBrush),
+            [ClassificationTypeNames.ParameterName] = AsFrozen(ParameterBrush),
             [ClassificationTypeNames.Comment] = AsFrozen(CommentBrush),
             [ClassificationTypeNames.StaticSymbol] = AsFrozen(StaticSymbolBrush),
             [ClassificationTypeNames.XmlDocCommentAttributeName] = AsFrozen(XmlCommentBrush),

@@ -78,7 +78,7 @@
         </Border>
 
         <TreeView Grid.Row="1"
-                  Items="{Binding DocumentRoot.Children}"
+                  ItemsSource="{Binding DocumentRoot.Children}"
                   Name="Tree">
             <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}">

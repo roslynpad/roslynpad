@@ -4,10 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage.FileIO;
 using Avalonia.Platform.Storage;
 using RoslynPad.UI;
-using System;
 
 namespace RoslynPad;
 
@@ -53,6 +51,6 @@ internal class SaveFileDialogAdapter : ISaveFileDialog
         }
 
         var file = await window.StorageProvider.SaveFilePickerAsync(options).ConfigureAwait(false);
-        return file?.TryGetUri(out var uri) == true ? uri.LocalPath : null;
+        return file?.Path.ToString();
     }
 }

@@ -11,8 +11,8 @@
     <NoWarn>$(NoWarn);NU1603;NU1605</NoWarn>
   </PropertyGroup>
   <!--
-    Unfortunately we can't use the public feed version because it doesn't contain `LanguageServer.Protocol`.
-    Must correlate its version using the Git commit ID.
+    Unfortunately we can't use the public feed version because it doesn't the following packages.
+    We must manually correlate their version using the Git commit ID.
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" Version="$(RoslynPrivateVersion)" GeneratePathProperty="true" IncludeAssets="none" PrivateAssets="all" />

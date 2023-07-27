@@ -98,14 +98,13 @@ public sealed class ContextActionsRenderer
         if (!(e.Key == Key.OemPeriod && e.HasModifiers(ModifierKeys.Control))) return;
 
         Cancel();
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) ||
-            _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
         {
             HideBulb();
             return;
         }
 
-        _contextMenu.SetItems(_actions!);
+        _contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         OpenContextMenu();
     }
@@ -113,9 +112,6 @@ public sealed class ContextActionsRenderer
     private void OpenContextMenu()
     {
         _contextMenu.Open(_bulbMargin.Marker);
-#if !AVALONIA
-        _contextMenu.Focus();
-#endif
     }
 
     private ContextActionsBulbContextMenu CreateContextMenu()
@@ -123,14 +119,21 @@ public sealed class ContextActionsRenderer
         var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
 
         // TODO: workaround to refresh menu with latest document
-        contextMenu.ContextMenuOpening += async (sender, args) =>
-        {
-            if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
+#if AVALONIA
+        contextMenu.Opening
+#else
+        contextMenu.ContextMenuOpening
+#endif
+            += async (sender, args) =>
             {
-                var popup = (ContextActionsBulbContextMenu)sender!;
-                popup.SetItems(_actions!);
-            }
-        };
+                if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
+                {
+                    if (sender is ContextActionsBulbContextMenu menu)
+                    {
+                        menu.ItemsSource = _actions;
+                    }
+                }
+            };
 
         return contextMenu;
     }
@@ -179,7 +182,9 @@ public sealed class ContextActionsRenderer
     private async void TimerMoveTick(object? sender, EventArgs e)
     {
         if (!_delayMoveTimer.IsEnabled)
+        {
             return;
+        }
 
         Cancel();
 
@@ -193,14 +198,13 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) ||
-            _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
         {
             HideBulb();
             return;
         }
 
-        _contextMenu.SetItems(_actions!);
+        _contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
     }
 
@@ -211,7 +215,10 @@ public sealed class ContextActionsRenderer
     private void StartTimer()
     {
         if (_providers.Count == 0)
+        {
             return;
+        }
+
         _delayMoveTimer.Start();
     }
 

@@ -81,7 +81,7 @@
                        Width="16"
                        Height="16" />
             </Button>
-            <ComboBox Items="{Binding AvailablePlatforms, Mode=OneTime}"
+            <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
                       SelectedItem="{Binding Platform}" />
             <Button ToolTip.Tip="Set platform as default"
                     Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}">
@@ -108,7 +108,7 @@
                   IsEnabled="{Binding NuGet.IsEnabled}">
                 <MenuItem Name="RootNuGetMenu"
                           IsSubMenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
-                          Items="{Binding NuGet.Packages}"
+                          ItemsSource="{Binding NuGet.Packages}"
                           Header="{Binding NuGet, Mode=OneTime}"
                           ToolTip.Tip="NuGet Packages">
                     <MenuItem.Styles>
@@ -205,7 +205,7 @@
                                  Grid.Row="1" />
 
         <TreeView Grid.Row="3"
-                  Items="{Binding Results}">
+                  ItemsSource="{Binding Results}">
             <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
