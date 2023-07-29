@@ -63,6 +63,7 @@ internal partial class ExecutionHost : IExecutionHost
     private readonly SyntaxTree _moduleInitSyntax;
     private readonly SyntaxTree _importsSyntax;
     private readonly LibraryRef _runtimeAssemblyLibraryRef;
+    private readonly LibraryRef _runtimeNetFxAssemblyLibraryRef;
     private readonly string _restorePath;
     private readonly object _ctsLock;
     private CancellationTokenSource? _executeCts;
@@ -141,7 +142,8 @@ internal partial class ExecutionHost : IExecutionHost
 
         MetadataReferences = ImmutableArray<MetadataReference>.Empty;
 
-        _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "RoslynPad.Runtime.dll"));
+        _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "runtimes", "net", "RoslynPad.Runtime.dll"));
+        _runtimeNetFxAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "runtimes", "netfx", "RoslynPad.Runtime.dll"));
 
         _restorePath = Path.Combine(Path.GetTempPath(), "roslynpad", "restore");
     }
@@ -532,7 +534,7 @@ internal partial class ExecutionHost : IExecutionHost
             return;
         }
 
-        var libraries = ParseReferences(syntaxRoot).Append(_runtimeAssemblyLibraryRef);
+        var libraries = ParseReferences(syntaxRoot).Append(Platform.IsDotNet ? _runtimeAssemblyLibraryRef : _runtimeNetFxAssemblyLibraryRef);
         if (UpdateLibraries(libraries))
         {
             await RestoreAsync().ConfigureAwait(false);

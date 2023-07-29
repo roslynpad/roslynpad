@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $true
 
 Remove-Item -Recurse $PSScriptRoot\..\src\*.nupkg
 

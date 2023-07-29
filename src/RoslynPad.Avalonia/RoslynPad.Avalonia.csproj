@@ -5,6 +5,7 @@
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
+    <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
@@ -18,6 +19,5 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
-    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
   </ItemGroup>
 </Project>

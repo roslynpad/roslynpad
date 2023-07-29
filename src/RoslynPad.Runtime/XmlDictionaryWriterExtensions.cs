@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !NET6_0_OR_GREATER
+using System;
 using System.Xml;
 
 namespace RoslynPad.Runtime;
@@ -52,3 +53,4 @@ internal static class XmlDictionaryWriterExtensions
         public void Dispose() => _writer.WriteEndElement();
     }
 }
+#endif

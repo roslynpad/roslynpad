@@ -13,6 +13,32 @@ public static class ObjectExtensions
         return o;
     }
 
+#if NET6_0_OR_GREATER
+    public static Span<T> Dump<T>(this Span<T> o, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
+    {
+        Dump(o.ToArray());
+        return o;
+    }
+
+    public static ReadOnlySpan<T> Dump<T>(this ReadOnlySpan<T> o, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
+    {
+        Dump(o.ToArray());
+        return o;
+    }
+
+    public static Memory<T> Dump<T>(this Memory<T> o, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
+    {
+        Dump(o.ToArray());
+        return o;
+    }
+
+    public static ReadOnlyMemory<T> Dump<T>(this ReadOnlyMemory<T> o, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
+    {
+        Dump(o.ToArray());
+        return o;
+    }
+#endif
+
     public static T DumpAs<T, TResult>(this T o, Func<T, TResult>? selector, string? header = null, int maxDepth = DumpQuotas.DefaultMaxDepth, int maxExpandedDepth = DumpQuotas.DefaultMaxExpandedDepth, int maxEnumerableLength = DumpQuotas.DefaultMaxEnumerableLength, int maxStringLength = DumpQuotas.DefaultMaxStringLength)
     {
         Dump(selector != null ? (object?)selector.Invoke(o) : null, header, maxDepth, maxExpandedDepth, maxEnumerableLength, maxStringLength);

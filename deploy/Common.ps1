@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $true
 
 function Get-DirectoryBuildProps {
   $propsFile = Join-Path $PSScriptRoot '..' '.\Directory.Build.props'

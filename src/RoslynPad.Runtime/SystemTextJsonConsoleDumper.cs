@@ -1,10 +1,9 @@
-﻿#if !NET6_0_OR_GREATER
+﻿#if NET6_0_OR_GREATER
 using System;
 using System.IO;
-using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
-using System.Xml;
 
 namespace RoslynPad.Runtime;
 
@@ -32,9 +31,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
         _lock = new object();
     }
 
-    // this assembly shouldn't have any external dependencies, so using this legacy JSON writer
-    private XmlDictionaryWriter CreateJsonWriter() =>
-        JsonReaderWriterFactory.CreateJsonWriter(_stream, Encoding.UTF8, ownsStream: false);
+    private Utf8JsonWriter CreateJsonWriter() => new(_stream);
 
     public bool SupportsRedirect => true;
 
@@ -100,11 +97,14 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
             using (var jsonWriter = CreateJsonWriter())
             {
-                using var _ = jsonWriter.WriteObject();
+                jsonWriter.WriteStartObject();
+
                 if (result.Progress != null)
                 {
-                    jsonWriter.WriteProperty("p", result.Progress.Value);
+                    jsonWriter.WriteNumber("p", result.Progress.Value);
                 }
+
+                jsonWriter.WriteEndObject();
             }
 
             WriteNewLine();
@@ -137,8 +137,9 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
             using (var jsonWriter = CreateJsonWriter())
             {
-                using var _ = jsonWriter.WriteObject();
-                jsonWriter.WriteProperty("v", message);
+                jsonWriter.WriteStartObject();
+                jsonWriter.WriteString("v", message);
+                jsonWriter.WriteEndObject();
             }
 
             WriteNewLine();
@@ -170,10 +171,17 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
             using (var jsonWriter = CreateJsonWriter())
             {
-                using var _ = jsonWriter.WriteObject();
-                jsonWriter.WriteProperty("m", result.Message);
-                jsonWriter.WriteProperty("l", result.LineNumber);
-                WriteResultObjectContent(jsonWriter, result);
+                jsonWriter.WriteStartObject();
+                try
+                {
+                    jsonWriter.WriteString("m", result.Message);
+                    jsonWriter.WriteNumber("l", result.LineNumber);
+                    WriteResultObjectContent(jsonWriter, result);
+                }
+                finally
+                {
+                    jsonWriter.WriteEndObject();
+                }
             }
 
             WriteNewLine();
@@ -188,7 +196,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
             using (var jsonWriter = CreateJsonWriter())
             {
-                WriteResultObject(jsonWriter, result, isRoot: true);
+                WriteResultObject(jsonWriter, result);
             }
 
             WriteNewLine();
@@ -197,26 +205,40 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
     private void WriteNewLine() => Write(s_newLine);
 
-    private void WriteResultObject(XmlDictionaryWriter jsonWriter, ResultObject result, bool isRoot)
+    private void WriteResultObject(Utf8JsonWriter jsonWriter, ResultObject result)
     {
-        using var _ = jsonWriter.WriteObject(name: isRoot ? "root" : "item");
-        WriteResultObjectContent(jsonWriter, result);
+        jsonWriter.WriteStartObject();
+        try
+        {
+            WriteResultObjectContent(jsonWriter, result);
+        }
+        finally
+        {
+            jsonWriter.WriteEndObject();
+        }
     }
 
-    private void WriteResultObjectContent(XmlDictionaryWriter jsonWriter, ResultObject result)
+    private void WriteResultObjectContent(Utf8JsonWriter jsonWriter, ResultObject result)
     {
-        jsonWriter.WriteProperty("t", result.Type);
-        jsonWriter.WriteProperty("h", result.Header);
-        jsonWriter.WriteProperty("v", result.Value);
-        jsonWriter.WriteProperty("x", result.IsExpanded);
+        jsonWriter.WriteString("t", result.Type);
+        jsonWriter.WriteString("h", result.Header);
+        jsonWriter.WriteString("v", result.Value);
+        jsonWriter.WriteBoolean("x", result.IsExpanded);
 
         if (result.Children != null)
         {
-            using var _ = jsonWriter.WriteArray("c");
+            jsonWriter.WriteStartArray("c");
 
-            foreach (var child in result.Children)
+            try
             {
-                WriteResultObject(jsonWriter, child, isRoot: false);
+                foreach (var child in result.Children)
+                {
+                    WriteResultObject(jsonWriter, child);
+                }
+            }
+            finally
+            {
+                jsonWriter.WriteEndArray();
             }
         }
     }

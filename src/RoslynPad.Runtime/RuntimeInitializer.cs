@@ -25,17 +25,18 @@ public static class RuntimeInitializer
 
         s_initialized = true;
 
-        var isAttachedToParent = TryAttachToParentProcess();
         DisableWer();
-        AttachConsole(isAttachedToParent);
+
+        var useJson = UseJsonOutput() || TryAttachToParentProcess();
+        AttachConsole(useJson);
     }
 
-    private static void AttachConsole(bool isAttachedToParent)
+    private static void AttachConsole(bool useJson)
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
 
-        var consoleDumper = isAttachedToParent ? (IConsoleDumper)new JsonConsoleDumper() : new DirectConsoleDumper();
+        var consoleDumper = useJson ? (IConsoleDumper)new JsonConsoleDumper() : new DirectConsoleDumper();
 
         if (consoleDumper.SupportsRedirect)
         {
@@ -53,8 +54,10 @@ public static class RuntimeInitializer
         }
 
         ObjectExtensions.Dumped += consoleDumper.Dump;
-        AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();            
+        AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();
     }
+
+    private static bool UseJsonOutput() => Environment.CommandLine.IndexOf("--json", StringComparison.OrdinalIgnoreCase) >= 0;
 
     private static bool TryAttachToParentProcess()
     {

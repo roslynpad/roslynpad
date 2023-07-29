@@ -33,15 +33,9 @@ internal class DirectConsoleDumper : IConsoleDumper
         }
     }
 
-    public void DumpException(Exception exception)
-    {
-        throw new NotSupportedException();
-    }
+    public void DumpException(Exception exception) => throw new NotSupportedException();
 
-    public TextReader CreateReader()
-    {
-        throw new NotSupportedException();
-    }
+    public TextReader CreateReader() => throw new NotSupportedException();
 
     private void DumpResultObject(ResultObject resultObject, int indent = 0)
     {
@@ -81,5 +75,6 @@ internal class DirectConsoleDumper : IConsoleDumper
     }
 
     public void DumpProgress(ProgressResultObject result)
-        => throw new NotSupportedException($"Dumping progress is not supported with {nameof(DirectConsoleDumper)}");
+    {
+    }
 }
