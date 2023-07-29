@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Composition;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -33,12 +34,13 @@ public class OpenDocumentViewModel : NotificationObject
     private readonly IServiceProvider _serviceProvider;
     private readonly IAppDispatcher _dispatcher;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly ILogger<OpenDocumentViewModel> _logger;
     private readonly IPlatformsFactory _platformsFactory;
-    private readonly IExecutionHost _executionHost;
     private readonly ObservableCollection<IResultObject> _results;
     private readonly List<RestoreResultObject> _restoreResults;
-    private readonly ExecutionHostParameters _executionHostParameters;
-
+    
+    private IExecutionHost? _executionHost;
+    private ExecutionHostParameters? _executionHostParameters;
     private CancellationTokenSource? _runCts;
     private bool _isRunning;
     private bool _isDirty;
@@ -90,21 +92,31 @@ public class OpenDocumentViewModel : NotificationObject
             {
                 _ = RunAsync();
 
-                if (_liveModeTimer == null)
+                _liveModeTimer ??= new Timer(o => _dispatcher.InvokeAsync(() =>
                 {
-                    _liveModeTimer = new Timer(o => _dispatcher.InvokeAsync(() =>
-                    {
-                        var runTask = RunAsync();
-                    }), null, Timeout.Infinite, Timeout.Infinite);
-                }
+                    _ = RunAsync();
+                }), state: null, Timeout.Infinite, Timeout.Infinite);
             }
         }
     }
 
     public SourceCodeKind SourceCodeKind
     {
-        get => _sourceCodeKind ??= Path.GetExtension(Document?.Name)?.Equals(ScriptFileExtension, StringComparison.OrdinalIgnoreCase) == true
-            ? SourceCodeKind.Script : SourceCodeKind.Regular;
+        get
+        {
+            if (_sourceCodeKind is not null)
+            {
+                return _sourceCodeKind.Value;
+            }
+
+            var isScript = Path.GetExtension(Document?.Name)?.Equals(ScriptFileExtension, StringComparison.OrdinalIgnoreCase);
+            if (isScript is null)
+            {
+                throw new InvalidOperationException("Document not initialized");
+            }
+
+            return _sourceCodeKind ??= isScript == true ? SourceCodeKind.Script : SourceCodeKind.Regular;
+        }
         set => _sourceCodeKind = value;
     }
 
@@ -114,18 +126,7 @@ public class OpenDocumentViewModel : NotificationObject
     public DocumentViewModel? Document
     {
         get => _document;
-        private set
-        {
-            if (_document != value)
-            {
-                _document = value;
-
-                if (_executionHost != null && value != null)
-                {
-                    _executionHost.Name = value.Name;
-                }
-            }
-        }
+        private set => SetProperty(ref _document, value);
     }
 
     public string ILText
@@ -142,6 +143,7 @@ public class OpenDocumentViewModel : NotificationObject
         Directory.CreateDirectory(BuildPath);
 
         _telemetryProvider = telemetryProvider;
+        _logger = logger;
         _platformsFactory = serviceProvider.GetRequiredService<IPlatformsFactory>();
         _serviceProvider = serviceProvider;
         _results = new ObservableCollection<IResultObject>();
@@ -168,16 +170,29 @@ public class OpenDocumentViewModel : NotificationObject
 
         ILText = DefaultILText;
 
+        InitializePlatforms();
+    }
+
+    [MemberNotNull(nameof(_executionHost))]
+    private void InitializeExecutionHost()
+    {
         var roslynHost = MainViewModel.RoslynHost;
 
         _executionHostParameters = new ExecutionHostParameters(
             BuildPath,
-            serviceProvider.GetRequiredService<NuGetViewModel>().ConfigPath,
+            _serviceProvider.GetRequiredService<NuGetViewModel>().ConfigPath,
             roslynHost.DefaultImports,
             roslynHost.DisabledDiagnostics,
             WorkingDirectory,
             SourceCodeKind);
-        _executionHost = new ExecutionHost(_executionHostParameters, roslynHost, logger);
+
+        _executionHost = new ExecutionHost(_executionHostParameters, roslynHost, _logger)
+        {
+            Name = Document?.Name ?? "Untitled",
+            DocumentId = DocumentId,
+            Platform = Platform.NotNull(),
+            DotNetExecutable = _platformsFactory.DotNetExecutable
+        };
 
         _executionHost.Dumped += ExecutionHostOnDump;
         _executionHost.Error += ExecutionHostOnError;
@@ -188,27 +203,30 @@ public class OpenDocumentViewModel : NotificationObject
         _executionHost.RestoreCompleted += OnRestoreCompleted;
         _executionHost.RestoreMessage += AddRestoreResult;
         _executionHost.ProgressChanged += p => ReportedProgress = p.Progress;
-
-        InitializePlatforms();
     }
 
     private void SetDefaultPlatform()
     {
-        if (Platform != null)
+        if (Platform is not null)
         {
             MainViewModel.Settings.DefaultPlatformName = Platform.ToString();
         }
     }
+
     private void InitializePlatforms()
     {
         AvailablePlatforms = _platformsFactory.GetExecutionPlatforms().ToImmutableArray();
-        _executionHost.DotNetExecutable = _platformsFactory.DotNetExecutable;
     }
 
     private void OnRestoreStarted() => IsRestoring = true;
 
     private void OnRestoreCompleted(RestoreResult restoreResult)
     {
+        if (_executionHost is null)
+        {
+            return;
+        }
+
         IsRestoring = false;
 
         lock (_results)
@@ -324,8 +342,6 @@ public class OpenDocumentViewModel : NotificationObject
         Document = document == null ? null : DocumentViewModel.FromPath(document.Path);
 
         IsDirty = document?.IsAutoSave == true;
-
-        _executionHost.Name = Document?.Name ?? "Untitled";
     }
 
     public void SendInput(string input) => _ = _executionHost?.SendInputAsync(input);
@@ -438,7 +454,6 @@ public class OpenDocumentViewModel : NotificationObject
 
             if (SetProperty(ref _platform, value))
             {
-                _executionHost.Platform = value;
                 UpdatePackages();
 
                 RunCommand.RaiseCanExecuteChanged();
@@ -596,6 +611,8 @@ public class OpenDocumentViewModel : NotificationObject
         Platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
                    AvailablePlatforms.FirstOrDefault();
 
+        InitializeExecutionHost();
+
         UpdatePackages();
 
         TerminateCommand?.Execute();
@@ -607,7 +624,6 @@ public class OpenDocumentViewModel : NotificationObject
         private set
         {
             _documentId = value;
-            _executionHost.DocumentId = value;
         }
     }
 
@@ -659,7 +675,7 @@ public class OpenDocumentViewModel : NotificationObject
         try
         {
             var code = await GetCodeAsync(cancellationToken).ConfigureAwait(true);
-            if (_executionHost != null)
+            if (_executionHost is not null && _executionHostParameters is not null)
             {
                 // Make sure the execution working directory matches the current script path
                 // which may have changed since we loaded.
@@ -707,7 +723,7 @@ public class OpenDocumentViewModel : NotificationObject
     private OptimizationLevel OptimizationLevel => MainViewModel.Settings.OptimizeCompilation ? OptimizationLevel.Release : OptimizationLevel.Debug;
 
     private void UpdatePackages(bool alwaysRestore = true) =>
-        _ = _executionHost.UpdateReferencesAsync(alwaysRestore);
+        _ = _executionHost?.UpdateReferencesAsync(alwaysRestore);
 
     private async Task<string> GetCodeAsync(CancellationToken cancellationToken)
     {

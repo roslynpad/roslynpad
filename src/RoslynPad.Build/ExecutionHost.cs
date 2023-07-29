@@ -278,7 +278,7 @@ internal partial class ExecutionHost : IExecutionHost
         var syntaxTrees = ImmutableList.Create(ParseCode(code, parseOptions));
         if (_parameters.SourceCodeKind == SourceCodeKind.Script)
         {
-            syntaxTrees = syntaxTrees.Add(_scriptInitSyntax);
+            syntaxTrees = syntaxTrees.Insert(0, _scriptInitSyntax);
         }
         else
         {

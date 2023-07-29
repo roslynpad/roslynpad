@@ -30,7 +30,7 @@ internal class ExecutionHostParameters
     public ImmutableArray<string> Imports { get; set; }
     public ImmutableArray<string> DisabledDiagnostics { get; }
     public string WorkingDirectory { get; set; }
-    public SourceCodeKind SourceCodeKind { get; }
+    public SourceCodeKind SourceCodeKind { get; set; }
     public bool CheckOverflow { get; }
     public bool AllowUnsafe { get; }
 }
