@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -12,9 +11,7 @@ using NuGet.Configuration;
 using NuGet.Credentials;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
-using NuGet.Versioning;
 using RoslynPad.Roslyn.Completion.Providers;
-using RoslynPad.Utilities;
 using IPackageSourceProvider = NuGet.Configuration.IPackageSourceProvider;
 using PackageSource = NuGet.Configuration.PackageSource;
 using PackageSourceProvider = NuGet.Configuration.PackageSourceProvider;
@@ -127,8 +124,6 @@ public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvide
         return packages;
     }
 
-    #region Inner Classes
-
     private class CommandLineSourceRepositoryProvider : ISourceRepositoryProvider
     {
         private readonly List<Lazy<INuGetResourceProvider>> _resourceProviders;
@@ -168,216 +163,5 @@ public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvide
         }
 
         public IPackageSourceProvider PackageSourceProvider { get; }
-    }
-
-    #endregion
-}
-
-[Export]
-public sealed class NuGetDocumentViewModel : NotificationObject
-{
-    private readonly NuGetViewModel _nuGetViewModel;
-    private readonly ITelemetryProvider _telemetryProvider;
-
-    private string _searchTerm;
-    private bool _isSearching;
-    private CancellationTokenSource _searchCts;
-    private bool _isPackagesMenuOpen;
-    private bool _prerelease;
-    private IReadOnlyList<PackageData> _packages;
-
-    public IReadOnlyList<PackageData> Packages
-    {
-        get => _packages;
-        private set => SetProperty(ref _packages, value);
-    }
-
-    [ImportingConstructor]
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
-    public NuGetDocumentViewModel(NuGetViewModel nuGetViewModel, ICommandProvider commands, ITelemetryProvider telemetryProvider)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
-    {
-        _nuGetViewModel = nuGetViewModel;
-        _telemetryProvider = telemetryProvider;
-
-        InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
-    }
-
-    private void InstallPackage(PackageData? package)
-    {
-        if (package == null)
-        {
-            return;
-        }
-
-        OnPackageInstalled(package);
-    }
-
-    public IDelegateCommand<PackageData> InstallPackageCommand { get; }
-
-    private void OnPackageInstalled(PackageData package)
-    {
-        PackageInstalled?.Invoke(package);
-    }
-
-    public event Action<PackageData> PackageInstalled;
-
-    public bool IsSearching
-    {
-        get => _isSearching;
-        private set => SetProperty(ref _isSearching, value);
-    }
-
-    public string SearchTerm
-    {
-        get => _searchTerm;
-        set
-        {
-            if (SetProperty(ref _searchTerm, value))
-            {
-                PerformSearch();
-            }
-        }
-    }
-
-    public bool IsPackagesMenuOpen
-    {
-        get => _isPackagesMenuOpen;
-        set => SetProperty(ref _isPackagesMenuOpen, value);
-    }
-
-    public bool ExactMatch { get; set; }
-
-    public bool Prerelease
-    {
-        get => _prerelease;
-        set
-        {
-            if (SetProperty(ref _prerelease, value))
-            {
-                PerformSearch();
-            }
-        }
-    }
-
-    private void PerformSearch()
-    {
-        _searchCts?.Cancel();
-        var searchCts = new CancellationTokenSource();
-        var cancellationToken = searchCts.Token;
-        _searchCts = searchCts;
-
-        _ = Task.Run(() => PerformSearch(SearchTerm, cancellationToken), cancellationToken);
-    }
-
-    private async Task PerformSearch(string searchTerm, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            Packages = Array.Empty<PackageData>();
-            IsPackagesMenuOpen = false;
-            return;
-        }
-
-        IsSearching = true;
-        try
-        {
-            try
-            {
-                var packages = await Task.Run(() =>
-                        _nuGetViewModel.GetPackagesAsync(searchTerm, includePrerelease: Prerelease,
-                            exactMatch: ExactMatch, cancellationToken: cancellationToken), cancellationToken)
-                    .ConfigureAwait(true);
-
-                Packages = packages;
-                IsPackagesMenuOpen = Packages.Count > 0;
-            }
-            catch (Exception e) when (!(e is OperationCanceledException))
-            {
-                _telemetryProvider.ReportError(e);
-            }
-        }
-        finally
-        {
-            IsSearching = false;
-        }
-    }
-}
-
-public sealed class PackageData : INuGetPackage
-{
-    private readonly IPackageSearchMetadata? _package;
-
-    private PackageData(string id, NuGetVersion version)
-    {
-        Id = id;
-        Version = version;
-    }
-
-    public string Id { get; }
-    public NuGetVersion Version { get; }
-    public ImmutableArray<PackageData> OtherVersions { get; private set; }
-
-    IEnumerable<string> INuGetPackage.Versions
-    {
-        get
-        {
-            if (!OtherVersions.IsDefaultOrEmpty)
-            {
-                var lastStable = OtherVersions.FirstOrDefault(v => !v.Version.IsPrerelease);
-                if (lastStable != null)
-                {
-                    yield return lastStable.Version.ToString();
-                }
-
-                foreach (var version in OtherVersions)
-                {
-                    if (version != lastStable)
-                    {
-                        yield return version.Version.ToString();
-                    }
-                }
-            }
-        }
-    }
-
-    public PackageData(IPackageSearchMetadata package)
-    {
-        _package = package;
-        Id = package.Identity.Id;
-        Version = package.Identity.Version;
-    }
-
-    public async Task Initialize()
-    {
-        if (_package == null) return;
-        var versions = await _package.GetVersionsAsync().ConfigureAwait(false);
-        OtherVersions = versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version).ToImmutableArray();
-    }
-}
-
-internal static class SourceRepositoryExtensions
-{
-    public static async Task<IPackageSearchMetadata[]> SearchAsync(this SourceRepository sourceRepository, string searchText, SearchFilter searchFilter, int pageSize, CancellationToken cancellationToken)
-    {
-        var searchResource = await sourceRepository.GetResourceAsync<PackageSearchResource>(cancellationToken).ConfigureAwait(false);
-
-        if (searchResource != null)
-        {
-            var searchResults = await searchResource.SearchAsync(
-                searchText,
-                searchFilter,
-                0,
-                pageSize,
-                NullLogger.Instance,
-                cancellationToken).ConfigureAwait(false);
-
-            if (searchResults != null)
-            {
-                return searchResults.ToArray();
-            }
-        }
-
-        return Array.Empty<IPackageSearchMetadata>();
     }
 }

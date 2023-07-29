@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +26,7 @@ public class MainViewModelBase : NotificationObject
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ICommandProvider _commands;
     private readonly DocumentFileWatcher _documentFileWatcher;
+    private readonly string _editorConfigPath;
 
     private OpenDocumentViewModel? _currentOpenDocument;
     private bool _hasUpdate;
@@ -33,8 +35,8 @@ public class MainViewModelBase : NotificationObject
     private bool _isWithinSearchResults;
     private bool _isInitialized;
     private DocumentViewModel _documentRoot;
-    private DocumentWatcher _documentWatcher;
-    private readonly string _editorConfigPath;
+    private DocumentWatcher? _documentWatcher;
+    private RoslynHost? _roslynHost;
 
     public IApplicationSettingsValues Settings { get; }
 
@@ -44,7 +46,11 @@ public class MainViewModelBase : NotificationObject
         private set => SetProperty(ref _documentRoot, value);
     }
 
-    public RoslynHost RoslynHost { get; private set; }
+    public RoslynHost RoslynHost
+    {
+        get => _roslynHost.NotNull();
+        private set => _roslynHost = value;
+    }
 
     public bool IsInitialized
     {
@@ -56,9 +62,7 @@ public class MainViewModelBase : NotificationObject
         }
     }
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         _serviceProvider = serviceProvider;
         _telemetryProvider = telemetryProvider;
@@ -90,7 +94,7 @@ public class MainViewModelBase : NotificationObject
 
         _editorFontSize = Settings.EditorFontSize;
 
-        DocumentRoot = CreateDocumentRoot();
+        _documentRoot = CreateDocumentRoot();
 
         OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
         OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
@@ -245,6 +249,7 @@ public class MainViewModelBase : NotificationObject
         }
     }
 
+    [MemberNotNull(nameof(_documentWatcher))]
     private DocumentViewModel CreateDocumentRoot()
     {
         _documentWatcher?.Dispose();
@@ -370,7 +375,7 @@ public class MainViewModelBase : NotificationObject
 
         if (document.DocumentId != null)
         {
-            RoslynHost.CloseDocument(document.DocumentId);
+            RoslynHost?.CloseDocument(document.DocumentId);
         }
 
         OpenDocuments.Remove(document);
@@ -463,7 +468,7 @@ public class MainViewModelBase : NotificationObject
     }
 
 
-    public event Action<double> EditorFontSizeChanged;
+    public event Action<double>? EditorFontSizeChanged;
 
     public DocumentViewModel AddDocument(string documentName)
     {
@@ -496,8 +501,6 @@ public class MainViewModelBase : NotificationObject
     public bool CanClearSearch => IsWithinSearchResults || !string.IsNullOrEmpty(SearchText);
 
     public IDelegateCommand SearchCommand => _commands.CreateAsync(Search);
-
-    #region Search
 
     private async Task Search()
     {
@@ -666,10 +669,6 @@ public class MainViewModelBase : NotificationObject
         }
     }
 
-    #endregion
-
-    #region Document Watcher
-
     private class DocumentWatcher : IDisposable
     {
         private static readonly char[] s_pathSeparators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
@@ -757,6 +756,4 @@ public class MainViewModelBase : NotificationObject
         return document.IsFolder ||
             DocumentViewModel.RelevantFileExtensions.Contains(Path.GetExtension(document.Name));
     }
-
-    #endregion
 }
