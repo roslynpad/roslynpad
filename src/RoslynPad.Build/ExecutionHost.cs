@@ -4,7 +4,6 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -39,9 +38,8 @@ internal partial class ExecutionHost : IExecutionHost
         {
             // needed since JsonReaderWriterFactory writes those types as strings
             new BooleanConverter(),
-            new Int32Converter(),
-            new DoubleConverter(),
-        }
+        },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
     private static readonly ImmutableArray<string> s_binFilesToRename = ImmutableArray.Create(
@@ -667,9 +665,9 @@ internal partial class ExecutionHost : IExecutionHost
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var buildArgs = $" --interactive -nologo -flp:errorsonly;logfile=\"{errorsPath}\" \"{projBuildResult.csprojPath}\"";
-                    using var restoeResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath, $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
+                    using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath, $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
 
-                    await foreach (var line in restoeResult.GetStandardOutputLinesAsync().ConfigureAwait(false))
+                    await foreach (var line in restoreResult.GetStandardOutputLinesAsync().ConfigureAwait(false))
                     {
                         var trimmed = line.Trim();
                         var deviceCode = GetDeviceCode(trimmed);
@@ -679,9 +677,9 @@ internal partial class ExecutionHost : IExecutionHost
                         }
                     }
 
-                    if (restoeResult.ExitCode != 0)
+                    if (restoreResult.ExitCode != 0)
                     {
-                        var errors = await GetErrorsAsync(errorsPath, restoeResult, cancellationToken).ConfigureAwait(false);
+                        var errors = await GetErrorsAsync(errorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
                         RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
                         return;
                     }
@@ -876,28 +874,6 @@ internal partial class ExecutionHost : IExecutionHost
         }
 
         public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) => throw new NotSupportedException();
-    }
-
-    private class Int32Converter : JsonConverter<int>
-    {
-        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            using var span = reader.GetSpan();
-            return Utf8Parser.TryParse(span.Span, out int value, out _) ? value : throw new FormatException();
-        }
-
-        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options) => throw new NotSupportedException();
-    }
-
-    private class DoubleConverter : JsonConverter<double>
-    {
-        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            using var span = reader.GetSpan();
-            return Utf8Parser.TryParse(span.Span, out double value, out _) ? value : throw new FormatException();
-        }
-
-        public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) => throw new NotSupportedException();
     }
 
     [GeneratedRegex("[A-Z0-9]{9,}")]
