@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -19,13 +20,11 @@ public partial class DocumentViewModel : NotificationObject
     private bool _isExpanded;
     private bool? _isAutoSaveOnly;
     private bool _isSearchMatch;
-    private string _path;
-    private string _name;
+    private string? _path;
+    private string? _name;
     private string? _orderByName;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     private DocumentViewModel(string rootPath, bool isFolder)
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         Path = rootPath;
         IsFolder = isFolder;
@@ -48,26 +47,32 @@ public partial class DocumentViewModel : NotificationObject
 
     public string Path
     {
-        get => _path;
+        get => _path.NotNull();
+        [MemberNotNull(nameof(_path))]
         private set
         {
             var oldPath = _path;
             if (SetProperty(ref _path, value))
             {
                 Name = System.IO.Path.GetFileName(value);
-                UpdateChildPaths(oldPath);
+                if (oldPath is not null)
+                {
+                    UpdateChildPaths(oldPath, value);
+                }
             }
         }
     }
 
-    private void UpdateChildPaths(string newPath)
+    private void UpdateChildPaths(string oldPath, string newPath)
     {
         if (!IsFolder || !IsChildrenInitialized)
-            return;
-
-        foreach (var child in Children)
         {
-            child.Path = child.Path.Replace(_path, newPath);
+            return;
+        }
+
+        foreach (var child in InternalChildren)
+        {
+            child.Path = child.Path.Replace(oldPath, newPath);
         }
     }
 
@@ -139,7 +144,7 @@ public partial class DocumentViewModel : NotificationObject
 
     public string Name
     {
-        get => _name;
+        get => _name.NotNull();
         private set => SetProperty(ref _name, value);
     }
 
@@ -149,11 +154,12 @@ public partial class DocumentViewModel : NotificationObject
         _isAutoSaveOnly ??= IsAutoSave &&
             !File.Exists(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, Name));
 
+    [MemberNotNullWhen(true, nameof(InternalChildren))]
     public bool IsChildrenInitialized => InternalChildren != null;
 
-    internal DocumentCollection InternalChildren { get; private set; }
+    internal DocumentCollection? InternalChildren { get; private set; }
 
-    public ObservableCollection<DocumentViewModel> Children
+    public ObservableCollection<DocumentViewModel>? Children
     {
         get
         {
@@ -196,12 +202,18 @@ public partial class DocumentViewModel : NotificationObject
 
     internal void AddChild(DocumentViewModel documentViewModel)
     {
-        var insertIndex = Children.IndexOf(d => d.IsFolder == documentViewModel.IsFolder &&
+        var children = InternalChildren;
+        if (children is null)
+        {
+            return;
+        }
+
+        var insertIndex = children.IndexOf(d => d.IsFolder == documentViewModel.IsFolder &&
                                                 string.Compare(documentViewModel.OrderByName, d.OrderByName,
                                                     StringComparison.CurrentCulture) <= 0);
         if (insertIndex < 0)
         {
-            insertIndex = documentViewModel.IsFolder ? Children.IndexOf(c => !c.IsFolder) : Children.Count;
+            insertIndex = documentViewModel.IsFolder ? children.IndexOf(c => !c.IsFolder) : children.Count;
 
             if (insertIndex < 0)
             {
@@ -209,7 +221,7 @@ public partial class DocumentViewModel : NotificationObject
             }
         }
 
-        Children.Insert(insertIndex, documentViewModel);
+        children.Insert(insertIndex, documentViewModel);
     }
 
     [GeneratedRegex("[0-9]+")]

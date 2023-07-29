@@ -599,7 +599,13 @@ public class MainViewModelBase : NotificationObject
 
     private static IEnumerable<DocumentViewModel> GetAllDocumentsForSearch(DocumentViewModel root)
     {
-        foreach (var document in root.Children)
+        var children = root.Children;
+        if (children is null)
+        {
+            yield break;
+        }
+
+        foreach (var document in children)
         {
             if (document.IsFolder)
             {
@@ -609,7 +615,7 @@ public class MainViewModelBase : NotificationObject
                 }
 
                 // TODO: I'm lazy :)
-                document.IsSearchMatch = document.Children.Any(c => c.IsSearchMatch);
+                document.IsSearchMatch = document.Children?.Any(c => c.IsSearchMatch) == true;
             }
             else
             {
@@ -701,7 +707,7 @@ public class MainViewModelBase : NotificationObject
                 current = current.InternalChildren[part];
 
                 // the current part is not in the tree
-                if (current == null)
+                if (current is null)
                 {
                     if (data.Type != DocumentFileChangeType.Deleted)
                     {
