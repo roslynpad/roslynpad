@@ -127,6 +127,7 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
     {
         return !line.IsDeleted &&
                line.HighlightedLine.Document.Version.CompareAge(_document.Version) == 0 &&
+               line.LineNumber <= _document.LineCount &&
                _document.GetLineByNumber(line.LineNumber) is var currentLine &&
                currentLine?.Length == line.Length;
     }
@@ -185,7 +186,9 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         finally
         {
             if (!wasInHighlightingGroup)
+            {
                 EndHighlighting();
+            }
         }
     }
 
@@ -222,7 +225,7 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
         }
 
         // since we don't want to block the UI thread
-        // we'll enqueue the request and process it asynchornously
+        // we'll enqueue the request and process it asynchronously
         _subject.OnNext(new FrozenLine(line));
 
         CacheLine(line);
