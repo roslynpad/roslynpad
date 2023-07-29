@@ -23,18 +23,16 @@ public partial class DocumentView : IDisposable
 {
     private readonly SynchronizationContext? _syncContext;
     private readonly MarkerMargin _errorMargin;
-    private OpenDocumentViewModel _viewModel;
+    private OpenDocumentViewModel? _viewModel;
     private IResultObject? _contextMenuResultObject;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public DocumentView()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         InitializeComponent();
 
         _errorMargin = new MarkerMargin { Visibility = Visibility.Collapsed, MarkerImage = TryFindResource("ExceptionMarker") as ImageSource, Width = 10 };
         Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
-        Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
+        Editor.PreviewMouseWheel += EditorPreviewMouseWheel;
         Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
         Editor.TextArea.SelectionChanged += EditorSelectionChanged;
 
@@ -43,8 +41,10 @@ public partial class DocumentView : IDisposable
         DataContextChanged += OnDataContextChanged;
     }
 
+    public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
+
     private void EditorSelectionChanged(object? sender, EventArgs e) 
-        => _viewModel.SelectedText = Editor.SelectedText;
+        => ViewModel.SelectedText = Editor.SelectedText;
 
     private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
     {
@@ -52,15 +52,31 @@ public partial class DocumentView : IDisposable
         Col.Text = Editor.TextArea.Caret.Column.ToString();
     }
 
-    private void EditorOnPreviewMouseWheel(object? sender, MouseWheelEventArgs args)
+    private void EditorPreviewMouseWheel(object? sender, MouseWheelEventArgs args)
     {
         if (_viewModel == null)
         {
             return;
         }
+
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             _viewModel.MainViewModel.EditorFontSize += args.Delta > 0 ? 1 : -1;
+            args.Handled = true;
+        }
+    }
+    
+    private void ResultTreePreviewMouseWheel(object? sender, MouseWheelEventArgs args)
+    {
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            var fontSize = ResultTree.FontSize + (args.Delta > 0 ? 1 : -1);
+            if (!MainViewModelBase.IsValidFontSize(fontSize))
+            {
+                return;
+            }
+
+            ResultTree.FontSize = fontSize;
             args.Handled = true;
         }
     }
@@ -77,7 +93,7 @@ public partial class DocumentView : IDisposable
         _viewModel.EditorFocus += (o, e) => Editor.Focus();
         _viewModel.DocumentUpdated += (o, e) => Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
 
-        _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
+        _viewModel.MainViewModel.EditorFontSizeChanged += EditorFontSizeChanged;
         Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
 
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
@@ -115,12 +131,12 @@ public partial class DocumentView : IDisposable
 
         dialog.ShowInline(this);
 
-        _viewModel.SendInput(textBox.Text);
+        ViewModel.SendInput(textBox.Text);
     }
 
     private void ResultsAvailable()
     {
-        _viewModel.ResultsAvailable -= ResultsAvailable;
+        ViewModel.ResultsAvailable -= ResultsAvailable;
 
         _syncContext?.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
     }
@@ -139,7 +155,7 @@ public partial class DocumentView : IDisposable
         }
     }
 
-    private void OnEditorFontSizeChanged(double fontSize)
+    private void EditorFontSizeChanged(double fontSize)
     {
         Editor.FontSize = fontSize;
     }
@@ -178,11 +194,11 @@ public partial class DocumentView : IDisposable
     {
         if (_viewModel?.MainViewModel != null)
         {
-            _viewModel.MainViewModel.EditorFontSizeChanged -= OnEditorFontSizeChanged;
+            _viewModel.MainViewModel.EditorFontSizeChanged -= EditorFontSizeChanged;
         }
     }
 
-    private void OnTreeViewKeyDown(object? sender, KeyEventArgs e)
+    private void ResultTreeKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
         {
@@ -201,7 +217,7 @@ public partial class DocumentView : IDisposable
         }
     }
 
-    private void OnTreeViewDoubleClick(object? sender, MouseButtonEventArgs e)
+    private void ResultTreeDoubleClick(object? sender, MouseButtonEventArgs e)
     {
         TryJumpToLine(e.OriginalSource);
     }
@@ -249,7 +265,7 @@ public partial class DocumentView : IDisposable
     private void CopyAllResultsToClipboard(bool withChildren)
     {
         var builder = new StringBuilder();
-        foreach (var result in _viewModel.Results)
+        foreach (var result in ViewModel.Results)
         {
             if (withChildren)
             {
@@ -287,11 +303,11 @@ public partial class DocumentView : IDisposable
 
     private void SearchTerm_OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Down && _viewModel.NuGet.Packages?.Any() == true)
+        if (e.Key == Key.Down && ViewModel.NuGet.Packages?.Any() == true)
         {
-            if (!_viewModel.NuGet.IsPackagesMenuOpen)
+            if (!ViewModel.NuGet.IsPackagesMenuOpen)
             {
-                _viewModel.NuGet.IsPackagesMenuOpen = true;
+                ViewModel.NuGet.IsPackagesMenuOpen = true;
             }
             RootNuGetMenu.Focus();
         }

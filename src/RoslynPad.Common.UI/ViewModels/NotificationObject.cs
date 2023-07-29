@@ -21,6 +21,7 @@ public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataEr
             OnPropertyChanged(propertyName);
             return true;
         }
+
         return false;
     }
 

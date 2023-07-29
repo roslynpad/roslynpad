@@ -114,14 +114,15 @@ internal class ApplicationSettings : IApplicationSettings
     private class SerializableValues : NotificationObject, IApplicationSettingsValues
     {
         private const int LiveModeDelayMsDefault = 2000;
-        private const int EditorFontSizeDefault = 12;
+        private const int DefaultFontSize = 12;
 
         private bool _sendErrors;
         private string? _latestVersion;
         private string? _windowBounds;
         private string? _dockLayout;
         private string? _windowState;
-        private double _editorFontSize = EditorFontSizeDefault;
+        private double _editorFontSize = DefaultFontSize;
+        private double _outputFontSize = DefaultFontSize;
         private string? _documentPath;
         private bool _searchFileContents;
         private bool _searchUsingRegex;
@@ -138,7 +139,8 @@ internal class ApplicationSettings : IApplicationSettings
         {
             SendErrors = true;
             FormatDocumentOnComment = true;
-            EditorFontSize = EditorFontSizeDefault;
+            EditorFontSize = DefaultFontSize;
+            OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
         }
 
@@ -182,6 +184,12 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get => _editorFontSize;
             set => SetProperty(ref _editorFontSize, value);
+        }
+
+        public double OutputFontSize
+        {
+            get => _outputFontSize;
+            set => SetProperty(ref _outputFontSize, value);
         }
 
         public string? DocumentPath

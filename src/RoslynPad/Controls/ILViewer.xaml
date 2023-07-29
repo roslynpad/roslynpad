@@ -8,6 +8,6 @@
              d:DesignHeight="300"
              d:DesignWidth="300">
     <avalonedit:TextEditor Name="TextEditor"
-                           FontFamily="Consolas"
+                           FontFamily="Cascadia Code"
                            IsReadOnly="True" />
 </UserControl>

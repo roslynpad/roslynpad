@@ -255,7 +255,7 @@
                                      x:FieldModifier="private"
                                      ContextActionsIcon="{StaticResource Bulb}"
                                      IsBraceCompletionEnabled="{Binding MainViewModel.Settings.EnableBraceCompletion}"
-                                     FontFamily="Consolas"
+                                     FontFamily="Cascadia Code"
                                      Grid.Row="1"
                                      Grid.Column="0"
                                      Loaded="Editor_OnLoaded" />
@@ -323,9 +323,11 @@
                             </Grid>
                         </ScrollViewer>
                         <controls:TreeListView x:Name="ResultTree"
+                                               FontSize="{Binding MainViewModel.Settings.OutputFontSize, Mode=TwoWay}"
                                                ItemsSource="{Binding Results}"
-                                               KeyDown="OnTreeViewKeyDown"
-                                               MouseDoubleClick="OnTreeViewDoubleClick"
+                                               KeyDown="ResultTreeKeyDown"
+                                               MouseDoubleClick="ResultTreeDoubleClick"
+                                               PreviewMouseWheel="ResultTreePreviewMouseWheel"
                                                VirtualizingPanel.IsVirtualizing="True"
                                                VirtualizingPanel.VirtualizationMode="Recycling"
                                                BorderBrush="#cccccc"
@@ -377,7 +379,7 @@
                                     <Setter Property="IsExpanded"
                                             Value="{Binding IsExpanded, Mode=OneTime}" />
                                     <EventSetter Event="KeyDown"
-                                                 Handler="OnTreeViewKeyDown" />
+                                                 Handler="ResultTreeKeyDown" />
                                 </Style>
                             </ItemsControl.ItemContainerStyle>
                         </controls:TreeListView>

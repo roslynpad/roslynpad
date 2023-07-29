@@ -303,7 +303,7 @@ public class MainViewModelBase : NotificationObject
     public IDelegateCommand<OpenDocumentViewModel> CloseDocumentCommand { get; }
 
     public IDelegateCommand ToggleOptimizationCommand { get; }
-    
+
     public IDelegateCommand ClearRestoreCacheCommand { get; }
 
     public void OpenDocument(DocumentViewModel document)
@@ -427,7 +427,8 @@ public class MainViewModelBase : NotificationObject
 
     public bool SendTelemetry
     {
-        get => Settings.SendErrors; set
+        get => Settings.SendErrors;
+        set
         {
             Settings.SendErrors = value;
             OnPropertyChanged(nameof(SendTelemetry));
@@ -438,14 +439,20 @@ public class MainViewModelBase : NotificationObject
 
     public IDelegateCommand ReportProblemCommand { get; }
 
-    public double MinimumEditorFontSize => 8;
-    public double MaximumEditorFontSize => 72;
+    public const double MinimumFontSize = 8;
+    public const double MaximumFontSize = 72;
+
+    public static bool IsValidFontSize(double value) => value >= MinimumFontSize && value <= MaximumFontSize;
 
     public double EditorFontSize
     {
-        get => _editorFontSize; set
+        get => _editorFontSize;
+        set
         {
-            if (value < MinimumEditorFontSize || value > MaximumEditorFontSize) return;
+            if (!IsValidFontSize(value))
+            {
+                return;
+            }
 
             if (SetProperty(ref _editorFontSize, value))
             {
@@ -454,6 +461,7 @@ public class MainViewModelBase : NotificationObject
             }
         }
     }
+
 
     public event Action<double> EditorFontSizeChanged;
 
