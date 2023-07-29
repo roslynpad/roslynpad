@@ -188,7 +188,7 @@ public partial class DocumentViewModel : NotificationObject
                 .Where(file => !file.IsAutoSave));
         }
                 
-        return new DocumentCollection(directories.Concat(files.OrderBy(x => OrderByName)));
+        return new DocumentCollection(directories.Concat(files.OrderBy(file => file.OrderByName)));
     }
 
     private string OrderByName =>
