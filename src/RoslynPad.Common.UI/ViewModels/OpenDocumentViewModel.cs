@@ -454,6 +454,11 @@ public class OpenDocumentViewModel : NotificationObject
 
             if (SetProperty(ref _platform, value))
             {
+                if (_executionHost is not null)
+                {
+                    _executionHost.Platform = value;
+                }
+
                 UpdatePackages();
 
                 RunCommand.RaiseCanExecuteChanged();
@@ -606,12 +611,13 @@ public class OpenDocumentViewModel : NotificationObject
         _onError = onError;
         _getSelection = getSelection;
         DocumentId = documentId;
-        _isInitialized = true;
 
         Platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
                    AvailablePlatforms.FirstOrDefault();
 
         InitializeExecutionHost();
+
+        _isInitialized = true;
 
         UpdatePackages();
 
