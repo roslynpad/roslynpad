@@ -4,6 +4,7 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -91,10 +92,11 @@ internal partial class ExecutionHost : IExecutionHost
 
     public string DotNetExecutable
     {
-        get => !string.IsNullOrEmpty(_dotNetExecutable) ? _dotNetExecutable : throw new InvalidOperationException("Missing dotnet");
+        get => HasDotNetExecutable ? _dotNetExecutable : throw new InvalidOperationException("Missing dotnet");
         set => _dotNetExecutable = value;
     }
 
+    [MemberNotNullWhen(true, nameof(_dotNetExecutable))]
     private bool HasDotNetExecutable => !string.IsNullOrEmpty(_dotNetExecutable);
 
     public string Name
