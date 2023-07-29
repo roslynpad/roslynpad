@@ -215,7 +215,7 @@ public class OpenDocumentViewModel : NotificationObject
 
     private void InitializePlatforms()
     {
-        AvailablePlatforms = _platformsFactory.GetExecutionPlatforms().ToImmutableArray();
+        AvailablePlatforms = _platformsFactory.GetExecutionPlatforms();
     }
 
     private void OnRestoreStarted() => IsRestoring = true;

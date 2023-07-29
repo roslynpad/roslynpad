@@ -9,18 +9,18 @@ public class ExecutionPlatform
     internal string TargetFrameworkMoniker { get; }
     internal NuGetVersion? FrameworkVersion { get; }
     internal Architecture Architecture { get; }
-    internal bool IsCore { get; }
+    internal bool IsDotNet { get; }
     internal string Description { get; }
 
-    internal bool IsFramework => !IsCore;
+    internal bool IsDotNetFramework => !IsDotNet;
 
-    internal ExecutionPlatform(string name, string targetFrameworkMoniker, NuGetVersion? frameworkVersion, Architecture architecture, bool isCore)
+    internal ExecutionPlatform(string name, string targetFrameworkMoniker, NuGetVersion? frameworkVersion, Architecture architecture, bool isDotNet)
     {
         Name = name;
         TargetFrameworkMoniker = targetFrameworkMoniker;
         FrameworkVersion = frameworkVersion;
         Architecture = architecture;
-        IsCore = isCore;
+        IsDotNet = isDotNet;
         Description = $"{Name} {FrameworkVersion}";
     }
 

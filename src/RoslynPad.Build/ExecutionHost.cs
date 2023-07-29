@@ -115,7 +115,7 @@ internal partial class ExecutionHost : IExecutionHost
 
     private string BuildPath => _parameters.BuildPath;
 
-    private string ExecutableExtension => Platform.IsCore ? "dll" : "exe";
+    private string ExecutableExtension => Platform.IsDotNet ? "dll" : "exe";
 
     public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
     public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
@@ -299,7 +299,7 @@ internal partial class ExecutionHost : IExecutionHost
         }
         else
         {
-            if (Platform.IsFramework || Platform.FrameworkVersion?.Major < 5)
+            if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
             {
                 syntaxTrees = syntaxTrees.Add(_moduleInitAttributeSyntax);
             }
@@ -350,7 +350,7 @@ internal partial class ExecutionHost : IExecutionHost
 
         ProcessStartInfo GetProcessStartInfo(string assemblyPath) => new()
         {
-            FileName = Platform.IsCore ? DotNetExecutable : assemblyPath,
+            FileName = Platform.IsDotNet ? DotNetExecutable : assemblyPath,
             Arguments = $"\"{assemblyPath}\" --pid {Environment.ProcessId}",
             WorkingDirectory = _parameters.WorkingDirectory,
             CreateNoWindow = true,
@@ -769,7 +769,7 @@ internal partial class ExecutionHost : IExecutionHost
 
         async Task BuildGlobalJson(string restorePath)
         {
-            if (Platform?.IsCore != true)
+            if (Platform?.IsDotNet != true)
             {
                 return;
             }
@@ -781,7 +781,7 @@ internal partial class ExecutionHost : IExecutionHost
         async Task<(string restorePath, string csprojPath, string? markerPath, bool markerExists)> BuildCsproj()
         {
             var csproj = MSBuildHelper.CreateCsproj(
-                Platform.IsCore,
+                Platform.IsDotNet,
                 Platform.TargetFrameworkMoniker,
                 _libraries);
 

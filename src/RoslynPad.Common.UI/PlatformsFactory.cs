@@ -4,7 +4,6 @@ using RoslynPad.Build;
 using RoslynPad.UI;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Composition;
 using System.IO;
 using System.Linq;
@@ -15,33 +14,22 @@ namespace RoslynPad;
 [Export(typeof(IPlatformsFactory))]
 internal class PlatformsFactory : IPlatformsFactory
 {
+    IReadOnlyList<ExecutionPlatform>? _executionPlatforms;
     private string? _dotnetExe;
     private string? _sdkPath;
 
-    public IEnumerable<ExecutionPlatform> GetExecutionPlatforms()
+    public IReadOnlyList<ExecutionPlatform> GetExecutionPlatforms() =>
+        _executionPlatforms ??= GetNetVersions().Concat(GetNetFrameworkVersions()).ToArray().AsReadOnly();
+
+    public string DotNetExecutable => FindNetSdk().dotnetExe;
+
+    private IEnumerable<ExecutionPlatform> GetNetVersions()
     {
-        foreach (var version in GetCoreVersions())
-        {
-            yield return new ExecutionPlatform(version.name, version.tfm, version.verion, Architecture.X64, isCore: true);
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            var targetFrameworkName = GetNetFrameworkName();
-            yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, null, Architecture.X86, isCore: false);
-            yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, null, Architecture.X64, isCore: false);
-        }
-    }
-
-    public string DotNetExecutable => FindNetCore().dotnetExe;
-
-    private IReadOnlyList<(string name, string tfm, NuGetVersion verion)> GetCoreVersions()
-    {
-        var (_, sdkPath) = FindNetCore();
+        var (_, sdkPath) = FindNetSdk();
 
         if (string.IsNullOrEmpty(sdkPath))
         {
-            return ImmutableArray<(string, string, NuGetVersion)>.Empty;
+            return Array.Empty<ExecutionPlatform>();
         }
 
         var versions = new List<(string name, string tfm, NuGetVersion version)>();
@@ -57,10 +45,21 @@ internal class PlatformsFactory : IPlatformsFactory
             }
         }
 
-        return versions.OrderBy(c => c.version.IsPrerelease).ThenByDescending(c => c.version).ToImmutableArray();
+        return versions.OrderBy(c => c.version.IsPrerelease).ThenByDescending(c => c.version)
+            .Select(version => new ExecutionPlatform(version.name, version.tfm, version.version, Architecture.X64, isDotNet: true));
     }
 
-    private (string dotnetExe, string sdkPath) FindNetCore()
+    private IEnumerable<ExecutionPlatform> GetNetFrameworkVersions()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var targetFrameworkName = GetNetFrameworkName();
+            yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, null, Architecture.X86, isDotNet: false);
+            yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, null, Architecture.X64, isDotNet: false);
+        }
+    }
+
+    private (string dotnetExe, string sdkPath) FindNetSdk()
     {
         if (_dotnetExe != null && _sdkPath != null)
         {
@@ -123,23 +122,15 @@ internal class PlatformsFactory : IPlatformsFactory
         return string.Empty;
     }
 
-    private static string GetNetFrameworkTargetName(int releaseKey)
+    private static string GetNetFrameworkTargetName(int releaseKey) => releaseKey switch
     {
-        if (releaseKey >= 528040)
-            return "net48";
-        if (releaseKey >= 461808)
-            return "net472";
-        if (releaseKey >= 461308)
-            return "net471";
-        if (releaseKey >= 460798)
-            return "net47";
-        if (releaseKey >= 394802)
-            return "net462";
-        if (releaseKey >= 394254)
-            return "net461";
-        if (releaseKey >= 393295)
-            return "net46";
-
-        throw new ArgumentOutOfRangeException(nameof(releaseKey));
-    }
+        >= 528040 => "net48",
+        >= 461808 => "net472",
+        >= 461308 => "net471",
+        >= 460798 => "net47",
+        >= 394802 => "net462",
+        >= 394254 => "net461",
+        >= 393295 => "net46",
+        _ => throw new ArgumentOutOfRangeException(nameof(releaseKey))
+    };
 }

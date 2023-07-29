@@ -9,17 +9,17 @@ internal static class MSBuildHelper
     public const string ReferencesFile = "references.txt";
     public const string AnalyzersFile = "analyzers.txt";
 
-    public static XDocument CreateCsproj(bool isCore, string targetFramework, IEnumerable<LibraryRef> references) =>
+    public static XDocument CreateCsproj(bool isDotNet, string targetFramework, IEnumerable<LibraryRef> references) =>
         new(new XElement("Project",
                 ImportSdkProject("Microsoft.NET.Sdk", "Sdk.props"),
                 BuildProperties(targetFramework),
                 References(references),
-                ReferenceAssemblies(isCore),
+                ReferenceAssemblies(isDotNet),
                 ImportSdkProject("Microsoft.NET.Sdk", "Sdk.targets"),
                 CoreCompileTarget()));
 
-    private static XElement ReferenceAssemblies(bool isCore) =>
-        isCore ? new XElement("ItemGroup") : new XElement("ItemGroup",
+    private static XElement ReferenceAssemblies(bool isDotNet) =>
+        isDotNet ? new XElement("ItemGroup") : new XElement("ItemGroup",
             new XElement("PackageReference",
                 new XAttribute("Include", "Microsoft.NETFramework.ReferenceAssemblies"),
                 new XAttribute("Version", "*")));
