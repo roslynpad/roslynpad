@@ -91,11 +91,11 @@ internal partial class ExecutionHost : IExecutionHost
 
     public string DotNetExecutable
     {
-        get => _dotNetExecutable ?? throw new InvalidOperationException("Missing dotnet");
+        get => !string.IsNullOrEmpty(_dotNetExecutable) ? _dotNetExecutable : throw new InvalidOperationException("Missing dotnet");
         set => _dotNetExecutable = value;
     }
 
-    private bool HasDotNetExecutable => _dotNetExecutable != null;
+    private bool HasDotNetExecutable => !string.IsNullOrEmpty(_dotNetExecutable);
 
     public string Name
     {
@@ -194,6 +194,12 @@ internal partial class ExecutionHost : IExecutionHost
 
     public async Task ExecuteAsync(string code, bool disassemble, OptimizationLevel? optimizationLevel)
     {
+        if (!HasDotNetExecutable)
+        {
+            NoDotNetError();
+            return;
+        }
+
         _logger.LogInformation("Start ExecuteAsync");
 
         await new NoContextYieldAwaitable();
@@ -245,6 +251,15 @@ internal partial class ExecutionHost : IExecutionHost
                 InitializeBuildPath(stopProcess: false);
             }
         }
+    }
+
+    private void NoDotNetError()
+    {
+        CompilationErrors?.Invoke(new[]
+        {
+            CompilationErrorResultObject.Create("Error", errorCode: "",
+                message: "The .NET SDK is required to use RoslynPad. https://aka.ms/dotnet/download", line: 0, column: 0)
+        });
     }
 
     private void Disassemble()
@@ -640,6 +655,7 @@ internal partial class ExecutionHost : IExecutionHost
             {
                 if (!HasDotNetExecutable)
                 {
+                    NoDotNetError();
                     return;
                 }
 
