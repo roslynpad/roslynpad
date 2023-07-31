@@ -3,6 +3,7 @@
         x:Class="RoslynPad.MainWindow"
         xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+        xmlns:converters="clr-namespace:RoslynPad.ValueConverters;assembly=RoslynPad"
         xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         MinWidth="500"
@@ -10,116 +11,70 @@
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
-    <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+N"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
-        <KeyBinding Gesture="Ctrl+Shift+N"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
-        <KeyBinding Gesture="Ctrl+O"
-                    Command="{Binding OpenFileCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+W"
-                    Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+Shift+O"
-                    Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
-    </Window.KeyBindings>
-    <DockPanel>
-        <Expander DockPanel.Dock="Left"
-                  IsExpanded="False"
-                  ContentTransition="{x:Null}"
-                  ExpandDirection="Down">
-            <Expander.Header>
-                <LayoutTransformControl>
-                    <LayoutTransformControl.LayoutTransform>
-                        <RotateTransform Angle="90"/>
-                    </LayoutTransformControl.LayoutTransform>
-                    <TextBlock Text="Documents" />
-                </LayoutTransformControl>
-            </Expander.Header>
-            <local:DocumentTreeView />
-        </Expander>
-        <Border Padding="3"
-                Margin="1"
-                Background="#eebbbb"
-                DockPanel.Dock="Bottom"
-                IsVisible="{Binding HasError}">
-            <DockPanel LastChildFill="False">
-                <!--<Button Margin="3"
-                        Content="View details"
-                        DockPanel.Dock="Right"
-                        Background="Transparent"
-                        Click="ViewErrorDetails_OnClick" />
-                <Button Background="Transparent"
-                        Content=""
-                        FontFamily="Segoe UI Symbol"
-                        Command="{Binding ClearErrorCommand, Mode=OneTime}"
-                        Margin="3" />-->
-                <TextBlock VerticalAlignment="Center"
-                           Text="{Binding LastError.Message}" />
-            </DockPanel>
-        </Border>
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+N"
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
+    <KeyBinding Gesture="Ctrl+Shift+N"
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
+    <KeyBinding Gesture="Ctrl+O"
+                Command="{Binding OpenFileCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="Ctrl+W"
+                Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="Ctrl+Shift+O"
+                Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
+  </Window.KeyBindings>
+  <DockPanel>
 
-        <Grid>
-            <TabControl ItemsSource="{Binding OpenDocuments}"
-                        SelectedItem="{Binding CurrentOpenDocument}">
-                <TabControl.ItemTemplate>
-                    <DataTemplate>
-                        <DockPanel>
-                            <Button Command="{Binding RelativeSource={RelativeSource AncestorType=TabControl}, Path=DataContext.CloseDocumentCommand}"
-                                    CommandParameter="{Binding}"
-                                    FontSize="10"
-                                    Padding="2"
-                                    Margin="10 2"
-                                    DockPanel.Dock="Right"
-                                    Content="X" />
-                            <TextBlock Text="{Binding Title}" />
-                        </DockPanel>
-                    </DataTemplate>
-                </TabControl.ItemTemplate>
-                <TabControl.DataTemplates>
-                    <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
-                        <local:DocumentView />
-                    </DataTemplate>
-                </TabControl.DataTemplates>
-            </TabControl>
+    <Border Padding="3"
+              Margin="1"
+              Background="#eebbbb"
+              DockPanel.Dock="Bottom"
+              IsVisible="{Binding HasError}">
+      <DockPanel LastChildFill="False">
+        <TextBlock VerticalAlignment="Center"
+                   Text="{Binding LastError.Message}" />
+      </DockPanel>
+    </Border>
 
-            <UniformGrid HorizontalAlignment="Center"
-                         VerticalAlignment="Center"
-                         Rows="1"
-                         IsVisible="{Binding HasNoOpenDocuments}">
+    <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
+      <DockControl.Factory>
+        <Factory />
+      </DockControl.Factory>
 
-                <Button Padding="5"
-                        Margin="20 0 0 0"
-                        Background="Transparent"
-                        Command="{Binding NewDocumentCommand}"
-                        CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
-                    <StackPanel>
-                        <Image Source="{StaticResource CsFile}"
-                               Width="64"
-                               Height="64" />
-                        <TextBlock Text="New&#xA;(Ctrl+N)"
-                                       TextAlignment="Center"
-                                       HorizontalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+      <RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{Binding #MainLayout}">
 
-                <Button Padding="5"
-                        Margin="20 0 0 0"
-                        Background="Transparent"
-                        Command="{Binding NewDocumentCommand}"
-                        CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
-                    <StackPanel>
-                        <Image Source="{StaticResource CsFile}"
-                               Width="64"
-                               Height="64" />
-                        <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
-                                   TextAlignment="Center"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+        <ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Horizontal">
 
-            </UniformGrid>
-        </Grid>
-    </DockPanel>
+          <ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left">
+            <Tool x:Name="Documents" Id="Documents" Title="Documents" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+              <local:DocumentTreeView x:Name="DocumentTreeView" DataContext="{Binding #This.DataContext}" />
+            </Tool>
+          </ToolDock>
+
+          <ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter" />
+
+          <ProportionalDock x:Name="MainPane" Id="MainPane" Orientation="Vertical">
+
+            <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane">
+              <DocumentDock.DocumentTemplate>
+                <DocumentTemplate>
+                  <local:DocumentView DataContext="{Binding DataContext}" />
+                </DocumentTemplate>
+              </DocumentDock.DocumentTemplate>
+              <Document x:Name="NewDoc" Id="NewDoc" Title="Home" x:DataType="Document" CanClose="False" CanFloat="False">
+                <local:NewDocumentView DataContext="{Binding #This.DataContext}" />
+              </Document>
+            </DocumentDock>
+
+          </ProportionalDock>
+
+        </ProportionalDock>
+      </RootDock>
+
+    </DockControl>
+
+  </DockPanel>
+
 </Window>

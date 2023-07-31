@@ -14,7 +14,7 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
 {
     public bool AllowMultiple { get; set; }
 
-    public UI.FileDialogFilter? Filter { get; set; }
+    public FileDialogFilter? Filter { get; set; }
 
     public string InitialDirectory { get; set; } = string.Empty;
 
@@ -43,8 +43,8 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
             };
         }
 
-        var file = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
+        var files = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
 
-        return file.Select(f => f.Path.ToString()).ToArray();
+        return files.Select(file => file.Path.ToString()).ToArray();
     }
 }

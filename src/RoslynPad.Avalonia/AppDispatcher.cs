@@ -27,18 +27,11 @@ public class AppDispatcher : IAppDispatcher
         return Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority), cancellationToken).GetTask();
     }
 
-    private DispatcherPriority ConvertPriority(AppDispatcherPriority priority)
+    private DispatcherPriority ConvertPriority(AppDispatcherPriority priority) => priority switch
     {
-        switch (priority)
-        {
-            case AppDispatcherPriority.Normal:
-                return DispatcherPriority.Normal;
-            case AppDispatcherPriority.High:
-                return DispatcherPriority.Send;
-            case AppDispatcherPriority.Low:
-                return DispatcherPriority.Background;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(priority), priority, null);
-        }
-    }
+        AppDispatcherPriority.Normal => DispatcherPriority.Normal,
+        AppDispatcherPriority.High => DispatcherPriority.Send,
+        AppDispatcherPriority.Low => DispatcherPriority.Background,
+        _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null),
+    };
 }

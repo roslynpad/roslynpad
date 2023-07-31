@@ -1,0 +1,39 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RoslynPad.NewDocumentView"
+             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis">
+  <UniformGrid HorizontalAlignment="Center"
+               VerticalAlignment="Center">
+
+    <Button Padding="5"
+            Margin="20 0 0 0"
+            Background="Transparent"
+            Command="{Binding NewDocumentCommand}"
+            CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+      <StackPanel>
+        <Image Source="{StaticResource CsFile}"
+               Width="64"
+               Height="64" />
+        <TextBlock Text="New&#xA;(Ctrl+N)"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center" />
+      </StackPanel>
+    </Button>
+
+    <Button Padding="5"
+            Margin="20 0 0 0"
+            Background="Transparent"
+            Command="{Binding NewDocumentCommand}"
+            CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
+      <StackPanel>
+        <Image Source="{StaticResource CsFile}"
+               Width="64"
+               Height="64" />
+        <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center" />
+      </StackPanel>
+    </Button>
+
+  </UniformGrid>
+</UserControl>

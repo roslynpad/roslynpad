@@ -19,6 +19,8 @@
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvalonLibrary" Version="3.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.70.3" />
+    <PackageVersion Include="Dock.Avalonia" Version="11.0.0" />
+    <PackageVersion Include="Dock.Model.Avalonia" Version="11.0.0" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
