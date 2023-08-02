@@ -1,23 +1,17 @@
-﻿<UserControl x:Class="RoslynPad.SaveDocumentDialog"
-             x:ClassModifier="internal"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:RoslynPad"
-             mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance local:SaveDocumentDialog}"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             x:Class="RoslynPad.SaveDocumentDialog"
              MinWidth="300"
              BorderThickness="1"
              BorderBrush="Gray"
              Background="White">
     <StackPanel Margin="10">
         <TextBlock Text="Save Document"
-                   Style="{StaticResource Title}" />
+                   Classes="Title" />
         <TextBox Name="DocumentTextBox"
                  KeyDown="DocumentText_KeyDown"
-                 Text="{Binding DocumentName, UpdateSourceTrigger=PropertyChanged}"
-                 TextChanged="DocumentName_TextChanged"
+                 Text="{Binding DocumentName}"
                  IsEnabled="{Binding AllowNameEdit}"
                  MaxLength="200"
                  Margin="0,10,0,0" />
@@ -25,23 +19,19 @@
                     Orientation="Horizontal"
                     Margin="50,30,0,0">
             <Button Name="OverwriteButton"
-                    Style="{StaticResource DialogButton}"
                     BorderBrush="Red"
-                    Visibility="Collapsed"
+                    IsVisible="false"
                     Content="_Overwrite"
                     Click="Overwrite_Click"/>
             <Button IsDefault="True"
-                    Style="{StaticResource DialogButton}"
                     Name="SaveButton"
                     Content="_Save"
                     Click="Save_Click" />
             <Button Content="_Don't Save"
-                    Style="{StaticResource DialogButton}"
-                    Visibility="{Binding ShowDontSave, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    IsVisible="{Binding ShowDontSave}"
                     Name="DontSaveButton"
-                    Click="DontSave_Click" />
+                    Click="DoNotSave_Click" />
             <Button Content="_Cancel"
-                    Style="{StaticResource DialogButton}"
                     IsCancel="True"
                     Click="Cancel_Click" />
         </StackPanel>

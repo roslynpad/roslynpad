@@ -541,7 +541,7 @@ public class OpenDocumentViewModel : NotificationObject
             if (Document == null || Document.IsAutoSaveOnly)
             {
                 var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
-                dialog.ShowDontSave = promptSave;
+                dialog.ShowDoNotSave = promptSave;
                 dialog.AllowNameEdit = true;
                 dialog.FilePathFactory = name => DocumentViewModel.GetDocumentPathFromName(WorkingDirectory, name);
                 await dialog.ShowAsync().ConfigureAwait(true);
@@ -556,7 +556,7 @@ public class OpenDocumentViewModel : NotificationObject
             else if (promptSave)
             {
                 var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
-                dialog.ShowDontSave = true;
+                dialog.ShowDoNotSave = true;
                 dialog.DocumentName = Document.Name;
                 await dialog.ShowAsync().ConfigureAwait(true);
                 result = dialog.Result;

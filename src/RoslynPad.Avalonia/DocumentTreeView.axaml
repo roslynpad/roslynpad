@@ -3,7 +3,6 @@
              xmlns:roslynPad="using:RoslynPad"
              xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:ui="using:RoslynPad.UI"
-             Design.Height="300"
              x:Class="RoslynPad.DocumentTreeView">
   <UserControl.Styles>
 

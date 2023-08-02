@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.ThemeManager" />
+    <PackageReference Include="DialogHost.Avalonia" />
     <PackageReference Include="Dock.Avalonia" />
     <PackageReference Include="Dock.Model.Avalonia" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
@@ -21,10 +22,5 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="NewDocumentView.axaml.cs">
-      <DependentUpon>NewDocumentView.axaml</DependentUpon>
-    </Compile>
   </ItemGroup>
 </Project>

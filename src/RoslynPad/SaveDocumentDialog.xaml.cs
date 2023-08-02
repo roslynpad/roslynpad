@@ -21,7 +21,7 @@ namespace RoslynPad;
 internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyPropertyChanged
 {
     private string? _documentName;
-    private bool _showDontSave;
+    private bool _showDoNotSave;
     private InlineModalDialog _dialog;
     private bool _allowNameEdit;
     private string _filePath;
@@ -96,10 +96,10 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
         set => SetProperty(ref _allowNameEdit, value);
     }
 
-    public bool ShowDontSave
+    public bool ShowDoNotSave
     {
-        get => _showDontSave;
-        set => SetProperty(ref _showDontSave, value);
+        get => _showDoNotSave;
+        set => SetProperty(ref _showDoNotSave, value);
     }
 
     public string FilePath
@@ -108,7 +108,7 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
         private set => SetProperty(ref _filePath, value);
     }
 
-    public Func<string, string> FilePathFactory { get; set; }
+    public Func<string, string>? FilePathFactory { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -191,7 +191,7 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
 
     private void DontSave_Click(object? sender, RoutedEventArgs e)
     {
-        Result = SaveResult.DontSave;
+        Result = SaveResult.DoNotSave;
         Close();
     }
 
