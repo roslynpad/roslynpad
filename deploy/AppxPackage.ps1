@@ -1,5 +1,10 @@
+param (
+  [string] $PatchVersion = '0'
+)
+
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
+
 
 Set-Location $PSScriptRoot
 
@@ -19,7 +24,7 @@ Write-Host 'Updating manifest...'
 
 $appManifestPath = "$PSScriptRoot\PackageRoot\AppxManifest.xml"
 $appManifest = [xml] (Get-Content $appManifestPath)
-$appManifest.Package.Identity.Version = (Get-RoslynPadVersion) + '.0'
+$appManifest.Package.Identity.Version = (Get-RoslynPadVersion $PatchVersion) + '.0'
 $appManifest.Save($appManifestPath)
 
 Write-Host 'Building...'

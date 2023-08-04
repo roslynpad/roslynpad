@@ -8,4 +8,9 @@
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\$(LtsTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\netfx" />
   </Target>
+  <Target Name="CopyRoslynPadRuntimeAssemblies" AfterTargets="Publish"
+          Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
+    <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\$(LtsTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\net" />
+    <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\netfx" />
+  </Target>
 </Project>

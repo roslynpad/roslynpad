@@ -10,8 +10,16 @@ function Get-TargetFramework {
   return (Get-DirectoryBuildProps).Project.PropertyGroup.DefaultTargetFramework
 }
 
-function Get-RoslynPadVersion {
-  return (Get-DirectoryBuildProps).Project.PropertyGroup.RoslynPadVersion
+function Get-RoslynPadVersion($PatchVersion) {
+  $versionString = (Get-DirectoryBuildProps).Project.PropertyGroup.RoslynPadVersion
+
+  if ($PatchVersion) {
+    $version = [Version] $versionString
+    $version = [Version]::new($version.Major, $version.Minor, $PatchVersion)
+    $versionString = $version.ToString()
+  }
+
+  return $versionString
 }
 
 function Get-PackageRoot {
