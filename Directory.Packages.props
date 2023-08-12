@@ -9,7 +9,7 @@
     <RoslynPrivateVersion>4.7.0-2.23280.4</RoslynPrivateVersion>
     <AvaloniaVersion>11.0.0</AvaloniaVersion>
     <RxVersion>6.0.0</RxVersion>
-    <NuGetVersion>6.6.1</NuGetVersion>
+    <NuGetVersion>6.7.0</NuGetVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.0.90" />
