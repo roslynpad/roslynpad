@@ -5,20 +5,20 @@
   </PropertyGroup>
   <PropertyGroup>
     <DotNetExtensionsVersion>7.0.0</DotNetExtensionsVersion>
-    <RoslynVersion>4.7.0-2.final</RoslynVersion>
-    <RoslynPrivateVersion>4.7.0-2.23280.4</RoslynPrivateVersion>
-    <AvaloniaVersion>11.0.0</AvaloniaVersion>
+    <RoslynVersion>4.7.0</RoslynVersion>
+    <RoslynPrivateVersion>4.7.0-3.23416.9</RoslynPrivateVersion>
+    <AvaloniaVersion>11.0.4</AvaloniaVersion>
     <RxVersion>6.0.0</RxVersion>
     <NuGetVersion>6.6.1</NuGetVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.0.90" />
-    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.0" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.1" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.ThemeManager" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.ThemeManager" Version="11.0.0" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvalonLibrary" Version="3.0.0" />
-    <PackageVersion Include="DialogHost.Avalonia" Version="0.7.5" />
+    <PackageVersion Include="DialogHost.Avalonia" Version="0.7.6" />
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.70.3" />
     <PackageVersion Include="Dock.Avalonia" Version="11.0.0" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="11.0.0" />

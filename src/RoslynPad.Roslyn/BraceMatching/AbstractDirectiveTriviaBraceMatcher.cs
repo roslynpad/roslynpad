@@ -18,7 +18,7 @@ internal abstract class AbstractDirectiveTriviaBraceMatcher<TDirectiveTriviaSynt
         where TEndIfDirectiveTriviaSyntax : TDirectiveTriviaSyntax
 {
     internal abstract List<TDirectiveTriviaSyntax> GetMatchingConditionalDirectives(TDirectiveTriviaSyntax directive, CancellationToken cancellationToken);
-    internal abstract TDirectiveTriviaSyntax GetMatchingDirective(TDirectiveTriviaSyntax directive, CancellationToken cancellationToken);
+    internal abstract TDirectiveTriviaSyntax? GetMatchingDirective(TDirectiveTriviaSyntax directive, CancellationToken cancellationToken);
     internal abstract TextSpan GetSpanForTagging(TDirectiveTriviaSyntax directive);
 
     public async Task<BraceMatchingResult?> FindBracesAsync(Document document, int position, CancellationToken cancellationToken)

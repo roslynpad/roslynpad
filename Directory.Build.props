@@ -2,29 +2,28 @@
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
     <DefaultTargetFramework>net7.0</DefaultTargetFramework>
-    <LtsTargetFramework>net6.0</LtsTargetFramework>
+    <LtsTargetFramework>net7.0</LtsTargetFramework>
     <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) ">true</UseWPF>
     <TargetFramework Condition=" '$(UseWPF)' == 'true' ">$(LtsTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <Version>4.7.0-1.final</Version>
-    <RoslynPadVersion>18.0.0</RoslynPadVersion>
+    <Version>4.7.0</Version>
+    <RoslynPadVersion>19.0.0</RoslynPadVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <IsPackable>false</IsPackable>
     <Authors>Eli Arbel</Authors>
     <PackageProjectUrl>https://roslynpad.net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/roslynpad/roslynpad</RepositoryUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>Roslyn;RoslynPad</PackageTags>
     <PackageIcon>RoslynPad.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
   </PropertyGroup>
