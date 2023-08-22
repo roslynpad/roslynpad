@@ -1,6 +1,8 @@
-PARAM (
-  [Switch]
-  $Avalonia
+[CmdletBinding()]
+param (
+  [Parameter(Mandatory = $true)]
+  [ValidateSet('Avalonia', 'MacOSStandalone', 'Windows', 'WindowsStandalone')]
+  $Mode
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,16 +17,28 @@ Add-Type -A 'System.IO.Compression.FileSystem'
 
 Write-Host 'Building...'
 
-if ($Avalonia) {
-  dotnet build ..\src\RoslynPad.Avalonia -c Release
-  $archiveFile = "$PSScriptRoot\RoslynPadAvalonia.zip"
-}
-else {
-  dotnet build ..\src\RoslynPad -c Release
-  $archiveFile = "$PSScriptRoot\RoslynPad.zip"
+
+switch ($Mode) {
+  'Avalonia' {
+    dotnet publish ..\src\RoslynPad.Avalonia -c Release
+    $archiveFile = "$PSScriptRoot\RoslynPadAvalonia.zip"
+  }
+  'MacOSStandalone' {
+    dotnet publish ..\src\RoslynPad.Avalonia -c Release --self-contained -r osx-x64
+    $archiveFile = "$PSScriptRoot\RoslynPadMacOS.zip"
+  }
+  'Windows' {
+    dotnet build ..\src\RoslynPad -c Release
+    $archiveFile = "$PSScriptRoot\RoslynPad.zip"
+  }
+  'WindowsStandalone' {
+    dotnet build ..\src\RoslynPad -c Release --self-contained -r win-x64
+    $archiveFile = "$PSScriptRoot\RoslynPadWindowsStandalone.zip"
+  }
 }
 
-$rootPath = Get-PackageRoot -Avalonia:$Avalonia
+$avalonia = $Mode -eq 'Avalonia'
+$rootPath = Get-PackageRoot -Avalonia:$avalonia
 $files = Get-PackageFiles $rootPath
 
 Remove-Item $archiveFile -ErrorAction Ignore
@@ -43,7 +57,7 @@ finally {
   $archive.Dispose()
 }
 
-if (!$Avalonia) {
+if ($Mode -eq 'WindowsStandalone') {
   Write-Host 'Updating winget manifest...'
 
   $wingetManifestPath = 'winget.yaml'
@@ -52,7 +66,7 @@ if (!$Avalonia) {
   $releaseVersion = $version.Minor -le 0 -and $version.Build -le 0 ? $version.Major : $version
   $hash = (Get-FileHash $archiveFile -Algorithm SHA256).Hash
   $wingetManifest = $wingetManifest -replace 'PackageVersion:.*', "PackageVersion: $version"
-  $wingetManifest = $wingetManifest -replace 'InstallerUrl:.*', "InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/$releaseVersion/RoslynPad.zip"
+  $wingetManifest = $wingetManifest -replace 'InstallerUrl:.*', "InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/$releaseVersion/RoslynPadWindowsStandalone.zip"
   $wingetManifest = $wingetManifest -replace 'InstallerSha256:.*', "InstallerSha256: $hash"
   Set-Content -Path $wingetManifestPath -Value $wingetManifest
 }
