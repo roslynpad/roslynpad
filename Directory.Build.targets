@@ -3,12 +3,12 @@
     <ProjectReference Include="$(RepoRoot)\src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=$(LtsTargetFramework)" ReferenceOutputAssembly="false" />
     <ProjectReference Include="$(RepoRoot)\src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=netstandard2.0" ReferenceOutputAssembly="false" />
   </ItemGroup>
-  <Target Name="CopyRoslynPadRuntimeAssemblies" AfterTargets="Build"
+  <Target Name="CopyRoslynPadRuntimeAssembliesOnBuild" AfterTargets="Build"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\$(LtsTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\netfx" />
   </Target>
-  <Target Name="CopyRoslynPadRuntimeAssemblies" AfterTargets="Publish"
+  <Target Name="CopyRoslynPadRuntimeAssembliesOnPublish" AfterTargets="Publish"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\$(LtsTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)\src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\netfx" />
