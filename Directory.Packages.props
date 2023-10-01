@@ -18,7 +18,7 @@
     <PackageVersion Include="Avalonia.ThemeManager" Version="11.0.0" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvalonLibrary" Version="3.0.0" />
-    <PackageVersion Include="DialogHost.Avalonia" Version="0.7.6" />
+    <PackageVersion Include="DialogHost.Avalonia" Version="0.7.7" />
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.72.1" />
     <PackageVersion Include="Dock.Avalonia" Version="11.0.0" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="11.0.0" />
