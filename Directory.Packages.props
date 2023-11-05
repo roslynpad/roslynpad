@@ -7,7 +7,7 @@
     <DotNetExtensionsVersion>7.0.0</DotNetExtensionsVersion>
     <RoslynVersion>4.7.0</RoslynVersion>
     <RoslynPrivateVersion>4.7.0-3.23416.9</RoslynPrivateVersion>
-    <AvaloniaVersion>11.0.4</AvaloniaVersion>
+    <AvaloniaVersion>11.0.5</AvaloniaVersion>
     <RxVersion>6.0.0</RxVersion>
     <NuGetVersion>6.7.0</NuGetVersion>
   </PropertyGroup>
