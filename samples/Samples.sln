@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPadReplSample", "RoslynPadReplSample\RoslynPadReplSample.csproj", "{2A20F98B-F4E7-45F8-B526-4B6624ACDBB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Avalonia", "..\src\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{E28206B6-02C4-4531-BD79-D17D5A53AC82}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{2A20F98B-F4E7-45F8-B526-4B6624ACDBB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A20F98B-F4E7-45F8-B526-4B6624ACDBB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A20F98B-F4E7-45F8-B526-4B6624ACDBB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E28206B6-02C4-4531-BD79-D17D5A53AC82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E28206B6-02C4-4531-BD79-D17D5A53AC82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E28206B6-02C4-4531-BD79-D17D5A53AC82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E28206B6-02C4-4531-BD79-D17D5A53AC82}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

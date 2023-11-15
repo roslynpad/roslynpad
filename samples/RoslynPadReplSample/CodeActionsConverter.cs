@@ -2,8 +2,8 @@ using Microsoft.CodeAnalysis.CodeActions;
 using RoslynPad.Roslyn.CodeActions;
 using System;
 using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Markup;
+using Avalonia.Data.Converters;
+using Avalonia.Markup.Xaml;
 
 namespace RoslynPadReplSample;
 

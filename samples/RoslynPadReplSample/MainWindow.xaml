@@ -1,9 +1,9 @@
-﻿<Window x:Class="RoslynPadReplSample.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
+        x:Class="RoslynPadReplSample.MainWindow"
+        xmlns:editor1="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
         mc:Ignorable="d"
         Title="RoslynPad REPL Sample"
         Height="350"
@@ -13,17 +13,10 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
-                        <editor:RoslynCodeEditor Loaded="OnItemLoaded"
-                                                 FontFamily="Consolas"
-                                                 Margin="5"
-                                                 ContextActionsIcon="{StaticResource Bulb}"
-                                                 PreviewKeyDown="OnEditorKeyDown"
-                                                 IsReadOnly="{Binding IsReadOnly}"
-                                                 HorizontalScrollBarVisibility="Disabled"
-                                                 VerticalScrollBarVisibility="Disabled"
-                                                 ShowLineNumbers="False" />
-                        <TextBlock Text="{Binding Result}"
-                                   TextWrapping="Wrap" />
+                        <editor1:RoslynCodeEditor FontFamily="Consolas"
+                                                  Margin="5"
+                                                  ShowLineNumbers="False" />
+                        <TextBlock Text="Hallo" TextWrapping="Wrap" />
                     </StackPanel>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

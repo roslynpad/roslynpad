@@ -5,8 +5,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows;
-using System.Windows.Input;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Markup.Xaml;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using RoslynPad.Editor;
@@ -24,21 +25,14 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        AvaloniaXamlLoader.Load(this);
+        // InitializeComponent();
 
         _documents = new ObservableCollection<DocumentViewModel>();
+        var Items = this.Get<ItemsControl>("Items");
         Items.ItemsSource = _documents;
 
-        _host = new CustomRoslynHost(additionalAssemblies: new[]
-        {
-                    Assembly.Load("RoslynPad.Roslyn.Windows"),
-                    Assembly.Load("RoslynPad.Editor.Windows")
-                }, RoslynHostReferences.NamespaceDefault.With(assemblyReferences: new[]
-        {
-            typeof(object).Assembly,
-            typeof(System.Text.RegularExpressions.Regex).Assembly,
-            typeof(Enumerable).Assembly,
-        }));
+        _host = new CustomRoslynHost(additionalAssemblies: new Assembly[] {}, RoslynHostReferences.NamespaceDefault);
 
         AddNewDocument();
     }
@@ -102,7 +96,8 @@ public partial class MainWindow : Window
     {
         private bool _addedAnalyzers;
 
-        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableArray<string>? disabledDiagnostics = null) : base(additionalAssemblies, references, disabledDiagnostics)
+        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableArray<string>? disabledDiagnostics = null)
+            : base(additionalAssemblies, references, disabledDiagnostics)
         {
         }
 

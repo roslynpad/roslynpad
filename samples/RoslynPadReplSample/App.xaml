@@ -1,23 +1,13 @@
-﻿<Application x:Class="RoslynPadReplSample.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn"
-             xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
-             xmlns:local="clr-namespace:RoslynPadReplSample"
-             StartupUri="MainWindow.xaml">
-    <Application.Resources>
+             x:Class="RoslynPadReplSample.App">
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="TextBlock.h3">
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
 
-        <DrawingImage x:Key="Bulb">
-            <DrawingImage.Drawing>
-                <GeometryDrawing Brush="Gold">
-                    <GeometryDrawing.Geometry>
-                        <EllipseGeometry RadiusX="1"
-                                         RadiusY="1" />
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingImage.Drawing>
-        </DrawingImage>
-
+        <!--
         <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
                                   ItemsSource="{Binding Fixes, Mode=OneTime}">
             <TextBlock Text="{Binding Provider, Mode=OneTime}" />
@@ -30,6 +20,6 @@
 
         <DataTemplate DataType="{x:Type codeActions:CodeAction}">
             <TextBlock Text="{Binding Title, Mode=OneTime}" />
-        </DataTemplate>
-    </Application.Resources>
+        </DataTemplate>-->
+    </Application.Styles>
 </Application>

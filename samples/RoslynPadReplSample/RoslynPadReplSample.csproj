@@ -2,11 +2,21 @@
   <PropertyGroup>
     <TargetFramework>net7.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RoslynPad.Editor.Windows" Version="4.4.0" />
+    <PackageReference Include="Avalonia" Version="11.0.5" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.5"/>
+    <PackageReference Include="RoslynPad.Editor.Avalonia" Version="4.4.7" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="MainWindow.xaml" />
+    <AvaloniaResource Include="MainWindow.xaml" />
+    <None Remove="App.xaml" />
+    <AvaloniaResource Include="App.xaml" />
   </ItemGroup>
 </Project>
