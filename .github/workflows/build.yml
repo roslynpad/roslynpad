@@ -8,14 +8,19 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout Code
+      uses: actions/checkout@v4
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
     - name: Build with dotnet
       run: dotnet build -bl -c Release -m:1 src/RoslynPad.sln
-    - uses: actions/upload-artifact@v2
-      if: always()
-      with:
-        name: logs
-        path: |
-          **/*.binlog
+    - name: Pack projects
+      run: |
+        dotnet pack src/RoslynPad.Editor.Avalonia --configuration Release -bl  -m:1
+        dotnet pack src/RoslynPad.Roslyn.Avalonia --configuration Release -bl  -m:1
+        dotnet pack src/RoslynPad.Roslyn --configuration Release -bl  -m:1
+    - name: Push
+      run: |
+        dotnet nuget push "src/RoslynPad.Editor.Avalonia/bin/Release/*.nupkg" --skip-duplicate --api-key ${{ github.token }} --source "github"
+        dotnet nuget push "src/RoslynPad.Roslyn.Avalonia/bin/Release/*.nupkg" --skip-duplicate --api-key ${{ github.token }} --source "github"
+        dotnet nuget push "src/RoslynPad.Roslyn/bin/Release/*.nupkg" --skip-duplicate --api-key ${{ github.token }} --source "github"
