@@ -39,7 +39,7 @@ internal class TreeListView : TreeView
         {
             if (_columns == null)
             {
-                _columns = new GridViewColumnCollection();
+                _columns = [];
             }
 
             return _columns;

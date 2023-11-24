@@ -43,7 +43,7 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
         _generatedNameTypeParameterSuffix = generatedNameTypeParameterSuffix;
         _languageName = languageName;
 
-        MemberContainers = extractableMembers.Select(m => new MemberSymbolViewModel(m)).OrderBy(s => s.MemberName).ToList();
+        MemberContainers = [.. extractableMembers.Select(m => new MemberSymbolViewModel(m)).OrderBy(s => s.MemberName)];
     }
 
     internal bool TrySubmit()

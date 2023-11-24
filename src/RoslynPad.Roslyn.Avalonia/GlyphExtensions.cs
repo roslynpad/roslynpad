@@ -12,7 +12,7 @@ public static class GlyphExtensions
 
     private class DefaultGlyphService : IGlyphService
     {
-        private readonly Glyphs _glyphs = new();
+        private readonly Glyphs _glyphs = [];
 
         public object? GetGlyphImage(Glyph glyph)
         {

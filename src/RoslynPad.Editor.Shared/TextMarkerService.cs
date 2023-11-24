@@ -53,7 +53,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
         if (editor == null) throw new ArgumentNullException(nameof(editor));
         _document = editor.Document;
         _markers = new TextSegmentCollection<TextMarker>(_document);
-        _textViews = new List<TextView>();
+        _textViews = [];
         editor.ToolTipRequest += EditorOnToolTipRequest;
     }
 

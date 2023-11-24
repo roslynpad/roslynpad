@@ -33,7 +33,7 @@ public static class Helpers
         var dispatcherType = windowsBaseAssembly.GetType("System.Windows.Threading.Dispatcher", throwOnError: true) ?? throw new InvalidOperationException();
         var dispatcherSyncContextCtor = windowsBaseAssembly.GetType("System.Windows.Threading.DispatcherSynchronizationContext", throwOnError: true)!
             .GetConstructors().FirstOrDefault(c => c.GetParameters() is var p && p.Length == 1 && p[0].ParameterType.Name == "Dispatcher") ?? throw new InvalidOperationException();
-        var runMethod = dispatcherType.GetMethod("Run", Array.Empty<Type>())?.CreateDelegate(typeof(Action)) as Action ?? throw new InvalidOperationException();
+        var runMethod = dispatcherType.GetMethod("Run", [])?.CreateDelegate(typeof(Action)) as Action ?? throw new InvalidOperationException();
         var currentDispatcherProperty = dispatcherType.GetProperty("CurrentDispatcher") ?? throw new InvalidOperationException();
 
         var tcs = new TaskCompletionSource<object>();

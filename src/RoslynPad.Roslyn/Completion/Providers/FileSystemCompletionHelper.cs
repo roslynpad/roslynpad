@@ -18,7 +18,7 @@ namespace RoslynPad.Roslyn;
 
 internal class FileSystemCompletionHelper
 {
-    private static readonly char[] s_windowsDirectorySeparator = { '\\' };
+    private static readonly char[] s_windowsDirectorySeparator = ['\\'];
 
     private readonly Glyph _folderGlyph;
     private readonly Glyph _fileGlyph;
@@ -103,7 +103,7 @@ internal class FileSystemCompletionHelper
         if (!PathUtilities.IsUnixLikePlatform && directoryPath.Length == 1 && directoryPath[0] == '\\')
         {
             // The user has typed only "\".  In this case, we want to add "\\" to the list.  
-            return ImmutableArray.Create(CreateNetworkRoot());
+            return [CreateNetworkRoot()];
         }
 
         var result = ArrayBuilder<CompletionItem>.GetInstance();

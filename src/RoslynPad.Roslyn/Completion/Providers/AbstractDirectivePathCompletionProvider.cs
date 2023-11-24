@@ -18,8 +18,8 @@ namespace RoslynPad.Roslyn.Completion.Providers;
 internal abstract class AbstractDirectivePathCompletionProvider : CompletionProvider
 {
     private static readonly char[] s_separators = PathUtilities.IsUnixLikePlatform
-        ? new[] { '/', ',' }
-        : new[] { '/', ',', '\\' };
+        ? ['/', ',']
+        : ['/', ',', '\\'];
 
     protected abstract bool TryGetStringLiteralToken(SyntaxTree tree, int position, out SyntaxToken stringLiteral, CancellationToken cancellationToken);
 
@@ -144,7 +144,7 @@ internal abstract class AbstractDirectivePathCompletionProvider : CompletionProv
         }
         else
         {
-            referenceSearchPaths = ImmutableArray<string>.Empty;
+            referenceSearchPaths = [];
             baseDirectory = null;
         }
 

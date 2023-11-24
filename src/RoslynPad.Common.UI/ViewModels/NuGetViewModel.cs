@@ -102,7 +102,7 @@ public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvide
             {
                 var match = result.FirstOrDefault(c => string.Equals(c.Identity.Id, searchTerm,
                     StringComparison.OrdinalIgnoreCase));
-                result = match != null ? new[] { match } : null;
+                result = match != null ? [match] : null;
             }
 
             if (result?.Length > 0)
@@ -137,8 +137,7 @@ public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvide
         {
             PackageSourceProvider = packageSourceProvider;
 
-            _resourceProviders = new List<Lazy<INuGetResourceProvider>>();
-            _resourceProviders.AddRange(Repository.Provider.GetCoreV3());
+            _resourceProviders = [.. Repository.Provider.GetCoreV3()];
 
             // Create repositories
             _repositories = PackageSourceProvider.LoadPackageSources()

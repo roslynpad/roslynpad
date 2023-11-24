@@ -73,10 +73,10 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
             // Use the cache only for the live AvalonEdit document
             // Highlighting in read-only documents (e.g. search results) does
             // not need the cache as it does not need to highlight the same line multiple times
-            _cachedLines = new List<CachedLine>();
+            _cachedLines = [];
         }
 
-        _changes = new List<(FrozenLine line, List<HighlightedSection> sections)>();
+        _changes = [];
         _syncContext = SynchronizationContext.Current;
     }
 

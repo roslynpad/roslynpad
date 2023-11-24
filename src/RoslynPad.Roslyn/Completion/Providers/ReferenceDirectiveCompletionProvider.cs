@@ -15,8 +15,8 @@ namespace RoslynPad.Roslyn.Completion.Providers;
 internal class ReferenceDirectiveCompletionProvider : AbstractReferenceDirectiveCompletionProvider
 {
     private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
-        filterCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
-        commitCharacterRules: ImmutableArray<CharacterSetModificationRule>.Empty,
+        filterCharacterRules: [],
+        commitCharacterRules: [],
         enterKeyRule: EnterKeyRule.Never,
         selectionBehavior: CompletionItemSelectionBehavior.SoftSelection);
 

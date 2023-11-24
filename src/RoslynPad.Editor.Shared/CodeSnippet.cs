@@ -179,7 +179,7 @@ internal sealed class CodeSnippet
 
     private static string GetWhitespaceBefore(string snippetText, int offset)
     {
-        var start = snippetText.LastIndexOfAny(new[] { '\r', '\n' }, offset) + 1;
+        var start = snippetText.LastIndexOfAny(['\r', '\n'], offset) + 1;
         return snippetText.Substring(start, offset - start);
     }
 

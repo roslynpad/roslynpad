@@ -70,7 +70,7 @@ public sealed class ContextActionsRenderer
         editor.TextArea.Caret.PositionChanged += CaretPositionChanged;
 
         editor.KeyDown += ContextActionsRenderer_KeyDown;
-        _providers = new ObservableCollection<IContextActionProvider>();
+        _providers = [];
         _providers.CollectionChanged += Providers_CollectionChanged;
 
         editor.TextArea.TextView.ScrollOffsetChanged += ScrollChanged;

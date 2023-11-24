@@ -18,7 +18,7 @@ namespace RoslynPad.Editor;
 public sealed class RoslynContextActionProvider : IContextActionProvider
 {
     private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
-        ImmutableArray.Create("ExtractInterface");
+        ["ExtractInterface"];
 
     private readonly DocumentId _documentId;
     private readonly IRoslynHost _roslynHost;

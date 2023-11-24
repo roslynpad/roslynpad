@@ -81,7 +81,7 @@ internal class ILStructure
     /// <summary>
     /// The list of child structures.
     /// </summary>
-    public readonly List<ILStructure> Children = new();
+    public readonly List<ILStructure> Children = [];
 
     public ILStructure(MethodBody body)
         : this(ILStructureType.Root, 0, body.CodeSize)

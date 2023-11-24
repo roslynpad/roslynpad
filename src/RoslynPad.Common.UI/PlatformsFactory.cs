@@ -70,12 +70,12 @@ internal class PlatformsFactory : IPlatformsFactory
         string dotnetExe;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            dotnetPaths = new[] { Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432")!, "dotnet") };
+            dotnetPaths = [Path.Combine(Environment.GetEnvironmentVariable("ProgramW6432")!, "dotnet")];
             dotnetExe = "dotnet.exe";
         }
         else
         {
-            dotnetPaths = new[] { "/usr/lib64/dotnet", "/usr/share/dotnet", "/usr/local/share/dotnet", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet") };
+            dotnetPaths = ["/usr/lib64/dotnet", "/usr/share/dotnet", "/usr/local/share/dotnet", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet")];
             dotnetExe = "dotnet";
         }
 

@@ -13,9 +13,9 @@ namespace RoslynPad.Roslyn;
 public class RoslynHostReferences
 {
     public static RoslynHostReferences Empty { get; } = new(
-        ImmutableArray<MetadataReference>.Empty,
+        [],
         ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase),
-        ImmutableArray<string>.Empty);
+        []);
 
     /// <summary>
     /// Returns namespace-only (no assemblies) defaults that fit all frameworks.

@@ -17,7 +17,7 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
     private readonly List<ParameterViewModel> _parametersWithoutDefaultValues;
     private readonly List<ParameterViewModel> _parametersWithDefaultValues;
     private readonly ParameterViewModel? _paramsParameter;
-    private readonly HashSet<ParameterViewModel> _disabledParameters = new();
+    private readonly HashSet<ParameterViewModel> _disabledParameters = [];
     private readonly ImmutableArray<SymbolDisplayPart> _declarationParts;
 
     internal ChangeSignatureDialogViewModel(ParameterConfiguration parameters, ISymbol symbol)
@@ -298,7 +298,7 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
     {
         var index = SelectedIndex;
         index = _thisParameter == null ? index : index - 1;
-        return index < _parametersWithoutDefaultValues.Count ? _parametersWithoutDefaultValues : index < _parametersWithoutDefaultValues.Count + _parametersWithDefaultValues.Count ? _parametersWithDefaultValues : new List<ParameterViewModel>();
+        return index < _parametersWithoutDefaultValues.Count ? _parametersWithoutDefaultValues : index < _parametersWithoutDefaultValues.Count + _parametersWithDefaultValues.Count ? _parametersWithDefaultValues : [];
     }
 
     public bool IsOkButtonEnabled

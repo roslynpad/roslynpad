@@ -14,8 +14,8 @@ namespace RoslynPad.UI;
 public partial class DocumentViewModel : NotificationObject
 {
     internal const string AutoSaveSuffix = ".autosave";
-    
-    public static ImmutableArray<string> RelevantFileExtensions { get; } = ImmutableArray.Create(".cs", ".csx");
+
+    public static ImmutableArray<string> RelevantFileExtensions { get; } = [".cs", ".csx"];
 
     private bool _isExpanded;
     private bool? _isAutoSaveOnly;
@@ -193,7 +193,7 @@ public partial class DocumentViewModel : NotificationObject
                 .Select(file => new DocumentViewModel(file, isFolder: false))
                 .Where(file => !file.IsAutoSave));
         }
-                
+
         return new DocumentCollection(directories.Concat(files.OrderBy(file => file.OrderByName)));
     }
 

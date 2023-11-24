@@ -1140,7 +1140,7 @@ internal sealed class ReflectionDisassembler
 
     private sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string?>> where T : struct
     {
-        private readonly List<KeyValuePair<long, string?>> _names = new();
+        private readonly List<KeyValuePair<long, string?>> _names = [];
 
         public void Add(T flag, string? name)
         {

@@ -9,9 +9,9 @@ namespace RoslynPad.Runtime;
 
 internal class ResultObject
 {
-    private static readonly HashSet<string> s_irrelevantEnumerableProperties = new() { "Count", "Length", "Key" };
+    private static readonly HashSet<string> s_irrelevantEnumerableProperties = ["Count", "Length", "Key"];
 
-    private static readonly HashSet<string> s_doNotTreatAsEnumerableTypeNames = new() { "JObject", "JProperty" };
+    private static readonly HashSet<string> s_doNotTreatAsEnumerableTypeNames = ["JObject", "JProperty"];
 
     private static readonly Dictionary<string, string> s_toStringAlternatives = new()
     {
@@ -154,7 +154,7 @@ internal class ResultObject
         {
             Header = _member.Name;
             Value = $"Threw {exception.InnerException!.GetType().Name}";
-            Children = new List<ResultObject> { ExceptionResultObject.Create(exception.InnerException, _quotas) };
+            Children = [ExceptionResultObject.Create(exception.InnerException, _quotas)];
             return true;
         }
 
@@ -288,7 +288,7 @@ internal class ResultObject
         {
             Header = _member?.Name;
             Value = $"Threw {exception.GetType().Name}";
-            Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
+            Children = [ExceptionResultObject.Create(exception, _quotas)];
         }
     }
 
@@ -336,7 +336,7 @@ internal class ResultObject
         {
             Header = _member?.Name;
             Value = $"Threw {exception.GetType().Name}";
-            Children = new List<ResultObject> { ExceptionResultObject.Create(exception, _quotas) };
+            Children = [ExceptionResultObject.Create(exception, _quotas)];
         }
     }
 
@@ -372,7 +372,7 @@ internal class ExceptionResultObject : ResultObject
     {
         Message = exception.Message;
 
-        var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? Array.Empty<StackFrame>();
+        var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? [];
         foreach (var stackFrame in stackFrames)
         {
             if (string.IsNullOrWhiteSpace(stackFrame.GetFileName()) &&

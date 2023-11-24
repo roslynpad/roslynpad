@@ -117,7 +117,7 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
     {
         var filterText = GetFilterText(item, text, textSpanToText);
         if (string.IsNullOrEmpty(filterText)) return true;
-        return completionService.FilterItems(document, ImmutableArray.Create(item), filterText).Length > 0;
+        return completionService.FilterItems(document, [item], filterText).Length > 0;
     }
 
     private static string GetFilterText(CompletionItem item, SourceText text, Dictionary<TextSpan, string> textSpanToText)

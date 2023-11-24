@@ -146,8 +146,8 @@ public class OpenDocumentViewModel : NotificationObject
         _logger = logger;
         _platformsFactory = serviceProvider.GetRequiredService<IPlatformsFactory>();
         _serviceProvider = serviceProvider;
-        _results = new ObservableCollection<IResultObject>();
-        _restoreResults = new List<RestoreResultObject>();
+        _results = [];
+        _restoreResults = [];
 
         MainViewModel = mainViewModel;
         CommandProvider = commands;

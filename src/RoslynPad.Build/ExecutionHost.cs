@@ -43,13 +43,13 @@ internal partial class ExecutionHost : IExecutionHost
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
-    private static readonly ImmutableArray<string> s_binFilesToRename = ImmutableArray.Create(
+    private static readonly ImmutableArray<string> s_binFilesToRename = [
         "{0}.deps.json",
         "{0}.runtimeconfig.json",
         "{0}.exe.config"
-    );
+    ];
 
-    private static readonly ImmutableArray<byte> s_newLine = Encoding.UTF8.GetBytes(Environment.NewLine).ToImmutableArray();
+    private static readonly ImmutableArray<byte> s_newLine = [.. Encoding.UTF8.GetBytes(Environment.NewLine)];
 
     private readonly ExecutionHostParameters _parameters;
     private readonly IRoslynHost _roslynHost;
@@ -128,7 +128,7 @@ internal partial class ExecutionHost : IExecutionHost
         _roslynHost = roslynHost;
         _logger = logger;
         _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
-        _libraries = new();
+        _libraries = [];
         _imports = parameters.Imports;
 
         _ctsLock = new object();
@@ -140,7 +140,7 @@ internal partial class ExecutionHost : IExecutionHost
         _moduleInitSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ModuleInit, regularParseOptions);
         _importsSyntax = SyntaxFactory.ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
 
-        MetadataReferences = ImmutableArray<MetadataReference>.Empty;
+        MetadataReferences = [];
 
         _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "net", "RoslynPad.Runtime.dll"));
         _runtimeNetFxAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "netfx", "RoslynPad.Runtime.dll"));
@@ -732,7 +732,7 @@ internal partial class ExecutionHost : IExecutionHost
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Restore error");
-                RestoreCompleted?.Invoke(RestoreResult.FromErrors(new[] { ex.ToString() }));
+                RestoreCompleted?.Invoke(RestoreResult.FromErrors([ex.ToString()]));
             }
             finally
             {

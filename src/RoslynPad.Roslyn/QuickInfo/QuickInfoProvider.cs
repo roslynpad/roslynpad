@@ -201,15 +201,14 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
         var sections = await descriptionService.ToDescriptionGroupsAsync(semanticModel, token.SpanStart, symbols.AsImmutable(), SymbolDescriptionOptions.Default, cancellationToken).ConfigureAwait(false);
 
         var mainDescriptionBuilder = new List<TaggedText>();
-        if (sections.ContainsKey(SymbolDescriptionGroups.MainDescription))
+        if (sections.TryGetValue(SymbolDescriptionGroups.MainDescription, out var value))
         {
-            mainDescriptionBuilder.AddRange(sections[SymbolDescriptionGroups.MainDescription]);
+            mainDescriptionBuilder.AddRange(value);
         }
 
         var typeParameterMapBuilder = new List<TaggedText>();
-        if (sections.ContainsKey(SymbolDescriptionGroups.TypeParameterMap))
+        if (sections.TryGetValue(SymbolDescriptionGroups.TypeParameterMap, out var parts))
         {
-            var parts = sections[SymbolDescriptionGroups.TypeParameterMap];
             if (!parts.IsDefaultOrEmpty)
             {
                 typeParameterMapBuilder.AddLineBreak();
@@ -218,9 +217,8 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
         }
 
         var structuralTypesBuilder = new List<TaggedText>();
-        if (sections.ContainsKey(SymbolDescriptionGroups.StructuralTypes))
+        if (sections.TryGetValue(SymbolDescriptionGroups.StructuralTypes, out parts))
         {
-            var parts = sections[SymbolDescriptionGroups.StructuralTypes];
             if (!parts.IsDefaultOrEmpty)
             {
                 structuralTypesBuilder.AddLineBreak();
@@ -229,9 +227,8 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
         }
 
         var usageTextBuilder = new List<TaggedText>();
-        if (sections.ContainsKey(SymbolDescriptionGroups.AwaitableUsageText))
+        if (sections.TryGetValue(SymbolDescriptionGroups.AwaitableUsageText, out parts))
         {
-            var parts = sections[SymbolDescriptionGroups.AwaitableUsageText];
             if (!parts.IsDefaultOrEmpty)
             {
                 usageTextBuilder.AddRange(parts);
@@ -244,9 +241,8 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
         }
 
         var exceptionsTextBuilder = new List<TaggedText>();
-        if (sections.ContainsKey(SymbolDescriptionGroups.Exceptions))
+        if (sections.TryGetValue(SymbolDescriptionGroups.Exceptions, out parts))
         {
-            var parts = sections[SymbolDescriptionGroups.Exceptions];
             if (!parts.IsDefaultOrEmpty)
             {
                 exceptionsTextBuilder.AddRange(parts);
@@ -287,10 +283,10 @@ internal sealed class QuickInfoProvider : IQuickInfoProvider
         ISyntaxFactsService syntaxFactsService,
         CancellationToken cancellationToken)
     {
-        if (sections.ContainsKey(SymbolDescriptionGroups.Documentation))
+        if (sections.TryGetValue(SymbolDescriptionGroups.Documentation, out var value))
         {
             var documentationBuilder = new List<TaggedText>();
-            documentationBuilder.AddRange(sections[SymbolDescriptionGroups.Documentation]);
+            documentationBuilder.AddRange(value);
             return _contentProvider.CreateClassifiableDeferredContent(documentationBuilder);
         }
         if (symbols.Any())

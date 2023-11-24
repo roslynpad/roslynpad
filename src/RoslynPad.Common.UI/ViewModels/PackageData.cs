@@ -56,6 +56,6 @@ public sealed class PackageData : INuGetPackage
     {
         if (_package == null) return;
         var versions = await _package.GetVersionsAsync().ConfigureAwait(false);
-        OtherVersions = versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version).ToImmutableArray();
+        OtherVersions = [.. versions.Select(x => new PackageData(Id, x.Version)).OrderByDescending(x => x.Version)];
     }
 }

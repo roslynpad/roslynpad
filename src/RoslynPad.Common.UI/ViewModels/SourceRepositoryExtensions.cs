@@ -29,6 +29,6 @@ internal static class SourceRepositoryExtensions
             }
         }
 
-        return Array.Empty<IPackageSearchMetadata>();
+        return [];
     }
 }

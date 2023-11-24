@@ -20,20 +20,16 @@ namespace RoslynPad.Roslyn;
 public class RoslynHost : IRoslynHost
 {
     internal static readonly ImmutableArray<string> PreprocessorSymbols =
-        ImmutableArray.CreateRange(new[] { "TRACE", "DEBUG" });
+        ["TRACE", "DEBUG"];
 
     internal static readonly ImmutableArray<Assembly> DefaultCompositionAssemblies =
-        ImmutableArray.Create(
-            // Microsoft.CodeAnalysis.Workspaces
+        [
             typeof(WorkspacesResources).Assembly,
-            // Microsoft.CodeAnalysis.CSharp.Workspaces
             typeof(CSharpWorkspaceResources).Assembly,
-            // Microsoft.CodeAnalysis.Features
             typeof(FeaturesResources).Assembly,
-            // Microsoft.CodeAnalysis.CSharp.Features
             typeof(CSharpFeaturesResources).Assembly,
-            // RoslynPad.Roslyn
-            typeof(RoslynHost).Assembly);
+            typeof(RoslynHost).Assembly,
+        ];
 
     internal static readonly ImmutableArray<Type> DefaultCompositionTypes =
         DefaultCompositionAssemblies.SelectMany(t => t.DefinedTypes).Select(t => t.AsType())
@@ -64,8 +60,8 @@ public class RoslynHost : IRoslynHost
     {
         if (references == null) references = RoslynHostReferences.Empty;
 
-        _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
-        _diagnosticsUpdatedNotifiers = new ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>>();
+        _workspaces = [];
+        _diagnosticsUpdatedNotifiers = [];
 
         var partTypes = GetDefaultCompositionTypes();
 
@@ -87,8 +83,8 @@ public class RoslynHost : IRoslynHost
         DefaultReferences = references.GetReferences(DocumentationProviderFactory);
         DefaultImports = references.Imports;
 
-        DisabledDiagnostics = disabledDiagnostics ?? ImmutableArray<string>.Empty;
-        AnalyzerConfigFiles = analyzerConfigFiles ?? ImmutableArray<string>.Empty;
+        DisabledDiagnostics = disabledDiagnostics ?? [];
+        AnalyzerConfigFiles = analyzerConfigFiles ?? [];
         GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
     }
 
@@ -266,9 +262,9 @@ public class RoslynHost : IRoslynHost
     protected virtual CompilationOptions CreateCompilationOptions(DocumentCreationArgs args, bool addDefaultImports)
     {
         var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
-            usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
+            usings: addDefaultImports ? DefaultImports : [],
             allowUnsafe: true,
-            sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
+            sourceReferenceResolver: new SourceFileResolver([], args.WorkingDirectory),
             // all #r references are resolved by the editor/msbuild
             metadataReferenceResolver: DummyScriptMetadataResolver.Instance,
             nullableContextOptions: NullableContextOptions.Enable);
@@ -312,7 +308,7 @@ public class RoslynHost : IRoslynHost
             isSubmission: isScript,
             parseOptions: parseOptions,
             compilationOptions: compilationOptions,
-            metadataReferences: previousProject != null ? ImmutableArray<MetadataReference>.Empty : DefaultReferences,
+            metadataReferences: previousProject != null ? [] : DefaultReferences,
             projectReferences: previousProject != null ? new[] { new ProjectReference(previousProject.Id) } : null)
             .WithAnalyzerConfigDocuments(analyzerConfigDocuments));
 

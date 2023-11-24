@@ -12,7 +12,7 @@ internal sealed class DocumentCollection : ObservableCollection<DocumentViewMode
 
     public DocumentCollection(IEnumerable<DocumentViewModel> items)
     {
-        _dictionary = new Dictionary<string, DocumentViewModel>();
+        _dictionary = [];
 
         foreach (var item in items)
         {

@@ -2,7 +2,7 @@
 {
     public const string NuGetPrefix = "nuget:";
 
-    private static readonly char[] s_nugetSeparators = new[] { '/', ',' };
+    private static readonly char[] s_nugetSeparators = ['/', ','];
 
     public static (string id, string? version) ParseNuGetReference(string value)
     {

@@ -37,7 +37,7 @@ public class DocumentFileWatcher : IDisposable, IObservable<DocumentFileChanged>
     public DocumentFileWatcher(IAppDispatcher appDispatcher)
     {
         _appDispatcher = appDispatcher;
-        _observers = new List<IObserver<DocumentFileChanged>>();
+        _observers = [];
         _fileSystemWatcher = new FileSystemWatcher();
         _fileSystemWatcher.Created += OnChanged;
         _fileSystemWatcher.Renamed += OnRenamed;

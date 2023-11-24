@@ -27,11 +27,11 @@ internal sealed class Compiler
         OutputKind = outputKind;
         Platform = platform;
         ParseOptions = parseOptions;
-        References = references?.AsImmutable() ?? ImmutableArray<MetadataReference>.Empty;
-        Usings = usings?.AsImmutable() ?? ImmutableArray<string>.Empty;
+        References = references?.AsImmutable() ?? [];
+        Usings = usings?.AsImmutable() ?? [];
         SourceResolver = sourceResolver ??
                          (workingDirectory != null
-                             ? new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory)
+                             ? new SourceFileResolver([], workingDirectory)
                              : SourceFileResolver.Default);
     }
 
@@ -104,7 +104,7 @@ internal sealed class Compiler
     {
         if (diagnostics.IsEmptyWithoutResolution)
         {
-            return ImmutableArray<Diagnostic>.Empty;
+            return [];
         }
 
         return diagnostics.AsEnumerable().Where(d =>

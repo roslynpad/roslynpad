@@ -191,8 +191,8 @@ internal sealed class SnippetManager
 
     private List<CodeSnippet> GetWindowsSnippets()
     {
-        return new List<CodeSnippet>
-        {
+        return
+        [
             new CodeSnippet
             (
                 "desktopapp",
@@ -200,6 +200,6 @@ internal sealed class SnippetManager
                 "#r \"framework: Microsoft.WindowsDesktop.App\"\nawait Helpers.RunWpfAsync();\n\n${Selection}",
                 "#r"
             )
-        };
+        ];
     }
 }

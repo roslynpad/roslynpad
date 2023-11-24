@@ -96,7 +96,7 @@ public class MainViewModelBase : NotificationObject
 
         _documentRoot = CreateDocumentRoot();
 
-        OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
+        OpenDocuments = [];
         OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
     }
 
@@ -671,7 +671,7 @@ public class MainViewModelBase : NotificationObject
 
     private class DocumentWatcher : IDisposable
     {
-        private static readonly char[] s_pathSeparators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+        private static readonly char[] s_pathSeparators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
 
         private readonly DocumentViewModel _documentRoot;
         private readonly IDisposable _subscription;
