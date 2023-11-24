@@ -30,16 +30,10 @@ using ICSharpCode.AvalonEdit.Document;
 
 namespace RoslynPad.Editor;
 
-internal sealed class TextMarkerToolTipProvider
+internal sealed class TextMarkerToolTipProvider(TextMarkerService textMarkerService, TextEditor editor)
 {
-    private readonly TextMarkerService _textMarkerService;
-    private readonly TextEditor _editor;
-
-    public TextMarkerToolTipProvider(TextMarkerService textMarkerService, TextEditor editor)
-    {
-        _textMarkerService = textMarkerService;
-        _editor = editor;
-    }
+    private readonly TextMarkerService _textMarkerService = textMarkerService;
+    private readonly TextEditor _editor = editor;
 
     public void HandleToolTipRequest(ToolTipRequestEventArgs args)
     {

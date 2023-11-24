@@ -84,23 +84,19 @@ public static class Helpers
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public readonly struct SynchronizationContextAwaitable
+    public readonly struct SynchronizationContextAwaitable(Task<SynchronizationContext> task)
     {
-        private readonly Task<SynchronizationContext> _task;
-
-        public SynchronizationContextAwaitable(Task<SynchronizationContext> task) => _task = task;
+        private readonly Task<SynchronizationContext> _task = task;
 
         public SynchronizationContextAwaiter GetAwaiter() => new(_task);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public readonly struct SynchronizationContextAwaiter : INotifyCompletion
+    public readonly struct SynchronizationContextAwaiter(Task<SynchronizationContext> task) : INotifyCompletion
     {
         private static readonly SendOrPostCallback s_postCallback = state => ((Action)state!)();
 
-        private readonly Task<SynchronizationContext> _task;
-
-        public SynchronizationContextAwaiter(Task<SynchronizationContext> task) => _task = task;
+        private readonly Task<SynchronizationContext> _task = task;
 
         public bool IsCompleted => false;
 

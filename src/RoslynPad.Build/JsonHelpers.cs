@@ -21,17 +21,10 @@ internal static class JsonHelpers
         return new SpanDisposer(array.AsSpan(0, length), array);
     }
 
-    public readonly ref struct SpanDisposer
+    public readonly ref struct SpanDisposer(ReadOnlySpan<byte> span, byte[]? array = null)
     {
-        private readonly byte[]? _array;
-
-        public SpanDisposer(ReadOnlySpan<byte> span, byte[]? array = null)
-        {
-            Span = span;
-            _array = array;
-        }
-
-        public readonly ReadOnlySpan<byte> Span;
+        private readonly byte[]? _array = array;
+        public readonly ReadOnlySpan<byte> Span = span;
 
         public void Dispose()
         {

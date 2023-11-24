@@ -3,34 +3,22 @@ using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Build;
 
-internal class ExecutionHostParameters
+internal class ExecutionHostParameters(
+    string buildPath,
+    string nuGetConfigPath,
+    ImmutableArray<string> imports,
+    ImmutableArray<string> disabledDiagnostics,
+    string workingDirectory,
+    SourceCodeKind sourceCodeKind,
+    bool checkOverflow = false,
+    bool allowUnsafe = true)
 {
-    public ExecutionHostParameters(
-        string buildPath,
-        string nuGetConfigPath,
-        ImmutableArray<string> imports,
-        ImmutableArray<string> disabledDiagnostics,
-        string workingDirectory,
-        SourceCodeKind sourceCodeKind,
-        bool checkOverflow = false,
-        bool allowUnsafe = true)
-    {
-        BuildPath = buildPath;
-        NuGetConfigPath = nuGetConfigPath;
-        Imports = imports;
-        DisabledDiagnostics = disabledDiagnostics;
-        WorkingDirectory = workingDirectory;
-        SourceCodeKind = sourceCodeKind;
-        CheckOverflow = checkOverflow;
-        AllowUnsafe = allowUnsafe;
-    }
-
-    public string BuildPath { get; }
-    public string NuGetConfigPath { get; }
-    public ImmutableArray<string> Imports { get; set; }
-    public ImmutableArray<string> DisabledDiagnostics { get; }
-    public string WorkingDirectory { get; set; }
-    public SourceCodeKind SourceCodeKind { get; set; }
-    public bool CheckOverflow { get; }
-    public bool AllowUnsafe { get; }
+    public string BuildPath { get; } = buildPath;
+    public string NuGetConfigPath { get; } = nuGetConfigPath;
+    public ImmutableArray<string> Imports { get; set; } = imports;
+    public ImmutableArray<string> DisabledDiagnostics { get; } = disabledDiagnostics;
+    public string WorkingDirectory { get; set; } = workingDirectory;
+    public SourceCodeKind SourceCodeKind { get; set; } = sourceCodeKind;
+    public bool CheckOverflow { get; } = checkOverflow;
+    public bool AllowUnsafe { get; } = allowUnsafe;
 }

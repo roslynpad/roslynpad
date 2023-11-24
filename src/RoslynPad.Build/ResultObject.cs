@@ -109,19 +109,12 @@ public class CompilationErrorResultObject : IResultObject
     public void WriteTo(StringBuilder builder) => builder.Append(ToString());
 }
 
-public class RestoreResultObject : IResultObject
+public class RestoreResultObject(string message, string severity, string? value = null) : IResultObject
 {
-    private readonly string? _value;
+    private readonly string? _value = value;
 
-    public RestoreResultObject(string message, string severity, string? value = null)
-    {
-        Message = message;
-        Severity = severity;
-        _value = value;
-    }
-
-    public string Message { get; set; }
-    public string Severity { get; set; }
+    public string Message { get; set; } = message;
+    public string Severity { get; set; } = severity;
     public string Value => _value ?? Message;
 
     public void WriteTo(StringBuilder builder) => builder.Append(Value);

@@ -19,15 +19,9 @@ public static class ProeprtyExtensions
         (options & value) == value;
 }
 
-public class CommonPropertyChangedArgs<T>
+public class CommonPropertyChangedArgs<T>(T oldValue, T newValue)
 {
-    public T OldValue { get; }
+    public T OldValue { get; } = oldValue;
 
-    public T NewValue { get; }
-
-    public CommonPropertyChangedArgs(T oldValue, T newValue)
-    {
-        OldValue = oldValue;
-        NewValue = newValue;
-    }
+    public T NewValue { get; } = newValue;
 }

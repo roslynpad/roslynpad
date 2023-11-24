@@ -27,21 +27,13 @@ using ICSharpCode.AvalonEdit.Snippets;
 
 namespace RoslynPad.Editor;
 
-internal sealed class CodeSnippet
+internal sealed class CodeSnippet(string name, string description, string text, string keyword)
 {
-    public CodeSnippet(string name, string description, string text, string keyword)
-    {
-        Name = name;
-        Text = text;
-        Description = description;
-        Keyword = keyword;
-    }
+    public string Name { get; } = name;
 
-    public string Name { get; }
+    public string Text { get; } = text;
 
-    public string Text { get; }
-
-    public string Description { get; }
+    public string Description { get; } = description;
 
     public bool HasSelection
     {
@@ -53,7 +45,7 @@ internal sealed class CodeSnippet
         }
     }
 
-    public string Keyword { get; }
+    public string Keyword { get; } = keyword;
 
     public Snippet CreateAvalonEditSnippet()
     {

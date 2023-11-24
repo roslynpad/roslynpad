@@ -3,19 +3,13 @@ using System.IO;
 
 namespace RoslynPad.Runtime;
 
-internal class ConsoleReader : TextReader
+internal class ConsoleReader(JsonConsoleDumper dumper) : TextReader
 {
-    private readonly TextReader _reader;
-    private readonly JsonConsoleDumper _dumper;
+    private readonly TextReader _reader = new StreamReader(Console.OpenStandardInput());
+    private readonly JsonConsoleDumper _dumper = dumper;
 
     private string? _readString;
     private int _readPosition;
-
-    public ConsoleReader(JsonConsoleDumper dumper)
-    {
-        _dumper = dumper;
-        _reader = new StreamReader(Console.OpenStandardInput());
-    }
 
     public override int Read()
     {

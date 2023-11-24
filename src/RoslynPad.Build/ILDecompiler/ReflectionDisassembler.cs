@@ -28,19 +28,12 @@ namespace RoslynPad.Build.ILDecompiler;
 /// <summary>
 /// Disassembles type and member definitions.
 /// </summary>
-internal sealed class ReflectionDisassembler
+internal sealed class ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
 {
-    private readonly ITextOutput _output;
-    private readonly CancellationToken _cancellationToken;
+    private readonly ITextOutput _output = output ?? throw new ArgumentNullException(nameof(output));
+    private readonly CancellationToken _cancellationToken = cancellationToken;
     private bool _isInType; // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
-    private readonly MethodBodyDisassembler _methodBodyDisassembler;
-
-    public ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
-    {
-        _output = output ?? throw new ArgumentNullException(nameof(output));
-        _cancellationToken = cancellationToken;
-        _methodBodyDisassembler = new MethodBodyDisassembler(output, detectControlStructure);
-    }
+    private readonly MethodBodyDisassembler _methodBodyDisassembler = new MethodBodyDisassembler(output, detectControlStructure);
 
     #region Disassemble Method
 

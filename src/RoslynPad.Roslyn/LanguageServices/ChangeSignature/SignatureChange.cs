@@ -1,15 +1,9 @@
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature;
 
-internal sealed class SignatureChange
+internal sealed class SignatureChange(ParameterConfiguration originalConfiguration, ParameterConfiguration updatedConfiguration)
 {
-    public SignatureChange(ParameterConfiguration originalConfiguration, ParameterConfiguration updatedConfiguration)
-    {
-        OriginalConfiguration = originalConfiguration;
-        UpdatedConfiguration = updatedConfiguration;
-    }
-
-    public ParameterConfiguration OriginalConfiguration { get; }
-    public ParameterConfiguration UpdatedConfiguration { get; }
+    public ParameterConfiguration OriginalConfiguration { get; } = originalConfiguration;
+    public ParameterConfiguration UpdatedConfiguration { get; } = updatedConfiguration;
 
     internal Microsoft.CodeAnalysis.ChangeSignature.SignatureChange ToInternal()
     {

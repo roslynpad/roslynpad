@@ -11,17 +11,11 @@ using Microsoft.CodeAnalysis.Text;
 namespace RoslynPad.Roslyn.CodeRefactorings;
 
 [Export(typeof(ICodeRefactoringService)), Shared]
-internal sealed class CodeRefactoringService : ICodeRefactoringService
+[method: ImportingConstructor]
+internal sealed class CodeRefactoringService(Microsoft.CodeAnalysis.CodeRefactorings.ICodeRefactoringService inner, IGlobalOptionService globalOption) : ICodeRefactoringService
 {
-    private readonly Microsoft.CodeAnalysis.CodeRefactorings.ICodeRefactoringService _inner;
-    private readonly IGlobalOptionService _globalOption;
-
-    [ImportingConstructor]
-    public CodeRefactoringService(Microsoft.CodeAnalysis.CodeRefactorings.ICodeRefactoringService inner, IGlobalOptionService globalOption)
-    {
-        _inner = inner;
-        _globalOption = globalOption;
-    }
+    private readonly Microsoft.CodeAnalysis.CodeRefactorings.ICodeRefactoringService _inner = inner;
+    private readonly IGlobalOptionService _globalOption = globalOption;
 
     public Task<bool> HasRefactoringsAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
     {

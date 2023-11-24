@@ -622,38 +622,30 @@ public class SearchReplacePanel : Control
 /// <summary>
 /// EventArgs for <see cref="SearchReplacePanel.SearchOptionsChanged"/> event.
 /// </summary>
-public class SearchOptionsChangedEventArgs : EventArgs
+/// <remarks>
+/// Creates a new SearchOptionsChangedEventArgs instance.
+/// </remarks>
+public class SearchOptionsChangedEventArgs(string searchPattern, bool matchCase, bool useRegex, bool wholeWords) : EventArgs
 {
     /// <summary>
     /// Gets the search pattern.
     /// </summary>
-    public string SearchPattern { get; private set; }
+    public string SearchPattern { get; private set; } = searchPattern;
 
     /// <summary>
     /// Gets whether the search pattern should be interpreted case-sensitive.
     /// </summary>
-    public bool MatchCase { get; private set; }
+    public bool MatchCase { get; private set; } = matchCase;
 
     /// <summary>
     /// Gets whether the search pattern should be interpreted as regular expression.
     /// </summary>
-    public bool UseRegex { get; private set; }
+    public bool UseRegex { get; private set; } = useRegex;
 
     /// <summary>
     /// Gets whether the search pattern should only match whole words.
     /// </summary>
-    public bool WholeWords { get; private set; }
-
-    /// <summary>
-    /// Creates a new SearchOptionsChangedEventArgs instance.
-    /// </summary>
-    public SearchOptionsChangedEventArgs(string searchPattern, bool matchCase, bool useRegex, bool wholeWords)
-    {
-        SearchPattern = searchPattern;
-        MatchCase = matchCase;
-        UseRegex = useRegex;
-        WholeWords = wholeWords;
-    }
+    public bool WholeWords { get; private set; } = wholeWords;
 }
 
 class SearchReplacePanelAdorner : Adorner

@@ -71,39 +71,24 @@ public static class ObjectExtensions
     internal delegate void DumpDelegate(in DumpData data);
 }
 
-internal readonly struct DumpData
+internal readonly struct DumpData(object? o, string? header, DumpQuotas quotas)
 {
-    public object? Object { get; }
-    public string? Header { get; }
-    public DumpQuotas Quotas { get; }
-
-    public DumpData(object? o, string? header, DumpQuotas quotas)
-    {
-        Object = o;
-        Header = header;
-        Quotas = quotas;
-    }
+    public object? Object { get; } = o;
+    public string? Header { get; } = header;
+    public DumpQuotas Quotas { get; } = quotas;
 }
 
-internal struct DumpQuotas
+internal struct DumpQuotas(int maxDepth, int maxExpandedDepth, int maxEnumerableLength, int maxStringLength)
 {
     internal const int DefaultMaxDepth = 4;
     internal const int DefaultMaxExpandedDepth = 1;
     internal const int DefaultMaxStringLength = 10000;
     internal const int DefaultMaxEnumerableLength = 10000;
 
-    public int MaxDepth { get; }
-    public int MaxExpandedDepth { get; }
-    public int MaxEnumerableLength { get; }
-    public int MaxStringLength { get; }
-
-    public DumpQuotas(int maxDepth, int maxExpandedDepth, int maxEnumerableLength, int maxStringLength)
-    {
-        MaxDepth = maxDepth;
-        MaxExpandedDepth = maxExpandedDepth;
-        MaxEnumerableLength = maxEnumerableLength;
-        MaxStringLength = maxStringLength;
-    }
+    public int MaxDepth { get; } = maxDepth;
+    public int MaxExpandedDepth { get; } = maxExpandedDepth;
+    public int MaxEnumerableLength { get; } = maxEnumerableLength;
+    public int MaxStringLength { get; } = maxStringLength;
 
     public static DumpQuotas Default { get; } = new DumpQuotas(DefaultMaxDepth, DefaultMaxExpandedDepth, DefaultMaxEnumerableLength, DefaultMaxStringLength);
 

@@ -6,15 +6,11 @@ using Microsoft.CodeAnalysis.Host.Mef;
 namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature;
 
 [ExportWorkspaceService(typeof(IChangeSignatureOptionsService))]
-internal sealed class ChangeSignatureOptionsService : IChangeSignatureOptionsService
+[method: ImportingConstructor]
+internal sealed class ChangeSignatureOptionsService(ExportFactory<IChangeSignatureDialog> dialogFactory) : IChangeSignatureOptionsService
 {
-    private readonly ExportFactory<IChangeSignatureDialog> _dialogFactory;
+    private readonly ExportFactory<IChangeSignatureDialog> _dialogFactory = dialogFactory;
 
-    [ImportingConstructor]
-    public ChangeSignatureOptionsService(ExportFactory<IChangeSignatureDialog> dialogFactory)
-    {
-        _dialogFactory = dialogFactory;
-    }
     public ChangeSignatureOptionsResult? GetChangeSignatureOptions(Document document, int positionForTypeBinding, ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters)
     {
         var viewModel = new ChangeSignatureDialogViewModel(new ParameterConfiguration(parameters), symbol);

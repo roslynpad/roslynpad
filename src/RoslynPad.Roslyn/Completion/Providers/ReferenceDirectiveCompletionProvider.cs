@@ -12,7 +12,8 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace RoslynPad.Roslyn.Completion.Providers;
 
 [ExportCompletionProvider("ReferenceDirectiveCompletionProvider", LanguageNames.CSharp)]
-internal class ReferenceDirectiveCompletionProvider : AbstractReferenceDirectiveCompletionProvider
+[method: ImportingConstructor]
+internal class ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)] INuGetCompletionProvider nuGetCompletionProvider) : AbstractReferenceDirectiveCompletionProvider
 {
     private static readonly CompletionItemRules s_rules = CompletionItemRules.Create(
         filterCharacterRules: [],
@@ -20,13 +21,7 @@ internal class ReferenceDirectiveCompletionProvider : AbstractReferenceDirective
         enterKeyRule: EnterKeyRule.Never,
         selectionBehavior: CompletionItemSelectionBehavior.SoftSelection);
 
-    private readonly INuGetCompletionProvider _nuGetCompletionProvider;
-
-    [ImportingConstructor]
-    public ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)] INuGetCompletionProvider nuGetCompletionProvider)
-    {
-        _nuGetCompletionProvider = nuGetCompletionProvider;
-    }
+    private readonly INuGetCompletionProvider _nuGetCompletionProvider = nuGetCompletionProvider;
 
     private CompletionItem CreateNuGetRoot()
         => CommonCompletionItem.Create(

@@ -56,28 +56,16 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
         return new ClassifiableDeferredContent(content);
     }
 
-    private class QuickInfoDisplayDeferredContent : IDeferredQuickInfoContent
+    private class QuickInfoDisplayDeferredContent(IDeferredQuickInfoContent? symbolGlyph, IDeferredQuickInfoContent? warningGlyph, IDeferredQuickInfoContent mainDescription, IDeferredQuickInfoContent documentation, IDeferredQuickInfoContent typeParameterMap, IDeferredQuickInfoContent anonymousTypes, IDeferredQuickInfoContent usageText, IDeferredQuickInfoContent exceptionText) : IDeferredQuickInfoContent
     {
-        private readonly IDeferredQuickInfoContent? _symbolGlyph;
-        private readonly IDeferredQuickInfoContent? _warningGlyph;
-        private readonly IDeferredQuickInfoContent _mainDescription;
-        private readonly IDeferredQuickInfoContent _documentation;
-        private readonly IDeferredQuickInfoContent _typeParameterMap;
-        private readonly IDeferredQuickInfoContent _anonymousTypes;
-        private readonly IDeferredQuickInfoContent _usageText;
-        private readonly IDeferredQuickInfoContent _exceptionText;
-
-        public QuickInfoDisplayDeferredContent(IDeferredQuickInfoContent? symbolGlyph, IDeferredQuickInfoContent? warningGlyph, IDeferredQuickInfoContent mainDescription, IDeferredQuickInfoContent documentation, IDeferredQuickInfoContent typeParameterMap, IDeferredQuickInfoContent anonymousTypes, IDeferredQuickInfoContent usageText, IDeferredQuickInfoContent exceptionText)
-        {
-            _symbolGlyph = symbolGlyph;
-            _warningGlyph = warningGlyph;
-            _mainDescription = mainDescription;
-            _documentation = documentation;
-            _typeParameterMap = typeParameterMap;
-            _anonymousTypes = anonymousTypes;
-            _usageText = usageText;
-            _exceptionText = exceptionText;
-        }
+        private readonly IDeferredQuickInfoContent? _symbolGlyph = symbolGlyph;
+        private readonly IDeferredQuickInfoContent? _warningGlyph = warningGlyph;
+        private readonly IDeferredQuickInfoContent _mainDescription = mainDescription;
+        private readonly IDeferredQuickInfoContent _documentation = documentation;
+        private readonly IDeferredQuickInfoContent _typeParameterMap = typeParameterMap;
+        private readonly IDeferredQuickInfoContent _anonymousTypes = anonymousTypes;
+        private readonly IDeferredQuickInfoContent _usageText = usageText;
+        private readonly IDeferredQuickInfoContent _exceptionText = exceptionText;
 
         public object Create()
         {
@@ -258,13 +246,8 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
         }
     }
 
-    private class SymbolGlyphDeferredContent : IDeferredQuickInfoContent
+    private class SymbolGlyphDeferredContent(Glyph glyph) : IDeferredQuickInfoContent
     {
-        public SymbolGlyphDeferredContent(Glyph glyph)
-        {
-            Glyph = glyph;
-        }
-
         public object Create()
         {
             var image = new Image
@@ -276,17 +259,12 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
             return image;
         }
 
-        private Glyph Glyph { get; }
+        private Glyph Glyph { get; } = glyph;
     }
 
-    private class ClassifiableDeferredContent : IDeferredQuickInfoContent
+    private class ClassifiableDeferredContent(IList<TaggedText> content) : IDeferredQuickInfoContent
     {
-        private readonly IList<TaggedText> _classifiableContent;
-
-        public ClassifiableDeferredContent(IList<TaggedText> content)
-        {
-            _classifiableContent = content;
-        }
+        private readonly IList<TaggedText> _classifiableContent = content;
 
         public object Create()
         {
@@ -297,14 +275,9 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
         }
     }
 
-    private class DocumentationCommentDeferredContent : IDeferredQuickInfoContent
+    private class DocumentationCommentDeferredContent(string? documentationComment) : IDeferredQuickInfoContent
     {
-        private readonly string? _documentationComment;
-
-        public DocumentationCommentDeferredContent(string? documentationComment)
-        {
-            _documentationComment = documentationComment;
-        }
+        private readonly string? _documentationComment = documentationComment;
 
         public object Create()
         {

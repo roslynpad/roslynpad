@@ -1,17 +1,10 @@
 namespace RoslynPad.Roslyn.Snippets;
 
-public sealed class SnippetInfo
+public sealed class SnippetInfo(string shortcut, string title, string description)
 {
-    public string Shortcut { get; }
+    public string Shortcut { get; } = shortcut;
 
-    public string Title { get; }
+    public string Title { get; } = title;
 
-    public string Description { get; }
-
-    public SnippetInfo(string shortcut, string title, string description)
-    {
-        Shortcut = shortcut;
-        Title = title;
-        Description = description;
-    }
+    public string Description { get; } = description;
 }

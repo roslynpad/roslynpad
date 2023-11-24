@@ -92,17 +92,11 @@ public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataEr
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
     }
 
-    protected class ErrorInfo
+    protected class ErrorInfo(string id, string message)
     {
-        public ErrorInfo(string id, string message)
-        {
-            Id = id;
-            Message = message;
-        }
+        public string Id { get; } = id;
 
-        public string Id { get; }
-
-        public string Message { get; }
+        public string Message { get; } = message;
 
         public override string ToString() => Message;
     }

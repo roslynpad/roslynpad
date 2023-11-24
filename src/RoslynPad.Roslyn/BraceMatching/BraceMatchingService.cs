@@ -13,16 +13,11 @@ using Microsoft.CodeAnalysis.Host.Mef;
 namespace RoslynPad.Roslyn.BraceMatching;
 
 [Export(typeof(IBraceMatchingService))]
-internal class BraceMatchingService : IBraceMatchingService
+[method: ImportingConstructor]
+internal class BraceMatchingService(
+    [ImportMany] IEnumerable<Lazy<IBraceMatcher, LanguageMetadata>> braceMatchers) : IBraceMatchingService
 {
-    private readonly ImmutableArray<Lazy<IBraceMatcher, LanguageMetadata>> _braceMatchers;
-
-    [ImportingConstructor]
-    public BraceMatchingService(
-        [ImportMany] IEnumerable<Lazy<IBraceMatcher, LanguageMetadata>> braceMatchers)
-    {
-        _braceMatchers = braceMatchers.ToImmutableArray();
-    }
+    private readonly ImmutableArray<Lazy<IBraceMatcher, LanguageMetadata>> _braceMatchers = braceMatchers.ToImmutableArray();
 
     public async Task<BraceMatchingResult?> GetMatchingBracesAsync(Document document, int position, CancellationToken cancellationToken)
     {

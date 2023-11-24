@@ -14,15 +14,10 @@ using Microsoft.CodeAnalysis.Notification;
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface;
 
 [ExportWorkspaceService(typeof(IExtractInterfaceOptionsService))]
-internal sealed class ExtractInterfaceOptionsService : IExtractInterfaceOptionsService
+[method: ImportingConstructor]
+internal sealed class ExtractInterfaceOptionsService(ExportFactory<IExtractInterfaceDialog> dialogFactory) : IExtractInterfaceOptionsService
 {
-    private readonly ExportFactory<IExtractInterfaceDialog> _dialogFactory;
-
-    [ImportingConstructor]
-    public ExtractInterfaceOptionsService(ExportFactory<IExtractInterfaceDialog> dialogFactory)
-    {
-        _dialogFactory = dialogFactory;
-    }
+    private readonly ExportFactory<IExtractInterfaceDialog> _dialogFactory = dialogFactory;
 
     public Task<ExtractInterfaceOptionsResult> GetExtractInterfaceOptionsAsync(
         ISyntaxFactsService syntaxFactsService,

@@ -10,41 +10,27 @@ using Microsoft.CodeAnalysis.Emit;
 
 namespace RoslynPad.Roslyn;
 
-internal sealed class Compiler
+internal sealed class Compiler(ImmutableList<SyntaxTree> syntaxTrees, CSharpParseOptions parseOptions,
+    OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+    Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
+    IEnumerable<string>? usings = null, string? workingDirectory = null,
+    SourceReferenceResolver? sourceResolver = null,
+    OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
+    bool checkOverflow = false, bool allowUnsafe = true)
 {
-    public Compiler(ImmutableList<SyntaxTree> syntaxTrees, CSharpParseOptions parseOptions,
-        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
-        Platform platform = Platform.AnyCpu, IEnumerable<MetadataReference>? references = null,
-        IEnumerable<string>? usings = null, string? workingDirectory = null,
-        SourceReferenceResolver? sourceResolver = null,
-        OptimizationLevel optimizationLevel = OptimizationLevel.Debug,
-        bool checkOverflow = false, bool allowUnsafe = true)
-    {
-        OptimizationLevel = optimizationLevel;
-        CheckOverflow = checkOverflow;
-        AllowUnsafe = allowUnsafe;
-        SyntaxTrees = syntaxTrees;
-        OutputKind = outputKind;
-        Platform = platform;
-        ParseOptions = parseOptions;
-        References = references?.AsImmutable() ?? [];
-        Usings = usings?.AsImmutable() ?? [];
-        SourceResolver = sourceResolver ??
+    public ImmutableList<SyntaxTree> SyntaxTrees { get; } = syntaxTrees;
+    public OutputKind OutputKind { get; } = outputKind;
+    public Platform Platform { get; } = platform;
+    public ImmutableArray<MetadataReference> References { get; } = references?.AsImmutable() ?? [];
+    public SourceReferenceResolver SourceResolver { get; } = sourceResolver ??
                          (workingDirectory != null
                              ? new SourceFileResolver([], workingDirectory)
                              : SourceFileResolver.Default);
-    }
-
-    public ImmutableList<SyntaxTree> SyntaxTrees { get; }
-    public OutputKind OutputKind { get; }
-    public Platform Platform { get; }
-    public ImmutableArray<MetadataReference> References { get; }
-    public SourceReferenceResolver SourceResolver { get; }
-    public ImmutableArray<string> Usings { get; }
-    public CSharpParseOptions ParseOptions { get; }
-    public OptimizationLevel OptimizationLevel { get; }
-    public bool CheckOverflow { get; }
-    public bool AllowUnsafe { get; }
+    public ImmutableArray<string> Usings { get; } = usings?.AsImmutable() ?? [];
+    public CSharpParseOptions ParseOptions { get; } = parseOptions;
+    public OptimizationLevel OptimizationLevel { get; } = optimizationLevel;
+    public bool CheckOverflow { get; } = checkOverflow;
+    public bool AllowUnsafe { get; } = allowUnsafe;
 
     public ImmutableArray<Diagnostic> CompileAndSaveAssembly(string assemblyPath, CancellationToken cancellationToken = default)
     {

@@ -15,16 +15,10 @@ internal sealed class AddMetadataReferenceCodeActionOperationFactoryWorkspaceSer
         return new AddMetadataReferenceOperation(projectId, assemblyIdentity);
     }
 
-    private class AddMetadataReferenceOperation : CodeActionOperation
+    private class AddMetadataReferenceOperation(ProjectId projectId, AssemblyIdentity assemblyIdentity) : CodeActionOperation
     {
-        private readonly AssemblyIdentity _assemblyIdentity;
-        private readonly ProjectId _projectId;
-
-        public AddMetadataReferenceOperation(ProjectId projectId, AssemblyIdentity assemblyIdentity)
-        {
-            _projectId = projectId;
-            _assemblyIdentity = assemblyIdentity;
-        }
+        private readonly AssemblyIdentity _assemblyIdentity = assemblyIdentity;
+        private readonly ProjectId _projectId = projectId;
 
         public override void Apply(Workspace workspace, CancellationToken cancellationToken)
         {

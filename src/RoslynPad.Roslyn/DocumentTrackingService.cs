@@ -9,16 +9,11 @@ namespace RoslynPad.Roslyn;
 [ExportWorkspaceServiceFactory(typeof(IDocumentTrackingService), ServiceLayer.Host)]
 internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
 {
-    private class DocumentTrackingService : IDocumentTrackingService
+    private class DocumentTrackingService(Workspace workspace) : IDocumentTrackingService
     {
-        private readonly RoslynWorkspace _workspace;
+        private readonly RoslynWorkspace _workspace = (RoslynWorkspace)workspace;
 
         public bool SupportsDocumentTracking => true;
-
-        public DocumentTrackingService(Workspace workspace)
-        {
-            _workspace = (RoslynWorkspace)workspace;
-        }
 
         public DocumentId GetActiveDocument() => _workspace.OpenDocumentId ?? throw new InvalidOperationException("No active document");
 

@@ -150,23 +150,16 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
         set => SetProperty(ref _fileName, value);
     }
 
-    internal class MemberSymbolViewModel : NotificationObject
+    internal class MemberSymbolViewModel(ISymbol symbol) : NotificationObject
     {
-        public ISymbol MemberSymbol { get; }
+        public ISymbol MemberSymbol { get; } = symbol;
 
         private static readonly SymbolDisplayFormat s_memberDisplayFormat = new(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeOptionalBrackets,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
-
-        public MemberSymbolViewModel(ISymbol symbol)
-        {
-            MemberSymbol = symbol;
-            _isChecked = true;
-        }
-
-        private bool _isChecked;
+        private bool _isChecked = true;
         public bool IsChecked
         {
             get => _isChecked;

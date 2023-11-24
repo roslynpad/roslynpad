@@ -25,16 +25,10 @@ namespace RoslynPad.Build.ILDecompiler;
 /// <summary>
 /// Disassembles a method body.
 /// </summary>
-internal sealed class MethodBodyDisassembler
+internal sealed class MethodBodyDisassembler(ITextOutput output, bool detectControlStructure)
 {
-    private readonly ITextOutput _output;
-    private readonly bool _detectControlStructure;
-
-    public MethodBodyDisassembler(ITextOutput output, bool detectControlStructure)
-    {
-        _output = output ?? throw new ArgumentNullException(nameof(output));
-        _detectControlStructure = detectControlStructure;
-    }
+    private readonly ITextOutput _output = output ?? throw new ArgumentNullException(nameof(output));
+    private readonly bool _detectControlStructure = detectControlStructure;
 
     public void Disassemble(MethodBody body)
     {

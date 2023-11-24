@@ -10,15 +10,10 @@ using Microsoft.CodeAnalysis.PickMembers;
 namespace RoslynPad.Roslyn.LanguageServices.PickMembers;
 
 [ExportWorkspaceService(typeof(IPickMembersService), ServiceLayer.Host), Shared]
-internal class PickMembersService : IPickMembersService
+[method: ImportingConstructor]
+internal class PickMembersService(ExportFactory<IPickMembersDialog> dialogFactory) : IPickMembersService
 {
-    private readonly ExportFactory<IPickMembersDialog> _dialogFactory;
-
-    [ImportingConstructor]
-    public PickMembersService(ExportFactory<IPickMembersDialog> dialogFactory)
-    {
-        _dialogFactory = dialogFactory;
-    }
+    private readonly ExportFactory<IPickMembersDialog> _dialogFactory = dialogFactory;
 
     public PickMembersResult PickMembers(
         string title, ImmutableArray<ISymbol> members, ImmutableArray<PickMembersOption> options = default, bool selectAll = true)

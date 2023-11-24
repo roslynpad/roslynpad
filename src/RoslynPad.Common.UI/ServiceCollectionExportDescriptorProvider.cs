@@ -6,16 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace RoslynPad;
 
-public class ServiceCollectionExportDescriptorProvider : ExportDescriptorProvider
+public class ServiceCollectionExportDescriptorProvider(ServiceCollection services) : ExportDescriptorProvider
 {
-    private readonly Dictionary<Type, ServiceDescriptor> _services;
-    private readonly ServiceProvider _serviceProvider;
-
-    public ServiceCollectionExportDescriptorProvider(ServiceCollection services)
-    {
-        _services = services.GroupBy(s => s.ServiceType).Select(s => s.Last()).ToDictionary(s => s.ServiceType);
-        _serviceProvider = services.BuildServiceProvider();
-    }
+    private readonly Dictionary<Type, ServiceDescriptor> _services = services.GroupBy(s => s.ServiceType).Select(s => s.Last()).ToDictionary(s => s.ServiceType);
+    private readonly ServiceProvider _serviceProvider = services.BuildServiceProvider();
 
     public override IEnumerable<ExportDescriptorPromise> GetExportDescriptors(CompositionContract contract, DependencyAccessor descriptorAccessor)
     {

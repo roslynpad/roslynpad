@@ -13,17 +13,11 @@ public enum DocumentFileChangeType
     Renamed
 }
 
-public class DocumentFileChanged
+public class DocumentFileChanged(DocumentFileChangeType type, string path, string? newPath = null)
 {
-    public DocumentFileChanged(DocumentFileChangeType type, string path, string? newPath = null)
-    {
-        Type = type;
-        Path = path;
-        NewPath = newPath;
-    }
-    public DocumentFileChangeType Type { get; }
-    public string Path { get; }
-    public string? NewPath { get; }
+    public DocumentFileChangeType Type { get; } = type;
+    public string Path { get; } = path;
+    public string? NewPath { get; } = newPath;
 }
 
 [Export]

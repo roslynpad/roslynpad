@@ -333,18 +333,12 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
         }
     }
 
-    public class ParameterViewModel
+    public class ParameterViewModel(ChangeSignatureDialogViewModel changeSignatureDialogViewModel, ExistingParameter parameter)
     {
-        private readonly ChangeSignatureDialogViewModel _changeSignatureDialogViewModel;
+        private readonly ChangeSignatureDialogViewModel _changeSignatureDialogViewModel = changeSignatureDialogViewModel;
 
-        public ExistingParameter Parameter { get; }
+        public ExistingParameter Parameter { get; } = parameter;
         public IParameterSymbol ParameterSymbol => Parameter.Symbol;
-
-        public ParameterViewModel(ChangeSignatureDialogViewModel changeSignatureDialogViewModel, ExistingParameter parameter)
-        {
-            _changeSignatureDialogViewModel = changeSignatureDialogViewModel;
-            Parameter = parameter;
-        }
 
         public string Modifier
         {

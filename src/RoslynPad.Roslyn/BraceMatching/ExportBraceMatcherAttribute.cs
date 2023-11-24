@@ -7,13 +7,7 @@ namespace RoslynPad.Roslyn.BraceMatching;
 
 [MetadataAttribute]
 [AttributeUsage(AttributeTargets.Class)]
-internal class ExportBraceMatcherAttribute : ExportAttribute
+internal class ExportBraceMatcherAttribute(string language) : ExportAttribute(typeof(IBraceMatcher))
 {
-    public string Language { get; }
-
-    public ExportBraceMatcherAttribute(string language)
-        : base(typeof(IBraceMatcher))
-    {
-        Language = language ?? throw new ArgumentNullException(nameof(language));
-    }
+    public string Language { get; } = language ?? throw new ArgumentNullException(nameof(language));
 }

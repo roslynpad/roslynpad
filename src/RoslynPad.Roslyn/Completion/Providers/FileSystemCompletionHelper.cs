@@ -16,35 +16,25 @@ using Roslyn.Utilities;
 
 namespace RoslynPad.Roslyn;
 
-internal class FileSystemCompletionHelper
+internal class FileSystemCompletionHelper(
+    Glyph folderGlyph,
+    Glyph fileGlyph,
+    ImmutableArray<string> searchPaths,
+    string baseDirectoryOpt,
+    ImmutableArray<string> allowableExtensions,
+    CompletionItemRules itemRules)
 {
     private static readonly char[] s_windowsDirectorySeparator = ['\\'];
 
-    private readonly Glyph _folderGlyph;
-    private readonly Glyph _fileGlyph;
+    private readonly Glyph _folderGlyph = folderGlyph;
+    private readonly Glyph _fileGlyph = fileGlyph;
 
     // absolute paths
-    private readonly ImmutableArray<string> _searchPaths;
-    private readonly string _baseDirectoryOpt;
+    private readonly ImmutableArray<string> _searchPaths = searchPaths;
+    private readonly string _baseDirectoryOpt = baseDirectoryOpt!;
 
-    private readonly ImmutableArray<string> _allowableExtensions;
-    private readonly CompletionItemRules _itemRules;
-
-    public FileSystemCompletionHelper(
-        Glyph folderGlyph,
-        Glyph fileGlyph,
-        ImmutableArray<string> searchPaths,
-        string baseDirectoryOpt,
-        ImmutableArray<string> allowableExtensions,
-        CompletionItemRules itemRules)
-    {
-        _searchPaths = searchPaths;
-        _baseDirectoryOpt = baseDirectoryOpt!;
-        _allowableExtensions = allowableExtensions;
-        _folderGlyph = folderGlyph;
-        _fileGlyph = fileGlyph;
-        _itemRules = itemRules;
-    }
+    private readonly ImmutableArray<string> _allowableExtensions = allowableExtensions;
+    private readonly CompletionItemRules _itemRules = itemRules;
 
     private string[] GetLogicalDrives()
         => IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>());

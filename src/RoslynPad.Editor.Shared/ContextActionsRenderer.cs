@@ -234,11 +234,9 @@ public sealed class ContextActionsRenderer
     }
 }
 
-internal class ActionCommandConverter : IValueConverter
+internal class ActionCommandConverter(Func<object, ICommand?>? commandProvider) : IValueConverter
 {
-    public ActionCommandConverter(Func<object, ICommand?>? commandProvider) => CommandProvider = commandProvider;
-
-    public Func<object, ICommand?>? CommandProvider { get; }
+    public Func<object, ICommand?>? CommandProvider { get; } = commandProvider;
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value == null ? null : CommandProvider?.Invoke(value);
 

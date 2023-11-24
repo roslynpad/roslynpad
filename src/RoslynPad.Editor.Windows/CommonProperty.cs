@@ -57,14 +57,9 @@ public static class CommonProperty
     }
 }
 
-public sealed class StyledProperty<TValue>
+public sealed class StyledProperty<TValue>(DependencyProperty property)
 {
-    public DependencyProperty Property { get; }
-
-    public StyledProperty(DependencyProperty property)
-    {
-        Property = property;
-    }
+    public DependencyProperty Property { get; } = property;
 
     public StyledProperty<TValue> AddOwner<TOwner>() =>
         new(Property.AddOwner(typeof(TOwner)));

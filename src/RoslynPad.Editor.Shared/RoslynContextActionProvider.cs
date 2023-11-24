@@ -80,16 +80,10 @@ public sealed class RoslynContextActionProvider : IContextActionProvider
         }
     }
 
-    private class CodeActionCommand : ICommand
+    private class CodeActionCommand(RoslynContextActionProvider provider, CodeAction codeAction) : ICommand
     {
-        private readonly RoslynContextActionProvider _provider;
-        private readonly CodeAction _codeAction;
-
-        public CodeActionCommand(RoslynContextActionProvider provider, CodeAction codeAction)
-        {
-            _provider = provider;
-            _codeAction = codeAction;
-        }
+        private readonly RoslynContextActionProvider _provider = provider;
+        private readonly CodeAction _codeAction = codeAction;
 
         public event EventHandler? CanExecuteChanged
         {

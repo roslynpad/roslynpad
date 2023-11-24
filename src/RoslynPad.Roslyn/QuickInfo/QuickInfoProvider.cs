@@ -17,15 +17,10 @@ using Roslyn.Utilities;
 namespace RoslynPad.Roslyn.QuickInfo;
 
 [Export(typeof(IQuickInfoProvider)), Shared]
-internal sealed class QuickInfoProvider : IQuickInfoProvider
+[method: ImportingConstructor]
+internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider contentProvider) : IQuickInfoProvider
 {
-    private readonly IDeferredQuickInfoContentProvider _contentProvider;
-
-    [ImportingConstructor]
-    public QuickInfoProvider(IDeferredQuickInfoContentProvider contentProvider)
-    {
-        _contentProvider = contentProvider;
-    }
+    private readonly IDeferredQuickInfoContentProvider _contentProvider = contentProvider;
 
     public async Task<QuickInfoItem?> GetItemAsync(
         Document document,

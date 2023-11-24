@@ -2,18 +2,11 @@
 
 namespace RoslynPad.Editor;
 
-public sealed class CompletionResult
+public sealed class CompletionResult(IList<ICompletionDataEx>? completionData, IOverloadProviderEx? overloadProvider, bool useHardSelection)
 {
-    public CompletionResult(IList<ICompletionDataEx>? completionData, IOverloadProviderEx? overloadProvider, bool useHardSelection)
-    {
-        CompletionData = completionData;
-        OverloadProvider = overloadProvider;
-        UseHardSelection = useHardSelection;
-    }
+    public bool UseHardSelection { get; } = useHardSelection;
 
-    public bool UseHardSelection { get; }
+    public IList<ICompletionDataEx>? CompletionData { get; } = completionData;
 
-    public IList<ICompletionDataEx>? CompletionData { get; }
-
-    public IOverloadProviderEx? OverloadProvider { get; }
+    public IOverloadProviderEx? OverloadProvider { get; } = overloadProvider;
 }
