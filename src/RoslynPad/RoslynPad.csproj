@@ -9,6 +9,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Version>$(RoslynPadVersion)</Version>
     <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="**\*.xshd" />
@@ -22,7 +23,6 @@
     <PackageReference Include="AvalonLibrary" />
     <PackageReference Include="Dirkster.AvalonDock" />
     <PackageReference Include="Mono.Cecil" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />

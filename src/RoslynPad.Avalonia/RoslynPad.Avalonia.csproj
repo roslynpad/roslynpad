@@ -6,6 +6,7 @@
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
     <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Resources\RoslynPad.ico" />

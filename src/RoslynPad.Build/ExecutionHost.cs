@@ -142,8 +142,8 @@ internal partial class ExecutionHost : IExecutionHost
 
         MetadataReferences = ImmutableArray<MetadataReference>.Empty;
 
-        _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "runtimes", "net", "RoslynPad.Runtime.dll"));
-        _runtimeNetFxAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(Path.GetDirectoryName(typeof(ExecutionHost).Assembly.Location)!, "runtimes", "netfx", "RoslynPad.Runtime.dll"));
+        _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "net", "RoslynPad.Runtime.dll"));
+        _runtimeNetFxAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "netfx", "RoslynPad.Runtime.dll"));
 
         _restorePath = Path.Combine(Path.GetTempPath(), "roslynpad", "restore");
     }

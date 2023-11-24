@@ -116,12 +116,7 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
         return false;
     }
 
-#if AVALONIA
-    public CommonImage? Image => null;
-    public IImage? Drawing => _glyph.ToImageSource();
-#else
     public CommonImage? Image => _glyph.ToImageSource();
-#endif
 
     public string Text { get; }
 

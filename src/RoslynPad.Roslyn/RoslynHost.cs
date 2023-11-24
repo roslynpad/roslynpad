@@ -14,7 +14,6 @@ using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Roslyn.Utilities;
 using System.IO;
-using Microsoft.CodeAnalysis.Editor.CSharp;
 
 namespace RoslynPad.Roslyn;
 
@@ -39,17 +38,12 @@ public class RoslynHost : IRoslynHost
     internal static readonly ImmutableArray<Type> DefaultCompositionTypes =
         DefaultCompositionAssemblies.SelectMany(t => t.DefinedTypes).Select(t => t.AsType())
         .Concat(GetDiagnosticCompositionTypes())
-        .Concat(GetEditorFeaturesTypes())
         .ToImmutableArray();
 
     private static IEnumerable<Type> GetDiagnosticCompositionTypes() => MetadataUtil.LoadTypesByNamespaces(
         typeof(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService).Assembly,
         "Microsoft.CodeAnalysis.Diagnostics",
         "Microsoft.CodeAnalysis.CodeFixes");
-
-    private static IEnumerable<Type> GetEditorFeaturesTypes() => MetadataUtil.LoadTypesBy(
-        typeof(CSharpEditorResources).Assembly, t => t.Name.EndsWith("OptionsStorage", StringComparison.Ordinal))
-        .SelectMany(t => t.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic).Where(t => t.IsDefined(typeof(ExportLanguageServiceAttribute))));
 
     private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
     private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
@@ -251,10 +245,10 @@ public class RoslynHost : IRoslynHost
     protected virtual IEnumerable<AnalyzerReference> GetSolutionAnalyzerReferences()
     {
         var loader = GetService<IAnalyzerAssemblyLoader>();
-        yield return new AnalyzerFileReference(typeof(Compilation).Assembly.Location, loader);
-        yield return new AnalyzerFileReference(typeof(CSharpResources).Assembly.Location, loader);
-        yield return new AnalyzerFileReference(typeof(FeaturesResources).Assembly.Location, loader);
-        yield return new AnalyzerFileReference(typeof(CSharpFeaturesResources).Assembly.Location, loader);
+        yield return new AnalyzerFileReference(MetadataUtil.GetAssemblyPath(typeof(Compilation).Assembly), loader);
+        yield return new AnalyzerFileReference(MetadataUtil.GetAssemblyPath(typeof(CSharpResources).Assembly), loader);
+        yield return new AnalyzerFileReference(MetadataUtil.GetAssemblyPath(typeof(FeaturesResources).Assembly), loader);
+        yield return new AnalyzerFileReference(MetadataUtil.GetAssemblyPath(typeof(CSharpFeaturesResources).Assembly), loader);
     }
 
     public void UpdateDocument(Document document)

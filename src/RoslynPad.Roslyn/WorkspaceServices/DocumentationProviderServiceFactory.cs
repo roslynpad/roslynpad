@@ -21,9 +21,9 @@ internal sealed class DocumentationProviderServiceFactory : IWorkspaceServiceFac
 [Export(typeof(IDocumentationProviderService)), Shared]
 internal sealed class DocumentationProviderService : IDocumentationProviderService
 {
-    private readonly ConcurrentDictionary<string, DocumentationProvider?> _assemblyPathToDocumentationProviderMap = new();
+    private readonly ConcurrentDictionary<string, DocumentationProvider> _assemblyPathToDocumentationProviderMap = new();
 
-    public DocumentationProvider? GetDocumentationProvider(string location)
+    public DocumentationProvider GetDocumentationProvider(string location)
     {
         string? finalPath = Path.ChangeExtension(location, "xml");
 
@@ -31,7 +31,7 @@ internal sealed class DocumentationProviderService : IDocumentationProviderServi
         {
             if (!File.Exists(finalPath))
             {
-                return null;
+                return DocumentationProvider.Default;
             }
 
             return XmlDocumentationProvider.CreateFromFile(finalPath);

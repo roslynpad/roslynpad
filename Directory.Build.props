@@ -1,15 +1,15 @@
 <Project>
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
-    <DefaultTargetFramework>net7.0</DefaultTargetFramework>
-    <LtsTargetFramework>net7.0</LtsTargetFramework>
+    <DefaultTargetFramework>net8.0</DefaultTargetFramework>
+    <LtsTargetFramework>net8.0</LtsTargetFramework>
     <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) ">true</UseWPF>
     <TargetFramework Condition=" '$(UseWPF)' == 'true' ">$(LtsTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <Version>4.7.0</Version>
+    <Version>4.8.0</Version>
     <RoslynPadVersion>19.0.0</RoslynPadVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
@@ -26,10 +26,16 @@
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
+    <PublishSingleFile>true</PublishSingleFile>
+    <TrimMode>partial</TrimMode>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
-  <ItemGroup Condition=" $(MSBuildProjectName.Contains('RoslynPad')) ">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-  </ItemGroup>
+  <PropertyGroup>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_RoslynPadInitialRuntimeIdentifier>$(RuntimeIdentifier)</_RoslynPadInitialRuntimeIdentifier>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)\src\RoslynPad\Resources\RoslynPad.png" Pack="true" PackagePath="\" />
   </ItemGroup>

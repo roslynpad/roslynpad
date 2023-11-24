@@ -8,6 +8,8 @@ using Roslyn.Utilities;
 
 namespace RoslynPad.Roslyn;
 
+#pragma warning disable IL3000 // Assembly.Location is fine here
+
 public class RoslynHostReferences
 {
     public static RoslynHostReferences Empty { get; } = new(

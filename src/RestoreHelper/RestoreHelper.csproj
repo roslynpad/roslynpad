@@ -11,17 +11,15 @@
     <NoWarn>$(NoWarn);NU1603;NU1605</NoWarn>
   </PropertyGroup>
   <!--
-    Unfortunately we can't use the public feed version because it doesn't the following packages.
+    Unfortunately we can't use the public feed version because the following packages aren't published to it.
     We must manually correlate their version using the Git commit ID.
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" Version="$(RoslynPrivateVersion)" GeneratePathProperty="true" IncludeAssets="none" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.EditorFeatures" Version="$(RoslynPrivateVersion)" GeneratePathProperty="true" IncludeAssets="none" PrivateAssets="all" />
   </ItemGroup>
   <Target Name="GetLibReferences" Outputs="@(Reference)">
     <ItemGroup>
       <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/net7.0/*.dll" />
-      <Reference Include="$(PkgMicrosoft_CodeAnalysis_CSharp_EditorFeatures)/lib/net6.0/*.dll" />
     </ItemGroup>
   </Target>
 </Project>

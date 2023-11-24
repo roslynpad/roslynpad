@@ -6,19 +6,48 @@ using System.Linq;
 using System.Reflection;
 using System.IO;
 using Roslyn.Utilities;
-using System.Runtime.InteropServices;
+using System.Reflection.Metadata;
 
 namespace RoslynPad.Roslyn;
 
 internal class MetadataUtil
 {
+    public static string GetAssemblyPath(Assembly assembly) => Path.Combine(AppContext.BaseDirectory, assembly.GetName().Name + ".dll");
+
     public static IReadOnlyList<Type> LoadTypesByNamespaces(Assembly assembly, params string[] namespaces) =>
         LoadTypesBy(assembly, t => namespaces.Contains(t.Namespace));
 
-    public static IReadOnlyList<Type> LoadTypesBy(Assembly assembly, Func<Type, bool> predicate)
+    public static unsafe IReadOnlyList<Type> LoadTypesBy(Assembly assembly, Func<TypeInfo, bool> predicate)
     {
-        using var context = new MetadataLoadContext(new PathAssemblyResolver(Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll")));
-        var types = context.LoadFromAssemblyPath(assembly.Location).DefinedTypes;
-        return types.Where(predicate).Select(t => assembly.GetType(t.FullName!)).WhereNotNull().ToReadOnlyCollection();
+        if (!assembly.TryGetRawMetadata(out var metadata, out var length))
+        {
+            return [];
+        }
+
+        var types = new List<Type>();
+
+        MetadataReader reader = new(metadata, length);
+        foreach (var typeDefHandle in reader.TypeDefinitions)
+        {
+            var typeDef = reader.GetTypeDefinition(typeDefHandle);
+            var typeInfo = new TypeInfo(reader.GetString(typeDef.Namespace), reader.GetString(typeDef.Name));
+            if (predicate(typeInfo))
+            {
+                var type = assembly.GetType(typeInfo.FullName);
+                if (type is not null)
+                {
+                    types.Add(type);
+                }
+            }
+        }
+
+        return types;
+    }
+
+    public record TypeInfo(string Namespace, string Name)
+    {
+        private string? _fullName;
+
+        public string FullName => _fullName ??= $"{Namespace}.{Name}";
     }
 }

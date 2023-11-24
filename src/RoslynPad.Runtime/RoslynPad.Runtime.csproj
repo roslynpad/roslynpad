@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <IsTrimmable>false</IsTrimmable>
+    <PublishTrimmed>false</PublishTrimmed>
     <TargetFrameworks Condition=" '$(DefaultTargetFramework)' == '$(LtsTargetFramework)' ">$(DefaultTargetFramework);netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition=" '$(DefaultTargetFramework)' != '$(LtsTargetFramework)' ">$(LtsTargetFramework);$(DefaultTargetFramework);netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

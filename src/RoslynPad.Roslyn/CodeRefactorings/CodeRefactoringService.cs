@@ -32,7 +32,7 @@ internal sealed class CodeRefactoringService : ICodeRefactoringService
     public async Task<IEnumerable<CodeRefactoring>> GetRefactoringsAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
     {
         var options = _globalOption.GetCodeActionOptionsProvider();
-        var result = await _inner.GetRefactoringsAsync(document, textSpan, CodeActionRequestPriority.Normal,
+        var result = await _inner.GetRefactoringsAsync(document, textSpan, CodeActionRequestPriority.Default,
             options, addOperationScope: _ => null, cancellationToken).ConfigureAwait(false);
         return result.Select(x => new CodeRefactoring(x)).ToArray();
     }
