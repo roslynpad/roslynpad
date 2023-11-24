@@ -3,6 +3,7 @@
              xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
              x:Class="RoslynPad.App"
              xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
              xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
@@ -20,9 +21,9 @@
         <ControlTemplate>
           <cc:CompletionListBox Name="PART_ListBox">
             <cc:CompletionListBox.ItemTemplate>
-              <DataTemplate>
+              <DataTemplate x:DataType="editor:RoslynCompletionData">
                 <StackPanel Orientation="Horizontal">
-                  <Image Source="{Binding Drawing}"
+                  <Image Source="{Binding Image}"
                          Width="16"
                          Height="16"
                          Margin="0,0,2,0" />
@@ -44,6 +45,7 @@
         <ControlTemplate>
           <DockPanel LastChildFill="True">
             <ContentControl DockPanel.Dock="Right"
+                            x:DataType="DataValidationErrors"
                             ContentTemplate="{TemplateBinding ErrorTemplate}"
                             DataContext="{TemplateBinding Owner}"
                             Content="{Binding (DataValidationErrors.Errors)}"
@@ -60,7 +62,7 @@
         </ControlTemplate>
       </Setter>
       <Setter Property="ErrorTemplate">
-        <DataTemplate>
+        <DataTemplate x:CompileBindings="false">
           <Canvas Width="14" Height="14" Margin="4 0 1 0"
                   Background="Transparent">
             <Canvas.Styles>
@@ -82,28 +84,28 @@
   </Application.Styles>
   <Application.DataTemplates>
 
-    <DataTemplate DataType="{x:Type Drawing}">
+    <DataTemplate DataType="Drawing">
       <Image Source="{Binding Mode=OneTime}" />
     </DataTemplate>
 
-    <TreeDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
+    <TreeDataTemplate DataType="codeFixes:CodeFixCollection"
                       ItemsSource="{Binding Fixes, Mode=OneTime}">
       <TextBlock Text="{Binding Provider, Mode=OneTime}" />
     </TreeDataTemplate>
 
-    <TreeDataTemplate DataType="{x:Type codeFixes:CodeFix}"
+    <TreeDataTemplate DataType="codeFixes:CodeFix"
                       ItemsSource="{Binding Action, Mode=OneTime, Converter={formatting:CodeActionsConverter}}">
       <ContentPresenter Content="{Binding Action, Mode=OneTime}" />
     </TreeDataTemplate>
 
-    <DataTemplate DataType="{x:Type codeActions:CodeAction}">
+    <DataTemplate DataType="codeActions:CodeAction">
       <DockPanel>
         <Image Source="{Binding Mode=OneTime, Converter={formatting:CodeActionToGlyphConverter}}" />
         <TextBlock Text="{Binding Title, Mode=OneTime}" />
       </DockPanel>
     </DataTemplate>
 
-    <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
+    <DataTemplate DataType="codeAnalysis:Diagnostic">
       <TextBlock Text="{Binding Descriptor.Title, Mode=OneTime}" />
     </DataTemplate>
   </Application.DataTemplates>

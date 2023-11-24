@@ -3,7 +3,8 @@
              xmlns:roslynPad="using:RoslynPad"
              xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:ui="using:RoslynPad.UI"
-             x:Class="RoslynPad.DocumentTreeView">
+             x:Class="RoslynPad.DocumentTreeView"
+             x:DataType="roslynPad:MainViewModel">
   <UserControl.Styles>
 
     <Style Selector="Button.SearchButtonStyle">

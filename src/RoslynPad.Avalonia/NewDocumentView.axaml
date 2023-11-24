@@ -1,7 +1,9 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RoslynPad.NewDocumentView"
-             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis">
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             x:DataType="local:MainViewModel">
   <UniformGrid HorizontalAlignment="Center"
                VerticalAlignment="Center">
 

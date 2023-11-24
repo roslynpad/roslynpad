@@ -8,6 +8,7 @@
         xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
         MinWidth="500"
         MinHeight="300"
+        x:DataType="local:MainViewModel"
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
@@ -60,7 +61,7 @@
 
               <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane">
                 <DocumentDock.DocumentTemplate>
-                  <DocumentTemplate>
+                  <DocumentTemplate x:CompileBindings="false">
                     <local:DocumentView DataContext="{Binding DataContext}" />
                   </DocumentTemplate>
                 </DocumentDock.DocumentTemplate>
