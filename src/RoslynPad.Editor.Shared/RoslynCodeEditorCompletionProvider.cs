@@ -15,7 +15,7 @@ namespace RoslynPad.Editor;
 
 public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionProvider
 {
-    private static bool _initialized;
+    private static bool s_initialized;
 
     private readonly DocumentId _documentId;
     private readonly IRoslynHost _roslynHost;
@@ -31,9 +31,9 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
     // initialize the providers once in the app domain so typing would start faster
     internal void Warmup()
     {
-        if (_initialized) return;
+        if (s_initialized) return;
 
-        _initialized = true;
+        s_initialized = true;
 
         Task.Run(() =>
         {

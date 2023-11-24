@@ -83,7 +83,7 @@ public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataEr
         return errors?.AsEnumerable() ?? Array.Empty<ErrorInfo>();
     }
 
-    public bool HasErrors => _propertyErrors?.Any(c => c.Value.Any()) == true;
+    public bool HasErrors => _propertyErrors?.Any(c => c.Value.Count != 0) == true;
 
     public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 

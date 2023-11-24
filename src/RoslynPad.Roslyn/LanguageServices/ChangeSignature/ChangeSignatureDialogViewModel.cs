@@ -401,7 +401,7 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
                 }
 
                 if (this == _changeSignatureDialogViewModel._parametersWithoutDefaultValues.LastOrDefault() &&
-                    (_changeSignatureDialogViewModel._parametersWithDefaultValues.Any() || _changeSignatureDialogViewModel._paramsParameter != null))
+                    (_changeSignatureDialogViewModel._parametersWithDefaultValues.Count != 0 || _changeSignatureDialogViewModel._paramsParameter != null))
                 {
                     return true;
                 }

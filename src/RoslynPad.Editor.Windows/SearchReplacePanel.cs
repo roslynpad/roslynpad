@@ -154,7 +154,7 @@ public class SearchReplacePanel : Control
         // only reset as long as there are results
         // if no results are found, the "no matches found" message should not flicker.
         // if results are found by the next run, the message will be hidden inside DoSearch ...
-        if (_renderer.CurrentResults.Any())
+        if (_renderer.CurrentResults.Count != 0)
             _messageView.IsOpen = false;
         var searchPattern = SearchPattern ?? "";
         _strategy = SearchStrategyFactory.Create(searchPattern, !MatchCase, WholeWords, UseRegex ? SearchMode.RegEx : SearchMode.Normal);
@@ -321,7 +321,7 @@ public class SearchReplacePanel : Control
                 _renderer.CurrentResults.Add(result);
             }
 
-            if (!_renderer.CurrentResults.Any())
+            if (_renderer.CurrentResults.Count == 0)
             {
                 _messageView.IsOpen = true;
                 _messageView.Content = Localization.NoMatchesFoundText;
@@ -383,8 +383,7 @@ public class SearchReplacePanel : Control
         var hasFocus = IsKeyboardFocusWithin;
 
         var layer = AdornerLayer.GetAdornerLayer(_textArea);
-        if (layer != null)
-            layer.Remove(_adorner);
+        layer?.Remove(_adorner);
         _messageView.IsOpen = false;
         _textArea.TextView.BackgroundRenderers.Remove(_renderer);
         if (hasFocus)
@@ -413,8 +412,7 @@ public class SearchReplacePanel : Control
     {
         if (!IsClosed) return;
         var layer = AdornerLayer.GetAdornerLayer(_textArea);
-        if (layer != null)
-            layer.Add(_adorner);
+        layer?.Add(_adorner);
         _textArea.TextView.BackgroundRenderers.Add(_renderer);
         IsClosed = false;
         DoSearch(false);

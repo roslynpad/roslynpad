@@ -137,10 +137,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
         var bestBinding = candidateResults.FirstOrDefault(c => c.Item3.Count > 0 && !ErrorVisitor.ContainsError(c.Item3.First()));
 
         // Every file binds with errors. Take the first candidate, which is from the current file.
-        if (bestBinding == null)
-        {
-            bestBinding = candidateResults.First();
-        }
+        bestBinding ??= candidateResults.First();
 
         if (bestBinding.Item3 == null || !bestBinding.Item3.Any())
         {
@@ -251,7 +248,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
         var showSymbolGlyph = true;
 
         if (workspace.Services.GetLanguageServices(semanticModel.Language).GetRequiredService<ISyntaxFactsService>().IsAwaitKeyword(token) &&
-            (symbols.First() as INamedTypeSymbol)?.SpecialType == SpecialType.System_Void)
+            symbols.First() is INamedTypeSymbol { SpecialType: SpecialType.System_Void })
         {
             documentationContent = _contentProvider.CreateDocumentationCommentDeferredContent(null);
             showSymbolGlyph = false;
@@ -330,10 +327,9 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
 
             if (symbols.Any())
             {
-                var typeParameter = symbols.First() as ITypeParameterSymbol;
                 return new ValueTuple<SemanticModel, IList<ISymbol>>(
                     semanticModel,
-                    typeParameter != null && typeParameter.TypeParameterKind == TypeParameterKind.Cref
+                    symbols.First() is ITypeParameterSymbol typeParameter && typeParameter.TypeParameterKind == TypeParameterKind.Cref
                         ? SpecializedCollections.EmptyList<ISymbol>()
                         : symbols.ToList());
             }
@@ -366,11 +362,11 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
 
     private class ErrorVisitor : SymbolVisitor<bool>
     {
-        private static readonly ErrorVisitor _instance = new();
+        private static readonly ErrorVisitor s_instance = new();
 
         public static bool ContainsError(ISymbol symbol)
         {
-            return _instance.Visit(symbol);
+            return s_instance.Visit(symbol);
         }
 
         public override bool DefaultVisit(ISymbol symbol)

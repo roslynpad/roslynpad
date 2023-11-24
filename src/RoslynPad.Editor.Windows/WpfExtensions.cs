@@ -5,6 +5,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
+#pragma warning disable IDE0060 // Remove unused parameter
+
 namespace RoslynPad.Editor;
 
 internal static class WpfExtensions

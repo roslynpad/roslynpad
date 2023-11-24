@@ -27,7 +27,7 @@ using ICSharpCode.AvalonEdit.Snippets;
 
 namespace RoslynPad.Editor;
 
-internal sealed class CodeSnippet(string name, string description, string text, string keyword)
+internal sealed partial class CodeSnippet(string name, string description, string text, string keyword)
 {
     public string Name { get; } = name;
 
@@ -52,7 +52,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
         return CreateAvalonEditSnippet(Text);
     }
 
-    private static readonly Regex s_pattern = new(@"\$\{([^\}]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static readonly Regex s_pattern = Pattern();
 
     public static Snippet CreateAvalonEditSnippet(string snippetText)
     {
@@ -93,7 +93,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
         return snippet;
     }
 
-    private static readonly Regex s_functionPattern = new(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant);
+    private static readonly Regex s_functionPattern = FunctionPattern();
 
     private static SnippetElement CreateElementForValue(Dictionary<string, SnippetReplaceableTextElement> replaceableElements, string val, int offset, string snippetText)
     {
@@ -123,7 +123,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
             {
                 var innerVal = m.Groups[2].Value;
                 if (replaceableElements.TryGetValue(innerVal, out srte))
-                    return new FunctionBoundElement { TargetElement = srte, Function = f };
+                    return new FunctionBoundElement { TargetElement = srte, _function = f };
                 var result2 = GetValue(innerVal);
                 if (result2 != null)
                     return new SnippetTextElement { Text = f(result2) };
@@ -200,7 +200,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
     {
         if (string.IsNullOrEmpty(fieldName))
             return fieldName;
-        if (fieldName.StartsWith("_") && fieldName.Length > 1)
+        if (fieldName.StartsWith('_') && fieldName.Length > 1)
             return char.ToUpper(fieldName[1]) + fieldName.Substring(2);
         if (fieldName.StartsWith("m_") && fieldName.Length > 2)
             return char.ToUpper(fieldName[2]) + fieldName.Substring(3);
@@ -211,7 +211,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
     {
         if (string.IsNullOrEmpty(fieldName))
             return fieldName;
-        if (fieldName.StartsWith("_") && fieldName.Length > 1)
+        if (fieldName.StartsWith('_') && fieldName.Length > 1)
             return char.ToLower(fieldName[1]) + fieldName.Substring(2);
         if (fieldName.StartsWith("m_") && fieldName.Length > 2)
             return char.ToLower(fieldName[2]) + fieldName.Substring(3);
@@ -230,11 +230,16 @@ internal sealed class CodeSnippet(string name, string description, string text, 
 
     private sealed class FunctionBoundElement : SnippetBoundElement
     {
-        internal Func<string, string>? Function;
+        internal Func<string, string>? _function;
 
         public override string? ConvertText(string input)
         {
-            return Function?.Invoke(input);
+            return _function?.Invoke(input);
         }
     }
+
+    [GeneratedRegex(@"\$\{([^\}]*)\}", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex Pattern();
+    [GeneratedRegex(@"^([a-zA-Z]+)\(([^\)]*)\)$", RegexOptions.CultureInvariant)]
+    private static partial Regex FunctionPattern();
 }

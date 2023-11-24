@@ -230,9 +230,7 @@ internal static class CecilExtensions
     [Obsolete("throwing exceptions is considered a bug")]
     public static TypeDefinition ResolveOrThrow(this TypeReference typeReference)
     {
-        var resolved = typeReference.Resolve();
-        if (resolved == null)
-            throw new Exception("ReferenceResolving");
+        var resolved = typeReference.Resolve() ?? throw new Exception("ReferenceResolving");
         return resolved;
     }
 
@@ -288,7 +286,7 @@ internal static class CecilExtensions
 
     public static bool HasGeneratedName(this MemberReference member)
     {
-        return member.Name.StartsWith("<", StringComparison.Ordinal);
+        return member.Name.StartsWith('<');
     }
 
     public static bool ContainsAnonymousType(this TypeReference type)

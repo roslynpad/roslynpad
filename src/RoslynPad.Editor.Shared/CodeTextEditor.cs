@@ -67,12 +67,14 @@ public partial class CodeTextEditor : TextEditor
             commandBindings.Remove(deleteLineCommand);
         }
 
-        var contextMenu = new ContextMenu();
-        contextMenu.ItemsSource = new[]
+        var contextMenu = new ContextMenu
         {
-            new MenuItem { Command = ApplicationCommands.Cut },
-            new MenuItem { Command = ApplicationCommands.Copy },
-            new MenuItem { Command = ApplicationCommands.Paste }
+            ItemsSource = new[]
+            {
+                new MenuItem { Command = ApplicationCommands.Cut },
+                new MenuItem { Command = ApplicationCommands.Copy },
+                new MenuItem { Command = ApplicationCommands.Paste }
+            }
         };
         ContextMenu = contextMenu;
 

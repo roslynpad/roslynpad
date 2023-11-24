@@ -17,7 +17,7 @@ namespace RoslynPad.Editor;
 
 public sealed class RoslynContextActionProvider : IContextActionProvider
 {
-    private static readonly ImmutableArray<string> ExcludedRefactoringProviders =
+    private static readonly ImmutableArray<string> s_excludedRefactoringProviders =
         ["ExtractInterface"];
 
     private readonly DocumentId _documentId;
@@ -51,7 +51,7 @@ public sealed class RoslynContextActionProvider : IContextActionProvider
 
         return ((IEnumerable<object>) codeFixes.SelectMany(x => x.Fixes))
             .Concat(codeRefactorings
-                .Where(x => ExcludedRefactoringProviders.All(p => !x.Provider.GetType().Name.Contains(p)))
+                .Where(x => s_excludedRefactoringProviders.All(p => !x.Provider.GetType().Name.Contains(p)))
                 .SelectMany(x => x.Actions));
     }
 
@@ -61,8 +61,7 @@ public sealed class RoslynContextActionProvider : IContextActionProvider
         {
             return new CodeActionCommand(this, codeAction);
         }
-        var codeFix = action as CodeFix;
-        if (codeFix == null || codeFix.Action.HasCodeActions()) return null;
+        if (action is not CodeFix codeFix || codeFix.Action.HasCodeActions()) return null;
         return new CodeActionCommand(this, codeFix.Action);
     }
 

@@ -16,7 +16,7 @@ namespace RoslynPad;
 [Export(typeof(IRenameSymbolDialog))]
 public partial class RenameSymbolDialog : INotifyPropertyChanged, IRenameSymbolDialog
 {
-    private static readonly Regex _identifierRegex = new(@"^(?:((?!\d)\w+(?:\.(?!\d)\w+)*)\.)?((?!\d)\w+)$");
+    private static readonly Regex _identifierRegex = IdentifierRegex();
 
     private string? _symbolName;
     private InlineModalDialog? _dialog;
@@ -102,4 +102,7 @@ public partial class RenameSymbolDialog : INotifyPropertyChanged, IRenameSymbolD
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    [GeneratedRegex(@"^(?:((?!\d)\w+(?:\.(?!\d)\w+)*)\.)?((?!\d)\w+)$")]
+    private static partial Regex IdentifierRegex();
 }

@@ -58,7 +58,7 @@ public class RoslynHost : IRoslynHost
         ImmutableArray<string>? disabledDiagnostics = null,
         ImmutableArray<string>? analyzerConfigFiles = null)
     {
-        if (references == null) references = RoslynHostReferences.Empty;
+        references ??= RoslynHostReferences.Empty;
 
         _workspaces = [];
         _diagnosticsUpdatedNotifiers = [];
