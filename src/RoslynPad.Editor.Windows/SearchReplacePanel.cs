@@ -456,8 +456,7 @@ public class SearchReplacePanel : Control
     /// </summary>
     public static SearchReplacePanel Install(TextEditor editor)
     {
-        if (editor == null)
-            throw new ArgumentNullException(nameof(editor));
+        ArgumentNullException.ThrowIfNull(editor);
         return Install(editor.TextArea);
     }
 
@@ -466,8 +465,7 @@ public class SearchReplacePanel : Control
     /// </summary>
     public static SearchReplacePanel Install(TextArea textArea)
     {
-        if (textArea == null)
-            throw new ArgumentNullException(nameof(textArea));
+        ArgumentNullException.ThrowIfNull(textArea);
         var panel = new SearchReplacePanel { _textArea = textArea };
         panel.AttachInternal(textArea);
         panel._handler = new SearchReplaceInputHandler(textArea, panel);
@@ -663,7 +661,7 @@ class SearchReplacePanelAdorner : Adorner
 
     protected override Visual GetVisualChild(int index)
     {
-        if (index != 0) throw new ArgumentOutOfRangeException(nameof(index));
+        ArgumentOutOfRangeException.ThrowIfNotEqual(index, 0);
         return _panel;
     }
 
@@ -701,10 +699,8 @@ class SearchReplaceResultBackgroundRenderer : IBackgroundRenderer
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
-        if (textView == null)
-            throw new ArgumentNullException(nameof(textView));
-        if (drawingContext == null)
-            throw new ArgumentNullException(nameof(drawingContext));
+        ArgumentNullException.ThrowIfNull(textView);
+        ArgumentNullException.ThrowIfNull(drawingContext);
 
         if (CurrentResults == null || !textView.VisualLinesValid)
             return;

@@ -11,21 +11,21 @@ public static class CodeActionExtensions
 {
     public static bool HasCodeActions(this CodeAction codeAction)
     {
-        if (codeAction == null) throw new ArgumentNullException(nameof(codeAction));
+        ArgumentNullException.ThrowIfNull(codeAction);
 
         return !codeAction.NestedCodeActions.IsDefaultOrEmpty;
     }
 
     public static ImmutableArray<CodeAction> GetCodeActions(this CodeAction codeAction)
     {
-        if (codeAction == null) throw new ArgumentNullException(nameof(codeAction));
+        ArgumentNullException.ThrowIfNull(codeAction);
 
         return codeAction.NestedCodeActions;
     }
 
     public static Glyph GetGlyph(this CodeAction codeAction)
     {
-        if (codeAction == null) throw new ArgumentNullException(nameof(codeAction));
+        ArgumentNullException.ThrowIfNull(codeAction);
 
         return GetGlyph(codeAction.Tags);
     }

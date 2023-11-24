@@ -170,8 +170,7 @@ internal static class CecilExtensions
     /// </summary>
     public static int GetEndOffset(this Instruction inst)
     {
-        if (inst == null)
-            throw new ArgumentNullException(nameof(inst));
+        ArgumentNullException.ThrowIfNull(inst);
         return inst.Offset + inst.GetSize();
     }
 

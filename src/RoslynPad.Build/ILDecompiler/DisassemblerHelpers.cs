@@ -347,8 +347,7 @@ internal static class DisassemblerHelpers
 
     public static void WriteOperand(ITextOutput writer, object operand)
     {
-        if (operand == null)
-            throw new ArgumentNullException(nameof(operand));
+        ArgumentNullException.ThrowIfNull(operand);
 
         switch (operand)
         {

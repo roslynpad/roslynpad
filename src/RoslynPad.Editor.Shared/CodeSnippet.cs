@@ -56,7 +56,7 @@ internal sealed class CodeSnippet(string name, string description, string text, 
 
     public static Snippet CreateAvalonEditSnippet(string snippetText)
     {
-        if (snippetText == null) throw new ArgumentNullException(nameof(snippetText));
+        ArgumentNullException.ThrowIfNull(snippetText);
         var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
         foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
         {

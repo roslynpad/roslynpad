@@ -50,7 +50,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 
     public TextMarkerService(CodeTextEditor editor)
     {
-        if (editor == null) throw new ArgumentNullException(nameof(editor));
+        ArgumentNullException.ThrowIfNull(editor);
         _document = editor.Document;
         _markers = new TextSegmentCollection<TextMarker>(_document);
         _textViews = [];
@@ -112,8 +112,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 
     public void RemoveAll(Predicate<TextMarker> predicate)
     {
-        if (predicate == null)
-            throw new ArgumentNullException(nameof(predicate));
+        ArgumentNullException.ThrowIfNull(predicate);
         if (_markers != null)
         {
             foreach (var m in _markers.ToArray())
@@ -126,8 +125,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 
     public void Remove(TextMarker marker)
     {
-        if (marker == null)
-            throw new ArgumentNullException(nameof(marker));
+        ArgumentNullException.ThrowIfNull(marker);
         var m = marker;
         if (_markers != null && _markers.Remove(m))
         {
@@ -193,10 +191,8 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
-        if (textView == null)
-            throw new ArgumentNullException(nameof(textView));
-        if (drawingContext == null)
-            throw new ArgumentNullException(nameof(drawingContext));
+        ArgumentNullException.ThrowIfNull(textView);
+        ArgumentNullException.ThrowIfNull(drawingContext);
         if (_markers == null || !textView.VisualLinesValid)
             return;
         var visualLines = textView.VisualLines;

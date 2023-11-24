@@ -128,7 +128,7 @@ public class RoslynHost : IRoslynHost
 
     public void CloseWorkspace(RoslynWorkspace workspace)
     {
-        if (workspace == null) throw new ArgumentNullException(nameof(workspace));
+        ArgumentNullException.ThrowIfNull(workspace);
 
         foreach (var documentId in workspace.CurrentSolution.Projects.SelectMany(p => p.DocumentIds))
         {
@@ -143,7 +143,7 @@ public class RoslynHost : IRoslynHost
 
     public void CloseDocument(DocumentId documentId)
     {
-        if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+        ArgumentNullException.ThrowIfNull(documentId);
 
         if (_workspaces.TryGetValue(documentId, out var workspace))
         {
@@ -173,7 +173,7 @@ public class RoslynHost : IRoslynHost
 
     public Document? GetDocument(DocumentId documentId)
     {
-        if (documentId == null) throw new ArgumentNullException(nameof(documentId));
+        ArgumentNullException.ThrowIfNull(documentId);
 
         return _workspaces.TryGetValue(documentId, out var workspace)
             ? workspace.CurrentSolution.GetDocument(documentId)
@@ -182,14 +182,14 @@ public class RoslynHost : IRoslynHost
 
     public DocumentId AddDocument(DocumentCreationArgs args)
     {
-        if (args == null) throw new ArgumentNullException(nameof(args));
+        ArgumentNullException.ThrowIfNull(args);
 
         return AddDocument(CreateWorkspace(), args);
     }
 
     public DocumentId AddRelatedDocument(DocumentId relatedDocumentId, DocumentCreationArgs args, bool addProjectReference = true)
     {
-        if (args == null) throw new ArgumentNullException(nameof(args));
+        ArgumentNullException.ThrowIfNull(args);
 
         if (!_workspaces.TryGetValue(relatedDocumentId, out var workspace))
         {
@@ -249,7 +249,7 @@ public class RoslynHost : IRoslynHost
 
     public void UpdateDocument(Document document)
     {
-        if (document == null) throw new ArgumentNullException(nameof(document));
+        ArgumentNullException.ThrowIfNull(document);
 
         if (!_workspaces.TryGetValue(document.Id, out var workspace))
         {

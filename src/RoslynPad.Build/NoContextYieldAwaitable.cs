@@ -21,10 +21,7 @@ public readonly struct NoContextYieldAwaitable
 
         private static void QueueContinuation(Action continuation, bool flowContext)
         {
-            if (continuation == null)
-            {
-                throw new ArgumentNullException(nameof(continuation));
-            }
+            ArgumentNullException.ThrowIfNull(continuation);
 
             if (flowContext)
             {

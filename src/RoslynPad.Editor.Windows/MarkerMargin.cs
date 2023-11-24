@@ -40,7 +40,7 @@ public class MarkerMargin : AbstractMargin
 
     protected override Visual GetVisualChild(int index)
     {
-        if (index != 0) throw new ArgumentOutOfRangeException(nameof(index));
+        ArgumentOutOfRangeException.ThrowIfNotEqual(index, 0);
         return Marker;
     }
 
