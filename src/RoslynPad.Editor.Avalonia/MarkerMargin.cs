@@ -21,7 +21,7 @@ public class MarkerMargin : AbstractMargin
 
     public event EventHandler? MarkerPointerDown;
 
-    private Control CreateMarker()
+    private Image CreateMarker()
     {
         var marker = new Image();
         marker.PointerPressed += (o, e) => { e.Handled = true; MarkerPointerDown?.Invoke(o, e); };

@@ -52,8 +52,7 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
 
     private void DocumentName_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        var textBox = sender as TextBox;
-        if (textBox == null) return;
+        if (sender is not TextBox textBox) return;
 
         var invalidChars = Path.GetInvalidFileNameChars();
         foreach (var c in e.Changes)

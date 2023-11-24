@@ -184,9 +184,9 @@ internal sealed partial class CodeSnippet(string name, string description, strin
     private static Func<string, string>? GetFunction(string name)
     {
         if ("toLower".Equals(name, StringComparison.OrdinalIgnoreCase))
-            return s => s.ToLower();
+            return s => s.ToLowerInvariant();
         if ("toUpper".Equals(name, StringComparison.OrdinalIgnoreCase))
-            return s => s.ToUpper();
+            return s => s.ToUpperInvariant();
         if ("toFieldName".Equals(name, StringComparison.OrdinalIgnoreCase))
             return GetFieldName;
         if ("toPropertyName".Equals(name, StringComparison.OrdinalIgnoreCase))
@@ -201,10 +201,10 @@ internal sealed partial class CodeSnippet(string name, string description, strin
         if (string.IsNullOrEmpty(fieldName))
             return fieldName;
         if (fieldName.StartsWith('_') && fieldName.Length > 1)
-            return char.ToUpper(fieldName[1]) + fieldName.Substring(2);
-        if (fieldName.StartsWith("m_") && fieldName.Length > 2)
-            return char.ToUpper(fieldName[2]) + fieldName.Substring(3);
-        return char.ToUpper(fieldName[0]) + fieldName.Substring(1);
+            return char.ToUpperInvariant(fieldName[1]) + fieldName.Substring(2);
+        if (fieldName.StartsWith("m_", StringComparison.Ordinal) && fieldName.Length > 2)
+            return char.ToUpperInvariant(fieldName[2]) + fieldName.Substring(3);
+        return char.ToUpperInvariant(fieldName[0]) + fieldName.Substring(1);
     }
 
     private static string GetParameterName(string fieldName)
@@ -212,17 +212,17 @@ internal sealed partial class CodeSnippet(string name, string description, strin
         if (string.IsNullOrEmpty(fieldName))
             return fieldName;
         if (fieldName.StartsWith('_') && fieldName.Length > 1)
-            return char.ToLower(fieldName[1]) + fieldName.Substring(2);
-        if (fieldName.StartsWith("m_") && fieldName.Length > 2)
-            return char.ToLower(fieldName[2]) + fieldName.Substring(3);
-        return char.ToLower(fieldName[0]) + fieldName.Substring(1);
+            return char.ToLowerInvariant(fieldName[1]) + fieldName.Substring(2);
+        if (fieldName.StartsWith("m_", StringComparison.Ordinal) && fieldName.Length > 2)
+            return char.ToLowerInvariant(fieldName[2]) + fieldName.Substring(3);
+        return char.ToLowerInvariant(fieldName[0]) + fieldName.Substring(1);
     }
 
     private static string GetFieldName(string propertyName)
     {
         if (string.IsNullOrEmpty(propertyName))
             return propertyName;
-        var newName = char.ToLower(propertyName[0]) + propertyName.Substring(1);
+        var newName = char.ToLowerInvariant(propertyName[0]) + propertyName.Substring(1);
         if (newName == propertyName)
             return "_" + newName;
         return newName;

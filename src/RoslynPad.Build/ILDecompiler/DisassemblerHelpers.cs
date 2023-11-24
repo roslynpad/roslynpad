@@ -134,7 +134,7 @@ internal static class DisassemblerHelpers
 
         if (method is MethodDefinition md && md.IsCompilerControlled)
         {
-            writer.WriteReference(Escape(method.Name + "$PST" + method.MetadataToken.ToInt32().ToString("X8")), method);
+            writer.WriteReference(Escape(method.Name + "$PST" + method.MetadataToken.ToInt32().ToString("X8", CultureInfo.InvariantCulture)), method);
         }
         else
         {
@@ -270,7 +270,7 @@ internal static class DisassemblerHelpers
                 if (genericParameter.Owner.GenericParameterType == GenericParameterType.Method)
                     writer.Write('!');
                 if (string.IsNullOrEmpty(type.Name) || type.Name[0] == '!' || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
-                    writer.Write(genericParameter.Position.ToString());
+                    writer.Write(genericParameter.Position.ToString(CultureInfo.InvariantCulture));
                 else
                     writer.Write(Escape(type.Name));
                 break;
@@ -360,12 +360,12 @@ internal static class DisassemblerHelpers
             case VariableReference variableRef:
                 writer.WriteReference(
                     string.IsNullOrEmpty(variableRef.ToString())
-                    ? variableRef.Index.ToString()
+                    ? variableRef.Index.ToString(CultureInfo.InvariantCulture)
                     : Escape(variableRef.ToString()), variableRef);
                 return;
             case ParameterReference paramRef:
                 writer.WriteReference(
-                    string.IsNullOrEmpty(paramRef.Name) ? paramRef.Index.ToString() : Escape(paramRef.Name), paramRef);
+                    string.IsNullOrEmpty(paramRef.Name) ? paramRef.Index.ToString(CultureInfo.InvariantCulture) : Escape(paramRef.Name), paramRef);
                 return;
             case MethodReference methodRef:
                 methodRef.WriteTo(writer);
@@ -380,7 +380,7 @@ internal static class DisassemblerHelpers
                 writer.Write("\"" + TextWriterTokenWriter.ConvertString(stringOpeand) + "\"");
                 break;
             case char charOperand:
-                writer.Write(((int)charOperand).ToString());
+                writer.Write(((int)charOperand).ToString(CultureInfo.InvariantCulture));
                 break;
             case float floatOperand:
                 if (floatOperand == 0)
@@ -400,7 +400,7 @@ internal static class DisassemblerHelpers
                     {
                         if (i > 0)
                             writer.Write(' ');
-                        writer.Write(data[i].ToString("X2"));
+                        writer.Write(data[i].ToString("X2", CultureInfo.InvariantCulture));
                     }
                     writer.Write(')');
                 }
@@ -429,7 +429,7 @@ internal static class DisassemblerHelpers
                     {
                         if (i > 0)
                             writer.Write(' ');
-                        writer.Write(data[i].ToString("X2"));
+                        writer.Write(data[i].ToString("X2", CultureInfo.InvariantCulture));
                     }
                     writer.Write(')');
                 }

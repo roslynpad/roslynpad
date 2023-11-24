@@ -37,9 +37,9 @@ public class ResultObject : IResultObject
         return builder.ToString();
     }
 
-    public void WriteTo(StringBuilder stringBuilder)
+    public void WriteTo(StringBuilder builder)
     {
-        BuildStringRecursive(stringBuilder, 0);
+        BuildStringRecursive(builder, 0);
     }
 
     private void BuildStringRecursive(StringBuilder builder, int level)

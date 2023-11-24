@@ -208,9 +208,11 @@ public partial class DocumentViewModel : NotificationObject
             return;
         }
 
+#pragma warning disable CA1309 // Use ordinal string comparison
         var insertIndex = children.IndexOf(d => d.IsFolder == documentViewModel.IsFolder &&
                                                 string.Compare(documentViewModel.OrderByName, d.OrderByName,
                                                     StringComparison.CurrentCulture) <= 0);
+#pragma warning restore CA1309 // Use ordinal string comparison
         if (insertIndex < 0)
         {
             insertIndex = documentViewModel.IsFolder ? children.IndexOf(c => !c.IsFolder) : children.Count;

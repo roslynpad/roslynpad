@@ -265,6 +265,6 @@ internal class ApplicationSettings : IApplicationSettings
         }
 
         [JsonIgnore]
-        public IApplicationSettings? Settings { get; set; }
+        public ApplicationSettings? Settings { get; set; }
     }
 }

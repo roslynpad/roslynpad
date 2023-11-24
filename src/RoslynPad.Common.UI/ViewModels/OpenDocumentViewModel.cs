@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Composition;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -24,7 +25,7 @@ using RoslynPad.Utilities;
 namespace RoslynPad.UI;
 
 [Export]
-public class OpenDocumentViewModel : NotificationObject
+public class OpenDocumentViewModel : NotificationObject, IDisposable
 {
     private const string DefaultDocumentName = "New";
     private const string RegularFileExtension = ".cs";
@@ -39,7 +40,7 @@ public class OpenDocumentViewModel : NotificationObject
     private readonly ObservableCollection<IResultObject> _results;
     private readonly List<RestoreResultObject> _restoreResults;
     
-    private IExecutionHost? _executionHost;
+    private ExecutionHost? _executionHost;
     private ExecutionHostParameters? _executionHostParameters;
     private CancellationTokenSource? _runCts;
     private bool _isRunning;
@@ -110,12 +111,9 @@ public class OpenDocumentViewModel : NotificationObject
             }
 
             var isScript = Path.GetExtension(Document?.Name)?.Equals(ScriptFileExtension, StringComparison.OrdinalIgnoreCase);
-            if (isScript is null)
-            {
-                throw new InvalidOperationException("Document not initialized");
-            }
-
-            return _sourceCodeKind ??= isScript == true ? SourceCodeKind.Script : SourceCodeKind.Regular;
+            return isScript is null
+                ? throw new InvalidOperationException("Document not initialized")
+                : (_sourceCodeKind ??= isScript == true ? SourceCodeKind.Script : SourceCodeKind.Regular);
         }
         set => _sourceCodeKind = value;
     }
@@ -696,7 +694,7 @@ public class OpenDocumentViewModel : NotificationObject
             foreach (var diagnostic in ex.Diagnostics)
             {
                 var startLinePosition = diagnostic.Location.GetLineSpan().StartLinePosition;
-                AddResult(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(), startLinePosition.Line, startLinePosition.Character));
+                AddResult(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(CultureInfo.InvariantCulture), startLinePosition.Line, startLinePosition.Character));
             }
         }
         catch (Exception ex)
@@ -814,5 +812,10 @@ public class OpenDocumentViewModel : NotificationObject
         }
 
         UpdatePackages(alwaysRestore: false);
+    }
+
+    public void Dispose()
+    {
+        _runCts?.Dispose();
     }
 }

@@ -26,8 +26,7 @@ internal abstract class AbstractDirectiveTriviaBraceMatcher<TDirectiveTriviaSynt
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
         var token = root!.FindToken(position, findInsideTrivia: true);
 
-        var directive = token.Parent as TDirectiveTriviaSyntax;
-        if (directive == null)
+        if (token.Parent is not TDirectiveTriviaSyntax directive)
         {
             return null;
         }

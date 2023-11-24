@@ -294,7 +294,7 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
         return _disabledParameters.Contains(parameterViewModel);
     }
 
-    private IList<ParameterViewModel> GetSelectedGroup()
+    private List<ParameterViewModel> GetSelectedGroup()
     {
         var index = SelectedIndex;
         index = _thisParameter == null ? index : index - 1;

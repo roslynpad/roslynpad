@@ -36,12 +36,12 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
             exceptionText: CreateClassifiableDeferredContent(exceptionText));
     }
 
-    private static IDeferredQuickInfoContent CreateGlyphDeferredContent(ISymbol symbol)
+    private static SymbolGlyphDeferredContent CreateGlyphDeferredContent(ISymbol symbol)
     {
         return new SymbolGlyphDeferredContent(symbol.GetGlyph());
     }
 
-    private static IDeferredQuickInfoContent CreateWarningGlyph()
+    private static SymbolGlyphDeferredContent CreateWarningGlyph()
     {
         return new SymbolGlyphDeferredContent(Glyph.CompletionWarning);
     }

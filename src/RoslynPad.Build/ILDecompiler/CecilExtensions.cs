@@ -230,7 +230,7 @@ internal static class CecilExtensions
     [Obsolete("throwing exceptions is considered a bug")]
     public static TypeDefinition ResolveOrThrow(this TypeReference typeReference)
     {
-        var resolved = typeReference.Resolve() ?? throw new Exception("ReferenceResolving");
+        var resolved = typeReference.Resolve() ?? throw new InvalidOperationException("ReferenceResolving");
         return resolved;
     }
 

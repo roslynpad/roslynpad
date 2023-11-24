@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -69,7 +70,7 @@ internal class ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)
                         "",
                         s_rules,
                         Microsoft.CodeAnalysis.Glyph.NuGet,
-                        sortText: i.ToString("0000"))));
+                        sortText: i.ToString("0000", CultureInfo.InvariantCulture))));
             }
         }
         else
@@ -80,7 +81,7 @@ internal class ReferenceDirectiveCompletionProvider([Import(AllowDefault = true)
                      "",
                     s_rules,
                     Microsoft.CodeAnalysis.Glyph.NuGet,
-                    sortText: i.ToString("0000"))));
+                    sortText: i.ToString("0000", CultureInfo.InvariantCulture))));
         }
     }
 

@@ -16,7 +16,7 @@ public class MarkerMargin : AbstractMargin
         Marker = CreateMarker();
     }
 
-    private FrameworkElement CreateMarker()
+    private Image CreateMarker()
     {
         var marker = new Image();
         marker.MouseDown += (o, e) => { e.Handled = true; MarkerPointerDown?.Invoke(o, e); };

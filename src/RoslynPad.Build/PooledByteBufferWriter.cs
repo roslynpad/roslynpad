@@ -136,7 +136,7 @@ internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
                 newSize = currentLength + sizeHint;
                 if ((uint)newSize > int.MaxValue)
                 {
-                    throw new OutOfMemoryException("BufferMaximumSizeExceeded: " + (uint)newSize);
+                    throw new InsufficientMemoryException("BufferMaximumSizeExceeded: " + (uint)newSize);
                 }
             }
 

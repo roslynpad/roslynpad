@@ -69,7 +69,7 @@ internal class PickMembersDialogViewModel : NotificationObject
                 return string.Empty;
             }
 
-            return string.Format("Move {0} below {1}", MemberContainers[SelectedIndex.Value].MemberAutomationText, MemberContainers[SelectedIndex.Value - 1].MemberAutomationText);
+            return $"Move {MemberContainers[SelectedIndex.Value].MemberAutomationText} below {MemberContainers[SelectedIndex.Value - 1].MemberAutomationText}";
         }
     }
 
@@ -82,7 +82,7 @@ internal class PickMembersDialogViewModel : NotificationObject
                 return string.Empty;
             }
 
-            return string.Format("Move {0} below {1}", MemberContainers[SelectedIndex.Value].MemberAutomationText, MemberContainers[SelectedIndex.Value + 1].MemberAutomationText);
+            return $"Move {MemberContainers[SelectedIndex.Value].MemberAutomationText} below {MemberContainers[SelectedIndex.Value + 1].MemberAutomationText}";
         }
     }
 

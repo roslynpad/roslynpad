@@ -108,10 +108,12 @@ public partial class CodeTextEditor : TextEditor
         }
     }
 
+#pragma warning disable CA1859
     private static Brush CreateDefaultCompletionBackground()
     {
         return new SolidColorBrush(Color.FromRgb(240, 240, 240)).AsFrozen();
     }
+#pragma warning restore CA1859
 
     public Brush CompletionBackground
     {

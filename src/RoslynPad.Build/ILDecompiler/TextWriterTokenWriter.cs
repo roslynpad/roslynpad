@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace RoslynPad.Build.ILDecompiler;
@@ -41,7 +42,7 @@ internal static class TextWriterTokenWriter
                     // print all uncommon white spaces as numbers
                     (char.IsWhiteSpace(ch) && ch != ' '))
                 {
-                    return "\\u" + ((int)ch).ToString("x4");
+                    return "\\u" + ((int)ch).ToString("x4", CultureInfo.InvariantCulture);
                 }
                 else
                 {

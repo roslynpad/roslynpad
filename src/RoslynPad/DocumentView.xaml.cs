@@ -16,6 +16,7 @@ using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
 using System.Windows.Data;
+using System.Globalization;
 
 namespace RoslynPad;
 
@@ -48,8 +49,8 @@ public partial class DocumentView : IDisposable
 
     private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
     {
-        Ln.Text = Editor.TextArea.Caret.Line.ToString();
-        Col.Text = Editor.TextArea.Caret.Column.ToString();
+        Ln.Text = Editor.TextArea.Caret.Line.ToString(CultureInfo.InvariantCulture);
+        Col.Text = Editor.TextArea.Caret.Column.ToString(CultureInfo.InvariantCulture);
     }
 
     private void EditorPreviewMouseWheel(object? sender, MouseWheelEventArgs args)
@@ -224,8 +225,7 @@ public partial class DocumentView : IDisposable
 
     private void TryJumpToLine(object source)
     {
-        var result = (source as FrameworkElement)?.DataContext as CompilationErrorResultObject;
-        if (result == null) return;
+        if ((source as FrameworkElement)?.DataContext is not CompilationErrorResultObject result) return;
 
         Editor.TextArea.Caret.Line = result.Line;
         Editor.TextArea.Caret.Column = result.Column;

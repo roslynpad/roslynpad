@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -31,7 +32,7 @@ namespace RoslynPad.Build;
 /// <summary>
 /// An <see cref="IExecutionHost"/> implementation that compiles to disk and executes in separated processes.
 /// </summary>
-internal partial class ExecutionHost : IExecutionHost
+internal partial class ExecutionHost : IExecutionHost, IDisposable
 {
     private static readonly JsonSerializerOptions s_serializerOptions = new()
     {
@@ -160,6 +161,8 @@ internal partial class ExecutionHost : IExecutionHost
 
     public void Dispose()
     {
+        _executeCts?.Dispose();
+        _restoreCts?.Dispose();
     }
 
     private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
@@ -227,7 +230,7 @@ internal partial class ExecutionHost : IExecutionHost
 
             var diagnostics = script.CompileAndSaveAssembly(_assemblyPath, cancellationToken);
             var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-            _logger.LogInformation("Assembly saved at {assemblyPath}, has errors = {hasErrors}", _assemblyPath, hasErrors);
+            _logger.LogInformation("Assembly saved at {AssemblyPath}, has errors = {HasErrors}", _assemblyPath, hasErrors);
 
             SendDiagnostics(diagnostics);
 
@@ -283,9 +286,9 @@ internal partial class ExecutionHost : IExecutionHost
 
         var optimization = optimizationLevel ?? OptimizationLevel.Release;
 
-        _logger.LogInformation("Creating script runner, platform = {platform}, " +
-            "references = {references}, imports = {imports}, directory = {directory}, " +
-            "optimization = {optimization}",
+        _logger.LogInformation("Creating script runner, platform = {Platform}, " +
+            "references = {References}, imports = {Imports}, directory = {Directory}, " +
+            "optimization = {Optimization}",
             platform,
             MetadataReferences.Select(t => t.Display),
             _imports,
@@ -337,7 +340,7 @@ internal partial class ExecutionHost : IExecutionHost
             }
         });
 
-        _logger.LogInformation("Starting process {executable}, arguments = {arguments}", process.StartInfo.FileName, process.StartInfo.Arguments);
+        _logger.LogInformation("Starting process {Executable}, arguments = {Arguments}", process.StartInfo.FileName, process.StartInfo.Arguments);
         if (!process.Start())
         {
             _logger.LogWarning("Process.Start returned false");
@@ -513,7 +516,7 @@ internal partial class ExecutionHost : IExecutionHost
         var lineSpan = diagnostic.Location.GetLineSpan();
 
         var result = CompilationErrorResultObject.Create(diagnostic.Severity.ToString(),
-                diagnostic.Id, diagnostic.GetMessage(),
+                diagnostic.Id, diagnostic.GetMessage(CultureInfo.InvariantCulture),
                 lineSpan.StartLinePosition.Line, lineSpan.StartLinePosition.Character);
         return result;
     }
@@ -717,8 +720,8 @@ internal partial class ExecutionHost : IExecutionHost
 
                     foreach (var fileToRename in s_binFilesToRename)
                     {
-                        var originalFile = Path.Combine(BuildPath, string.Format(fileToRename, "restore"));
-                        var newFile = Path.Combine(BuildPath, string.Format(fileToRename, Name));
+                        var originalFile = Path.Combine(BuildPath, string.Format(CultureInfo.InvariantCulture, fileToRename, "restore"));
+                        var newFile = Path.Combine(BuildPath, string.Format(CultureInfo.InvariantCulture, fileToRename, Name));
                         if (File.Exists(originalFile))
                         {
                             File.Move(originalFile, newFile, overwrite: true);

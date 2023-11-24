@@ -60,7 +60,7 @@ internal sealed class Compiler(ImmutableList<SyntaxTree> syntaxTrees, CSharpPars
         diagnostics.AddRange(emitResult.Diagnostics);
     }
 
-    private Compilation GetCompilationFromCode(string assemblyName)
+    private CSharpCompilation GetCompilationFromCode(string assemblyName)
     {
         var compilationOptions = new CSharpCompilationOptions(
             OutputKind,

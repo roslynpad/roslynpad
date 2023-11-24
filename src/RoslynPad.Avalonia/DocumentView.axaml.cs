@@ -41,8 +41,7 @@ partial class DocumentView : UserControl, IDisposable
 
     private async void OnDataContextChanged(object? sender, EventArgs args)
     {
-        var viewModel = DataContext as OpenDocumentViewModel;
-        if (viewModel == null) return;
+        if (DataContext is not OpenDocumentViewModel viewModel) return;
 
         viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 

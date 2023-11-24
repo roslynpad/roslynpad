@@ -31,18 +31,11 @@ public class RoslynWorkspace : Workspace
 
     public override bool CanApplyChange(ApplyChangesKind feature)
     {
-        switch (feature)
+        return feature switch
         {
-            case ApplyChangesKind.ChangeDocument:
-            case ApplyChangesKind.ChangeDocumentInfo:
-            case ApplyChangesKind.AddMetadataReference:
-            case ApplyChangesKind.RemoveMetadataReference:
-            case ApplyChangesKind.AddAnalyzerReference:
-            case ApplyChangesKind.RemoveAnalyzerReference:
-                return true;
-            default:
-                return false;
-        }
+            ApplyChangesKind.ChangeDocument or ApplyChangesKind.ChangeDocumentInfo or ApplyChangesKind.AddMetadataReference or ApplyChangesKind.RemoveMetadataReference or ApplyChangesKind.AddAnalyzerReference or ApplyChangesKind.RemoveAnalyzerReference => true,
+            _ => false,
+        };
     }
 
     public void OpenDocument(DocumentId documentId, SourceTextContainer textContainer)
@@ -63,15 +56,15 @@ public class RoslynWorkspace : Workspace
         DiagnosticProvider.Disable(this);
     }
 
-    protected override void ApplyDocumentTextChanged(DocumentId document, SourceText newText)
+    protected override void ApplyDocumentTextChanged(DocumentId id, SourceText text)
     {
-        if (OpenDocumentId != document)
+        if (OpenDocumentId != id)
         {
             return;
         }
 
-        ApplyingTextChange?.Invoke(document, newText);
+        ApplyingTextChange?.Invoke(id, text);
 
-        OnDocumentTextChanged(document, newText, PreservationMode.PreserveIdentity);
+        OnDocumentTextChanged(id, text, PreservationMode.PreserveIdentity);
     }
 }

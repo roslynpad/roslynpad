@@ -29,17 +29,15 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
 {
     private readonly Document _document;
     private readonly CompletionItem _item;
-    private readonly char? _completionChar;
     private readonly SnippetManager _snippetManager;
     private readonly Glyph _glyph;
     private readonly Lazy<Task> _descriptionTask;
     private Decorator? _description;
 
-    public RoslynCompletionData(Document document, CompletionItem item, char? completionChar, SnippetManager snippetManager)
+    public RoslynCompletionData(Document document, CompletionItem item, SnippetManager snippetManager)
     {
         _document = document;
         _item = item;
-        _completionChar = completionChar;
         _snippetManager = snippetManager;
         Text = item.DisplayTextPrefix + item.DisplayText + item.DisplayTextSuffix;
         Content = Text;

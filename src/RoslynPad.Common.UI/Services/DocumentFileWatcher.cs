@@ -66,17 +66,13 @@ public class DocumentFileWatcher : IDisposable, IObservable<DocumentFileChanged>
 
     private DocumentFileChangeType ToDocumentFileChangeType(WatcherChangeTypes changeType)
     {
-        switch (changeType)
+        return changeType switch
         {
-            case WatcherChangeTypes.Created:
-                return DocumentFileChangeType.Created;
-            case WatcherChangeTypes.Deleted:
-                return DocumentFileChangeType.Deleted;
-            case WatcherChangeTypes.Renamed:
-                return DocumentFileChangeType.Renamed;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(changeType), changeType, null);
-        }
+            WatcherChangeTypes.Created => DocumentFileChangeType.Created,
+            WatcherChangeTypes.Deleted => DocumentFileChangeType.Deleted,
+            WatcherChangeTypes.Renamed => DocumentFileChangeType.Renamed,
+            _ => throw new ArgumentOutOfRangeException(nameof(changeType), changeType, null),
+        };
     }
 
     private void OnRenamed(object? sender, RenamedEventArgs e)

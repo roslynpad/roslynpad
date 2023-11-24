@@ -13,6 +13,7 @@
     <RoslynPadVersion>19.0.0</RoslynPadVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
+    <AnalysisMode>Recommended</AnalysisMode>
     <IsPackable>false</IsPackable>
     <Authors>Eli Arbel</Authors>
     <PackageProjectUrl>https://roslynpad.net</PackageProjectUrl>

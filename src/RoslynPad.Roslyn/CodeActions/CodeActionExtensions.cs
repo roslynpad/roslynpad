@@ -46,125 +46,80 @@ public static class CodeActionExtensions
                     return tags.Contains(LanguageNames.VisualBasic) ? Glyph.BasicProject : Glyph.CSharpProject;
 
                 case WellKnownTags.Class:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.ClassProtected;
-                        case Accessibility.Private:
-                            return Glyph.ClassPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.ClassInternal;
-                        default:
-                            return Glyph.ClassPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.ClassProtected,
+                        Accessibility.Private => Glyph.ClassPrivate,
+                        Accessibility.Internal => Glyph.ClassInternal,
+                        _ => Glyph.ClassPublic,
+                    };
                 case WellKnownTags.Constant:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.ConstantProtected;
-                        case Accessibility.Private:
-                            return Glyph.ConstantPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.ConstantInternal;
-                        default:
-                            return Glyph.ConstantPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.ConstantProtected,
+                        Accessibility.Private => Glyph.ConstantPrivate,
+                        Accessibility.Internal => Glyph.ConstantInternal,
+                        _ => Glyph.ConstantPublic,
+                    };
                 case WellKnownTags.Delegate:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.DelegateProtected;
-                        case Accessibility.Private:
-                            return Glyph.DelegatePrivate;
-                        case Accessibility.Internal:
-                            return Glyph.DelegateInternal;
-                        default:
-                            return Glyph.DelegatePublic;
-                    }
-
+                        Accessibility.Protected => Glyph.DelegateProtected,
+                        Accessibility.Private => Glyph.DelegatePrivate,
+                        Accessibility.Internal => Glyph.DelegateInternal,
+                        _ => Glyph.DelegatePublic,
+                    };
                 case WellKnownTags.Enum:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.EnumProtected;
-                        case Accessibility.Private:
-                            return Glyph.EnumPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.EnumInternal;
-                        default:
-                            return Glyph.EnumPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.EnumProtected,
+                        Accessibility.Private => Glyph.EnumPrivate,
+                        Accessibility.Internal => Glyph.EnumInternal,
+                        _ => Glyph.EnumPublic,
+                    };
                 case WellKnownTags.EnumMember:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.EnumMemberProtected;
-                        case Accessibility.Private:
-                            return Glyph.EnumMemberPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.EnumMemberInternal;
-                        default:
-                            return Glyph.EnumMemberPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.EnumMemberProtected,
+                        Accessibility.Private => Glyph.EnumMemberPrivate,
+                        Accessibility.Internal => Glyph.EnumMemberInternal,
+                        _ => Glyph.EnumMemberPublic,
+                    };
                 case WellKnownTags.Error:
                     return Glyph.Error;
 
                 case WellKnownTags.Event:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.EventProtected;
-                        case Accessibility.Private:
-                            return Glyph.EventPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.EventInternal;
-                        default:
-                            return Glyph.EventPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.EventProtected,
+                        Accessibility.Private => Glyph.EventPrivate,
+                        Accessibility.Internal => Glyph.EventInternal,
+                        _ => Glyph.EventPublic,
+                    };
                 case WellKnownTags.ExtensionMethod:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.ExtensionMethodProtected;
-                        case Accessibility.Private:
-                            return Glyph.ExtensionMethodPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.ExtensionMethodInternal;
-                        default:
-                            return Glyph.ExtensionMethodPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.ExtensionMethodProtected,
+                        Accessibility.Private => Glyph.ExtensionMethodPrivate,
+                        Accessibility.Internal => Glyph.ExtensionMethodInternal,
+                        _ => Glyph.ExtensionMethodPublic,
+                    };
                 case WellKnownTags.Field:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.FieldProtected;
-                        case Accessibility.Private:
-                            return Glyph.FieldPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.FieldInternal;
-                        default:
-                            return Glyph.FieldPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.FieldProtected,
+                        Accessibility.Private => Glyph.FieldPrivate,
+                        Accessibility.Internal => Glyph.FieldInternal,
+                        _ => Glyph.FieldPublic,
+                    };
                 case WellKnownTags.Interface:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.InterfaceProtected;
-                        case Accessibility.Private:
-                            return Glyph.InterfacePrivate;
-                        case Accessibility.Internal:
-                            return Glyph.InterfaceInternal;
-                        default:
-                            return Glyph.InterfacePublic;
-                    }
-
+                        Accessibility.Protected => Glyph.InterfaceProtected,
+                        Accessibility.Private => Glyph.InterfacePrivate,
+                        Accessibility.Internal => Glyph.InterfaceInternal,
+                        _ => Glyph.InterfacePublic,
+                    };
                 case WellKnownTags.Intrinsic:
                     return Glyph.Intrinsic;
 
@@ -181,31 +136,21 @@ public static class CodeActionExtensions
                     return Glyph.Namespace;
 
                 case WellKnownTags.Method:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.MethodProtected;
-                        case Accessibility.Private:
-                            return Glyph.MethodPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.MethodInternal;
-                        default:
-                            return Glyph.MethodPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.MethodProtected,
+                        Accessibility.Private => Glyph.MethodPrivate,
+                        Accessibility.Internal => Glyph.MethodInternal,
+                        _ => Glyph.MethodPublic,
+                    };
                 case WellKnownTags.Module:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.ModulePublic;
-                        case Accessibility.Private:
-                            return Glyph.ModulePrivate;
-                        case Accessibility.Internal:
-                            return Glyph.ModuleInternal;
-                        default:
-                            return Glyph.ModulePublic;
-                    }
-
+                        Accessibility.Protected => Glyph.ModulePublic,
+                        Accessibility.Private => Glyph.ModulePrivate,
+                        Accessibility.Internal => Glyph.ModuleInternal,
+                        _ => Glyph.ModulePublic,
+                    };
                 case WellKnownTags.Folder:
                     return Glyph.OpenFolder;
 
@@ -216,18 +161,13 @@ public static class CodeActionExtensions
                     return Glyph.Parameter;
 
                 case WellKnownTags.Property:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.PropertyProtected;
-                        case Accessibility.Private:
-                            return Glyph.PropertyPrivate;
-                        case Accessibility.Internal:
-                            return Glyph.PropertyInternal;
-                        default:
-                            return Glyph.PropertyPublic;
-                    }
-
+                        Accessibility.Protected => Glyph.PropertyProtected,
+                        Accessibility.Private => Glyph.PropertyPrivate,
+                        Accessibility.Internal => Glyph.PropertyInternal,
+                        _ => Glyph.PropertyPublic,
+                    };
                 case WellKnownTags.RangeVariable:
                     return Glyph.RangeVariable;
 
@@ -238,18 +178,13 @@ public static class CodeActionExtensions
                     return Glyph.NuGet;
 
                 case WellKnownTags.Structure:
-                    switch (GetAccessibility(tags))
+                    return GetAccessibility(tags) switch
                     {
-                        case Accessibility.Protected:
-                            return Glyph.StructureProtected;
-                        case Accessibility.Private:
-                            return Glyph.StructurePrivate;
-                        case Accessibility.Internal:
-                            return Glyph.StructureInternal;
-                        default:
-                            return Glyph.StructurePublic;
-                    }
-
+                        Accessibility.Protected => Glyph.StructureProtected,
+                        Accessibility.Private => Glyph.StructurePrivate,
+                        Accessibility.Internal => Glyph.StructureInternal,
+                        _ => Glyph.StructurePublic,
+                    };
                 case WellKnownTags.TypeParameter:
                     return Glyph.TypeParameter;
 

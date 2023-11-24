@@ -39,6 +39,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 #endif
 
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable
+
 namespace RoslynPad.Editor;
 
 public sealed class ContextActionsRenderer

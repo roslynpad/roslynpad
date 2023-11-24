@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +19,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
 
-public class MainViewModelBase : NotificationObject
+public class MainViewModelBase : NotificationObject, IDisposable
 {
     private static readonly Version s_currentVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version();
 
@@ -197,7 +198,7 @@ public class MainViewModelBase : NotificationObject
         get
         {
             var currentVersion = s_currentVersion.Minor <= 0 && s_currentVersion.Build <= 0
-                ? s_currentVersion.Major.ToString()
+                ? s_currentVersion.Major.ToString(CultureInfo.InvariantCulture)
                 : s_currentVersion.ToString();
             return "RoslynPad " + currentVersion;
         }
@@ -755,5 +756,10 @@ public class MainViewModelBase : NotificationObject
     {
         return document.IsFolder ||
             DocumentViewModel.RelevantFileExtensions.Contains(Path.GetExtension(document.Name));
+    }
+
+    public void Dispose()
+    {
+        _documentFileWatcher?.Dispose();
     }
 }
