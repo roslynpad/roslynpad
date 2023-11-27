@@ -13,4 +13,22 @@
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(LtsTargetFramework)\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\netfx" />
   </Target>
+  <!-- hack to make macOS asset packaging (actool) work on non-Catalyst builds -->
+  <Target Name="Before_CoreCompileImageAssets" BeforeTargets="_CoreCompileImageAssets">
+    <PropertyGroup>
+      <Original_SdkPlatform>$(_SdkPlatform)</Original_SdkPlatform>
+      <_SdkPlatform>MacCatalyst</_SdkPlatform>
+      <Original_UIDeviceFamily>$(_UIDeviceFamily)</Original_UIDeviceFamily>
+      <_UIDeviceFamily>IPad</_UIDeviceFamily>
+      <Original_ComputedTargetFrameworkMoniker>$(_ComputedTargetFrameworkMoniker)</Original_ComputedTargetFrameworkMoniker>
+      <_ComputedTargetFrameworkMoniker>$(_ComputedTargetFrameworkMoniker.Replace('=macos', '=maccatalyst'))</_ComputedTargetFrameworkMoniker>
+    </PropertyGroup>
+  </Target>
+  <Target Name="After_CoreCompileImageAssets" AfterTargets="_CoreCompileImageAssets">
+    <PropertyGroup>
+      <_SdkPlatform>$(Original_SdkPlatform)</_SdkPlatform>
+      <_UIDeviceFamily>$(Original_UIDeviceFamily)</_UIDeviceFamily>
+      <_ComputedTargetFrameworkMoniker>$(Original_ComputedTargetFrameworkMoniker)</_ComputedTargetFrameworkMoniker>
+    </PropertyGroup>
+  </Target>
 </Project>
