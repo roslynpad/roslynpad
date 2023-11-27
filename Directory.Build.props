@@ -6,11 +6,13 @@
     <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) ">true</UseWPF>
     <TargetFramework Condition=" '$(UseWPF)' == 'true' ">$(LtsTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
+    <IsMacOS>$([System.OperatingSystem]::IsMacOS())</IsMacOS>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Version>4.8.0</Version>
     <RoslynPadVersion>19.0.0</RoslynPadVersion>
+    <ApplicationVersion>$(RoslynPadVersion.Replace('.', ''))</ApplicationVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <AnalysisMode>Recommended</AnalysisMode>

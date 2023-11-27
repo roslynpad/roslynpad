@@ -32,9 +32,9 @@ Open `src\RoslynPad.sln` in Visual Studio 2022.
 
 ## Running the cross-platform .NET Core Avalonia version (on Mac or Linux)
 
-* Install .NET Core SDK 7.0
+* Install .NET Core SDK 8.0
 * Download and unzip `RoslynPadAvalonia.zip` from the latest release
-* Run `dotnet RoslynPad.dll`
+* Copy the app to the `Applications` directory and run
 
 ## Features
 

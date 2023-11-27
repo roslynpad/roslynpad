@@ -9,7 +9,12 @@
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn"
              xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Light"
+             Name="RoslynPad">
+	<NativeMenu.Menu>
+		<NativeMenu>
+		</NativeMenu>
+	</NativeMenu.Menu>
   <Application.Styles>
     <FluentTheme />
     <DockFluentTheme />

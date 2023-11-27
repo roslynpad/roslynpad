@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.Build.Traversal">
+  <ItemGroup>
+    <ProjectReference Include="RoslynPad.Avalonia/RoslynPad.Avalonia.csproj" />
+  </ItemGroup>
+</Project>
