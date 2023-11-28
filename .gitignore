@@ -202,10 +202,10 @@ FakesAssemblies/
 *.opt
 
 *.lock.json
-RoslynPad.zip
 /lib
 *.binlog
 
+*.zip
 *.appx
 *.msix
 

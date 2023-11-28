@@ -1,4 +1,5 @@
 param (
+  [string] $RootPath,
   [string] $PatchVersion = '0'
 )
 
@@ -27,12 +28,7 @@ $appManifest = [xml] (Get-Content $appManifestPath)
 $appManifest.Package.Identity.Version = (Get-RoslynPadVersion $PatchVersion) + '.0'
 $appManifest.Save($appManifestPath)
 
-Write-Host 'Building...'
-
-dotnet publish .\..\src\RoslynPad -c Release --self-contained -r win-x64
-
-$rootPath = Get-PackageRoot -Published
-$files = Get-PackageFiles $rootPath
+$files = Get-PackageFiles $RootPath
 
 Write-Host 'Creating mapping...'
 
@@ -45,7 +41,7 @@ foreach ($asset in Get-ChildItem resources\windows\PackageRoot\Assets) {
 }
 
 foreach ($file in $files) {
-  ('"' + $file + '" "' + $file.Substring($rootPath.Length) + '"') >> $mapping
+  ('"' + $file + '" "' + $file.Substring($RootPath.Length) + '"') >> $mapping
   $file
 }
 

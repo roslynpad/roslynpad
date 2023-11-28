@@ -8,11 +8,12 @@
     <ApplicationTitle>RoslynPad</ApplicationTitle>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
-    <TargetFramework Condition=" '$(IsMacOS)' == 'true' ">$(DefaultTargetFramework)-macos</TargetFramework>
+    <TargetFramework Condition=" '$(IsMacBuild)' == 'true' ">$(DefaultTargetFramework)-macos</TargetFramework>
     <SelfContained>true</SelfContained>
+    <CreatePackage>false</CreatePackage>
   </PropertyGroup>
   <!-- hack to force resizetizer to work outside of MAUI -->
-  <PropertyGroup Condition=" '$(IsMacOS)' == 'true' ">
+  <PropertyGroup Condition=" '$(IsMacBuild)' == 'true' ">
     <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>
     <ResizetizerIncludeSelfProject>true</ResizetizerIncludeSelfProject>
     <OptimizePNGs>true</OptimizePNGs>
