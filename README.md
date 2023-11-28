@@ -30,11 +30,15 @@ RoslynPad is also available as NuGet packages which allow you to use Roslyn serv
 
 Open `src\RoslynPad.sln` in Visual Studio 2022.
 
-## Running the cross-platform .NET Core Avalonia version (on Mac or Linux)
+## Running the cross-platform version (on Mac or Linux)
 
 * Install .NET Core SDK 8.0
-* Download and unzip `RoslynPadAvalonia.zip` from the latest release
+* Download and unzip the relevant release
+
+### Additional steps for macOS
 * Copy the app to the `Applications` directory and run
+* On the first run, right click the app on Finder and select **Open**
+* You will be prompted that the app is not signed by a known developer - click **Open**
 
 ## Features
 

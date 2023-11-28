@@ -11,8 +11,7 @@ Set-Location $PSScriptRoot
 
 . .\Common.ps1
 
-$toolsPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Shared\NuGetPackages\microsoft.windows.sdk.buildtools"
-$toolsPath += "\$(Get-LatestVersionPath $toolsPath)\bin"
+$toolsPath = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\"
 $toolsPath += "\$(Get-LatestVersionPath $toolsPath)\x64"
 $env:Path += ";$toolsPath"
 
@@ -51,7 +50,7 @@ makepri.exe new /pr resources\windows\PackageRoot /cf priconfig.xml
 
 foreach ($file in Get-ChildItem *.pri) {
   ('"' + $file + '" "' + $file.BaseName + '.pri"') >> $mapping
-  $file
+  $file | Write-Host
 }
 
 Write-Host 'Creating APPX...'
