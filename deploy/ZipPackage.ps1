@@ -20,12 +20,12 @@ Write-Host 'Building...'
 
 switch ($Mode) {
   'Avalonia' {
-    dotnet publish ..\src\RoslynPad.Avalonia -c Release
+    dotnet publish ..\src\RoslynPad.Avalonia
     $archiveFile = "$PSScriptRoot\RoslynPadAvalonia.zip"
   }
   'MacOSStandalone' {
-    dotnet publish ..\src\RoslynPad.Avalonia -c Release --self-contained -r osx-x64
-    $archiveFile = "$PSScriptRoot\RoslynPadMacOS.zip"
+    dotnet publish ..\src\RoslynPad.Avalonia --self-contained -r osx-x64
+    $archiveFile = "$PSScriptRoot\RoslynPadMacOS-x64.zip"
   }
   'Windows' {
     dotnet build ..\src\RoslynPad -c Release

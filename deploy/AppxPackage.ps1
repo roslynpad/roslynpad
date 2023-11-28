@@ -22,7 +22,7 @@ Remove-Item *.pri
 
 Write-Host 'Updating manifest...'
 
-$appManifestPath = "$PSScriptRoot\PackageRoot\AppxManifest.xml"
+$appManifestPath = "$PSScriptRoot\resources\windows\PackageRoot\AppxManifest.xml"
 $appManifest = [xml] (Get-Content $appManifestPath)
 $appManifest.Package.Identity.Version = (Get-RoslynPadVersion $PatchVersion) + '.0'
 $appManifest.Save($appManifestPath)
@@ -40,7 +40,7 @@ Write-Host 'Creating mapping...'
 
 ('"' + $appManifestPath + '" "AppxManifest.xml"') >> $mapping
 
-foreach ($asset in Get-ChildItem PackageRoot\Assets) {
+foreach ($asset in Get-ChildItem resources\windows\PackageRoot\Assets) {
   ('"' + $asset.FullName + '" "Assets\' + $asset.Name + '"') >> $mapping
 }
 
@@ -51,7 +51,7 @@ foreach ($file in $files) {
 
 Write-Host 'Creating PRI...'
 
-makepri.exe new /pr PackageRoot /cf priconfig.xml
+makepri.exe new /pr resources\windows\PackageRoot /cf priconfig.xml
 
 foreach ($file in Get-ChildItem *.pri) {
   ('"' + $file + '" "' + $file.BaseName + '.pri"') >> $mapping

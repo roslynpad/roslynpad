@@ -6,21 +6,20 @@
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationId>net.roslynpad</ApplicationId>
     <ApplicationTitle>RoslynPad</ApplicationTitle>
-    <ApplicationDisplayVersion>$(RoslynPadVersion)</ApplicationDisplayVersion>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
-    <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
     <TargetFramework Condition=" '$(IsMacOS)' == 'true' ">$(DefaultTargetFramework)-macos</TargetFramework>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
   <!-- hack to force resizetizer to work outside of MAUI -->
   <PropertyGroup Condition=" '$(IsMacOS)' == 'true' ">
     <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>
     <ResizetizerIncludeSelfProject>true</ResizetizerIncludeSelfProject>
     <OptimizePNGs>true</OptimizePNGs>
-    <_XSAppIconAssets>Assets.xcassets/roslynpad.appiconset</_XSAppIconAssets>
+    <_XSAppIconAssets>Assets.xcassets/appicon.appiconset</_XSAppIconAssets>
   </PropertyGroup>
   <ItemGroup>
-    <MauiIcon Include="../../docs/roslynpad.svg" />
+    <MauiIcon Include="$(RepoRoot)/deploy/resources/macos/appicon.svg" />
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
     <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
   </ItemGroup>
@@ -35,6 +34,7 @@
     <PackageReference Include="Microsoft.Maui.Resizetizer" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
   </ItemGroup>
