@@ -116,9 +116,10 @@
             <Style Selector="MenuItem Popup">
               <Setter Property="MaxHeight" Value="400" />
             </Style>
-            <Style Selector="MenuItem > MenuItem">
+            <Style Selector="MenuItem > MenuItem"
+                   x:DataType="ui:PackageData">
               <Setter Property="Command"
-                      Value="{Binding ElementName=RootMenu, Path=((ui:OpenDocumentViewModel)DataContext).NuGet.InstallPackageCommand, Mode=OneTime}" />
+                      Value="{Binding InstallPackageCommand}" />
               <Setter Property="CommandParameter"
                       Value="{Binding}" />
             </Style>

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using RoslynPad.Roslyn.Completion.Providers;
+using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
 
@@ -44,6 +45,8 @@ public sealed class PackageData : INuGetPackage
             }
         }
     }
+
+    public IDelegateCommand? InstallPackageCommand { get; internal set; }
 
     public PackageData(IPackageSearchMetadata package)
     {

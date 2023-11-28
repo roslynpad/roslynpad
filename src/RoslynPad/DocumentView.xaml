@@ -163,7 +163,7 @@
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Command"
-                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
+                                        Value="{Binding InstallPackageCommand, Mode=OneTime}" />
                                 <Setter Property="CommandParameter"
                                         Value="{Binding Mode=OneTime}" />
                                 <Setter Property="Icon"

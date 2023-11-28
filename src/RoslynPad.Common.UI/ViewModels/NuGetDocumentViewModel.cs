@@ -127,6 +127,13 @@ public sealed class NuGetDocumentViewModel : NotificationObject
                             exactMatch: ExactMatch, cancellationToken: cancellationToken), cancellationToken)
                     .ConfigureAwait(true);
 
+                cancellationToken.ThrowIfCancellationRequested();
+
+                foreach (var package in packages)
+                {
+                    package.InstallPackageCommand = InstallPackageCommand;
+                }
+
                 Packages = packages;
                 IsPackagesMenuOpen = Packages.Count > 0;
             }
