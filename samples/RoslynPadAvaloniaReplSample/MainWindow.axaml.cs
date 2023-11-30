@@ -5,17 +5,20 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows;
-using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using RoslynPad.Editor;
 using RoslynPad.Roslyn;
 
-namespace RoslynPadReplSample;
+namespace RoslynPadAvaloniaReplSample;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+/// Interaction logic for MainWindow.axaml
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -24,16 +27,18 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        AvaloniaXamlLoader.Load(this);
+        this.AttachDevTools();
 
         _documents = new ObservableCollection<DocumentViewModel>();
-        Items.ItemsSource = _documents;
+        var items = this.Get<ItemsControl>("Items");
+        items.ItemsSource = _documents;
 
         _host = new CustomRoslynHost(additionalAssemblies: new[]
         {
-                    Assembly.Load("RoslynPad.Roslyn.Windows"),
-                    Assembly.Load("RoslynPad.Editor.Windows")
-                }, RoslynHostReferences.NamespaceDefault.With(assemblyReferences: new[]
+            Assembly.Load("RoslynPad.Roslyn.Avalonia"),
+            Assembly.Load("RoslynPad.Editor.Avalonia")
+        }, RoslynHostReferences.NamespaceDefault.With(assemblyReferences: new[]
         {
             typeof(object).Assembly,
             typeof(System.Text.RegularExpressions.Regex).Assembly,
@@ -48,7 +53,7 @@ public partial class MainWindow : Window
         _documents.Add(new DocumentViewModel(_host, previous));
     }
 
-    private async void OnItemLoaded(object sender, EventArgs e)
+    private async void OnItemLoaded(object? sender, RoutedEventArgs e)
     {
         if (!(sender is RoslynCodeEditor editor && editor.DataContext is DocumentViewModel viewModel)) return;
 
@@ -67,7 +72,6 @@ public partial class MainWindow : Window
                     args.TextContainer.UpdateText));
             };
         }
-
         var documentId = await editor.InitializeAsync(_host, new ClassificationHighlightColors(),
             workingDirectory, string.Empty, SourceCodeKind.Script).ConfigureAwait(true);
 
@@ -102,7 +106,8 @@ public partial class MainWindow : Window
     {
         private bool _addedAnalyzers;
 
-        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableArray<string>? disabledDiagnostics = null) : base(additionalAssemblies, references, disabledDiagnostics)
+        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableArray<string>? disabledDiagnostics = null)
+            : base(additionalAssemblies, references, disabledDiagnostics)
         {
         }
 

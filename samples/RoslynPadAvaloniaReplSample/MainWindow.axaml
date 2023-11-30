@@ -1,0 +1,29 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="RoslynPadAvaloniaReplSample.MainWindow"
+        xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
+        xmlns:roslynPadReplSample="clr-namespace:RoslynPadAvaloniaReplSample"
+        mc:Ignorable="d"
+        Title="RoslynPad REPL Sample"
+        Height="350"
+        Width="525">
+    <ScrollViewer Background="#eee">
+        <ItemsControl Name="Items">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="roslynPadReplSample:DocumentViewModel">
+                    <StackPanel>
+                        <editor:RoslynCodeEditor Loaded="OnItemLoaded"
+                                                  KeyDown="OnEditorKeyDown"
+                                                  FontFamily="Consolas"
+                                                  Margin="5"
+                                                  ShowLineNumbers="False"
+                                                  IsReadOnly="{Binding IsReadOnly}" />
+                        <TextBlock Text="{Binding Result}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</Window>
