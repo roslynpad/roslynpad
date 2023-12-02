@@ -21,11 +21,13 @@ A cross-platform C# editor based on Roslyn and AvalonEdit
    
    You will be prompted that the app is not signed by a known developer - click **Open**.
 
-   For more information see the [Open a Mac app from an unidentified developer](https://support.apple.com/en-il/guide/mac-help/mh40616/mac).
+   For more information see [Open a Mac app from an unidentified developer](https://support.apple.com/guide/mac-help/mh40616).
 
 ## Packages
 
 RoslynPad is also available as NuGet packages which allow you to use Roslyn services and the editor in your own apps.
+
+[Code samples](https://github.com/aelij/RoslynPad/tree/main/samples)
 
 |Package Name|Description|
 |------------|-----------|
@@ -37,11 +39,9 @@ RoslynPad is also available as NuGet packages which allow you to use Roslyn serv
 
 Package versions match Roslyn's.
 
-[Code samples](https://github.com/aelij/RoslynPad/tree/main/samples)
-
 ## Building
 
-Open `src\RoslynPad.sln` in Visual Studio 2022.
+Open `src/RoslynPad.sln` in Visual Studio 2022.
 
 ## Features
 
