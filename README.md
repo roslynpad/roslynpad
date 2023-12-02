@@ -28,7 +28,7 @@ RoslynPad is also available as NuGet packages which allow you to use Roslyn serv
 |[![NuGet](https://img.shields.io/nuget/v/RoslynPad.Editor.Windows.svg?style=flat-square)](https://www.nuget.org/packages/RoslynPad.Editor.Windows) `RoslynPad.Editor.Windows`|Provides a Roslyn-based code editor using AvaloniaEdit (WPF platform) with completion, diagnostics, and quick actions|
 |[![NuGet](https://img.shields.io/nuget/v/RoslynPad.Editor.Avalonia.svg?style=flat-square)](https://www.nuget.org/packages/RoslynPad.Editor.Avalonia) `RoslynPad.Editor.Avalonia`|Provides a Roslyn-based code editor using AvalonEdit (Avalonia platform) with completion, diagnostics, and quick actions|
 
-`RoslynPad.Roslyn*` package versions must correspond to Roslyn's.
+Package versions match Roslyn's.
 
 [Code samples](https://github.com/aelij/RoslynPad/tree/main/samples)
 
@@ -38,13 +38,16 @@ Open `src\RoslynPad.sln` in Visual Studio 2022.
 
 ## Running the cross-platform version (on Mac or Linux)
 
-* Install .NET Core SDK 8.0
-* Download and unzip the relevant release
+1. Install a supported .NET SDK.
+2. Download and unzip the relevant release.
 
 ### Additional steps for macOS
-* Copy the app to the `Applications` directory and run
-* On the first run, right click the app on Finder and select **Open**
-* You will be prompted that the app is not signed by a known developer - click **Open**
+3. Copy the app to the `Applications` directory.
+4. On the first run, right click the app on Finder and select **Open**.
+   
+   You will be prompted that the app is not signed by a known developer - click **Open**.
+
+   For more information see the [Open a Mac app from an unidentified developer](https://support.apple.com/en-il/guide/mac-help/mh40616/mac).
 
 ## Features
 
