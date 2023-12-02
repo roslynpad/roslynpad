@@ -4,17 +4,24 @@
 
 A cross-platform C# editor based on Roslyn and AvalonEdit
 
-[![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases)
+## Installing
 
-Also available to download in the Microsoft Store:
+**You must also install a supported .NET SDK to allow RoslynPad to compile programs.**
 
-<a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="50" alt="Microsoft Store badge logo" /></a>
+| Source | |
+|-|-|
+| GitHub | [![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases/latest) |
+| Microsoft Store | <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="50" alt="Microsoft Store badge logo" /></a> |
+| winget | `winget install --id RoslynPad.RoslynPad` |
 
-And via winget:
+### Running on macOS
 
-```
-winget install --id RoslynPad.RoslynPad
-```
+1. Copy the app to the `Applications` directory.
+1. On the first run, right click the app on Finder and select **Open**.
+   
+   You will be prompted that the app is not signed by a known developer - click **Open**.
+
+   For more information see the [Open a Mac app from an unidentified developer](https://support.apple.com/en-il/guide/mac-help/mh40616/mac).
 
 ## Packages
 
@@ -35,19 +42,6 @@ Package versions match Roslyn's.
 ## Building
 
 Open `src\RoslynPad.sln` in Visual Studio 2022.
-
-## Running the cross-platform version (on Mac or Linux)
-
-1. Install a supported .NET SDK.
-2. Download and unzip the relevant release.
-
-### Additional steps for macOS
-3. Copy the app to the `Applications` directory.
-4. On the first run, right click the app on Finder and select **Open**.
-   
-   You will be prompted that the app is not signed by a known developer - click **Open**.
-
-   For more information see the [Open a Mac app from an unidentified developer](https://support.apple.com/en-il/guide/mac-help/mh40616/mac).
 
 ## Features
 
