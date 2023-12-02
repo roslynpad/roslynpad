@@ -10,6 +10,12 @@ Also available to download in the Microsoft Store:
 
 <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="50" alt="Microsoft Store badge logo" /></a>
 
+And via winget:
+
+```
+winget install --id RoslynPad.RoslynPad
+```
+
 ## Packages
 
 RoslynPad is also available as NuGet packages which allow you to use Roslyn services and the editor in your own apps.
