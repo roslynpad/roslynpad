@@ -41,7 +41,14 @@ Package versions match Roslyn's.
 
 ## Building
 
-Open `src/RoslynPad.sln` in Visual Studio 2022.
+To build the source code, use one of the following:
+* `dotnet build`
+* Visual Studio 2022
+* Visual Studio Code with the C# Dev Kit extension
+
+Solutions:
+* `src/RoslynPad.sln` - contains all projects (recommended only on Windows)
+* `src/RoslynPad.Avalonia.sln` - contains only cross-platform projects
 
 ## Features
 
