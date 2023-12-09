@@ -197,9 +197,11 @@ public class MainViewModelBase : NotificationObject, IDisposable
     {
         get
         {
-            var currentVersion = s_currentVersion.Minor <= 0 && s_currentVersion.Build <= 0
-                ? s_currentVersion.Major.ToString(CultureInfo.InvariantCulture)
-                : s_currentVersion.ToString();
+            var currentVersion = s_currentVersion switch {
+                { Minor: <= 0, Build: <= 0 } => s_currentVersion.Major.ToString(CultureInfo.InvariantCulture),
+                { Build: <= 0 } => $"{s_currentVersion.Major}.{s_currentVersion.Minor}",
+                _ => s_currentVersion.ToString()
+            };
             return "RoslynPad " + currentVersion;
         }
     }

@@ -89,8 +89,8 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
 }
 
 if ($IsMacOS) {
-  # Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
-  # Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
+  Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
+  Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
   Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
 }
 elseif ($IsWindows) {
