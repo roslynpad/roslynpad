@@ -51,10 +51,9 @@ internal class PlatformsFactory : IPlatformsFactory
 
     private IEnumerable<ExecutionPlatform> GetNetFrameworkVersions()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
         {
             var targetFrameworkName = GetNetFrameworkName();
-            yield return new ExecutionPlatform(".NET Framework x86", targetFrameworkName, null, Architecture.X86, isDotNet: false);
             yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, null, Architecture.X64, isDotNet: false);
         }
     }

@@ -110,7 +110,6 @@
         <Button Grid.Column="1"
                 BorderBrush="Transparent"
                 Background="Transparent"
-                Content="{StaticResource CsFile}"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
                 CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
                 ToolTip.Tip="New Document (Ctrl+N)">
