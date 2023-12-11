@@ -43,6 +43,8 @@
                      x:Shared="False">
             <MenuItem Header="_Open in File Explorer"
                       Click="DocumentsContextMenu_OpenFolder_Click" />
+            <MenuItem Header="_Delete" Click="DocumentsContextMenu_Delete_Click"/>
+            <MenuItem Header="View _History" Click="OnViewHistoryClick"/>
         </ContextMenu>
 
         <Style x:Key="DocumentItemContainerStyle"
@@ -68,6 +70,8 @@
                     Value="2" />
         </Style>
 
+        <roslynPad:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <roslynPad:NotBooleanToVisibilityConverter x:Key="NotBooleanToVisibilityConverter"/>
     </FrameworkElement.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -170,6 +174,22 @@
                 <Image Source="{StaticResource ClearContent}"
                        Width="16"
                        Height="16" />
+            </Button>
+            <Separator/>
+            <Button ToolTip="Init Git" Visibility="{Binding IsGitInited, Converter={StaticResource NotBooleanToVisibilityConverter}}"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding InitGitCommand, Mode=OneTime}">
+                <Image Source="Resources/git.png" Width="20" Height="20"/>
+            </Button>
+            <Button ToolTip="Commit" Visibility="{Binding IsGitInited, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                    ToolTipService.Placement="Top"
+                    Command="{Binding CommitCommand, Mode=OneTime}">
+                <Image Source="Resources/gitcommit.png" Width="20" Height="20"/>
+            </Button>
+            <Button ToolTip="Branch History" Visibility="{Binding IsGitInited, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                    ToolTipService.Placement="Top"
+                    Command="{Binding BrachHistoryCommand, Mode=OneTime}">
+                <Image Source="Resources/codebranch.png" Width="20" Height="20"/>
             </Button>
         </ToolBar>
 

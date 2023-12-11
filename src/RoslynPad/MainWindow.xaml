@@ -33,6 +33,21 @@
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>
 
+        <DataTemplate DataType="{x:Type roslynPad:GitFileCompareViewModel}">
+            <roslynPad:GitCompareFileView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type roslynPad:CommitChangesViewModel}">
+            <roslynPad:CommitDetailView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type roslynPad:GitCommitFileViewModel}">
+            <roslynPad:GitFileViewer/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type roslynPad:GitBranchHistoryViewModel}">
+            <roslynPad:BranchHistoryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type roslynPad:GitChangesViewModel}">
+            <roslynPad:CommitView/>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
             <roslynPad:DocumentView />
         </DataTemplate>

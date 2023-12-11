@@ -17,6 +17,7 @@ using RoslynPad.Build;
 using RoslynPad.UI;
 using System.Windows.Data;
 using System.Globalization;
+using ICSharpCode.AvalonEdit.Folding;
 
 namespace RoslynPad;
 
@@ -40,8 +41,17 @@ public partial class DocumentView : IDisposable
         _syncContext = SynchronizationContext.Current;
 
         DataContextChanged += OnDataContextChanged;
+        foldingManager = ICSharpCode.AvalonEdit.Folding.FoldingManager.Install(Editor.TextArea);
+        Editor.TextChanged += EditorTextChanged;
     }
 
+    FoldingManager foldingManager;
+    BraceFoldingStrategy foldingStrategy = new BraceFoldingStrategy();
+    private void EditorTextChanged(object? sender, EventArgs e)
+    {
+        if (foldingManager == null) return;
+        foldingStrategy.UpdateFoldings(foldingManager, Editor.Document);
+    }
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
 
     private void EditorSelectionChanged(object? sender, EventArgs e) 

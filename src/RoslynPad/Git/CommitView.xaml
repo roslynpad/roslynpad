@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="RoslynPad.CommitView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:controls="clr-namespace:RoslynPad.Controls"
+             xmlns:local="clr-namespace:RoslynPad"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <local:StringNotNullEmptyConverter x:Key="StringNotNullEmptyConverter"/>
+        <HierarchicalDataTemplate DataType="{x:Type local:GitChangesViewModel}"
+                                  ItemsSource="{Binding Children}">
+            <DockPanel Margin="0 2 0 2" VerticalAlignment="Center">
+                <ToggleButton Style="{StaticResource TreeListViewToggleStyle}" />
+
+                <Image Name="Icon2"
+                       Source="{StaticResource CsFile}"
+                       Height="12"
+                       Margin="0 0 3 0" />
+                <TextBlock Text="{Binding Name}" />
+                <TextBlock Text="{Binding Status}" HorizontalAlignment="Right" Margin="0,0,3,0"/>
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFolder, Mode=OneTime}"
+                             Value="True">
+                    <Setter TargetName="Icon2"
+                            Property="Source"
+                            Value="{StaticResource Folder}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+        <ContextMenu x:Key="CommitViewContextMenu"
+                     x:Shared="False">
+            <MenuItem Header="_Open"
+                      Click="GitItemOpenClicked" />
+            <MenuItem Header="_Compare with Unmodified" Click="GitCompareClicked"/>
+            <MenuItem Header="_Ignore" Click="GitItemIgnoreClicked"/>
+        </ContextMenu>
+        <Style x:Key="CommitViewContainerStyle"
+               TargetType="controls:TreeListViewItem"
+               BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+            <EventSetter Event="MouseDoubleClick"
+                         Handler="OnDocumentClick" />
+            <Setter Property="ContextMenu"
+                    Value="{StaticResource CommitViewContextMenu}" />
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="0,0,0,30">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBox Margin="5,2" Grid.Row="0" Grid.ColumnSpan="2" BorderThickness="1" 
+                      Name="CommitComment" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"/>
+
+        <TextBlock Margin="7,2" Grid.Row="0" Grid.ColumnSpan="2" Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               Foreground="DarkGray">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ElementName=CommitComment, Path=Text}"
+                                                 Value="">
+                            <Setter Property="Visibility"
+                                                Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <Button Margin="5,2" Padding="15,3" Name="CommitButton" Content="Commit" Grid.Row="1" Click="OnCommit"
+                IsEnabled="{Binding ElementName=CommitComment, Path=Text, Converter={StaticResource StringNotNullEmptyConverter}}"/>
+        <Label Margin="5,2" Content="Changes" Grid.Row="2"/>
+        <controls:TreeListView x:Name="ChangeList" Margin="5, 2" Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding Children}"
+                               ItemContainerStyle="{StaticResource CommitViewContainerStyle}"
+                               ShowSeparator="False"/>
+    </Grid>
+</UserControl>

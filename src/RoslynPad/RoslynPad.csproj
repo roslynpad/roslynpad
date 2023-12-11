@@ -17,15 +17,40 @@
     <EmbeddedResource Include="**\*.xshd" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Resources\.gitignore" />
+    <None Remove="Resources\blank.png" />
+    <None Remove="Resources\codebranch.png" />
+    <None Remove="Resources\git.png" />
+    <None Remove="Resources\gitcommit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\.gitignore" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonLibrary" />
     <PackageReference Include="Dirkster.AvalonDock" />
+    <PackageReference Include="LibGit2Sharp" />
     <PackageReference Include="Mono.Cecil" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\blank.png">
+      <CustomToolNamespace>MSBuild:Compile</CustomToolNamespace>
+    </Resource>
+    <Resource Include="Resources\codebranch.png">
+      <CustomToolNamespace>MSBuild:Compile</CustomToolNamespace>
+    </Resource>
+    <Resource Include="Resources\git.png">
+      <CustomToolNamespace>MSBuild:Compile</CustomToolNamespace>
+    </Resource>
+    <Resource Include="Resources\gitcommit.png">
+      <CustomToolNamespace>MSBuild:Compile</CustomToolNamespace>
+    </Resource>
   </ItemGroup>
 </Project>

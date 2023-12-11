@@ -29,7 +29,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
     private readonly DocumentFileWatcher _documentFileWatcher;
     private readonly string _editorConfigPath;
 
-    private OpenDocumentViewModel? _currentOpenDocument;
+    private IOpenDocumentViewModel? _currentOpenDocument;
     private bool _hasUpdate;
     private double _editorFontSize;
     private string? _searchText;
@@ -86,7 +86,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
         NewDocumentCommand = commands.Create<SourceCodeKind>(CreateNewDocument);
         OpenFileCommand = commands.CreateAsync(OpenFile);
         CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
-        CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
+        CloseDocumentCommand = commands.CreateAsync<IOpenDocumentViewModel>(CloseDocument);
         ClearErrorCommand = commands.Create(_telemetryProvider.ClearLastError);
         ReportProblemCommand = commands.Create(ReportProblem);
         EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
@@ -261,7 +261,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
         return root;
     }
 
-    public void EditUserDocumentPath()
+    public virtual void EditUserDocumentPath()
     {
         var dialog = _serviceProvider.GetRequiredService<IFolderBrowserDialog>();
         dialog.ShowEditBox = true;
@@ -281,9 +281,9 @@ public class MainViewModelBase : NotificationObject, IDisposable
 
     public NuGetViewModel NuGet { get; }
 
-    public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
+    public ObservableCollection<IOpenDocumentViewModel> OpenDocuments { get; }
 
-    public OpenDocumentViewModel? CurrentOpenDocument
+    public IOpenDocumentViewModel? CurrentOpenDocument
     {
         get => _currentOpenDocument;
         set
@@ -308,7 +308,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
 
     public IDelegateCommand CloseCurrentDocumentCommand { get; }
 
-    public IDelegateCommand<OpenDocumentViewModel> CloseDocumentCommand { get; }
+    public IDelegateCommand<IOpenDocumentViewModel> CloseDocumentCommand { get; }
 
     public IDelegateCommand ToggleOptimizationCommand { get; }
 
@@ -363,7 +363,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
         CurrentOpenDocument = openDocument;
     }
 
-    public async Task CloseDocument(OpenDocumentViewModel? document)
+    public async Task CloseDocument(IOpenDocumentViewModel? document)
     {
         if (document == null)
         {
@@ -376,7 +376,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
             return;
         }
 
-        if (document.DocumentId != null)
+        if (document.DocumentId != null && document is OpenDocumentViewModel)
         {
             RoslynHost?.CloseDocument(document.DocumentId);
         }
@@ -406,7 +406,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
     public async Task CloseAllDocuments()
     {
         // can't modify the collection while enumerating it.
-        var openDocs = new ObservableCollection<OpenDocumentViewModel>(OpenDocuments);
+        var openDocs = new ObservableCollection<IOpenDocumentViewModel>(OpenDocuments);
         foreach (var document in openDocs)
         {
             await CloseDocument(document).ConfigureAwait(false);

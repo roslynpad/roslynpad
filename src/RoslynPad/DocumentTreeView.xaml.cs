@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -28,6 +29,47 @@ public partial class DocumentTreeView
         _viewModel = (MainViewModel)e.NewValue;
     }
 
+    private void OnViewHistoryClick(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel)
+        {
+            if (documentViewModel.IsFolder) return;
+            var file = documentViewModel.Path;
+            _viewModel.ShowFileHistory(file);
+        }
+    }
+    private async void DocumentsContextMenu_Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel)
+        {
+            if (documentViewModel.IsFolder)
+            {
+                if (MessageBox.Show("Are you sure to delete this folder and all the files inside it?", "delete confirm", MessageBoxButton.OKCancel, MessageBoxImage.Question)
+                    != MessageBoxResult.OK)
+                    return;
+                Directory.Delete(documentViewModel.Path, true);
+                _viewModel.DocumentRoot.Children?.Remove(documentViewModel);
+            }
+            else
+            {
+                if (MessageBox.Show("Are you sure to delete this file?", "delete confirm", MessageBoxButton.OKCancel, MessageBoxImage.Question)
+                    != MessageBoxResult.OK)
+                    return;
+                for (int i = 0; i < _viewModel.OpenDocuments.Count; i++)
+                {
+                    var doc = _viewModel.OpenDocuments[i];
+                    if (doc.Document != null && doc.Document.Path == documentViewModel.Path)
+                    {
+                        await _viewModel.CloseDocument(doc).ConfigureAwait(true);
+                        break;
+                    }
+                }
+                var file = documentViewModel.Path;
+                File.Delete(file);
+                _viewModel.DocumentRoot.Children?.Remove(documentViewModel);
+            }
+        }
+    }
     private void OnDocumentClick(object? sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton == MouseButton.Left)

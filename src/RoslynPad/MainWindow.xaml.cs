@@ -164,7 +164,7 @@ public partial class MainWindow
     private async void DockingManager_OnDocumentClosing(object? sender, DocumentClosingEventArgs e)
     {
         e.Cancel = true;
-        var document = (OpenDocumentViewModel)e.Document.Content;
+        var document = (IOpenDocumentViewModel)e.Document.Content;
         await _viewModel.CloseDocument(document).ConfigureAwait(false);
     }
 
