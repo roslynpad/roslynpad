@@ -119,6 +119,9 @@ internal static class IOUtilities
         using var enumerator = directories.GetEnumerator();
         while (PerformIO(enumerator.MoveNext))
         {
+            var dir = new DirectoryInfo(enumerator.Current);
+            var att = dir.Attributes;
+            if (((int)att & (int)FileAttributes.Hidden) > 0) continue;
             yield return enumerator.Current;
         }
     }

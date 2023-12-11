@@ -716,7 +716,12 @@ public class MainViewModelBase : NotificationObject, IDisposable
                         var currentPath = isLast && data.Type == DocumentFileChangeType.Renamed
                             ? data.NewPath
                             : Path.Combine(_documentRoot.Path, Path.Combine(pathParts.Take(index + 1).ToArray()));
-
+                        if (currentPath != null)
+                        {
+                            var dir = new DirectoryInfo(currentPath);
+                            var att = dir.Attributes;
+                            if (((int)att & (int)FileAttributes.Hidden) > 0) break;
+                        }
                         var newDocument = DocumentViewModel.FromPath(currentPath!);
                         if (!newDocument.IsAutoSave &&
                             IsRelevantDocument(newDocument))
