@@ -9,7 +9,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Version>$(RoslynPadVersion)</Version>
     <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
-    <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
   </PropertyGroup>
   <ItemGroup>
