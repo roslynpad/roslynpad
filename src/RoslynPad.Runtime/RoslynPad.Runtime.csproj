@@ -2,6 +2,7 @@
   <PropertyGroup>
     <IsTrimmable>false</IsTrimmable>
     <PublishTrimmed>false</PublishTrimmed>
+    <TargetFramework Condition=" '$(TargetFramework)' != '' "></TargetFramework>
     <TargetFrameworks>$(EarliestSupportedTargetFramework);netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition=" '$(DefaultTargetFramework)' != '$(EarliestSupportedTargetFramework)' ">$(DefaultTargetFramework);$(TargetFrameworks)</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
