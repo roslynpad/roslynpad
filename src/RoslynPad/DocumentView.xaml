@@ -281,13 +281,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150"
                                                       SharedSizeGroup="ResultNameGroup" />
-                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="5" />
                                     <ColumnDefinition Width="450"
                                                       SharedSizeGroup="ResultValueGroup" />
-                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="5" />
                                     <ColumnDefinition Width="Auto"
                                                       SharedSizeGroup="ResultTypeGroup" />
-                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="5" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Name"
@@ -299,7 +299,9 @@
                                               ResizeDirection="Columns"
                                               HorizontalAlignment="Stretch"
                                               VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
+                                              Background="Transparent"
+                                              BorderBrush="DarkGray"
+                                              BorderThickness="1 0 0 0" />
                                 <TextBlock Text="Value"
                                            Margin="20 0 20 0"
                                            HorizontalAlignment="Center"
@@ -309,7 +311,9 @@
                                               ResizeDirection="Columns"
                                               HorizontalAlignment="Stretch"
                                               VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
+                                              Background="Transparent"
+                                              BorderBrush="DarkGray"
+                                              BorderThickness="1 0 0 0" />
                                 <TextBlock Text="Type"
                                            Margin="20 0 20 0"
                                            HorizontalAlignment="Center"
@@ -319,7 +323,9 @@
                                               ResizeDirection="Columns"
                                               HorizontalAlignment="Stretch"
                                               VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
+                                              Background="Transparent"
+                                              BorderBrush="DarkGray"
+                                              BorderThickness="1 0 0 0" />
                             </Grid>
                         </ScrollViewer>
                         <controls:TreeListView x:Name="ResultTree"
