@@ -1,6 +1,7 @@
 ﻿<Application x:Class="RoslynPad.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
              xmlns:formatting="clr-namespace:RoslynPad.Formatting"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
@@ -421,7 +422,7 @@
                         <TextBlock Text="{Binding Header, Mode=OneTime}" />
                     </DockPanel>
                     <TextBlock Grid.Column="2"
-                               Text="{Binding Value, Mode=OneTime}"
+                               av:BindingHelpers.Inlines="{Binding Value, Mode=OneTime, Converter={x:Static converters:ControlCharacterInlinesConverter.Instance}}"
                                TextWrapping="Wrap"
                                Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                     <TextBlock Grid.Column="4"
