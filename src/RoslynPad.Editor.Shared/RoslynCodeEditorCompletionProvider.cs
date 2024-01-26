@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn;
-using RoslynPad.Roslyn.Completion;
 using RoslynPad.Roslyn.SignatureHelp;
 using RoslynPad.Roslyn.Snippets;
 

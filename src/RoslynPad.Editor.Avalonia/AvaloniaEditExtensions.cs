@@ -1,6 +1,4 @@
-﻿using Avalonia.Media;
-using AvaloniaEdit.CodeCompletion;
-using AvaloniaEdit.Rendering;
+﻿using AvaloniaEdit.CodeCompletion;
 
 namespace RoslynPad.Editor;
 

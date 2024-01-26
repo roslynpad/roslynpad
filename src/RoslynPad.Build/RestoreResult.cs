@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.Build;
+﻿namespace RoslynPad.Build;
 
 internal class RestoreResult
 {
