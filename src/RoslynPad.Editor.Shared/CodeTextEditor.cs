@@ -53,6 +53,7 @@ public partial class CodeTextEditor : TextEditor
             AllowScrollBelowDocument = true,
             IndentationSize = 4,
             EnableEmailHyperlinks = false,
+            ShowBoxForControlCharacters = true,
         };
 
         TextArea.TextView.VisualLinesChanged += OnVisualLinesChanged;
