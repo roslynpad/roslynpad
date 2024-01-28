@@ -4,7 +4,7 @@
              xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:ui="using:RoslynPad.UI"
              x:Class="RoslynPad.DocumentTreeView"
-             x:DataType="roslynPad:MainViewModel">
+             x:DataType="roslynPad:MainViewModelAvalonia">
   <UserControl.Styles>
 
     <Style Selector="Button.SearchButtonStyle">

@@ -3,7 +3,7 @@
              x:Class="RoslynPad.NewDocumentView"
              xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
              xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
-             x:DataType="local:MainViewModel">
+             x:DataType="local:MainViewModelAvalonia">
   <UniformGrid HorizontalAlignment="Center"
                VerticalAlignment="Center">
 

@@ -8,7 +8,7 @@
         xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
         MinWidth="500"
         MinHeight="300"
-        x:DataType="local:MainViewModel"
+        x:DataType="local:MainViewModelAvalonia"
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
