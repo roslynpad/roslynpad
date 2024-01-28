@@ -13,7 +13,7 @@ namespace RoslynPad;
 
 partial class MainWindow : Window
 {
-    private readonly MainViewModelBase _viewModel;
+    private readonly MainViewModel _viewModel;
 
     public MainWindow()
     {
@@ -26,7 +26,7 @@ partial class MainWindow : Window
             .WithAssembly(Assembly.GetEntryAssembly());
         var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-        _viewModel = locator.GetRequiredService<MainViewModelBase>();
+        _viewModel = locator.GetRequiredService<MainViewModel>();
         _viewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
 
         DataContext = _viewModel;

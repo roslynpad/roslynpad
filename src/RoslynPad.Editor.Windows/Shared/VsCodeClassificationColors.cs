@@ -8,7 +8,7 @@ namespace RoslynPad.Editor;
 public class VsCodeClassificationColors : IClassificationHighlightColors
 {
     public HighlightingColor StaticSymbolColor { get; protected set; } = new();
-    public HighlightingColor BraceMatchingColor { get; protected set; } = new HighlightingColor { Background = new SimpleHighlightingBrush(Color.FromArgb(150, 219, 224, 204)) };
+    public HighlightingColor BraceMatchingColor { get; protected set; }
 
     private static readonly JsonSerializerOptions s_serializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -20,6 +20,12 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
 
     public VsCodeClassificationColors(Theme theme)
     {
+        var isDark = string.Equals(theme.Type, "dark", StringComparison.OrdinalIgnoreCase);
+        BraceMatchingColor = new HighlightingColor
+        {
+            Background = new SimpleHighlightingBrush(isDark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
+        };
+
         var vsCodeScopes = ReadScopes("scopes-vscode");
         var roslynScopes = ReadScopes("scopes-roslyn");
 
@@ -63,11 +69,11 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
     private static HighlightingColor GetColorForScopes(Theme theme, string[] scopes, HighlightingColor defaultColor) =>
         scopes.Select(theme.TryGetScopeSettings).FirstOrDefault(s => s is not null) is { } scopeSettings
         ? new HighlightingColor
-            {
-                FontWeight = scopeSettings.Value.FontStyle?.Contains("bold", StringComparison.OrdinalIgnoreCase) == true ? FontWeights.Bold : null,
-                FontStyle = scopeSettings.Value.FontStyle?.Contains("italic", StringComparison.OrdinalIgnoreCase) == true ? FontStyles.Italic : null,
-                Foreground = ParseBrush(scopeSettings.Value.Foreground)
-            }.AsFrozen()
+        {
+            FontWeight = scopeSettings.Value.FontStyle?.Contains("bold", StringComparison.OrdinalIgnoreCase) == true ? FontWeights.Bold : null,
+            FontStyle = scopeSettings.Value.FontStyle?.Contains("italic", StringComparison.OrdinalIgnoreCase) == true ? FontStyles.Italic : null,
+            Foreground = ParseBrush(scopeSettings.Value.Foreground)
+        }.AsFrozen()
         : defaultColor;
 
     private static SimpleHighlightingBrush? ParseBrush(string? value) => value is null ? null : new(Parsers.ParseColor(value));

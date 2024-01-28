@@ -128,7 +128,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
     }
 
     [ImportingConstructor]
-    public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModelBase mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider, ILogger<OpenDocumentViewModel> logger)
+    public OpenDocumentViewModel(IServiceProvider serviceProvider, MainViewModel mainViewModel, ICommandProvider commands, IAppDispatcher appDispatcher, ITelemetryProvider telemetryProvider, ILogger<OpenDocumentViewModel> logger)
     {
         Id = Guid.NewGuid().ToString("n");
         BuildPath = Path.Combine(Path.GetTempPath(), "roslynpad", "build", Id);
@@ -625,7 +625,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
         }
     }
 
-    public MainViewModelBase MainViewModel { get; }
+    public MainViewModel MainViewModel { get; }
     public ICommandProvider CommandProvider { get; }
     public NuGetDocumentViewModel NuGet { get; }
     public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : DefaultDocumentName + GetFileExtension();

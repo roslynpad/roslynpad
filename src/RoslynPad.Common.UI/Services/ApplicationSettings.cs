@@ -113,7 +113,7 @@ internal class ApplicationSettings : IApplicationSettings
     {
         private const int LiveModeDelayMsDefault = 2000;
         private const int DefaultFontSize = 12;
-
+        private BuiltInTheme _builtInTheme;
         private bool _sendErrors;
         private string? _latestVersion;
         private string? _windowBounds;
@@ -132,6 +132,7 @@ internal class ApplicationSettings : IApplicationSettings
         private double? _windowFontSize;
         private bool _formatDocumentOnComment = true;
         private string? _effectiveDocumentPath;
+        private string? _themePath;
 
         public void LoadDefaultSettings()
         {
@@ -242,6 +243,18 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get => _formatDocumentOnComment;
             set => SetProperty(ref _formatDocumentOnComment, value);
+        }
+
+        public string? ThemePath
+        {
+            get => _themePath;
+            set => SetProperty(ref _themePath, value);
+        }
+
+        public BuiltInTheme BuiltInTheme
+        {
+            get => _builtInTheme;
+            set => SetProperty(ref _builtInTheme, value);
         }
 
         [JsonIgnore]

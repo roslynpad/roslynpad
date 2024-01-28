@@ -43,7 +43,7 @@ public partial class DocumentView : IDisposable
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
 
-    private void EditorSelectionChanged(object? sender, EventArgs e) 
+    private void EditorSelectionChanged(object? sender, EventArgs e)
         => ViewModel.SelectedText = Editor.SelectedText;
 
     private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
@@ -65,13 +65,13 @@ public partial class DocumentView : IDisposable
             args.Handled = true;
         }
     }
-    
+
     private void ResultTreePreviewMouseWheel(object? sender, MouseWheelEventArgs args)
     {
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             var fontSize = ResultTree.FontSize + (args.Delta > 0 ? 1 : -1);
-            if (!MainViewModelBase.IsValidFontSize(fontSize))
+            if (!MainViewModel.IsValidFontSize(fontSize))
             {
                 return;
             }
@@ -98,8 +98,8 @@ public partial class DocumentView : IDisposable
 
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
-        var theme = await new ThemeManager().ReadThemeAsync(Path.Combine(AppContext.BaseDirectory, @"Themes\light_modern.json")).ConfigureAwait(true);
-        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new VsCodeClassificationColors(theme),
+        ViewModel.MainViewModel.ThemeChanged += OnThemeChanged;
+        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new VsCodeClassificationColors(_viewModel.MainViewModel.Theme),
             _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind).ConfigureAwait(true);
 
         _viewModel.Initialize(documentId, OnError,
@@ -107,6 +107,11 @@ public partial class DocumentView : IDisposable
             this);
 
         Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        Editor.ClassificationHighlightColors = new VsCodeClassificationColors(ViewModel.MainViewModel.Theme);
     }
 
     private void OnReadInput()
@@ -193,10 +198,13 @@ public partial class DocumentView : IDisposable
 
     public void Dispose()
     {
-        if (_viewModel?.MainViewModel != null)
+        if (_viewModel?.MainViewModel is not { } mainViewModel)
         {
-            _viewModel.MainViewModel.EditorFontSizeChanged -= EditorFontSizeChanged;
+            return;
         }
+
+        mainViewModel.EditorFontSizeChanged -= EditorFontSizeChanged;
+        mainViewModel.ThemeChanged -= OnThemeChanged;
     }
 
     private void ResultTreeKeyDown(object? sender, KeyEventArgs e)

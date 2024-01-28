@@ -53,6 +53,20 @@ public class RoslynCodeEditor : CodeTextEditor
         get => this.GetValue(ContextActionsIconProperty);
         set => this.SetValue(ContextActionsIconProperty, value);
     }
+    public IClassificationHighlightColors? ClassificationHighlightColors
+    {
+        get => _classificationHighlightColors;
+        set
+        {
+            _classificationHighlightColors = value;
+            if (_braceMatcherHighlighter is not null && value is not null)
+            {
+                _braceMatcherHighlighter.ClassificationHighlightColors = value;
+            }
+
+            RefreshHighlighting();
+        }
+    }
 
     public static readonly RoutedEvent CreatingDocumentEvent = CommonEvent.Register<RoslynCodeEditor, CreatingDocumentEventArgs>(nameof(CreatingDocument), RoutingStrategy.Bubble);
 

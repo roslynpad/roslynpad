@@ -19,9 +19,10 @@ namespace RoslynPad;
 /// </summary>
 public partial class MainWindow
 {
-    private readonly MainViewModelBase _viewModel;
+    private readonly MainViewModel _viewModel;
     private bool _isClosing;
     private bool _isClosed;
+    private ThemeDictionary? _themeDictionary;
 
     public MainWindow()
     {
@@ -32,11 +33,13 @@ public partial class MainWindow
 
         var container = new ContainerConfiguration()
             .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
-            .WithAssembly(typeof(MainViewModelBase).Assembly)   // RoslynPad.Common.UI
-            .WithAssembly(typeof(MainWindow).Assembly);         // RoslynPad
-        var locator = container.CreateContainer().GetExport<IServiceProvider>();
+            .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
+            .WithAssembly(typeof(MainWindow).Assembly);     // RoslynPad
+        var serviceProvider = container.CreateContainer().GetExport<IServiceProvider>();
 
-        _viewModel = locator.GetRequiredService<MainViewModelBase>();
+        _viewModel = serviceProvider.GetRequiredService<MainViewModel>();
+        _viewModel.ThemeChanged += OnViewModelThemeChanged;
+        _viewModel.InitializeTheme();
 
         DataContext = _viewModel;
         InitializeComponent();
@@ -44,6 +47,18 @@ public partial class MainWindow
 
         LoadWindowLayout();
         LoadDockLayout();
+    }
+
+    private void OnViewModelThemeChanged(object? snder, EventArgs e)
+    {
+        var app = Application.Current;
+        if (_themeDictionary is not null)
+        {
+            app.Resources.MergedDictionaries.Remove(_themeDictionary);
+        }
+
+        _themeDictionary = new ThemeDictionary(_viewModel.Theme);
+        app.Resources.MergedDictionaries.Add(_themeDictionary);
     }
 
     private async void OnLoaded(object? sender, RoutedEventArgs e)

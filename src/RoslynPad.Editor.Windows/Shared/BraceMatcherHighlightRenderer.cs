@@ -18,13 +18,15 @@
 
 using RoslynPad.Roslyn.Classification;
 using RoslynPad.Roslyn.BraceMatching;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RoslynPad.Editor;
 
 public class BraceMatcherHighlightRenderer : IBackgroundRenderer
 {
     private readonly TextView _textView;
-    private readonly CommonBrush _backgroundBrush;
+    private IClassificationHighlightColors _classificationHighlightColors;
+    private CommonBrush _backgroundBrush;
 
     public BraceMatchingResult? LeftOfPosition { get; private set; }
     public BraceMatchingResult? RightOfPosition { get; private set; }
@@ -34,12 +36,17 @@ public class BraceMatcherHighlightRenderer : IBackgroundRenderer
     public BraceMatcherHighlightRenderer(TextView textView, IClassificationHighlightColors classificationHighlightColors)
     {
         _textView = textView ?? throw new ArgumentNullException(nameof(textView));
-
+        _classificationHighlightColors = classificationHighlightColors;
         _textView.BackgroundRenderers.Add(this);
+        UpdateBrush();
+    }
 
-        var brush = classificationHighlightColors
-            .GetBrush(AdditionalClassificationTypeNames.BraceMatching)
-            ?.Background?.GetBrush(null);
+    [MemberNotNull(nameof(_backgroundBrush))]
+    private void UpdateBrush()
+    {
+        var brush = ClassificationHighlightColors
+                    .GetBrush(AdditionalClassificationTypeNames.BraceMatching)
+                    ?.Background?.GetBrush(null);
 
         if (brush != null)
         {
@@ -62,6 +69,16 @@ public class BraceMatcherHighlightRenderer : IBackgroundRenderer
     }
 
     public KnownLayer Layer => KnownLayer.Selection;
+
+    public IClassificationHighlightColors ClassificationHighlightColors
+    {
+        get => _classificationHighlightColors;
+        set
+        {
+            _classificationHighlightColors = value;
+            UpdateBrush();
+        }
+    }
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:rp="clr-namespace:RoslynPad"
              xmlns:controls="clr-namespace:RoslynPad.Controls"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
@@ -48,7 +49,7 @@
             </Grid.RowDefinitions>
             <ToolBar Grid.ColumnSpan="3"
                      Background="Transparent"
-                     BorderBrush="DarkGray"
+                     BorderBrush="{DynamicResource {x:Static rp:ThemeDictionary.TabBarBorder}}"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand, Mode=OneTime}"
                         ToolTip="Run (F5)">
@@ -254,8 +255,9 @@
             <editor:RoslynCodeEditor x:Name="Editor"
                                      x:FieldModifier="private"
                                      ContextActionsIcon="{StaticResource Bulb}"
-                                     IsBraceCompletionEnabled="{Binding MainViewModel.Settings.EnableBraceCompletion}"
                                      FontFamily="Cascadia Code"
+                                     Background="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}"
+                                     Foreground="{DynamicResource {x:Static rp:ThemeDictionary.EditorForeground}}"
                                      Grid.Row="1"
                                      Grid.Column="0"
                                      Loaded="Editor_OnLoaded" />

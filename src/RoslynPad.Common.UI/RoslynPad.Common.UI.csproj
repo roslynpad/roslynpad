@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Build\RoslynPad.Build.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+    <ProjectReference Include="..\RoslynPad.Themes\RoslynPad.Themes.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NuGet.Commands" />

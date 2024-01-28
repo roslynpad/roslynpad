@@ -10,11 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 using NuGet.Packaging;
 using RoslynPad.Build;
 using RoslynPad.Roslyn;
+using RoslynPad.Themes;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
 
-public class MainViewModelBase : NotificationObject, IDisposable
+public abstract class MainViewModel : NotificationObject, IDisposable
 {
     private static readonly Version s_currentVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version();
 
@@ -23,6 +24,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
     private readonly ICommandProvider _commands;
     private readonly DocumentFileWatcher _documentFileWatcher;
     private readonly string _editorConfigPath;
+    private readonly ThemeManager _themeManager;
 
     private OpenDocumentViewModel? _currentOpenDocument;
     private bool _hasUpdate;
@@ -33,6 +35,7 @@ public class MainViewModelBase : NotificationObject, IDisposable
     private DocumentViewModel _documentRoot;
     private DocumentWatcher? _documentWatcher;
     private RoslynHost? _roslynHost;
+    private Theme? _theme;
 
     public IApplicationSettingsValues Settings { get; }
 
@@ -58,12 +61,13 @@ public class MainViewModelBase : NotificationObject, IDisposable
         }
     }
 
-    public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
+    public MainViewModel(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
     {
         _serviceProvider = serviceProvider;
         _telemetryProvider = telemetryProvider;
         _commands = commands;
         _documentFileWatcher = documentFileWatcher;
+        _themeManager = new ThemeManager();
 
         settings.LoadDefault();
         _editorConfigPath = Path.Combine(settings.GetDefaultDocumentPath(), ".editorconfig");
@@ -101,6 +105,33 @@ public class MainViewModelBase : NotificationObject, IDisposable
         IOUtilities.PerformIO(() => Directory.Delete(Path.Combine(Path.GetTempPath(), "roslynpad", "restore"), recursive: true));
     }
 
+    public void InitializeTheme()
+    {
+        var themeFile = Settings.ThemePath ?? GetBuiltinThemePath(Settings.BuiltInTheme);
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+        Theme = _themeManager.ReadThemeAsync(themeFile).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
+
+        string GetBuiltinThemePath(BuiltInTheme builtInTheme)
+        {
+            if (builtInTheme == BuiltInTheme.System)
+            {
+                builtInTheme = IsSystemDarkTheme() ? BuiltInTheme.Dark : BuiltInTheme.Light;
+            }
+
+            var themeFile = builtInTheme switch
+            {
+                BuiltInTheme.Light => "light_modern.json",
+                BuiltInTheme.Dark => "dark_modern.json",
+                _ => throw new ArgumentOutOfRangeException(nameof(builtInTheme)),
+            };
+
+            return Path.Combine(AppContext.BaseDirectory, "Themes", themeFile);
+        }
+
+    }
+
+
     public async Task Initialize()
     {
         if (IsInitialized) return;
@@ -118,12 +149,12 @@ public class MainViewModelBase : NotificationObject, IDisposable
     }
 
     protected virtual ImmutableArray<Assembly> CompositionAssemblies => ImmutableArray.Create(
-        typeof(MainViewModelBase).Assembly);
+        typeof(MainViewModel).Assembly);
 
     private async Task InitializeInternal()
     {
         RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
-            RoslynHostReferences.NamespaceDefault.With(imports: [ "RoslynPad.Runtime" ]),
+            RoslynHostReferences.NamespaceDefault.With(imports: ["RoslynPad.Runtime"]),
             disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097"),
             analyzerConfigFiles: ImmutableArray.Create(_editorConfigPath)))
             .ConfigureAwait(true);
@@ -188,11 +219,14 @@ public class MainViewModelBase : NotificationObject, IDisposable
         return d;
     }
 
+    protected abstract bool IsSystemDarkTheme();
+
     public string WindowTitle
     {
         get
         {
-            var currentVersion = s_currentVersion switch {
+            var currentVersion = s_currentVersion switch
+            {
                 { Minor: <= 0, Build: <= 0 } => s_currentVersion.Major.ToString(CultureInfo.InvariantCulture),
                 { Build: <= 0 } => $"{s_currentVersion.Major}.{s_currentVersion.Minor}",
                 _ => s_currentVersion.ToString()
@@ -654,6 +688,18 @@ public class MainViewModelBase : NotificationObject, IDisposable
     }
 
     public IDelegateCommand ClearSearchCommand => _commands.Create(ClearSearch);
+
+    public Theme Theme
+    {
+        get => _theme.NotNull();
+        private set
+        {
+            _theme = value;
+            ThemeChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public event EventHandler<EventArgs>? ThemeChanged;
 
     private void ClearSearch()
     {

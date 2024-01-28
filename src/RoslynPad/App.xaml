@@ -30,6 +30,11 @@
                 </Border>
             </ControlTemplate>
 
+            <Style TargetType="ScrollBar">
+                <Setter Property="Background"
+                        Value="Transparent" />
+            </Style>
+
             <HierarchicalDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
                                       ItemsSource="{Binding Fixes, Mode=OneTime}">
                 <TextBlock Text="{Binding Provider, Mode=OneTime}" />
