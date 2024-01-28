@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 #pragma warning disable AVP1001 // The same AvaloniaProperty should not be registered twice
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public class MarkerMargin : AbstractMargin
 {

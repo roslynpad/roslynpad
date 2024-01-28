@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Composition.Hosting.Core;
-using System.Linq;
+﻿using System.Composition.Hosting.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace RoslynPad;

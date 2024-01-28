@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Composition;
-using System.IO;
+﻿using System.Composition;
 using RoslynPad.UI.Utilities;
 
 namespace RoslynPad.UI;

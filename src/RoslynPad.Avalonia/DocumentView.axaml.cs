@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Avalonia.Controls;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;

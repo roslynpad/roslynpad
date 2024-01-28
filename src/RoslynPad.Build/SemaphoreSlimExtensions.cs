@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RoslynPad.Build;
+﻿namespace RoslynPad.Build;
 
 public static class SemaphoreSlimExtensions
 {

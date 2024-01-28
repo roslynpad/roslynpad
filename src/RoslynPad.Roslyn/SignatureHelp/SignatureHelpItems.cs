@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.SignatureHelp;

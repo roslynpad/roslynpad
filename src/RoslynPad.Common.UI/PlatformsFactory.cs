@@ -2,11 +2,7 @@
 using NuGet.Versioning;
 using RoslynPad.Build;
 using RoslynPad.UI;
-using System;
-using System.Collections.Generic;
 using System.Composition;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace RoslynPad;

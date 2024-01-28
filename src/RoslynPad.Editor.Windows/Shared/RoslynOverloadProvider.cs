@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading;
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.SignatureHelp;
 

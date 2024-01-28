@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-namespace RoslynPad.Roslyn.Classification;
+﻿namespace RoslynPad.Roslyn.Classification;
 
 /// <summary>
 /// Maps classification type names to LSP token names.

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Composition;
-using System.Linq;
+﻿using System.Composition;
 using RoslynPad.Roslyn.Snippets;
 
 namespace RoslynPad.Editor;

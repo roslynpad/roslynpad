@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Immutable;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using RoslynPad.Roslyn.Completion.Providers;

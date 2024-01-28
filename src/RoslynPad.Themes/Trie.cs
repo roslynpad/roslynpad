@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace RoslynPad.Themes;
+﻿namespace RoslynPad.Themes;
 
 internal class Trie<T>
 {

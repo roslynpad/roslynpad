@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.UI.Utilities;
+﻿namespace RoslynPad.UI.Utilities;
 
 internal sealed class Disposer(Action onDispose) : IDisposable
 {

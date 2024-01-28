@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using NuGet.Common;
+﻿using NuGet.Common;
 using NuGet.Protocol.Core.Types;
 
 namespace RoslynPad.UI;

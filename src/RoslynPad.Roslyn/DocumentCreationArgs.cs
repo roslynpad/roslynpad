@@ -1,4 +1,3 @@
-using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Roslyn.Diagnostics;

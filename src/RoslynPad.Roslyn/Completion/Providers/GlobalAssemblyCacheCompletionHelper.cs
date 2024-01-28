@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
 using System.Collections.Immutable;
-using System.Threading.Tasks;
-using System.Threading;
 using Microsoft.CodeAnalysis.PooledObjects;
 
 namespace RoslynPad.Roslyn.Completion.Providers;

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Composition;
-using System.Linq;
+﻿using System.Composition;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

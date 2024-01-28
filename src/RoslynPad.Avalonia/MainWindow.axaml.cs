@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Composition.Hosting;
-using System.Linq;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;

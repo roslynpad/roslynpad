@@ -1,4 +1,3 @@
-using System.Linq;
 using Avalonia.Data;
 
 namespace RoslynPad.Editor;

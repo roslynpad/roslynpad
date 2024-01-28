@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.UI;
+﻿namespace RoslynPad.UI;
 
 public interface ISaveDocumentDialog : IDialog
 {

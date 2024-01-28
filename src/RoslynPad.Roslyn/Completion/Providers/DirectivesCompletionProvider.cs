@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Extensions;

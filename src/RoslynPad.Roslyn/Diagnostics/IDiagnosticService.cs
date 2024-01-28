@@ -1,5 +1,3 @@
-using System;
-
 namespace RoslynPad.Roslyn.Diagnostics;
 
 public interface IDiagnosticService

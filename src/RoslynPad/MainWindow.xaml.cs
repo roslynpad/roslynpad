@@ -1,10 +1,8 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Composition.Hosting;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;

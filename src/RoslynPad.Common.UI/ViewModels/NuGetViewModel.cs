@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Composition;
-using System.Linq;
 using System.Runtime.ExceptionServices;
-using System.Threading;
-using System.Threading.Tasks;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Credentials;

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RoslynPad.Build;
+﻿namespace RoslynPad.Build;
 
 internal record LibraryRef(LibraryRef.RefKind Kind, string Value, string Version) : IComparable<LibraryRef>
 {

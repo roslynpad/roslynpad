@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public interface ICodeEditorCompletionProvider
 {

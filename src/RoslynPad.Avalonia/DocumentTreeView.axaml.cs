@@ -1,11 +1,9 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using RoslynPad.UI;
 using Avalonia.VisualTree;
-using System.Linq;
 
 namespace RoslynPad;
 

@@ -16,13 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Globalization;
-using System.IO;
 
 namespace RoslynPad.Build.ILDecompiler;
 
-	internal interface ITextOutput
+internal interface ITextOutput
 	{
 		void Indent();
 		void Unindent();

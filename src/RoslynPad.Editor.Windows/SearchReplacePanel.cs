@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Controls.Primitives;
+﻿using System.Windows.Controls.Primitives;
 using ICSharpCode.AvalonEdit.Search;
 using Localization = ICSharpCode.AvalonEdit.Search.Localization;
 

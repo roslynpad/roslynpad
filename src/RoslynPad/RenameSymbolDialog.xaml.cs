@@ -2,7 +2,6 @@
 using System.Composition;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Avalon.Windows.Controls;

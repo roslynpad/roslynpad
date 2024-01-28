@@ -1,7 +1,5 @@
 ﻿using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
-using System;
-using System.Collections.Generic;
 
 #pragma warning disable IDE0060 // Remove unused parameter
 

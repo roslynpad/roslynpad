@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace RoslynPad.UI;
+﻿namespace RoslynPad.UI;
 
 public record FileDialogFilter(string Header, IList<string> Extensions)
 {

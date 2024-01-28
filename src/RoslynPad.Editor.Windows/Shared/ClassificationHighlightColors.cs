@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.Classification;
 using RoslynPad.Roslyn.Classification;

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
-using System.Threading;
 using Microsoft.CodeAnalysis.Text;
 using TextChange = Microsoft.CodeAnalysis.Text.TextChange;
 using TextChangeEventArgs = Microsoft.CodeAnalysis.Text.TextChangeEventArgs;

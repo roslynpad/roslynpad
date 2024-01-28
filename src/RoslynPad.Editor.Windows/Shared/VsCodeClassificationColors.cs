@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.CodeAnalysis.Classification;
 using RoslynPad.Themes;
 using RoslynPad.Roslyn.Classification;

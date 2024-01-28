@@ -3,9 +3,6 @@ using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.QuickInfo;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Formatting;
 
 namespace RoslynPad.Editor;

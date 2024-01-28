@@ -3,17 +3,13 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using RoslynPad.Roslyn.Diagnostics;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition.Hosting;
-using System.Linq;
 using System.Reflection;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Roslyn.Utilities;
-using System.IO;
 
 namespace RoslynPad.Roslyn;
 

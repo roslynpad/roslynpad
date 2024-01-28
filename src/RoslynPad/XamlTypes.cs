@@ -1,5 +1,4 @@
-﻿using System;
-using RoslynPad.Build;
+﻿using RoslynPad.Build;
 
 namespace RoslynPad;
 

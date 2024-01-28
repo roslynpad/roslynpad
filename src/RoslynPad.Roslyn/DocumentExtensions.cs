@@ -2,8 +2,6 @@
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.LanguageService;
 using Microsoft.CodeAnalysis.Shared.Extensions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace RoslynPad.Roslyn;
 

@@ -34,6 +34,7 @@
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
     <TrimMode>partial</TrimMode>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
   <PropertyGroup>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>

@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.CodeFixes;

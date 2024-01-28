@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Composition;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.ExtractInterface;

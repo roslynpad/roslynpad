@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public sealed class CompletionResult(IList<ICompletionDataEx>? completionData, IOverloadProviderEx? overloadProvider, bool useHardSelection)
 {

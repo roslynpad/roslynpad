@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace RoslynPad.UI;
+﻿namespace RoslynPad.UI;
 
 public abstract class TelemetryProviderBase : ITelemetryProvider
 {

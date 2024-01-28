@@ -1,5 +1,4 @@
-﻿using System;
-using System.Composition;
+﻿using System.Composition;
 using System.Reflection;
 using RoslynPad.UI;
 using System.Collections.Immutable;

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RoslynPad.UI;
+﻿namespace RoslynPad.UI;
 
 public interface IAppDispatcher
 {

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Composition;
+﻿using System.Composition;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;

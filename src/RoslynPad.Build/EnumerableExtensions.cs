@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace RoslynPad.Build;
+﻿namespace RoslynPad.Build;
 
 internal static class EnumerableExtensions
 {

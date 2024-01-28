@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.CodeAnalysis;
