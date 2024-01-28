@@ -1,0 +1,74 @@
+{
+	"comment": [
+		"comment"
+	],
+	"string": [
+		"string"
+	],
+	"keyword": [
+		"keyword.control"
+	],
+	"number": [
+		"constant.numeric"
+	],
+	"regexp": [
+		"constant.regexp"
+	],
+	"operator": [
+		"keyword.operator"
+	],
+	"namespace": [
+		"entity.name.namespace"
+	],
+	"type": [
+		"entity.name.type",
+		"support.type"
+	],
+	"struct": [
+		"entity.name.type.struct"
+	],
+	"class": [
+		"entity.name.type.class",
+		"support.class"
+	],
+	"interface": [
+		"entity.name.type.interface"
+	],
+	"enum": [
+		"entity.name.type.enum"
+	],
+	"typeParameter": [
+		"entity.name.type.parameter"
+	],
+	"function": [
+		"entity.name.function",
+		"support.function"
+	],
+	"method": [
+		"entity.name.function.member",
+		"support.function"
+	],
+	"macro": [
+		"entity.name.function.preprocessor"
+	],
+	"variable": [
+		"variable.other.readwrite",
+		"entity.name.variable"
+	],
+	"parameter": [
+		"variable.parameter"
+	],
+	"property": [
+		"variable.other.property"
+	],
+	"enumMember": [
+		"variable.other.enummember"
+	],
+	"event": [
+		"variable.other.event"
+	],
+	"decorator": [
+		"entity.name.decorator",
+		"entity.name.function"
+	]
+}

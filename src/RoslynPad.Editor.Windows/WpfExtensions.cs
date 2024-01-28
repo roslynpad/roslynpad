@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
 
 #pragma warning disable IDE0060 // Remove unused parameter
 

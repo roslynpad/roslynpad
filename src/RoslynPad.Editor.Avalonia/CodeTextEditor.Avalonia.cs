@@ -1,7 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using AvaloniaEdit;
-using System;
+﻿using System;
 
 namespace RoslynPad.Editor;
 

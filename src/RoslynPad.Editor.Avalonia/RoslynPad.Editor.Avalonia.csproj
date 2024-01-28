@@ -15,10 +15,14 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+    <ProjectReference Include="..\RoslynPad.Themes\RoslynPad.Themes.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">
-      <Link>Shared\%(RecursivePath)%(Filename)%(Extension)</Link>
+    <Compile Include="..\RoslynPad.Editor.Windows\Shared\**\*.cs" Exclude="..\RoslynPad.Editor.Windows\bin\**;..\RoslynPad.Editor.Windows\obj\**">
+      <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
+    <EmbeddedResource Include="..\RoslynPad.Editor.Windows\Shared\**\*.json" Exclude="..\RoslynPad.Editor.Windows\bin\**;..\RoslynPad.Editor.Windows\obj\**">
+      <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

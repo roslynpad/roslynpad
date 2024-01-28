@@ -17,6 +17,8 @@ using RoslynPad.Build;
 using RoslynPad.UI;
 using System.Windows.Data;
 using System.Globalization;
+using RoslynPad.Themes;
+using System.IO;
 
 namespace RoslynPad;
 
@@ -99,7 +101,8 @@ public partial class DocumentView : IDisposable
 
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
-        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
+        var theme = await new ThemeManager().ReadThemeAsync(Path.Combine(AppContext.BaseDirectory, @"Themes\light_modern.json")).ConfigureAwait(true);
+        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new VsCodeClassificationColors(theme),
             _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind).ConfigureAwait(true);
 
         _viewModel.Initialize(documentId, OnError,

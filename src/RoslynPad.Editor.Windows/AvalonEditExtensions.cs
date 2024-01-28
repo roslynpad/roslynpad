@@ -1,6 +1,4 @@
-﻿using ICSharpCode.AvalonEdit.CodeCompletion;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public static class AvalonEditExtensions
 {

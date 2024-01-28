@@ -1,7 +1,8 @@
-﻿using Avalonia;
-using System;
+﻿using System;
 
 namespace RoslynPad.Editor;
+
+#pragma warning disable AVP1001 // The same AvaloniaProperty should not be registered twice
 
 public static class CommonProperty
 {
@@ -10,44 +11,41 @@ public static class CommonProperty
         Action<TOwner, CommonPropertyChangedArgs<TValue>>? onChanged = null)
         where TOwner : AvaloniaObject
     {
-#pragma warning disable AVP1001 // The same AvaloniaProperty should not be registered twice
         var property = AvaloniaProperty.Register<TOwner, TValue>(name, defaultValue!,
             options.Has(PropertyOptions.Inherits),
             options.Has(PropertyOptions.BindsTwoWay)
                 ? Avalonia.Data.BindingMode.TwoWay
                 : Avalonia.Data.BindingMode.OneWay);
-#pragma warning restore AVP1001 // The same AvaloniaProperty should not be registered twice
 
-        if (options.Has(PropertyOptions.AffectsRender))
+        if (typeof(Visual).IsAssignableFrom(typeof(TOwner)) && options.Has(PropertyOptions.AffectsRender))
         {
             AffectsRender(new[] { property });
         }
 
-        if (options.Has(PropertyOptions.AffectsArrange))
+        if (typeof(Layoutable).IsAssignableFrom(typeof(TOwner)))
         {
-            AffectsArrange(new[] { property });
-        }
+            if (options.Has(PropertyOptions.AffectsArrange))
+            {
+                AffectsArrange(new[] { property });
+            }
 
-        if (options.Has(PropertyOptions.AffectsMeasure))
-        {
-            AffectsMeasure(new[] { property });
+            if (options.Has(PropertyOptions.AffectsMeasure))
+            {
+                AffectsMeasure(new[] { property });
+            }
         }
 
         var onChangedLocal = onChanged;
         if (onChangedLocal != null)
         {
             property.Changed.AddClassHandler<TOwner>(
-#pragma warning disable CS8604 // Possible null reference argument.
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-                (o, e) => onChangedLocal(o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue, (TValue)e.NewValue)));
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-#pragma warning restore CS8604 // Possible null reference argument.
+                (o, e) => onChangedLocal(o, new CommonPropertyChangedArgs<TValue>((TValue)e.OldValue!, (TValue)e.NewValue!)));
         }
 
         return property;
     }
 
-    private static readonly Action<AvaloniaProperty[]> AffectsRender = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsRender));
-    private static readonly Action<AvaloniaProperty[]> AffectsArrange = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsArrange));
-    private static readonly Action<AvaloniaProperty[]> AffectsMeasure = ReflectionUtil.CreateDelegate<Action<AvaloniaProperty[]>>(typeof(Visual), nameof(AffectsMeasure));
+    private static Action<AvaloniaProperty[]> AffectsRender { get; } = ReflectionUtil.CreateDelegate<Visual, Action<AvaloniaProperty[]>>(nameof(AffectsRender));
+    private static Action<AvaloniaProperty[]> AffectsArrange { get; } = ReflectionUtil.CreateDelegate<Layoutable, Action<AvaloniaProperty[]>>(nameof(AffectsArrange));
+    private static Action<AvaloniaProperty[]> AffectsMeasure { get; } = ReflectionUtil.CreateDelegate<Layoutable, Action<AvaloniaProperty[]>>(nameof(AffectsMeasure));
 }

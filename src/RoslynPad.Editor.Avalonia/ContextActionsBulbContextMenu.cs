@@ -1,7 +1,5 @@
 using System.Linq;
-using Avalonia.Controls;
 using Avalonia.Data;
-using Avalonia.Styling;
 
 namespace RoslynPad.Editor;
 

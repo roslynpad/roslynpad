@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <None Update="Themes\*.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+</Project>
+

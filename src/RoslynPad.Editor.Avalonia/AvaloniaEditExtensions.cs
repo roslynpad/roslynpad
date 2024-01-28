@@ -1,6 +1,4 @@
-﻿using AvaloniaEdit.CodeCompletion;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public static class AvaloniaEditExtensions
 {

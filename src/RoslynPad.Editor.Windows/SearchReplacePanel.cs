@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
-using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Editing;
-using ICSharpCode.AvalonEdit.Rendering;
-using ICSharpCode.AvalonEdit.Search;
-using ICSharpCode.AvalonEdit;
-using Localization = ICSharpCode.AvalonEdit.Search.Localization;
 using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Controls.Primitives;
+using ICSharpCode.AvalonEdit.Search;
+using Localization = ICSharpCode.AvalonEdit.Search.Localization;
 
 namespace RoslynPad.Editor;
 

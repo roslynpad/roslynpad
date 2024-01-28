@@ -1,6 +1,4 @@
-﻿using Avalonia.Interactivity;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 public static class CommonEvent
 {

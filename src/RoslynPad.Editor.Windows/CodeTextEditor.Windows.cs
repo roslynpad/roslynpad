@@ -1,8 +1,4 @@
-﻿using ICSharpCode.AvalonEdit.CodeCompletion;
-using System.Windows;
-using System.Windows.Controls;
-
-namespace RoslynPad.Editor;
+﻿namespace RoslynPad.Editor;
 
 partial class CodeTextEditor
 {

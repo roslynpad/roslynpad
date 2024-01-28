@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Editing;
-using ICSharpCode.AvalonEdit.Rendering;
 
 namespace RoslynPad.Editor;
 

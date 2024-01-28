@@ -7,14 +7,17 @@
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+    <ProjectReference Include="..\RoslynPad.Themes\RoslynPad.Themes.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" />
     <PackageReference Include="System.Reactive.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">
-      <Link>Shared\%(RecursivePath)%(Filename)%(Extension)</Link>
-    </Compile>
+    <EmbeddedResource Remove="..\RoslynPad.Editor.Shared\Resources\tokens.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Shared\Resources\*.json" />
+    <EmbeddedResource Include="Shared\Resources\*.json" />
   </ItemGroup>
 </Project>

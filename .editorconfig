@@ -15,6 +15,9 @@ dotnet_diagnostic.CA1852.severity = none
 dotnet_diagnostic.CA1711.severity = none
 dotnet_diagnostic.CA1707.severity = none
 
+[*.csproj]
+indent_size = 2
+
 # C# files
 [*.cs]
 indent_size = 4
