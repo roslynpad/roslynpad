@@ -34,6 +34,8 @@ namespace RoslynPad.Build;
 /// </summary>
 internal partial class ExecutionHost : IExecutionHost, IDisposable
 {
+    private static readonly string s_version = typeof(ExecutionContext).Assembly.GetName().Version?.ToString() ?? string.Empty;
+
     private static readonly JsonSerializerOptions s_serializerOptions = new()
     {
         Converters =
@@ -802,7 +804,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
             if (UseCache)
             {
-                var hash = GetHash(csproj.ToString(System.Xml.Linq.SaveOptions.DisableFormatting), Platform.Description);
+                var hash = GetHash(csproj.ToString(System.Xml.Linq.SaveOptions.DisableFormatting), Platform.Description, s_version);
                 var hashedRestorePath = Path.Combine(_restorePath, hash);
                 Directory.CreateDirectory(hashedRestorePath);
 
@@ -884,12 +886,13 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    private static string GetHash(string a, string b)
+    private static string GetHash(string a, string b, string c)
     {
         Span<byte> hashBuffer = stackalloc byte[32];
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         hash.AppendData(MemoryMarshal.AsBytes(a.AsSpan()));
         hash.AppendData(MemoryMarshal.AsBytes(b.AsSpan()));
+        hash.AppendData(MemoryMarshal.AsBytes(c.AsSpan()));
         hash.TryGetHashAndReset(hashBuffer, out _);
         return Convert.ToHexString(hashBuffer);
     }
