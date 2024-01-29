@@ -13,5 +13,9 @@ public class MainViewModelAvalonia(IServiceProvider serviceProvider, ITelemetryP
         .Add(Assembly.Load(new AssemblyName("RoslynPad.Roslyn.Avalonia")))
         .Add(Assembly.Load(new AssemblyName("RoslynPad.Editor.Avalonia")));
 
-    protected override bool IsSystemDarkTheme() => true;
+    protected override bool IsSystemDarkTheme() => false;
+    
+    protected override void ListenToSystemThemeChanges(Action onChange)
+    {
+    }
 }

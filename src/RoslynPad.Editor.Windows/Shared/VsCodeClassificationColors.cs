@@ -1,14 +1,14 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Immutable;
+using System.Text.Json;
 using Microsoft.CodeAnalysis.Classification;
-using RoslynPad.Themes;
 using RoslynPad.Roslyn.Classification;
+using RoslynPad.Themes;
 
 namespace RoslynPad.Editor;
 
 public class VsCodeClassificationColors : IClassificationHighlightColors
 {
-    public HighlightingColor StaticSymbolColor { get; protected set; } = new();
-    public HighlightingColor BraceMatchingColor { get; protected set; }
+    private static readonly ImmutableArray<(string classification, string[] scopes)> s_classifiedScopes = GetClassifiedScopes();
 
     private static readonly JsonSerializerOptions s_serializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -18,14 +18,28 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
 
     private readonly Dictionary<string, HighlightingColor> _colors;
 
+    public HighlightingColor StaticSymbolColor { get; protected set; } = new();
+    public HighlightingColor BraceMatchingColor { get; protected set; }
+
     public VsCodeClassificationColors(Theme theme)
     {
         var isDark = string.Equals(theme.Type, "dark", StringComparison.OrdinalIgnoreCase);
         BraceMatchingColor = new HighlightingColor
         {
             Background = new SimpleHighlightingBrush(isDark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
-        };
+        }.AsFrozen();
 
+        DefaultBrush = GetColorFromTheme(theme, "editor.foreground");
+
+        _colors = s_classifiedScopes
+            .Select(t => (t.classification, color: GetColorForScopes(theme, t.scopes, DefaultBrush)))
+            .Append((classification: ClassificationTypeNames.StaticSymbol, color: StaticSymbolColor))
+            .Append((classification: AdditionalClassificationTypeNames.BraceMatching, color: BraceMatchingColor))
+            .ToDictionary(t => t.classification, t => t.color, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static ImmutableArray<(string classification, string[] scopes)> GetClassifiedScopes()
+    {
         var vsCodeScopes = ReadScopes("scopes-vscode");
         var roslynScopes = ReadScopes("scopes-roslyn");
 
@@ -41,14 +55,10 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
             classificationsMap[classification.Value] = classification.Key;
         }
 
-        DefaultBrush = GetColorFromTheme(theme, "editor.foreground");
-
-        _colors = scopes.Select(d => (name: d.Key, found: classificationsMap.TryGetValue(d.Key, out var classification), classification: classification!, scopes: d.Value))
+        return scopes.Select(d => (name: d.Key, found: classificationsMap.TryGetValue(d.Key, out var classification), classification: classification!, scopes: d.Value))
             .Where(d => d.found)
-            .Select(t => (t.classification, color: GetColorForScopes(theme, t.scopes, DefaultBrush)))
-            .Append((classification: ClassificationTypeNames.StaticSymbol, color: StaticSymbolColor))
-            .Append((classification: AdditionalClassificationTypeNames.BraceMatching, color: BraceMatchingColor))
-            .ToDictionary(t => t.classification, t => t.color, StringComparer.OrdinalIgnoreCase);
+            .Select(d => (d.classification, d.scopes))
+            .ToImmutableArray();
     }
 
     private static Dictionary<string, string[]> ReadScopes(string name) => DeserializeResource<Dictionary<string, string[]>>(name);

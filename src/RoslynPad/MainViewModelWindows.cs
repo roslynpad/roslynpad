@@ -19,4 +19,9 @@ public class MainViewModelWindows(IServiceProvider serviceProvider, ITelemetryPr
         using var personalizeKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
         return personalizeKey?.GetValue("AppsUseLightTheme") as int? == 0;
     }
+
+    protected override void ListenToSystemThemeChanges(Action onChange)
+    {
+        SystemEvents.UserPreferenceChanging += (_, _) => onChange();
+    }
 }

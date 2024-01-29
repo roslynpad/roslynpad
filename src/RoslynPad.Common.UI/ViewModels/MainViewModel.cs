@@ -36,6 +36,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private DocumentWatcher? _documentWatcher;
     private RoslynHost? _roslynHost;
     private Theme? _theme;
+    private bool? _isSystemDarkTheme;
 
     public IApplicationSettingsValues Settings { get; }
 
@@ -108,15 +109,26 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     public void InitializeTheme()
     {
         var themeFile = Settings.ThemePath ?? GetBuiltinThemePath(Settings.BuiltInTheme);
-#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
-        Theme = _themeManager.ReadThemeAsync(themeFile).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
+        LoadTheme(themeFile);
 
-        string GetBuiltinThemePath(BuiltInTheme builtInTheme)
+        var shouldListenToThemeChanges = Settings.ThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
+        if (shouldListenToThemeChanges)
+        {
+            ListenToSystemThemeChanges(() => LoadTheme(GetBuiltinThemePath(BuiltInTheme.System)));
+        }
+
+        string? GetBuiltinThemePath(BuiltInTheme builtInTheme)
         {
             if (builtInTheme == BuiltInTheme.System)
             {
-                builtInTheme = IsSystemDarkTheme() ? BuiltInTheme.Dark : BuiltInTheme.Light;
+                var isSystemDarkTheme = IsSystemDarkTheme();
+                if (isSystemDarkTheme == _isSystemDarkTheme)
+                {
+                    return null;
+                }
+
+                builtInTheme = isSystemDarkTheme ? BuiltInTheme.Dark : BuiltInTheme.Light;
+                _isSystemDarkTheme = isSystemDarkTheme;
             }
 
             var themeFile = builtInTheme switch
@@ -129,8 +141,18 @@ public abstract class MainViewModel : NotificationObject, IDisposable
             return Path.Combine(AppContext.BaseDirectory, "Themes", themeFile);
         }
 
+        void LoadTheme(string? themeFile)
+        {
+            if (themeFile is null)
+            {
+                return;
+            }
+
+            Theme = _themeManager.ReadThemeAsync(themeFile).GetAwaiter().GetResult();
+        }
     }
 
+    protected abstract void ListenToSystemThemeChanges(Action onChange);
 
     public async Task Initialize()
     {
