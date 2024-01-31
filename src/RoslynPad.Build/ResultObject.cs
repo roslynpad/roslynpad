@@ -10,10 +10,19 @@ public interface IResultObject
     void WriteTo(StringBuilder builder);
 }
 
-public class ResultObject : IResultObject
+public interface IResultWithLineNumber
+{
+    int? LineNumber { get; }
+    int Column { get; }
+}
+
+public class ResultObject : IResultObject, IResultWithLineNumber
 {
     [JsonPropertyName("h")]
     public string? Header { get; set; }
+    [JsonPropertyName("l")]
+    public int? LineNumber { get; set; }
+    int IResultWithLineNumber.Column => 0;
 
     [JsonPropertyName("v")]
     public string? Value { get; set; }
@@ -66,9 +75,6 @@ public class ResultObject : IResultObject
 
 public class ExceptionResultObject : ResultObject
 {
-    [JsonPropertyName("l")]
-    public int LineNumber { get; set; }
-
     [JsonPropertyName("m")]
     public string? Message { get; set; }
 }
@@ -83,11 +89,11 @@ public class ProgressResultObject
     public double? Progress { get; set; }
 }
 
-public class CompilationErrorResultObject : IResultObject
+public class CompilationErrorResultObject : IResultObject, IResultWithLineNumber
 {
     public string? ErrorCode { get; set; }
     public string? Severity { get; set; }
-    public int Line { get; set; }
+    public int? LineNumber { get; set; }
     public int Column { get; set; }
     public string? Message { get; set; }
 
@@ -97,7 +103,7 @@ public class CompilationErrorResultObject : IResultObject
         Severity = severity,
         Message = message,
         // 0 to 1-based
-        Line = line + 1,
+        LineNumber = line + 1,
         Column = column + 1,
     };
 

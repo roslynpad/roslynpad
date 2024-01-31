@@ -60,5 +60,5 @@ internal class ConsoleRedirectWriter(JsonConsoleDumper dumper, string? header = 
 
     public override void Write(char value) => Dump(value);
 
-    private void Dump(object? value) => _dumper.Dump(new DumpData(value, _header, DumpQuotas.Default));
+    private void Dump(object? value) => _dumper.Dump(new DumpData(value, _header, Line: null, DumpQuotas.Default));
 }

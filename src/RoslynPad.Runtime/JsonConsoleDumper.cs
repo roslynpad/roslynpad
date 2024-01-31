@@ -53,7 +53,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
         try
         {
-            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
+            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header, data.Line));
         }
         catch (Exception ex)
         {
@@ -172,7 +172,6 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
             {
                 using var _ = jsonWriter.WriteObject();
                 jsonWriter.WriteProperty("m", result.Message);
-                jsonWriter.WriteProperty("l", result.LineNumber);
                 WriteResultObjectContent(jsonWriter, result);
             }
 
@@ -207,6 +206,11 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
     {
         jsonWriter.WriteProperty("t", result.Type);
         jsonWriter.WriteProperty("h", result.Header);
+        if (result.LineNumber is int lineNumber)
+        {
+            jsonWriter.WriteProperty("l", lineNumber);
+        }
+
         jsonWriter.WriteProperty("v", result.Value);
         jsonWriter.WriteProperty("x", result.IsExpanded);
 

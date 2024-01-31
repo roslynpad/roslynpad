@@ -1,6 +1,8 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -8,14 +10,11 @@ using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using RoslynPad.Build;
 using RoslynPad.Controls;
 using RoslynPad.Editor;
-using RoslynPad.Build;
-using RoslynPad.UI;
-using System.Windows.Data;
-using System.Globalization;
 using RoslynPad.Themes;
-using System.IO;
+using RoslynPad.UI;
 
 namespace RoslynPad;
 
@@ -233,11 +232,16 @@ public partial class DocumentView : IDisposable
 
     private void TryJumpToLine(object source)
     {
-        if ((source as FrameworkElement)?.DataContext is not CompilationErrorResultObject result) return;
+        var dataContext = (source as FrameworkElement)?.DataContext;
+        if (!(dataContext is IResultWithLineNumber result &&
+              result.LineNumber is int lineNumber))
+        {
+            return;
+        }
 
-        Editor.TextArea.Caret.Line = result.Line;
+        Editor.TextArea.Caret.Line = lineNumber;
         Editor.TextArea.Caret.Column = result.Column;
-        Editor.ScrollToLine(result.Line);
+        Editor.ScrollToLine(lineNumber);
 
         _ = Dispatcher.InvokeAsync(Editor.Focus);
     }

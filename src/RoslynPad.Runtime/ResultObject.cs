@@ -8,29 +8,35 @@ internal class ResultObject
 {
     private static readonly HashSet<string> s_irrelevantEnumerableProperties = ["Count", "Length", "Key"];
 
-    private static readonly HashSet<string> s_doNotTreatAsEnumerableTypeNames = ["JObject", "JProperty"];
+    private static readonly HashSet<string> s_doNotTreatAsEnumerableTypeNames = ["JObject", "JProperty", "JsonObject"];
 
     private static readonly Dictionary<string, string> s_toStringAlternatives = new()
     {
         ["JArray"] = "[...]",
-        ["JObject"] = "{...}"
+        ["JObject"] = "{...}",
+        ["JsonElement"] = "{...}",
+        ["JsonDocument"] = "{...}",
+        ["JsonArray"] = "[...]",
+        ["JsonObject"] = "{...}",
     };
 
     private readonly DumpQuotas _quotas;
     private readonly MemberInfo? _member;
 
-    public static ResultObject Create(object? o, in DumpQuotas quotas, string? header = null) =>
-        new(o, quotas, header);
+    public static ResultObject Create(object? o, in DumpQuotas quotas, string? header = null, int? line = null) =>
+        new(o, quotas, header, line);
 
-    internal ResultObject(object? o, in DumpQuotas quotas, string? header = null, MemberInfo? member = null)
+    internal ResultObject(object? o, in DumpQuotas quotas, string? header = null, int? line = null, MemberInfo? member = null)
     {
         _quotas = quotas;
         _member = member;
         IsExpanded = quotas.MaxExpandedDepth > 0;
         Initialize(o, header);
+        LineNumber = line;
     }
 
     public string? Header { get; private set; }
+    public int? LineNumber { get; set; }
     public string? Value { get; protected set; }
     public string? Type { get; private set; }
     public List<ResultObject>? Children { get; private set; }
@@ -138,7 +144,7 @@ internal class ResultObject
 
                     if (_member.Name == "TargetSite")
                     {
-                        targetQuotas = targetQuotas.WithMaxDepth(0);
+                        targetQuotas = targetQuotas with { MaxDepth = 0 };
                     }
                 }
             }
@@ -383,7 +389,6 @@ internal class ExceptionResultObject : ResultObject
 
     public static ExceptionResultObject Create(Exception exception, DumpQuotas? quotas = null) => new(exception, quotas ?? DumpQuotas.Default);
 
-    public int LineNumber { get; private set; }
     public string Message { get; private set; }
 }
 

@@ -221,7 +221,7 @@
             <TextBlock Text="{Binding Severity}" Grid.Column="0" />
             <TextBlock Text="{Binding ErrorCode}" Grid.Column="1" />
             <TextBlock Text="{Binding Message}" Grid.Column="2" />
-            <TextBlock Text="{Binding Line}" Grid.Column="3" />
+            <TextBlock Text="{Binding LineNumber}" Grid.Column="3" />
             <TextBlock Text="{Binding Column}" Grid.Column="4" />
           </Grid>
         </TreeDataTemplate>

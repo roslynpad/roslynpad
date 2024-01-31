@@ -1,9 +1,6 @@
 ﻿#if NET6_0_OR_GREATER
-using System;
-using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 
 namespace RoslynPad.Runtime;
 
@@ -50,7 +47,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
         try
         {
-            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header));
+            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header, data.Line));
         }
         catch (Exception ex)
         {
@@ -175,7 +172,6 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
                 try
                 {
                     jsonWriter.WriteString("m", result.Message);
-                    jsonWriter.WriteNumber("l", result.LineNumber);
                     WriteResultObjectContent(jsonWriter, result);
                 }
                 finally
@@ -222,6 +218,11 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
     {
         jsonWriter.WriteString("t", result.Type);
         jsonWriter.WriteString("h", result.Header);
+        if (result.LineNumber is int lineNumber)
+        {
+            jsonWriter.WriteNumber("l", lineNumber);
+        }
+
         jsonWriter.WriteString("v", result.Value);
         jsonWriter.WriteBoolean("x", result.IsExpanded);
 

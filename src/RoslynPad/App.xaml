@@ -386,7 +386,7 @@
                     <TextBlock Grid.Column="4"
                                VerticalAlignment="Top"
                                TextWrapping="Wrap">
-                        <Run Text="{Binding Line, Mode=OneTime}" />,
+                        <Run Text="{Binding LineNumber, Mode=OneTime}" />,
                         <Run Text="{Binding Column, Mode=OneTime}" />
                     </TextBlock>
                 </Grid>
