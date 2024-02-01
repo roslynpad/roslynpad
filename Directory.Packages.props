@@ -45,7 +45,7 @@
     <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="System.Reflection.Metadata" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="System.Composition" Version="$(DotNetExtensionsVersion)" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.4" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.6" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
     <PackageVersion Include="xunit" Version="2.6.2" />
   </ItemGroup>
