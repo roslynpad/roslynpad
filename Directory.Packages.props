@@ -13,7 +13,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.0.90" />
-    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.5" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.0.6" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.ThemeManager" Version="11.0.0" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
