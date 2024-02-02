@@ -9,6 +9,7 @@
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
     <TargetFramework Condition=" '$(IsMacBuild)' == 'true' ">$(DefaultTargetFramework)-macos</TargetFramework>
+    <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
     <SelfContained>true</SelfContained>
     <CreatePackage>false</CreatePackage>
   </PropertyGroup>
