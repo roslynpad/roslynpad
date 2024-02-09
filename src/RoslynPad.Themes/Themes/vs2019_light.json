@@ -1,7 +1,6 @@
 {
     "$schema": "vscode://schemas/color-theme",
     "name": "Visual Studio 2019 Light",
-    "include": "./light_vs.json",
     "type": "light",
     // https://github.com/microsoft/vscode/blob/master/extensions/theme-defaults/themes/light_defaults.json
     "colors": {

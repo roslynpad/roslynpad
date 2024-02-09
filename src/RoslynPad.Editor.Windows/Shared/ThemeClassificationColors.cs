@@ -6,7 +6,7 @@ using RoslynPad.Themes;
 
 namespace RoslynPad.Editor;
 
-public class VsCodeClassificationColors : IClassificationHighlightColors
+public class ThemeClassificationColors : IClassificationHighlightColors
 {
     private static readonly ImmutableArray<(string classification, string[] scopes)> s_classifiedScopes = GetClassifiedScopes();
 
@@ -21,12 +21,11 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
     public HighlightingColor StaticSymbolColor { get; protected set; } = new();
     public HighlightingColor BraceMatchingColor { get; protected set; }
 
-    public VsCodeClassificationColors(Theme theme)
+    public ThemeClassificationColors(Theme theme)
     {
-        var isDark = string.Equals(theme.Type, "dark", StringComparison.OrdinalIgnoreCase);
         BraceMatchingColor = new HighlightingColor
         {
-            Background = new SimpleHighlightingBrush(isDark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
+            Background = new SimpleHighlightingBrush(theme.IsDark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
         }.AsFrozen();
 
         DefaultBrush = GetColorFromTheme(theme, "editor.foreground");
@@ -65,7 +64,7 @@ public class VsCodeClassificationColors : IClassificationHighlightColors
 
     private static T DeserializeResource<T>(string name)
     {
-        using var stream = typeof(VsCodeClassificationColors).Assembly.GetManifestResourceStream($"RoslynPad.Editor.Shared.Resources.{name}.json")
+        using var stream = typeof(ThemeClassificationColors).Assembly.GetManifestResourceStream($"RoslynPad.Editor.Shared.Resources.{name}.json")
             ?? throw new InvalidOperationException("Stream not found");
         return JsonSerializer.Deserialize<T>(stream, s_serializerOptions)
             ?? throw new InvalidOperationException($"Empty {name}.json");

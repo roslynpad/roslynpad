@@ -24,7 +24,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private readonly ICommandProvider _commands;
     private readonly DocumentFileWatcher _documentFileWatcher;
     private readonly string _editorConfigPath;
-    private readonly ThemeManager _themeManager;
+    private readonly VsCodeThemeReader _themeManager;
 
     private OpenDocumentViewModel? _currentOpenDocument;
     private bool _hasUpdate;
@@ -68,7 +68,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         _telemetryProvider = telemetryProvider;
         _commands = commands;
         _documentFileWatcher = documentFileWatcher;
-        _themeManager = new ThemeManager();
+        _themeManager = new VsCodeThemeReader();
 
         settings.LoadDefault();
         _editorConfigPath = Path.Combine(settings.GetDefaultDocumentPath(), ".editorconfig");

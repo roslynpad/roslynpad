@@ -13,6 +13,9 @@ public record Theme(
     [JsonInclude]
     internal string? Include { get; set; }
 
+    [JsonIgnore]
+    public bool IsDark => string.Equals(Type, "dark", StringComparison.OrdinalIgnoreCase);
+
     internal Trie<TokenColorSettings> ScopeSettings { get; } = new();
 
     public KeyValuePair<string, TokenColorSettings>? TryGetScopeSettings(string scope) => ScopeSettings.FindLongestPrefix(scope);

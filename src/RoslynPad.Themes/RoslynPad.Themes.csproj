@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
+      <None Remove="Themes\vs2019*.json" />
+      <EmbeddedResource Include="Themes\vs2019*.json" />
+    </ItemGroup>
+    <ItemGroup>
         <None Update="Themes\*.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

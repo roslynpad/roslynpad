@@ -5,13 +5,16 @@ namespace RoslynPad.Themes;
 /// <summary>
 /// Parses Visual Studio Code themes.
 /// </summary>
-public class ThemeManager
+public class VsCodeThemeReader : IThemeReader
 {
     private static readonly JsonSerializerOptions s_serializerOptions = new(JsonSerializerDefaults.Web)
     {
         AllowTrailingCommas = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
     };
+
+    private static readonly Lazy<Task<Theme>> s_vsDarkTheme = new(() => ReadThemeEmebeddedResourceAsync("vs2019_dark"));
+    private static readonly Lazy<Task<Theme>> s_vsLightTheme = new(() => ReadThemeEmebeddedResourceAsync("vs2019_light"));
 
     public async Task<Theme> ReadThemeAsync(string file)
     {
@@ -24,6 +27,9 @@ public class ThemeManager
             theme = await ReadThemeFileAsync(includePath).ConfigureAwait(false);
             themes.Push(theme);
         }
+
+        var baseTheme = await (theme.IsDark ? s_vsDarkTheme.Value : s_vsLightTheme.Value).ConfigureAwait(false);
+        themes.Push(baseTheme);
 
 
         theme = themes.Pop();
@@ -80,6 +86,18 @@ public class ThemeManager
     private static async Task<Theme> ReadThemeFileAsync(string file)
     {
         using var stream = File.OpenRead(file);
+        return await ReadThemeAsync(stream).ConfigureAwait(false);
+    }
+
+    private static async Task<Theme> ReadThemeEmebeddedResourceAsync(string name)
+    {
+        using var stream = typeof(VsCodeThemeReader).Assembly.GetManifestResourceStream($"RoslynPad.Themes.Themes.{name}.json")
+            ?? throw new InvalidOperationException("Stream not found");
+        return await ReadThemeAsync(stream).ConfigureAwait(false);
+    }
+
+    private static async Task<Theme> ReadThemeAsync(Stream stream)
+    {
         var theme = await JsonSerializer.DeserializeAsync<Theme>(stream, s_serializerOptions).ConfigureAwait(false);
         return theme.NotNull();
     }

@@ -98,7 +98,7 @@ public partial class DocumentView : IDisposable
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
         ViewModel.MainViewModel.ThemeChanged += OnThemeChanged;
-        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new VsCodeClassificationColors(_viewModel.MainViewModel.Theme),
+        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new ThemeClassificationColors(_viewModel.MainViewModel.Theme),
             _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind).ConfigureAwait(true);
 
         _viewModel.Initialize(documentId, OnError,
@@ -110,7 +110,7 @@ public partial class DocumentView : IDisposable
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
-        Editor.ClassificationHighlightColors = new VsCodeClassificationColors(ViewModel.MainViewModel.Theme);
+        Editor.ClassificationHighlightColors = new ThemeClassificationColors(ViewModel.MainViewModel.Theme);
     }
 
     private void OnReadInput()
