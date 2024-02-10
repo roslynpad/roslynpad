@@ -193,7 +193,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
         _executionHost.Disassembled += ExecutionHostOnDisassembled;
         _executionHost.RestoreStarted += OnRestoreStarted;
         _executionHost.RestoreCompleted += OnRestoreCompleted;
-        _executionHost.RestoreMessage += AddRestoreResult;
         _executionHost.ProgressChanged += p => ReportedProgress = p.Progress;
     }
 
@@ -466,7 +465,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
 
     private async Task TerminateAsync()
     {
-        Reset();
+        ResetCancellation();
         try
         {
             await Task.Run(() => _executionHost?.TerminateAsync()).ConfigureAwait(false);
@@ -652,13 +651,22 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
 
     private async Task RunAsync()
     {
-        if (IsRunning) return;
+        if (IsRunning || _executionHost is null || _executionHostParameters is null)
+        {
+            return;
+        }
 
         ReportedProgress = null;
 
-        Reset();
+        var cancellationToken = ResetCancellation();
 
         await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(true);
+
+        var documentPath = IsDirty ? Document?.GetAutoSavePath() : Document?.Path;
+        if (documentPath is null)
+        {
+            return;
+        }
 
         SetIsRunning(true);
 
@@ -669,10 +677,8 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
             ILText = DefaultILText;
         }
 
-        var cancellationToken = _runCts!.Token;
         try
         {
-            var code = await GetCodeAsync(cancellationToken).ConfigureAwait(true);
             if (_executionHost is not null && _executionHostParameters is not null)
             {
                 // Make sure the execution working directory matches the current script path
@@ -680,7 +686,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
                 if (_executionHostParameters.WorkingDirectory != WorkingDirectory)
                     _executionHostParameters.WorkingDirectory = WorkingDirectory;
 
-                await _executionHost.ExecuteAsync(code, ShowIL, OptimizationLevel).ConfigureAwait(true);
+                await _executionHost.ExecuteAsync(documentPath, ShowIL, OptimizationLevel, cancellationToken).ConfigureAwait(true);
             }
         }
         catch (CompilationErrorException ex)
@@ -740,14 +746,17 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
             .ConfigureAwait(false)).ToString();
     }
 
-    private void Reset()
+    private CancellationToken ResetCancellation()
     {
         if (_runCts != null)
         {
             _runCts.Cancel();
             _runCts.Dispose();
         }
-        _runCts = new CancellationTokenSource();
+
+        var runCts = new CancellationTokenSource();
+        _runCts = runCts;
+        return runCts.Token;
     }
 
     public async Task<string> LoadTextAsync()

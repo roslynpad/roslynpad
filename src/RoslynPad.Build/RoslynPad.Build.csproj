@@ -7,5 +7,6 @@
     <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="MSBuild.StructuredLogger" />
   </ItemGroup>
 </Project>

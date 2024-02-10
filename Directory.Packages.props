@@ -34,6 +34,7 @@
     <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="8.0.6" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="17.8.8" />
+    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.2.206" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.5" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.10.72" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
