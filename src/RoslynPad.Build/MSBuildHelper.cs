@@ -72,6 +72,8 @@ internal static class MSBuildHelper
             new XElement("OutputPath", "bin"),
             new XElement("UseAppHost", false),
             new XElement("AllowUnsafeBlocks", true),
+            new XElement("LangVersion", "preview"),
+            new XElement("Nullable", "enable"),
             new XElement("AppendTargetFrameworkToOutputPath", false),
             new XElement("AppendRuntimeIdentifierToOutputPath", false),
             new XElement("AppendPlatformToOutputPath", false),
