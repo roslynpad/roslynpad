@@ -49,7 +49,7 @@ public class ThemeDictionary : ResourceDictionary
             return;
         }
 
-        var isDark = theme.IsDark;
+        var isDark = theme.Type == ThemeType.Dark;
         foreach (var color in s_defaults)
         {
             this[color.Key] = isDark ? color.Value.DarkBrush : color.Value.LightBrush;

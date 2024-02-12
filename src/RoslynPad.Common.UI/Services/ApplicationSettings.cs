@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RoslynPad.Themes;
 
 namespace RoslynPad.UI;
 
@@ -132,7 +133,8 @@ internal class ApplicationSettings : IApplicationSettings
         private double? _windowFontSize;
         private bool _formatDocumentOnComment = true;
         private string? _effectiveDocumentPath;
-        private string? _themePath;
+        private string? _customThemePath;
+        private ThemeType? _customThemeType;
 
         public void LoadDefaultSettings()
         {
@@ -245,10 +247,16 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref _formatDocumentOnComment, value);
         }
 
-        public string? ThemePath
+        public string? CustomThemePath
         {
-            get => _themePath;
-            set => SetProperty(ref _themePath, value);
+            get => _customThemePath;
+            set => SetProperty(ref _customThemePath, value);
+        }
+
+        public ThemeType? CustomThemeType
+        {
+            get => _customThemeType;
+            set => SetProperty(ref _customThemeType, value);
         }
 
         public BuiltInTheme BuiltInTheme

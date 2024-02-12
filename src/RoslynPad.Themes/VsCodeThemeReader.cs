@@ -16,11 +16,13 @@ public class VsCodeThemeReader : IThemeReader
     private static readonly Lazy<Task<Theme>> s_vsDarkTheme = new(() => ReadThemeEmebeddedResourceAsync("vs2019_dark"));
     private static readonly Lazy<Task<Theme>> s_vsLightTheme = new(() => ReadThemeEmebeddedResourceAsync("vs2019_light"));
 
-    public async Task<Theme> ReadThemeAsync(string file)
+    public async Task<Theme> ReadThemeAsync(string file, ThemeType type)
     {
         var themes = new Stack<Theme>();
         var theme = await ReadThemeFileAsync(file).ConfigureAwait(false);
+        theme.Type = type;
         themes.Push(theme);
+
         while (theme.Include is not null)
         {
             var includePath = Path.Combine(Path.GetDirectoryName(file).NotNull(), theme.Include);
@@ -28,7 +30,7 @@ public class VsCodeThemeReader : IThemeReader
             themes.Push(theme);
         }
 
-        var baseTheme = await (theme.IsDark ? s_vsDarkTheme.Value : s_vsLightTheme.Value).ConfigureAwait(false);
+        var baseTheme = await (type == ThemeType.Dark ? s_vsDarkTheme.Value : s_vsLightTheme.Value).ConfigureAwait(false);
         themes.Push(baseTheme);
 
 
@@ -46,8 +48,6 @@ public class VsCodeThemeReader : IThemeReader
 
         while (themes.TryPop(out var nextTheme))
         {
-            theme.Type ??= nextTheme.Type;
-
             if (nextTheme.Colors is not null)
             {
                 foreach (var color in nextTheme.Colors)

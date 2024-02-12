@@ -108,47 +108,47 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public void InitializeTheme()
     {
-        var themeFile = Settings.ThemePath ?? GetBuiltinThemePath(Settings.BuiltInTheme);
-        LoadTheme(themeFile);
+        var theme = Settings.CustomThemePath is null ? GetBuiltinThemePath(Settings.BuiltInTheme) : (path: Settings.CustomThemePath, type: Settings.CustomThemeType.GetValueOrDefault());
+        LoadTheme(theme.path, theme.type);
 
-        var shouldListenToThemeChanges = Settings.ThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
+        var shouldListenToThemeChanges = Settings.CustomThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
         if (shouldListenToThemeChanges)
         {
-            ListenToSystemThemeChanges(() => LoadTheme(GetBuiltinThemePath(BuiltInTheme.System)));
+            ListenToSystemThemeChanges(() => { var buitInTheme = GetBuiltinThemePath(BuiltInTheme.System); LoadTheme(buitInTheme.path, buitInTheme.type); });
         }
 
-        string? GetBuiltinThemePath(BuiltInTheme builtInTheme)
+        (string? path, ThemeType type) GetBuiltinThemePath(BuiltInTheme builtInTheme)
         {
             if (builtInTheme == BuiltInTheme.System)
             {
                 var isSystemDarkTheme = IsSystemDarkTheme();
                 if (isSystemDarkTheme == _isSystemDarkTheme)
                 {
-                    return null;
+                    return default;
                 }
 
                 builtInTheme = isSystemDarkTheme ? BuiltInTheme.Dark : BuiltInTheme.Light;
                 _isSystemDarkTheme = isSystemDarkTheme;
             }
 
-            var themeFile = builtInTheme switch
+            (string file, ThemeType type) theme = builtInTheme switch
             {
-                BuiltInTheme.Light => "light_modern.json",
-                BuiltInTheme.Dark => "dark_modern.json",
+                BuiltInTheme.Light => ("light_modern.json", ThemeType.Light),
+                BuiltInTheme.Dark => ("dark_modern.json", ThemeType.Dark),
                 _ => throw new ArgumentOutOfRangeException(nameof(builtInTheme)),
             };
 
-            return Path.Combine(AppContext.BaseDirectory, "Themes", themeFile);
+            return (Path.Combine(AppContext.BaseDirectory, "Themes", theme.file), theme.type);
         }
 
-        void LoadTheme(string? themeFile)
+        void LoadTheme(string? themeFile, ThemeType type)
         {
             if (themeFile is null)
             {
                 return;
             }
 
-            Theme = _themeManager.ReadThemeAsync(themeFile).GetAwaiter().GetResult();
+            Theme = _themeManager.ReadThemeAsync(themeFile, type).GetAwaiter().GetResult();
         }
     }
 

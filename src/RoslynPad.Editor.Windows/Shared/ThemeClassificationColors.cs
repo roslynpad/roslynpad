@@ -25,7 +25,7 @@ public class ThemeClassificationColors : IClassificationHighlightColors
     {
         BraceMatchingColor = new HighlightingColor
         {
-            Background = new SimpleHighlightingBrush(theme.IsDark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
+            Background = new SimpleHighlightingBrush(theme.Type == ThemeType.Dark ? Color.FromArgb(60, 200, 200, 200) : Color.FromArgb(150, 219, 224, 204))
         }.AsFrozen();
 
         DefaultBrush = GetColorFromTheme(theme, "editor.foreground");

@@ -8,13 +8,11 @@ public record Theme(
     List<TokenColor>? TokenColors
 )
 {
-    public string? Type { get; set; }
+    [JsonIgnore]
+    public ThemeType Type { get; set; }
 
     [JsonInclude]
     internal string? Include { get; set; }
-
-    [JsonIgnore]
-    public bool IsDark => string.Equals(Type, "dark", StringComparison.OrdinalIgnoreCase);
 
     internal Trie<TokenColorSettings> ScopeSettings { get; } = new();
 

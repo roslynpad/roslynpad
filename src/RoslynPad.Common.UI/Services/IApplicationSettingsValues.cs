@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using RoslynPad.Themes;
 
 namespace RoslynPad.UI;
 
@@ -22,6 +23,7 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     double? WindowFontSize { get; set; }
     bool FormatDocumentOnComment { get; set; }
     string EffectiveDocumentPath { get; }
-    string? ThemePath { get; }
+    string? CustomThemePath { get; }
+    ThemeType? CustomThemeType { get; }
     BuiltInTheme BuiltInTheme { get; }
 }
