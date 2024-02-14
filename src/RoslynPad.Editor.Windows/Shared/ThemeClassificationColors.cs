@@ -72,7 +72,7 @@ public class ThemeClassificationColors : IClassificationHighlightColors
 
     private static HighlightingColor GetColorFromTheme(Theme theme, string name) => new HighlightingColor
     {
-        Foreground = theme.Colors?.TryGetValue(name, out var value) == true ? ParseBrush(value) : null
+        Foreground = theme.TryGetColor(name) is { } value ? ParseBrush(value) : null
     }.AsFrozen();
 
     private static HighlightingColor GetColorForScopes(Theme theme, string[] scopes, HighlightingColor defaultColor) =>

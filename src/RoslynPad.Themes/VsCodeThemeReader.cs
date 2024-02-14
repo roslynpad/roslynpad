@@ -19,32 +19,26 @@ public class VsCodeThemeReader : IThemeReader
     public async Task<Theme> ReadThemeAsync(string file, ThemeType type)
     {
         var themes = new Stack<Theme>();
-        var theme = await ReadThemeFileAsync(file).ConfigureAwait(false);
-        theme.Type = type;
-        themes.Push(theme);
+        var originTheme = await ReadThemeFileAsync(file).ConfigureAwait(false);
+        themes.Push(originTheme);
 
-        while (theme.Include is not null)
+        var includeTheme = originTheme;
+        while (includeTheme.Include is not null)
         {
-            var includePath = Path.Combine(Path.GetDirectoryName(file).NotNull(), theme.Include);
-            theme = await ReadThemeFileAsync(includePath).ConfigureAwait(false);
-            themes.Push(theme);
+            var includePath = Path.Combine(Path.GetDirectoryName(file).NotNull(), includeTheme.Include);
+            includeTheme = await ReadThemeFileAsync(includePath).ConfigureAwait(false);
+            themes.Push(includeTheme);
         }
 
         var baseTheme = await (type == ThemeType.Dark ? s_vsDarkTheme.Value : s_vsLightTheme.Value).ConfigureAwait(false);
         themes.Push(baseTheme);
 
-
-        theme = themes.Pop();
-
-        if (theme.Colors is null)
+        var theme = new Theme(new VsCodeColorRegistry())
         {
-            theme = theme with { Colors = [] };
-        }
-
-        if (theme.TokenColors is null)
-        {
-            theme = theme with { TokenColors = [] };
-        }
+            Name = originTheme.Name,
+            Colors = [],
+            TokenColors = [],
+        };
 
         while (themes.TryPop(out var nextTheme))
         {
@@ -80,6 +74,7 @@ public class VsCodeThemeReader : IThemeReader
             }
         }
 
+        theme.Type = type;
         return theme;
     }
 

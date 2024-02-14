@@ -48,6 +48,7 @@
         <Style x:Key="DocumentItemContainerStyle"
                TargetType="controls:TreeListViewItem"
                BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
             <EventSetter Event="MouseDoubleClick"
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"

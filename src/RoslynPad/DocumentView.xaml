@@ -26,7 +26,9 @@
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom"
+                   Background="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarBackground}}"
+                   Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarForeground}}">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <DockPanel LastChildFill="False" />
@@ -384,6 +386,7 @@
                             <ItemsControl.ItemContainerStyle>
                                 <Style TargetType="controls:TreeListViewItem"
                                        BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
                                     <Setter Property="IsExpanded"
                                             Value="{Binding IsExpanded, Mode=OneTime}" />
                                     <EventSetter Event="KeyDown"

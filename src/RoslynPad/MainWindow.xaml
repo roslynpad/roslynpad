@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:roslynPad="clr-namespace:RoslynPad"
+        xmlns:rp="clr-namespace:RoslynPad"
         xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
@@ -34,7 +34,7 @@
     <FrameworkElement.Resources>
 
         <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
-            <roslynPad:DocumentView />
+            <rp:DocumentView />
         </DataTemplate>
 
     </FrameworkElement.Resources>
@@ -42,7 +42,8 @@
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
-                    Background="#eebbbb"
+                    Background="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarItemErrorBackground}}"
+                    TextBlock.Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarItemErrorForeground}}"
                     DockPanel.Dock="Bottom"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel LastChildFill="False">
@@ -107,7 +108,7 @@
                                                        Title="Documents">
                                     <DockPanel x:Name="DocumentTree">
                                         <AdornerDecorator>
-                                            <roslynPad:DocumentTreeView />
+                                            <rp:DocumentTreeView />
                                         </AdornerDecorator>
                                     </DockPanel>
                                 </dock:LayoutAnchorable>
@@ -157,6 +158,7 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
+                            TextBlock.Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarForeground}}"
                             Margin="5">
 
                     <ToggleButton Margin="20 0 0 0"
