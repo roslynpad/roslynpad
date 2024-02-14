@@ -17,22 +17,12 @@ internal static class MSBuildHelper
             ImportSdkProject(Sdk, "Sdk.targets"),
             CoreCompileTarget()));
 
-    public static XDocument CreateCsproj(string targetFramework, IEnumerable<LibraryRef> referenceItems) =>
+    public static XDocument CreateCsproj(string targetFramework, IEnumerable<LibraryRef> referenceItems, IEnumerable<string> usingItems) =>
        new(new XElement("Project",
             new XAttribute("Sdk", Sdk),
             BuildProperties(targetFramework, copyBuildOutput: true),
-            Reference(referenceItems)));
-
-    public static void UpdateCsproj(XDocument csproj, string assemblyName, IEnumerable<string> compileItems, IEnumerable<string> usingItems)
-    {
-        csproj.Root?.Add(         
-            new XElement("PropertyGroup",
-                new XElement("AssemblyName", assemblyName)
-            ),
-            Compile(compileItems),
-            Using(usingItems)
-        );
-    }
+            Reference(referenceItems),
+            Using(usingItems)));
 
     private static XElement ReferenceAssemblies(bool isDotNet) =>
         isDotNet ? new XElement("ItemGroup") : new XElement("ItemGroup",

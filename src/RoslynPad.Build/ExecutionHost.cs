@@ -260,20 +260,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return false;
         }
 
-        var csprojPath = Path.Combine(BuildPath, "program.csproj");
-        XDocument doc;
-        using (var csprojStream = File.OpenRead(Path.Combine(_restorePath, "program.csproj")))
-        {
-            doc = await XDocument.LoadAsync(csprojStream, LoadOptions.None, cancellationToken).ConfigureAwait(false);
-            MSBuildHelper.UpdateCsproj(doc, Name, [path], _parameters.Imports);
-        }
-        var currentCsproj = await File.ReadAllTextAsync(csprojPath, cancellationToken).ConfigureAwait(false);
-        var newCsproj = doc.ToString(SaveOptions.None);
-        if (!string.Equals(currentCsproj, newCsproj, StringComparison.Ordinal))
-        {
-            await File.WriteAllTextAsync(csprojPath, newCsproj, cancellationToken).ConfigureAwait(false);
-        }
+        var targetPath = Path.Combine(BuildPath, Path.GetFileName(path));
+        var code = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+        var syntaxTree = ParseCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
+        await File.WriteAllTextAsync(targetPath, syntaxTree.ToString(), cancellationToken).ConfigureAwait(false);
 
+        var csprojPath = Path.Combine(BuildPath, "program.csproj");
         if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
         {
             var moduleInitAttributeFile = Path.Combine(BuildPath, BuildCode.ModuleInitAttributeName + ".cs");
@@ -290,7 +282,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
 
         var buildArgs =
-            $"-nologo -v:q -p:Configuration={optimizationLevel} " +
+            $"-nologo -v:q -p:Configuration={optimizationLevel} -p:AssemblyName={Name} " +
             $"-bl:ProjectImports=None \"{csprojPath}\" ";
         using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
             $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
@@ -308,7 +300,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private bool CompileInProcess(string path, OptimizationLevel? optimizationLevel, string assemblyPath, CancellationToken cancellationToken)
     {
         var code = File.ReadAllText(path);
-        var script = CreateCompiler(code, optimizationLevel);
+        var script = CreateCompiler(code, optimizationLevel, cancellationToken);
 
         var diagnostics = script.CompileAndSaveAssembly(assemblyPath, cancellationToken);
         var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
@@ -336,7 +328,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         Disassembled?.Invoke(output.ToString());
     }
 
-    private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel)
+    private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel, CancellationToken cancellationToken)
     {
         var platform = Platform.Architecture == Architecture.X86
             ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
@@ -355,7 +347,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
 
-        var syntaxTrees = ImmutableList.Create(ParseCode(code, parseOptions));
+        var syntaxTrees = ImmutableList.Create(ParseCode(code, path: "", parseOptions, cancellationToken));
         if (_parameters.SourceCodeKind == SourceCodeKind.Script)
         {
             syntaxTrees = syntaxTrees.Insert(0, _scriptInitSyntax);
@@ -525,10 +517,10 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    private static SyntaxTree ParseCode(string code, CSharpParseOptions parseOptions)
+    private static SyntaxTree ParseCode(string code, string path, CSharpParseOptions parseOptions, CancellationToken cancellationToken)
     {
-        var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions);
-        var root = tree.GetRoot();
+        var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions, path, cancellationToken: cancellationToken);
+        var root = tree.GetRoot(cancellationToken);
 
         if (root is not CompilationUnitSyntax compilationUnit)
         {
@@ -862,7 +854,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         {
             var csproj = MSBuildHelper.CreateCsproj(
                 Platform.TargetFrameworkMoniker,
-                _libraries);
+                _libraries,
+                _parameters.Imports);
 
             string csprojPath;
             string? markerPath;
