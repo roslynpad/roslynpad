@@ -30,14 +30,22 @@ public class RoslynCodeEditor : CodeTextEditor
 
     public bool IsBraceCompletionEnabled
     {
-        get { return this.GetValue(IsBraceCompletionEnabledProperty); }
+        get { return (bool)this.GetValue(IsBraceCompletionEnabledProperty); }
         set { this.SetValue(IsBraceCompletionEnabledProperty, value); }
     }
 
-    public static readonly StyledProperty<bool> IsBraceCompletionEnabledProperty =
+    public static readonly StyledProperty
+#if AVALONIA
+        <bool>
+#endif
+        IsBraceCompletionEnabledProperty =
         CommonProperty.Register<RoslynCodeEditor, bool>(nameof(IsBraceCompletionEnabled), defaultValue: true);
 
-    public static readonly StyledProperty<ImageSource> ContextActionsIconProperty = CommonProperty.Register<RoslynCodeEditor, ImageSource>(
+    public static readonly StyledProperty
+#if AVALONIA
+        <ImageSource>
+#endif
+        ContextActionsIconProperty = CommonProperty.Register<RoslynCodeEditor, ImageSource>(
         nameof(ContextActionsIcon), onChanged: OnContextActionsIconChanged);
 
     private static void OnContextActionsIconChanged(RoslynCodeEditor editor, CommonPropertyChangedArgs<ImageSource> args)
@@ -50,7 +58,7 @@ public class RoslynCodeEditor : CodeTextEditor
 
     public ImageSource ContextActionsIcon
     {
-        get => this.GetValue(ContextActionsIconProperty);
+        get => (ImageSource)this.GetValue(ContextActionsIconProperty);
         set => this.SetValue(ContextActionsIconProperty, value);
     }
     public IClassificationHighlightColors? ClassificationHighlightColors

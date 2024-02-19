@@ -1,23 +1,24 @@
 ﻿using System.Windows;
-using System.Windows.Media;
 using RoslynPad.Themes;
-
-namespace RoslynPad;
 
 #pragma warning disable CA1010 // Generic interface should also be implemented
 
-public class ThemeDictionary : ResourceDictionary
+namespace RoslynPad;
+
+public class ThemeDictionary : ThemeDictionaryBase
 {
     private static readonly IReadOnlySet<string> s_colors = typeof(ThemeDictionary).GetFields()
         .Where(t => t.IsStatic && t.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal))
         .Select(t => (string)t.GetValue(null)!).ToHashSet();
 
-    public ThemeDictionary(Theme theme)
+    public ThemeDictionary(Theme theme) : base(theme)
     {
         Initialize(theme);
         SetThemeColorForSystemKeys(Foreground, SystemColors.WindowTextBrushKey, SystemColors.WindowTextColorKey);
         SetThemeColorForSystemKeys(PanelBackground, SystemColors.WindowBrushKey, SystemColors.WindowColorKey);
         SetThemeColorForSystemKeys(FocusBorder, SystemColors.ActiveBorderBrushKey, SystemColors.ActiveBorderColorKey);
+        SetThemeColorForSystemKeys(PanelBackground, SystemColors.ControlBrushKey, SystemColors.ControlColorKey);
+        SetThemeColorForSystemKeys(TabBarBorder, SystemColors.ControlDarkBrushKey, SystemColors.ControlDarkColorKey);
     }
 
     public const string TabBarBackground = "editorGroupHeader.tabsBackground";
@@ -38,6 +39,18 @@ public class ThemeDictionary : ResourceDictionary
     public const string ListActiveSelectionBackground = "list.activeSelectionBackground";
     public const string ListActiveSelectionForeground = "list.activeSelectionForeground";
     public const string ListInactiveSelectionBackground = "list.inactiveSelectionBackground";
+    public const string TabActiveBackground ="tab.activeBackground";
+    public const string TabInactiveBackground = "tab.inactiveBackground";
+    public const string TabActiveForeground = "tab.activeForeground";
+    public const string TabInactiveForeground = "tab.inactiveForeground";
+    public const string TabHoverBackground = "tab.hoverBackground";
+    public const string TabHoverForeground = "tab.hoverForeground";
+    public const string TabActiveBorder = "tab.activeBorder";
+    public const string TabActiveBorderTop = "tab.activeBorderTop";
+    public const string TabHoverBorder = "tab.hoverBorder";
+    public const string TabBorder = "tab.border";
+    public const string InputBorder = "input.border";
+    public const string TitleBarActiveBackground = "titleBar.activeBackground";
 
     private void Initialize(Theme theme)
     {
@@ -54,28 +67,4 @@ public class ThemeDictionary : ResourceDictionary
             }
         }
     }
-
-    private void SetThemeColor(string name, string colorString)
-    {
-        var color = ParseColor(colorString);
-        this[name] = CreateBrush(color);
-        this[GetColorKey(name)] = color;
-    }
-
-    private void SetThemeColorForSystemKeys(string name, ResourceKey brushKey, ResourceKey colorKey)
-    {
-        this[brushKey] = this[name];
-        this[colorKey] = this[GetColorKey(name)];
-    }
-
-    private static string GetColorKey(string key) => key + "Color";
-
-    private static SolidColorBrush CreateBrush(Color color)
-    {
-        var brush = new SolidColorBrush(color);
-        brush.Freeze();
-        return brush;
-    }
-
-    private static Color ParseColor(string color) => (Color)ColorConverter.ConvertFromString(color);
 }

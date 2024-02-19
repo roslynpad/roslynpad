@@ -18,6 +18,11 @@ internal class ApplicationSettings : IApplicationSettings
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
     };
 
     private readonly ITelemetryProvider? _telemetryProvider;
@@ -169,6 +174,7 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref _windowBounds, value);
         }
 
+        [JsonPropertyName("dockLayoutV2")]
         public string? DockLayout
         {
             get => _dockLayout;

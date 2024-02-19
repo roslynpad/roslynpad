@@ -3,13 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:RoslynPad"
+             xmlns:rp="clr-namespace:RoslynPad"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance local:RenameSymbolDialog}"
+             d:DataContext="{d:DesignInstance rp:RenameSymbolDialog}"
              MinWidth="300"
              BorderThickness="1"
-             BorderBrush="Gray"
-             Background="White">
+             BorderBrush="{DynamicResource {x:Static rp:ThemeDictionary.TabBarBorder}}"
+             Background="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}">
     <StackPanel Margin="10">
         <TextBlock Text="Rename Symbol"
                    Style="{StaticResource Title}" />

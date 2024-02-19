@@ -58,6 +58,8 @@ public sealed class StyledProperty<TValue>(DependencyProperty property)
 {
     public DependencyProperty Property { get; } = property;
 
+    public static implicit operator DependencyProperty(StyledProperty<TValue> property) => property.Property;
+        
     public StyledProperty<TValue> AddOwner<TOwner>() =>
         new(Property.AddOwner(typeof(TOwner)));
 

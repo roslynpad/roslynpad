@@ -33,7 +33,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
     private readonly IPlatformsFactory _platformsFactory;
     private readonly ObservableCollection<IResultObject> _results;
     private readonly List<RestoreResultObject> _restoreResults;
-    
+
     private ExecutionHost? _executionHost;
     private ExecutionHostParameters? _executionHostParameters;
     private CancellationTokenSource? _runCts;
@@ -618,11 +618,10 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
     public DocumentId DocumentId
     {
         get => _documentId ?? throw new ArgumentNullException(nameof(_documentId));
-        private set
-        {
-            _documentId = value;
-        }
+        private set => _documentId = value;
     }
+
+    public bool HasDocumentId => _documentId is not null;
 
     public MainViewModel MainViewModel { get; }
     public ICommandProvider CommandProvider { get; }
@@ -735,7 +734,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
         {
             return SelectedText;
         }
-           
+
         var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
         if (document == null)
         {
@@ -820,5 +819,15 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
     public void Dispose()
     {
         _runCts?.Dispose();
+    }
+
+    public event Action<(int line, int column)>? EditorChangeLocation;
+
+    public void TryJumpToLine(IResultWithLineNumber result)
+    {
+        if (result.LineNumber is { } lineNumber)
+        {
+            EditorChangeLocation?.Invoke((lineNumber, result.Column));
+        }
     }
 }

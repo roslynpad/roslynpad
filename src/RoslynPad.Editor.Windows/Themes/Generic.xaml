@@ -1,8 +1,21 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
-                    xmlns:windows="clr-namespace:RoslynPad.Editor">
+                    xmlns:avCompletion="clr-namespace:ICSharpCode.AvalonEdit.CodeCompletion;assembly=ICSharpCode.AvalonEdit"
+                    xmlns:editor="clr-namespace:RoslynPad.Editor">
 
+    <Style TargetType="editor:CodeTextEditor"
+           BasedOn="{StaticResource {x:Type avalonedit:TextEditor}}" />
+
+    <Style TargetType="editor:CodeEditorCompletionWindow"
+           BasedOn="{StaticResource {x:Type Window}}">
+        <Setter Property="Background" Value="#F0F0F0" />
+    </Style>
+
+    <Style TargetType="editor:CodeEditorOverloadInsightWindow"
+          BasedOn="{StaticResource {x:Type avCompletion:InsightWindow}}">
+        <Setter Property="Background" Value="#FFFFE1" />
+    </Style>
 
     <DrawingImage x:Key="FindNext">
         <DrawingImage.Drawing>
@@ -127,7 +140,7 @@
     </Style>
 
     <ControlTemplate x:Key="SearchReplacePanelTemplate"
-                     TargetType="windows:SearchReplacePanel">
+                     TargetType="editor:SearchReplacePanel">
         <Border Background="#eeeeee"
                 BorderBrush="DarkGray"
                 BorderThickness="0 0 0 3"
@@ -238,7 +251,7 @@
                     <Button Margin="3"
                             Height="24"
                             Width="24"
-                            Command="windows:SearchCommandsEx.ReplaceNext"
+                            Command="editor:SearchCommandsEx.ReplaceNext"
                             ToolTip="Replace next (Alt+R)">
                         <Image Width="16"
                                Height="16"
@@ -248,7 +261,7 @@
                     <Button Margin="3"
                             Height="24"
                             Width="24"
-                            Command="windows:SearchCommandsEx.ReplaceAll"
+                            Command="editor:SearchCommandsEx.ReplaceAll"
                             ToolTip="Replace all (Alt+A)">
                         <Image Width="16"
                                Height="16"
@@ -272,7 +285,7 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
-    <Style TargetType="windows:SearchReplacePanel">
+    <Style TargetType="editor:SearchReplacePanel">
         <Setter Property="FontSize"
                 Value="{x:Static SystemFonts.MessageFontSize}" />
         <Setter Property="FontFamily"

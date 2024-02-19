@@ -148,6 +148,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
                 return;
             }
 
+            ThemeType = type;
             Theme = _themeManager.ReadThemeAsync(themeFile, type).GetAwaiter().GetResult();
         }
     }
@@ -344,6 +345,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
+    public object? ActiveContent
+    {
+        get => _currentOpenDocument;
+        set
+        {
+            if (value is not OpenDocumentViewModel viewModel)
+            {
+                return;
+            }
+
+            CurrentOpenDocument = viewModel;
+            OnPropertyChanged();
+        }
+    }
+
     private void ClearCurrentOpenDocument()
     {
         if (_currentOpenDocument == null) return;
@@ -427,7 +443,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
             return;
         }
 
-        if (document.DocumentId != null)
+        if (document.HasDocumentId)
         {
             RoslynHost?.CloseDocument(document.DocumentId);
         }
@@ -710,6 +726,8 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     }
 
     public IDelegateCommand ClearSearchCommand => _commands.Create(ClearSearch);
+
+    public ThemeType ThemeType { get; private set; }
 
     public Theme Theme
     {

@@ -73,11 +73,57 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition />
             <RowDefinition Height="Auto" />
+            <RowDefinition />
         </Grid.RowDefinitions>
 
-        <Border BorderBrush="#ABADB3"
+        <ToolBar Grid.Row="0"
+                 Background="Transparent"
+                 BorderBrush="DarkGray"
+                 BorderThickness="0 0 0 1"
+                 DockPanel.Dock="Bottom"
+                 Margin="0,5,0,0">
+            <Button ToolTip="New Document (Ctrl+N)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+                <Image Source="{StaticResource CsFile}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="New Script Document (Ctrl+Shift+N)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
+                <Image Source="{StaticResource CsFile}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="Open File (Ctrl+O)"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding OpenFileCommand, Mode=OneTime}">
+                <Image Source="{StaticResource OpenFolder}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="Change Documents Location"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
+                <Image Source="{StaticResource MoveFolder}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+            <Button ToolTip="Clear Restore Cache"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding ClearRestoreCacheCommand, Mode=OneTime}">
+                <Image Source="{StaticResource ClearContent}"
+                       Width="16"
+                       Height="16" />
+            </Button>
+        </ToolBar>
+
+        <Border Grid.Row="1"
+                BorderBrush="#ABADB3"
                 BorderThickness="1,1,1,0"
                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
             <DockPanel>
@@ -124,55 +170,9 @@
             </DockPanel>
         </Border>
 
-        <controls:TreeListView Grid.Row="1"
+        <controls:TreeListView Grid.Row="2"
                                ShowSeparator="False"
                                ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"
                                ItemsSource="{Binding DocumentRoot.Children, Converter={StaticResource FilterCollectionViewConverter}}" />
-
-        <ToolBar Grid.Row="2"
-                 Background="Transparent"
-                 BorderBrush="DarkGray"
-                 BorderThickness="0 0 0 1"
-                 DockPanel.Dock="Bottom"
-                 Margin="0,5,0,0">
-            <Button ToolTip="New Document (Ctrl+N)"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
-                <Image Source="{StaticResource CsFile}"
-                       Width="16"
-                       Height="16" />
-            </Button>
-            <Button ToolTip="New Script Document (Ctrl+Shift+N)"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                    CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
-                <Image Source="{StaticResource CsFile}"
-                       Width="16"
-                       Height="16" />
-            </Button>
-            <Button ToolTip="Open File (Ctrl+O)"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding OpenFileCommand, Mode=OneTime}">
-                <Image Source="{StaticResource OpenFolder}"
-                       Width="16"
-                       Height="16" />
-            </Button>
-            <Button ToolTip="Change Documents Location"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
-                <Image Source="{StaticResource MoveFolder}"
-                       Width="16"
-                       Height="16" />
-            </Button>
-            <Button ToolTip="Clear Restore Cache"
-                    ToolTipService.Placement="Top"
-                    Command="{Binding ClearRestoreCacheCommand, Mode=OneTime}">
-                <Image Source="{StaticResource ClearContent}"
-                       Width="16"
-                       Height="16" />
-            </Button>
-        </ToolBar>
-
     </Grid>
 </UserControl>

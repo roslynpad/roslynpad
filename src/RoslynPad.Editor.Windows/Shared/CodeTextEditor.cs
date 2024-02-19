@@ -4,8 +4,8 @@ namespace RoslynPad.Editor;
 
 public partial class CodeTextEditor : TextEditor
 {
-    private CustomCompletionWindow? _completionWindow;
-    private OverloadInsightWindow? _insightWindow;
+    private CodeEditorCompletionWindow? _completionWindow;
+    private CodeEditorOverloadInsightWindow? _insightWindow;
     private ToolTip? _toolTip;
 
     public CodeTextEditor()
@@ -49,9 +49,6 @@ public partial class CodeTextEditor : TextEditor
 
     partial void Initialize();
 
-    public static readonly StyledProperty<Brush> CompletionBackgroundProperty = CommonProperty.Register<CodeTextEditor, Brush>(
-        nameof(CompletionBackground), CreateDefaultCompletionBackground());
-
     public bool IsCompletionWindowOpen => _completionWindow?.IsVisible == true;
 
     public void CloseCompletionWindow()
@@ -72,19 +69,6 @@ public partial class CodeTextEditor : TextEditor
             _insightWindow.Close();
             _insightWindow = null;
         }
-    }
-
-#pragma warning disable CA1859
-    private static Brush CreateDefaultCompletionBackground()
-    {
-        return new SolidColorBrush(Color.FromRgb(240, 240, 240)).AsFrozen();
-    }
-#pragma warning restore CA1859
-
-    public Brush CompletionBackground
-    {
-        get => this.GetValue(CompletionBackgroundProperty);
-        set => this.SetValue(CompletionBackgroundProperty, value);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -264,10 +248,9 @@ public partial class CodeTextEditor : TextEditor
             }
             else
             {
-                _insightWindow = new OverloadInsightWindow(TextArea)
+                _insightWindow = new CodeEditorOverloadInsightWindow(TextArea)
                 {
                     Provider = results.OverloadProvider,
-                    //Background = CompletionBackground,
                 };
 
                 InitializeInsightWindow();
@@ -283,7 +266,7 @@ public partial class CodeTextEditor : TextEditor
             _insightWindow?.Close();
 
             // Open code completion after the user has pressed dot:
-            _completionWindow = new CustomCompletionWindow(TextArea)
+            _completionWindow = new CodeEditorCompletionWindow(TextArea)
             {
                 MinWidth = 300,
                 CloseWhenCaretAtBeginning = triggerMode == TriggerMode.Completion || triggerMode == TriggerMode.Text,
@@ -362,51 +345,4 @@ public partial class CodeTextEditor : TextEditor
     }
 
     #endregion
-
-    private partial class CustomCompletionWindow : CompletionWindow
-    {
-        private bool _isSoftSelectionActive;
-        private KeyEventArgs? _keyDownArgs;
-
-        public CustomCompletionWindow(TextArea textArea) : base(textArea)
-        {
-            _isSoftSelectionActive = true;
-            CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
-
-            Initialize();
-        }
-
-        partial void Initialize();
-
-        private void CompletionListOnSelectionChanged(object? sender, SelectionChangedEventArgs args)
-        {
-            if (!UseHardSelection &&
-                _isSoftSelectionActive && _keyDownArgs?.Handled != true
-                && args.AddedItems?.Count > 0)
-            {
-                CompletionList.SelectedItem = null;
-            }
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (e.Key == Key.Home || e.Key == Key.End) return;
-
-            _keyDownArgs = e;
-
-            base.OnKeyDown(e);
-
-            SetSoftSelection(e);
-        }
-
-        private void SetSoftSelection(RoutedEventArgs e)
-        {
-            if (e.Handled)
-            {
-                _isSoftSelectionActive = false;
-            }
-        }
-
-        public bool UseHardSelection { get; set; }
-    }
 }

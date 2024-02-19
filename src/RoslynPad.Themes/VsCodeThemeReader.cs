@@ -63,7 +63,7 @@ public class VsCodeThemeReader : IThemeReader
 
         foreach (var tokenColor in theme.TokenColors)
         {
-            if (tokenColor.Settings is null)
+            if (tokenColor.Settings is null || tokenColor.Scope is null)
             {
                 continue;
             }

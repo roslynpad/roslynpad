@@ -3,6 +3,6 @@
 namespace RoslynPad.Themes;
 
 public record TokenColor(
-    [property: JsonConverter(typeof(ListOrSingleJsonConverter<string>))] List<string> Scope,
+    [property: JsonConverter(typeof(ListOrSingleJsonConverter<string>))] List<string>? Scope,
     TokenColorSettings? Settings
 );

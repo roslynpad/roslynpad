@@ -17,3 +17,4 @@ global using CommonFontWeights = System.Windows.FontWeights;
 global using CommonTextEventArgs = System.Windows.Input.TextCompositionEventArgs;
 global using CommonBrush = System.Windows.Media.Brush;
 global using CommonImage = System.Windows.Media.ImageSource;
+global using StyledProperty = System.Windows.DependencyProperty;

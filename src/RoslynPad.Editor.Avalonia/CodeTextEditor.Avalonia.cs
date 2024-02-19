@@ -32,13 +32,4 @@ public partial class CodeTextEditor
     {
         _toolTip?.InvalidateVisual();
     }
-
-    partial class CustomCompletionWindow
-    {
-        partial void Initialize()
-        {
-            CompletionList.ListBox.BorderThickness = new Thickness(1);
-            CompletionList.ListBox.PointerPressed += (o, e) => _isSoftSelectionActive = false;
-        }
-    }
 }

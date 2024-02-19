@@ -7,7 +7,7 @@
         xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
-        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI" xmlns:controls="clr-namespace:RoslynPad.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance ui:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
@@ -65,7 +65,8 @@
             <Grid IsEnabled="{Binding IsInitialized}">
                 <dock:DockingManager Name="DockingManager"
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
-                                     ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                                     ActiveContent="{Binding ActiveContent, Mode=TwoWay}"
+                                     ActiveContentChanged="DockingManager_ActiveContentChanged"
                                      DocumentClosing="DockingManager_OnDocumentClosing"
                                      AnchorableContextMenu="{x:Null}">
                     <dock:DockingManager.DocumentHeaderTemplate>
@@ -113,7 +114,36 @@
                                     </DockPanel>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
-                            <dock:LayoutDocumentPane />
+                            <dock:LayoutPanel Orientation="Vertical">
+                                <dock:LayoutDocumentPane />
+                                <dock:LayoutAnchorablePane Name="ResultsPane"
+                                                           DockHeight="250">
+                                    <dock:LayoutAnchorable x:Name="Results"
+                                                           CanClose="False"
+                                                           CanHide="False"
+                                                           CanAutoHide="True"
+                                                           Title="Results">
+                                        <DockPanel x:Name="ResultsView">
+                                            <AdornerDecorator DataContext="{Binding CurrentOpenDocument}">
+                                                <rp:ResultsView />
+                                            </AdornerDecorator>
+                                        </DockPanel>
+                                    </dock:LayoutAnchorable>
+                                    <dock:LayoutAnchorable x:Name="IL"
+                                                           CanHide="False"
+                                                           CanClose="False"
+                                                           CanAutoHide="True"
+                                                           Title="IL">
+                                        <DockPanel x:Name="ILViewer">
+                                            <AdornerDecorator DataContext="{Binding CurrentOpenDocument}">
+                                                <controls:ILViewer Text="{Binding ILText}"
+                                                                   IsVisibleChanged="ILViewer_IsVisibleChanged"
+                                                                   FontSize="{Binding MainViewModel.EditorFontSize}" />
+                                            </AdornerDecorator>
+                                        </DockPanel>
+                                    </dock:LayoutAnchorable>
+                                </dock:LayoutAnchorablePane>
+                            </dock:LayoutPanel>
                         </dock:LayoutPanel>
                     </dock:LayoutRoot>
                 </dock:DockingManager>
