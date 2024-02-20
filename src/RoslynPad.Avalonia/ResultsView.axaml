@@ -1,0 +1,39 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RoslynPad.ResultsView"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:build="clr-namespace:RoslynPad.Build;assembly=RoslynPad.Build"
+             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
+             xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+             xmlns:converters="clr-namespace:RoslynPad.Converters"
+             x:DataType="ui:OpenDocumentViewModel">
+  <Grid>
+    <TreeView ItemsSource="{Binding Results}">
+      <TreeView.DataTemplates>
+        <TreeDataTemplate x:DataType="build:ResultObject"
+                          ItemsSource="{Binding Children}">
+          <Grid ColumnDefinitions="150,*,150">
+            <TextBlock Text="{Binding Header}" Grid.Column="0" />
+            <TextBlock Text="{Binding Value}" Grid.Column="1" />
+            <TextBlock Text="{Binding Type}" Grid.Column="2" />
+          </Grid>
+        </TreeDataTemplate>
+        <TreeDataTemplate x:DataType="build:CompilationErrorResultObject">
+          <Grid ColumnDefinitions="150,100,*,50,50">
+            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
+            <TextBlock Text="{Binding ErrorCode}" Grid.Column="1" />
+            <TextBlock Text="{Binding Message}" Grid.Column="2" />
+            <TextBlock Text="{Binding LineNumber}" Grid.Column="3" />
+            <TextBlock Text="{Binding Column}" Grid.Column="4" />
+          </Grid>
+        </TreeDataTemplate>
+        <TreeDataTemplate x:DataType="build:RestoreResultObject">
+          <Grid ColumnDefinitions="*,*">
+            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
+            <TextBlock Text="{Binding Message}" Grid.Column="1" />
+          </Grid>
+        </TreeDataTemplate>
+      </TreeView.DataTemplates>
+    </TreeView>
+  </Grid>
+</UserControl>

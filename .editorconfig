@@ -183,7 +183,7 @@ dotnet_diagnostic.VSTHRD110.severity = none
 dotnet_diagnostic.VSTHRD200.severity = none
 
 # XAML
-[*.xaml]
+[*.{xaml,axaml}]
 indent_style = space
 indent_size = 4
 charset = utf-8-bom

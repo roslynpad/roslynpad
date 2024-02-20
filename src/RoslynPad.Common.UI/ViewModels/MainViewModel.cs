@@ -108,13 +108,18 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public void InitializeTheme()
     {
+        UseSystemTheme = Settings.CustomThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
+
         var theme = Settings.CustomThemePath is null ? GetBuiltinThemePath(Settings.BuiltInTheme) : (path: Settings.CustomThemePath, type: Settings.CustomThemeType.GetValueOrDefault());
         LoadTheme(theme.path, theme.type);
 
-        var shouldListenToThemeChanges = Settings.CustomThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
-        if (shouldListenToThemeChanges)
+        if (UseSystemTheme)
         {
-            ListenToSystemThemeChanges(() => { var buitInTheme = GetBuiltinThemePath(BuiltInTheme.System); LoadTheme(buitInTheme.path, buitInTheme.type); });
+            ListenToSystemThemeChanges(() =>
+            {
+                var buitInTheme = GetBuiltinThemePath(BuiltInTheme.System);
+                LoadTheme(buitInTheme.path, buitInTheme.type);
+            });
         }
 
         (string? path, ThemeType type) GetBuiltinThemePath(BuiltInTheme builtInTheme)
@@ -726,6 +731,8 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     }
 
     public IDelegateCommand ClearSearchCommand => _commands.Create(ClearSearch);
+
+    public bool UseSystemTheme { get; private set; }
 
     public ThemeType ThemeType { get; private set; }
 

@@ -1,12 +1,16 @@
 ﻿using System.Collections.Specialized;
 using System.Composition.Hosting;
 using System.Reflection;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using Dock.Model.Avalonia.Controls;
+using Dock.Model.Core.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RoslynPad.Themes;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -14,11 +18,18 @@ namespace RoslynPad;
 partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private ThemeDictionary? _themeDictionary;
+
+    public MainViewModel ViewModel => _viewModel;
 
     public MainWindow()
     {
         var services = new ServiceCollection();
-        services.AddLogging(l => l.AddSimpleConsole().AddDebug());
+        services.AddLogging(
+#if DEBUG    
+        l => l.AddDebug()
+#endif
+        );
 
         var container = new ContainerConfiguration()
             .WithProvider(new ServiceCollectionExportDescriptorProvider(services))
@@ -28,6 +39,8 @@ partial class MainWindow : Window
 
         _viewModel = locator.GetRequiredService<MainViewModel>();
         _viewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
+        _viewModel.ThemeChanged += OnViewModelThemeChanged;
+        _viewModel.InitializeTheme();
 
         DataContext = _viewModel;
 
@@ -37,14 +50,42 @@ partial class MainWindow : Window
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
+    }
 
-        if (DocumentsPane.Factory is { } factory)
+    private void OnActiveDockableChanged(object sender, ActiveDockableChangedEventArgs e)
+    {
+        if (e.Dockable is Document document)
         {
-            factory.DockableClosed += Factory_DockableClosedAsync;
+            ViewModel.ActiveContent = document.DataContext;
         }
     }
 
-    private async void Factory_DockableClosedAsync(object? sender, Dock.Model.Core.Events.DockableClosedEventArgs e)
+    private void OnViewModelThemeChanged(object? sender, EventArgs e)
+    {
+        if (Application.Current is not { } app)
+        {
+            return;
+        }
+
+        if (!ViewModel.UseSystemTheme)
+        {
+            app.RequestedThemeVariant = ViewModel.ThemeType switch
+            {
+                ThemeType.Light => ThemeVariant.Light,
+                ThemeType.Dark => ThemeVariant.Dark,
+                _ => null
+            };
+        }
+
+        if (_themeDictionary is not null)
+        {
+            app.Resources.MergedDictionaries.Remove(_themeDictionary);
+        }
+
+        _themeDictionary = new ThemeDictionary(_viewModel.Theme);
+    }
+
+    private async void OnDockableClosedAsync(object? sender, DockableClosedEventArgs e)
     {
         if (e.Dockable is Document document && document.DataContext is OpenDocumentViewModel viewModel)
         {
@@ -67,7 +108,7 @@ partial class MainWindow : Window
                 {
                     factory.RemoveDockable(dockable, collapse: false);
                 }
-                
+
             }
         }
         if (e.NewItems is not null)
@@ -92,7 +133,7 @@ partial class MainWindow : Window
     protected override async void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
-        
+
         await _viewModel.Initialize().ConfigureAwait(true);
     }
 }

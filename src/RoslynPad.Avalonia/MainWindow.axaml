@@ -42,7 +42,8 @@
 
       <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>
-          <Factory />
+          <Factory ActiveDockableChanged="OnActiveDockableChanged"
+                   DockableClosed="OnDockableClosedAsync" />
         </DockControl.Factory>
 
         <RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{Binding #MainLayout}">
@@ -69,6 +70,15 @@
                   <local:NewDocumentView DataContext="{Binding #This.DataContext}" />
                 </Document>
               </DocumentDock>
+
+               <ProportionalDockSplitter x:Name="ResultSplitter" Id="ResultSplitter" />
+
+
+                <ToolDock x:Name="ResultPane" Id="ResultPane" Proportion="0.35" Alignment="Bottom">
+                  <Tool x:Name="Results" Id="Results" Title="Results" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                      <local:ResultsView x:Name="ResultsView" DataContext="{Binding #This.ViewModel.CurrentOpenDocument}" />
+                  </Tool>
+              </ToolDock>
 
             </ProportionalDock>
 

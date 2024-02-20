@@ -26,7 +26,7 @@
     <KeyBinding Gesture="F2"
                 Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
   </UserControl.KeyBindings>
-  <Grid RowDefinitions="Auto,*,5,*">
+  <Grid RowDefinitions="Auto,*">
     <StackPanel Grid.Row="0"
                 Name="Toolbar"
                 Orientation="Horizontal">
@@ -204,34 +204,5 @@
     <Editor:RoslynCodeEditor Name="Editor"
                              ContextActionsIcon="{DynamicResource Bulb}"
                              Grid.Row="1" />
-
-    <TreeView Grid.Row="3"
-              ItemsSource="{Binding Results}">
-      <TreeView.DataTemplates>
-        <TreeDataTemplate x:DataType="build:ResultObject"
-                          ItemsSource="{Binding Children}">
-          <Grid ColumnDefinitions="150,*,150">
-            <TextBlock Text="{Binding Header}" Grid.Column="0" />
-            <TextBlock Text="{Binding Value}" Grid.Column="1" />
-            <TextBlock Text="{Binding Type}" Grid.Column="2" />
-          </Grid>
-        </TreeDataTemplate>
-        <TreeDataTemplate x:DataType="build:CompilationErrorResultObject">
-          <Grid ColumnDefinitions="150,100,*,50,50">
-            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
-            <TextBlock Text="{Binding ErrorCode}" Grid.Column="1" />
-            <TextBlock Text="{Binding Message}" Grid.Column="2" />
-            <TextBlock Text="{Binding LineNumber}" Grid.Column="3" />
-            <TextBlock Text="{Binding Column}" Grid.Column="4" />
-          </Grid>
-        </TreeDataTemplate>
-        <TreeDataTemplate x:DataType="build:RestoreResultObject">
-          <Grid ColumnDefinitions="*,*">
-            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
-            <TextBlock Text="{Binding Message}" Grid.Column="1" />
-          </Grid>
-        </TreeDataTemplate>
-      </TreeView.DataTemplates>
-    </TreeView>
   </Grid>
 </UserControl>

@@ -119,8 +119,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
     private string ExecutableExtension => Platform.IsDotNet ? "dll" : "exe";
 
-    public ImmutableArray<MetadataReference> MetadataReferences { get; private set; }
-    public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; }
+    public ImmutableArray<MetadataReference> MetadataReferences { get; private set; } = [];
+    public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; } = [];
 
     public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost, ILogger logger)
     {

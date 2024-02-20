@@ -17,82 +17,12 @@
   </UserControl.Styles>
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="23" />
-      <RowDefinition />
-      <RowDefinition Height="32" />
+        <RowDefinition Height="32" />
+        <RowDefinition Height="23" />
+        <RowDefinition />
     </Grid.RowDefinitions>
 
-    <Border BorderBrush="#ABADB3"
-            BorderThickness="1,1,1,0">
-      <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition />
-          <ColumnDefinition Width="22" />
-          <ColumnDefinition Width="22" />
-        </Grid.ColumnDefinitions>
-
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition MaxWidth="22" />
-          </Grid.ColumnDefinitions>
-
-          <TextBox Name="SearchText"
-                   BorderThickness="0"
-                   Text="{Binding SearchText}"
-                    />
-          <TextBlock Text="Search documents (press Enter)"
-                     IsHitTestVisible="False"
-                     IsVisible="{Binding !CanClearSearch}"
-                     Foreground="DarkGray">
-          </TextBlock>
-          <Button Grid.Column="1"
-                  Classes="SearchButtonStyle"
-                  Command="{Binding ClearSearchCommand}"
-                  ToolTip.Tip="Clear search (Esc)"
-                  IsVisible="{Binding CanClearSearch}" >
-            <Image Source="{StaticResource Close}"
-                   Width="16"
-                   Height="16"/>
-          </Button>
-        </Grid>
-        <ToggleButton Grid.Column="1"
-                      Classes="SearchButtonStyle"
-                      IsChecked=  "{Binding SearchFileContents}"
-                      ToolTip.Tip="Search File Contents">
-          <Image Source="{StaticResource FileCollection}"
-                 Width="16"
-                 Height="16" />
-        </ToggleButton>
-        <ToggleButton Grid.Column="2"
-                      Classes="SearchButtonStyle"
-                      IsChecked="{Binding SearchUsingRegex}"
-                      ToolTip.Tip="Use Regular Expressions" >
-          <Image Source="{StaticResource RegularExpression}"
-                 Width="16"
-                 Height="16" />
-        </ToggleButton>
-      </Grid>
-    </Border>
-
-    <TreeView Grid.Row="1"
-              ItemsSource="{Binding DocumentRoot.Children}"
-              Name="Tree">
-      <TreeView.ItemTemplate>
-        <TreeDataTemplate ItemsSource="{Binding Children}">
-          <DockPanel Margin="0 2 0 2"
-                     VerticalAlignment="Center">
-            <Image Name="Icon"
-                   Source="{StaticResource CsFile}"
-                   Height="12"
-                   Margin="0 0 3 0" />
-            <TextBlock Text="{Binding Name}" />
-          </DockPanel>
-        </TreeDataTemplate>
-      </TreeView.ItemTemplate>
-    </TreeView>
-
-    <Border Grid.Row="2"
+    <Border Grid.Row="0"
             BorderBrush="DarkGray"
             BorderThickness="0 0 0 1">
 
@@ -156,5 +86,76 @@
         </Button>
       </Grid>
     </Border>
+
+    <Border Grid.Row="1"
+            BorderBrush="#ABADB3"
+            BorderThickness="1,1,1,0">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="22" />
+          <ColumnDefinition Width="22" />
+        </Grid.ColumnDefinitions>
+
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition MaxWidth="22" />
+          </Grid.ColumnDefinitions>
+
+          <TextBox Name="SearchText"
+                   BorderThickness="0"
+                   Text="{Binding SearchText}"
+                    />
+          <TextBlock Text="Search documents (press Enter)"
+                     IsHitTestVisible="False"
+                     IsVisible="{Binding !CanClearSearch}"
+                     Foreground="DarkGray">
+          </TextBlock>
+          <Button Grid.Column="1"
+                  Classes="SearchButtonStyle"
+                  Command="{Binding ClearSearchCommand}"
+                  ToolTip.Tip="Clear search (Esc)"
+                  IsVisible="{Binding CanClearSearch}" >
+            <Image Source="{StaticResource Close}"
+                   Width="16"
+                   Height="16"/>
+          </Button>
+        </Grid>
+        <ToggleButton Grid.Column="1"
+                      Classes="SearchButtonStyle"
+                      IsChecked=  "{Binding SearchFileContents}"
+                      ToolTip.Tip="Search File Contents">
+          <Image Source="{StaticResource FileCollection}"
+                 Width="16"
+                 Height="16" />
+        </ToggleButton>
+        <ToggleButton Grid.Column="2"
+                      Classes="SearchButtonStyle"
+                      IsChecked="{Binding SearchUsingRegex}"
+                      ToolTip.Tip="Use Regular Expressions" >
+          <Image Source="{StaticResource RegularExpression}"
+                 Width="16"
+                 Height="16" />
+        </ToggleButton>
+      </Grid>
+    </Border>
+
+    <TreeView Grid.Row="2"
+              ItemsSource="{Binding DocumentRoot.Children}"
+              Name="Tree">
+      <TreeView.ItemTemplate>
+        <TreeDataTemplate ItemsSource="{Binding Children}">
+          <DockPanel Margin="0 2 0 2"
+                     VerticalAlignment="Center">
+            <Image Name="Icon"
+                   Source="{StaticResource CsFile}"
+                   Height="12"
+                   Margin="0 0 3 0" />
+            <TextBlock Text="{Binding Name}" />
+          </DockPanel>
+        </TreeDataTemplate>
+      </TreeView.ItemTemplate>
+    </TreeView>
   </Grid>
 </UserControl>

@@ -74,12 +74,12 @@
             </Style>
 
             <Style TargetType="editor:CodeEditorCompletionWindow">
-                <Setter Property="Background" Value="Black" />
+                <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelBackground}}" />
             </Style>
 
             <Style TargetType="editor:CodeEditorOverloadInsightWindow">
-                <Setter Property="Background" Value="Black" />
-                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelBackground}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.EditorForeground}}" />
             </Style>
 
             <Style TargetType="av:TaskDialog">
