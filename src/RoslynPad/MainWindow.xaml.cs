@@ -3,7 +3,6 @@ using System.Composition.Hosting;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
@@ -135,8 +134,6 @@ public partial class MainWindow
     {
         var boundsString = _viewModel.Settings.WindowBounds;
 
-        //GetScreenAndWindowInfo();
-
         if (!string.IsNullOrEmpty(boundsString))
         {
             try
@@ -166,54 +163,10 @@ public partial class MainWindow
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
 
-        ShiftWindowOntoScreen();
-    }
-
-    private void GetScreenAndWindowInfo()
-    {
-        var sb = new StringBuilder();
-
-        sb.AppendLine(_viewModel.Settings.WindowBounds);
-
-        var virtualScreenInfo = $"Virtual Screen: {SystemParameters.VirtualScreenLeft}, {SystemParameters.VirtualScreenTop}, {SystemParameters.VirtualScreenWidth}, {SystemParameters.VirtualScreenHeight}";
-
-        sb.AppendLine(virtualScreenInfo);
-
-        sb.AppendLine();
-        foreach (var s in System.Windows.Forms.Screen.AllScreens)
-        {
-            sb.AppendLine("Device Name: \t" + s.DeviceName);
-            sb.AppendLine("BitsPerPixel: \t" + s.BitsPerPixel);
-            sb.AppendLine("Bounds: \t\t" + s.Bounds);
-            sb.AppendLine("Primary: \t\t" + s.Primary);
-            sb.AppendLine("Working Area: \t" + s.WorkingArea);
-            sb.AppendLine("============================================================");
-        }
-
-        File.WriteAllText("temp.txt", sb.ToString());
-    }
-
-    private void ShiftWindowOntoScreen()
-    {
-        if (Top < SystemParameters.VirtualScreenTop)
-        {
-            Top = SystemParameters.VirtualScreenTop;
-        }
-
-        if (Left < SystemParameters.VirtualScreenLeft)
-        {
-            Left = SystemParameters.VirtualScreenLeft;
-        }
-
-        if (Left + Width > SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth)
-        {
-            Left = SystemParameters.VirtualScreenWidth + SystemParameters.VirtualScreenLeft - Width;
-        }
-
-        if (Top + Height > SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight)
-        {
-            Top = SystemParameters.VirtualScreenHeight + SystemParameters.VirtualScreenTop - Height;
-        }
+        Width = Math.Clamp(Width, 0, SystemParameters.VirtualScreenWidth);
+        Height = Math.Clamp(Height, 0, SystemParameters.VirtualScreenHeight);
+        Left = Math.Clamp(Left, SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenWidth - Width);
+        Top = Math.Clamp(Top, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenHeight - Height);
     }
 
     private void SaveWindowLayout()
