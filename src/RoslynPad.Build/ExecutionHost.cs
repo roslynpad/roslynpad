@@ -738,7 +738,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                 var outputPath = Path.Combine(projBuildResult.RestorePath, "output.json");
 
-                if (!projBuildResult.MarkerExists)
+                if (!projBuildResult.MarkerExists || !File.Exists(outputPath))
                 {
                     File.WriteAllText(Path.Combine(projBuildResult.RestorePath, "Program.cs"), "_ = 0;");
                     await BuildGlobalJson(projBuildResult.RestorePath).ConfigureAwait(false);
