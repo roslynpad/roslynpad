@@ -49,6 +49,6 @@
     <PackageVersion Include="System.Composition" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
-    <PackageVersion Include="xunit" Version="2.6.6" />
+    <PackageVersion Include="xunit" Version="2.7.0" />
   </ItemGroup>
 </Project>
