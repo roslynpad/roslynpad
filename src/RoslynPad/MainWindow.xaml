@@ -149,7 +149,8 @@
                 </dock:DockingManager>
 
                 <UniformGrid HorizontalAlignment="Center"
-                             VerticalAlignment="Center"
+                             VerticalAlignment="Top"
+                             Margin="0,100,0,0"
                              Rows="1"
                              Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
 

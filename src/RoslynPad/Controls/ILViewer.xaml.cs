@@ -43,7 +43,7 @@ public partial class ILViewer
 
     private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((ILViewer)d).TextEditor.Document.Text = (string)e.NewValue;
+        ((ILViewer)d).TextEditor.Document.Text = e.NewValue as string ?? string.Empty;
     }
 
     public string Text
