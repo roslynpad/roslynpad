@@ -260,10 +260,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return false;
         }
 
-        var targetPath = Path.Combine(BuildPath, Path.GetFileName(path));
+        var targetPath = Path.Combine(BuildPath, "Program.cs");
         var code = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        var syntaxTree = ParseCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
-        await File.WriteAllTextAsync(targetPath, syntaxTree.ToString(), cancellationToken).ConfigureAwait(false);
+        var syntaxTree = ParseAndTransformCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
+        var finalCode = syntaxTree.ToString();
+        if (!File.Exists(targetPath) || !string.Equals(await File.ReadAllTextAsync(targetPath, cancellationToken).ConfigureAwait(false), finalCode, StringComparison.Ordinal))
+        {
+            await File.WriteAllTextAsync(targetPath, finalCode, cancellationToken).ConfigureAwait(false);
+        }
 
         var csprojPath = Path.Combine(BuildPath, "program.csproj");
         if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
@@ -347,7 +351,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
 
-        var syntaxTrees = ImmutableList.Create(ParseCode(code, path: "", parseOptions, cancellationToken));
+        var syntaxTrees = ImmutableList.Create(ParseAndTransformCode(code, path: "", parseOptions, cancellationToken));
         if (_parameters.SourceCodeKind == SourceCodeKind.Script)
         {
             syntaxTrees = syntaxTrees.Insert(0, _scriptInitSyntax);
@@ -517,7 +521,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    private static SyntaxTree ParseCode(string code, string path, CSharpParseOptions parseOptions, CancellationToken cancellationToken)
+    private static SyntaxTree ParseAndTransformCode(string code, string path, CSharpParseOptions parseOptions, CancellationToken cancellationToken)
     {
         var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions, path, cancellationToken: cancellationToken);
         var root = tree.GetRoot(cancellationToken);
@@ -765,14 +769,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                         return;
                     }
 
+                    var restoreOutput = JsonSerializer.Deserialize<BuildOutput>(restoreResult.StandardOutput);
+                    using var resultOutputStream = File.OpenWrite(outputPath);
+                    await JsonSerializer.SerializeAsync(resultOutputStream, restoreOutput, cancellationToken: cancellationToken).ConfigureAwait(false);
+
                     if (projBuildResult.UsesCache)
                     {
                         await File.WriteAllTextAsync(projBuildResult.MarkerPath, string.Empty, cancellationToken).ConfigureAwait(false);
                     }
-
-                    var restoreOutput = JsonSerializer.Deserialize<BuildOutput>(restoreResult.StandardOutput);
-                    using var resultOutputStream = File.OpenWrite(outputPath);
-                    await JsonSerializer.SerializeAsync(resultOutputStream, restoreOutput, cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
 
                 if (projBuildResult.UsesCache)

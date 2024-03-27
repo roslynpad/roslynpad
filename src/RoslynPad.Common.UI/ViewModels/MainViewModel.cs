@@ -347,6 +347,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         {
             if (value == null) return; // prevent binding from clearing the value
             SetProperty(ref _currentOpenDocument, value);
+            OnPropertyChanged(nameof(ActiveContent));
         }
     }
 
