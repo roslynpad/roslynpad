@@ -5,7 +5,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <DotNetExtensionsVersion>8.0.0</DotNetExtensionsVersion>
-    <RoslynVersion>4.9.0-3.final</RoslynVersion>
+    <RoslynVersion>4.9.2</RoslynVersion>
     <RoslynPrivateVersion>4.9.0-3.24054.13</RoslynPrivateVersion>
     <AvaloniaVersion>11.0.7</AvaloniaVersion>
     <RxVersion>6.0.0</RxVersion>
