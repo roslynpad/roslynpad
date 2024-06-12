@@ -74,6 +74,7 @@ internal class PlatformsFactory : IPlatformsFactory
         {
             dotnetPaths.AddRange([
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet"),
+                "/usr/lib/dotnet",
                 "/usr/lib64/dotnet",
                 "/usr/share/dotnet",
                 "/usr/local/share/dotnet",
