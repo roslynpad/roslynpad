@@ -138,6 +138,7 @@
                                             <AdornerDecorator DataContext="{Binding CurrentOpenDocument}">
                                                 <controls:ILViewer Text="{Binding ILText}"
                                                                    IsVisibleChanged="ILViewer_IsVisibleChanged"
+                                                                   FontFamily="{Binding MainViewModel.EditorFontFamily}"
                                                                    FontSize="{Binding MainViewModel.EditorFontSize}" />
                                             </AdornerDecorator>
                                         </DockPanel>

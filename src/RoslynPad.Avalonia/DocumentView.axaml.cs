@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
+using Avalonia.Media;
 
 namespace RoslynPad;
 
@@ -18,28 +19,11 @@ partial class DocumentView : UserControl, IDisposable
         InitializeComponent();
 
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
-        _editor.FontFamily = GetPlatformFontFamily();
 
         DataContextChanged += OnDataContextChanged;
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
-
-    private static string GetPlatformFontFamily()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return "Consolas";
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return "Menlo";
-        }
-        else
-        {
-            return "Monospace";
-        }
-    }
 
     private async void OnDataContextChanged(object? sender, EventArgs args)
     {
@@ -53,6 +37,7 @@ partial class DocumentView : UserControl, IDisposable
         viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
         viewModel.MainViewModel.ThemeChanged += OnThemeChanged;
         _editor.FontSize = viewModel.MainViewModel.EditorFontSize;
+        _editor.FontFamily = new FontFamily(viewModel.MainViewModel.EditorFontFamily);
 
         var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 

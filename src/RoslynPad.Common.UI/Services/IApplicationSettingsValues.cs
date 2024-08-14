@@ -12,6 +12,7 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     string? DockLayout { get; set; }
     string? WindowState { get; set; }
     double EditorFontSize { get; set; }
+    string EditorFontFamily { get; set; }
     double OutputFontSize { get; set; }
     string? DocumentPath { get; set; }
     bool SearchFileContents { get; set; }
