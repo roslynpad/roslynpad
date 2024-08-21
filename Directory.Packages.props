@@ -21,7 +21,7 @@
     <PackageVersion Include="DialogHost.Avalonia" Version="0.7.7" />
     <PackageVersion Include="Dirkster.AvalonDock" Version="4.72.1" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageVersion Include="Dock.Avalonia" Version="11.0.0.5" />
+    <PackageVersion Include="Dock.Avalonia" Version="11.0.0.7" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="11.0.0.5" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
