@@ -29,6 +29,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private OpenDocumentViewModel? _currentOpenDocument;
     private bool _hasUpdate;
     private double _editorFontSize;
+    private string _editorFontFamily;
     private string? _searchText;
     private bool _isWithinSearchResults;
     private bool _isInitialized;
@@ -94,6 +95,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
 
         _editorFontSize = Settings.EditorFontSize;
+        _editorFontFamily = Settings.EditorFontFamily;
 
         _documentRoot = CreateDocumentRoot();
 
@@ -543,8 +545,22 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
+    public string EditorFontFamily
+    {
+        get => _editorFontFamily;
+        set
+        {        
+            if (SetProperty(ref _editorFontFamily, value))
+            {
+                Settings.EditorFontFamily = value;
+                EditorFontFamilyChanged?.Invoke(value);
+            }
+        }
+    }
+
 
     public event Action<double>? EditorFontSizeChanged;
+    public event Action<string>? EditorFontFamilyChanged;
 
     public DocumentViewModel AddDocument(string documentName)
     {
