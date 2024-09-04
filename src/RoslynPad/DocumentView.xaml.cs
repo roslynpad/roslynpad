@@ -27,7 +27,6 @@ public partial class DocumentView : IDisposable
     private readonly FoldingManager _foldingManager;
     private readonly DispatcherTimer _foldingUpdateTimer;
     private readonly CSharpBracketFoldingStrategy _foldingStrategy;
-    private readonly CSharpBracketSearcher _bracketSearcher = new();
 
     public DocumentView()
     {
