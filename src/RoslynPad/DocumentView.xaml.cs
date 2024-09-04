@@ -4,14 +4,19 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Avalon.Windows.Controls;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Folding;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Editor;
+using RoslynPad.Folding;
 using RoslynPad.Themes;
 using RoslynPad.UI;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace RoslynPad;
 
@@ -19,6 +24,10 @@ public partial class DocumentView : IDisposable
 {
     private readonly MarkerMargin _errorMargin;
     private OpenDocumentViewModel? _viewModel;
+    private readonly FoldingManager _foldingManager;
+    private readonly DispatcherTimer _foldingUpdateTimer;
+    private readonly CSharpBracketFoldingStrategy _foldingStrategy;
+    private readonly CSharpBracketSearcher _bracketSearcher = new();
 
     public DocumentView()
     {
@@ -31,12 +40,19 @@ public partial class DocumentView : IDisposable
         Editor.TextArea.SelectionChanged += EditorSelectionChanged;
 
         DataContextChanged += OnDataContextChanged;
+
+        _foldingManager = FoldingManager.Install(Editor.TextArea);
+        _foldingStrategy = new CSharpBracketFoldingStrategy();
+        _foldingUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _foldingUpdateTimer.Tick += (sender, e) => _foldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
+        _foldingUpdateTimer.Start();
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
 
     private void EditorSelectionChanged(object? sender, EventArgs e)
-        => ViewModel.SelectedText = Editor.SelectedText;
+    => ViewModel.SelectedText = Editor.SelectedText;
+
 
     private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
     {
@@ -85,6 +101,7 @@ public partial class DocumentView : IDisposable
             this);
 
         Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)
