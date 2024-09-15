@@ -9,7 +9,7 @@ public class SearchReplacePanel : Control
     private TextArea _textArea;
     private SearchReplaceInputHandler _handler;
     private TextDocument _currentDocument;
-    private SearchReplaceResultBackgroundRenderer _renderer;
+    private SearchReplaceResultBackgroundRenderer? _renderer;
     private TextBox? _searchTextBox;
     private SearchReplacePanelAdorner _adorner;
     private ISearchStrategy _strategy;
@@ -116,9 +116,9 @@ public class SearchReplacePanel : Control
 
     static void MarkerBrushChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is SearchReplacePanel panel)
+        if (d is SearchReplacePanel panel && panel._renderer is { } renderer)
         {
-            panel._renderer.MarkerBrush = (Brush)e.NewValue;
+            renderer.MarkerBrush = (Brush)e.NewValue;
         }
     }
 
@@ -141,8 +141,11 @@ public class SearchReplacePanel : Control
         // only reset as long as there are results
         // if no results are found, the "no matches found" message should not flicker.
         // if results are found by the next run, the message will be hidden inside DoSearch ...
-        if (_renderer.CurrentResults.Count != 0)
+        if (_renderer?.CurrentResults.Count != 0)
+        {
             _messageView.IsOpen = false;
+        }
+
         var searchPattern = SearchPattern ?? "";
         _strategy = SearchStrategyFactory.Create(searchPattern, !MatchCase, WholeWords, UseRegex ? SearchMode.RegEx : SearchMode.Normal);
         OnSearchOptionsChanged(new SearchOptionsChangedEventArgs(searchPattern, MatchCase, UseRegex, WholeWords));
@@ -178,10 +181,13 @@ public class SearchReplacePanel : Control
         _adorner = new SearchReplacePanelAdorner(textArea, this);
         DataContext = this;
 
-        _renderer = new SearchReplaceResultBackgroundRenderer();
+        _renderer = new SearchReplaceResultBackgroundRenderer { MarkerBrush = MarkerBrush };
         _currentDocument = textArea.Document;
         if (_currentDocument != null)
+        {
             _currentDocument.TextChanged += TextArea_Document_TextChanged;
+        }
+
         textArea.DocumentChanged += TextArea_DocumentChanged;
         KeyDown += SearchLayerKeyDown;
 
@@ -258,6 +264,11 @@ public class SearchReplacePanel : Control
     /// </summary>
     public void FindNext()
     {
+        if (_renderer is null)
+        {
+            return;
+        }
+
         var selectedResult = GetSelectedResult();
         var result = _renderer.CurrentResults.FirstOrDefault(r => r.Offset >= _textArea.Caret.Offset && r != selectedResult) ??
                      _renderer.CurrentResults.FirstOrDefault();
@@ -273,6 +284,11 @@ public class SearchReplacePanel : Control
     /// </summary>
     public void FindPrevious()
     {
+        if (_renderer is null)
+        {
+            return;
+        }
+
         var selectedResult = GetSelectedResult();
         var result = _renderer.CurrentResults.LastOrDefault(r => r.EndOffset <= _textArea.Caret.Offset && r != selectedResult) ??
                      _renderer.CurrentResults.LastOrDefault();
@@ -286,8 +302,11 @@ public class SearchReplacePanel : Control
 
     void DoSearch(bool changeSelection)
     {
-        if (IsClosed)
+        if (_renderer is null || IsClosed)
+        {
             return;
+        }
+
         _renderer.CurrentResults.Clear();
 
         if (!string.IsNullOrEmpty(SearchPattern))
@@ -378,7 +397,7 @@ public class SearchReplacePanel : Control
         IsClosed = true;
 
         // Clear existing search results so that the segments don't have to be maintained
-        _renderer.CurrentResults.Clear();
+        _renderer?.CurrentResults.Clear();
     }
 
     /// <summary>
@@ -474,8 +493,10 @@ public class SearchReplacePanel : Control
 
     private ISearchResult? GetSelectedResult()
     {
-        if (_textArea.Selection.IsEmpty)
+        if (_renderer is null || _textArea.Selection.IsEmpty)
+        {
             return null;
+        }
 
         var selectionStartOffset = _textArea.Document.GetOffset(_textArea.Selection.StartPosition.Location);
         var selectionLength = _textArea.Selection.Length;
@@ -484,12 +505,15 @@ public class SearchReplacePanel : Control
 
     public void ReplaceAll()
     {
-        if (!IsReplaceMode) return;
+        if (!IsReplaceMode)
+        {
+            return;
+        }
 
         var document = _textArea.Document;
         using (document.RunUpdate())
         {
-            var results = _renderer.CurrentResults.OrderByDescending(x => x.EndOffset).ToArray();
+            var results = _renderer?.CurrentResults.OrderByDescending(x => x.EndOffset).ToArray() ?? [];
             foreach (var result in results)
             {
                 var replacement = result.ReplaceWith(ReplacePattern ?? string.Empty);
@@ -688,7 +712,9 @@ class SearchReplaceResultBackgroundRenderer : IBackgroundRenderer
         ArgumentNullException.ThrowIfNull(drawingContext);
 
         if (CurrentResults == null || !textView.VisualLinesValid)
+        {
             return;
+        }
 
         var visualLines = textView.VisualLines;
         if (visualLines.Count == 0)
