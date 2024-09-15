@@ -282,7 +282,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
 
             // if generating quick info for an attribute, bind to the class instead of the constructor
             if (token.Parent != null &&
-                syntaxFactsService.IsAttributeName(token.Parent) &&
+                syntaxFactsService.IsNameOfAttribute(token.Parent) &&
                 symbol.ContainingType?.IsAttribute() == true)
             {
                 symbol = symbol.ContainingType;

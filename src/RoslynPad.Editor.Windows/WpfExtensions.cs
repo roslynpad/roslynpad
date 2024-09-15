@@ -1,5 +1,7 @@
 ﻿#pragma warning disable IDE0060 // Remove unused parameter
 
+using System.Runtime.CompilerServices;
+
 namespace RoslynPad.Editor;
 
 internal static class WpfExtensions
@@ -68,5 +70,18 @@ internal static class WpfExtensions
     public static void Close(this ContextMenu contextMenu)
     {
         contextMenu.IsOpen = false;
+    }
+
+    public static DispatcherYieldAwaiter GetAwaiter(this Dispatcher dispatcher) => new(dispatcher, DispatcherPriority.Normal);
+
+    public readonly struct DispatcherYieldAwaiter(Dispatcher dispatcher, DispatcherPriority priority) : ICriticalNotifyCompletion
+    {
+        public bool IsCompleted => dispatcher.CheckAccess();
+
+        public void GetResult() => dispatcher.VerifyAccess();
+
+        public void OnCompleted(Action continuation) => dispatcher.InvokeAsync(continuation, priority);
+
+        public void UnsafeOnCompleted(Action continuation) => OnCompleted(continuation);
     }
 }

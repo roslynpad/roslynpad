@@ -10,6 +10,7 @@ using System.Reflection;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn;
 
@@ -33,12 +34,11 @@ public class RoslynHost : IRoslynHost
         .ToImmutableArray();
 
     private static IEnumerable<Type> GetDiagnosticCompositionTypes() => MetadataUtil.LoadTypesByNamespaces(
-        typeof(Microsoft.CodeAnalysis.Diagnostics.IDiagnosticService).Assembly,
+        typeof(Microsoft.CodeAnalysis.CodeFixes.ICodeFixService).Assembly,
         "Microsoft.CodeAnalysis.Diagnostics",
         "Microsoft.CodeAnalysis.CodeFixes");
 
     private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
-    private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
     private readonly IDocumentationProviderService _documentationProviderService;
     private readonly CompositionHost _compositionContext;
 
@@ -46,18 +46,17 @@ public class RoslynHost : IRoslynHost
     public ParseOptions ParseOptions { get; }
     public ImmutableArray<MetadataReference> DefaultReferences { get; }
     public ImmutableArray<string> DefaultImports { get; }
-    public ImmutableArray<string> DisabledDiagnostics { get; }
+    public ImmutableHashSet<string> DisabledDiagnostics { get; }
     public ImmutableArray<string> AnalyzerConfigFiles { get; }
 
     public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
         RoslynHostReferences? references = null,
-        ImmutableArray<string>? disabledDiagnostics = null,
+        ImmutableHashSet<string>? disabledDiagnostics = null,
         ImmutableArray<string>? analyzerConfigFiles = null)
     {
         references ??= RoslynHostReferences.Empty;
 
         _workspaces = [];
-        _diagnosticsUpdatedNotifiers = [];
 
         var partTypes = GetDefaultCompositionTypes();
 
@@ -81,7 +80,6 @@ public class RoslynHost : IRoslynHost
 
         DisabledDiagnostics = disabledDiagnostics ?? [];
         AnalyzerConfigFiles = analyzerConfigFiles ?? [];
-        GetService<IDiagnosticService>().DiagnosticsUpdated += OnDiagnosticsUpdated;
     }
 
     public Func<string, DocumentationProvider> DocumentationProviderFactory => _documentationProviderService.GetDocumentationProvider;
@@ -95,31 +93,12 @@ public class RoslynHost : IRoslynHost
     public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
         documentation: _documentationProviderService.GetDocumentationProvider(location));
 
-    private void OnDiagnosticsUpdated(object? sender, DiagnosticsUpdatedArgs diagnosticsUpdatedArgs)
-    {
-        var documentId = diagnosticsUpdatedArgs.DocumentId;
-        if (documentId == null) return;
-
-        if (_diagnosticsUpdatedNotifiers.TryGetValue(documentId, out var notifier))
-        {
-            if (diagnosticsUpdatedArgs.Kind == DiagnosticsUpdatedKind.DiagnosticsCreated)
-            {
-                var remove = diagnosticsUpdatedArgs.Diagnostics.RemoveAll(d => DisabledDiagnostics.Contains(d.Id));
-                if (remove.Length != diagnosticsUpdatedArgs.Diagnostics.Length)
-                {
-                    diagnosticsUpdatedArgs = diagnosticsUpdatedArgs.WithDiagnostics(remove);
-                }
-            }
-
-            notifier(diagnosticsUpdatedArgs);
-        }
-    }
-
     public TService GetService<TService>() => _compositionContext.GetExport<TService>();
+    public TService GetWorkspaceService<TService>(DocumentId documentId) where TService : IWorkspaceService =>
+        _workspaces[documentId].Services.GetRequiredService<TService>();
 
     protected internal virtual void AddMetadataReference(ProjectId projectId, AssemblyIdentity assemblyIdentity)
     {
-        // TODO
     }
 
     public void CloseWorkspace(RoslynWorkspace workspace)
@@ -129,13 +108,19 @@ public class RoslynHost : IRoslynHost
         foreach (var documentId in workspace.CurrentSolution.Projects.SelectMany(p => p.DocumentIds))
         {
             _workspaces.TryRemove(documentId, out _);
-            _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
         }
 
-        using (workspace) { }
+        workspace.Dispose();
     }
 
-    public virtual RoslynWorkspace CreateWorkspace() => new(HostServices, roslynHost: this);
+    public virtual RoslynWorkspace CreateWorkspace()
+    {
+        var workspace = new RoslynWorkspace(HostServices, roslynHost: this);
+        // create the updater before any document is opened
+        var diagnosticsUpdater = workspace.Services.GetRequiredService<IDiagnosticsUpdater>();
+        diagnosticsUpdater.DisabledDiagnostics = DisabledDiagnostics;
+        return workspace;
+    }
 
     public void CloseDocument(DocumentId documentId)
     {
@@ -153,9 +138,10 @@ public class RoslynHost : IRoslynHost
 
                 if (!solution.Projects.SelectMany(d => d.DocumentIds).Any())
                 {
-                    _workspaces.TryRemove(documentId, out workspace);
-
-                    using (workspace) { }
+                    if (_workspaces.TryRemove(documentId, out workspace))
+                    {
+                        workspace.Dispose();
+                    }
                 }
                 else
                 {
@@ -163,8 +149,6 @@ public class RoslynHost : IRoslynHost
                 }
             }
         }
-
-        _diagnosticsUpdatedNotifiers.TryRemove(documentId, out _);
     }
 
     public Document? GetDocument(DocumentId documentId)
@@ -203,7 +187,7 @@ public class RoslynHost : IRoslynHost
         var solution = workspace.CurrentSolution;
 
         if (previousDocument == null)
-        { 
+        {
             solution = solution.AddAnalyzerReferences(GetSolutionAnalyzerReferences());
         }
 
@@ -217,21 +201,21 @@ public class RoslynHost : IRoslynHost
 
         _workspaces.TryAdd(documentId, workspace);
 
-        if (args.OnDiagnosticsUpdated != null)
-        {
-            _diagnosticsUpdatedNotifiers.TryAdd(documentId, args.OnDiagnosticsUpdated);
-        }
-
         var onTextUpdated = args.OnTextUpdated;
         if (onTextUpdated != null)
         {
-            workspace.ApplyingTextChange += (d, s) =>
-            {
-                if (documentId == d) onTextUpdated(s);
-            };
+            workspace.ApplyingTextChange += OnTextUpdated;
         }
 
         return documentId;
+
+        void OnTextUpdated(DocumentId id, SourceText sourceText)
+        {
+            if (documentId == id)
+            {
+                onTextUpdated?.Invoke(sourceText);
+            }
+        }
     }
 
     protected virtual IEnumerable<AnalyzerReference> GetSolutionAnalyzerReferences()

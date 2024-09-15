@@ -5,8 +5,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <DotNetExtensionsVersion>8.0.0</DotNetExtensionsVersion>
-    <RoslynVersion>4.9.2</RoslynVersion>
-    <RoslynPrivateVersion>4.9.0-3.24054.13</RoslynPrivateVersion>
+    <RoslynVersion>4.12.0-1.final</RoslynVersion>
+    <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
+    <RoslynPrivateVersion>4.12.0-1.24379.11</RoslynPrivateVersion>
     <AvaloniaVersion>11.0.10</AvaloniaVersion>
     <RxVersion>6.0.0</RxVersion>
     <NuGetVersion>6.9.1</NuGetVersion>
@@ -34,6 +35,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="8.0.21" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="17.11.20" />
     <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="17.8.8" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.2.235" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.5" />

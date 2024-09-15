@@ -6,18 +6,10 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn;
 
-public class RoslynWorkspace : Workspace
+public class RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null) : Workspace(hostServices, workspaceKind)
 {
     public DocumentId? OpenDocumentId { get; private set; }
-    public RoslynHost? RoslynHost { get; }
-
-    public RoslynWorkspace(HostServices hostServices, string workspaceKind = WorkspaceKind.Host, RoslynHost? roslynHost = null)
-        : base(hostServices, workspaceKind)
-    {
-        DiagnosticProvider.Enable(this);
-
-        RoslynHost = roslynHost;
-    }
+    public RoslynHost? RoslynHost { get; } = roslynHost;
 
     public new void SetCurrentSolution(Solution solution)
     {
@@ -51,8 +43,6 @@ public class RoslynWorkspace : Workspace
         base.Dispose(finalize);
 
         ApplyingTextChange = null;
-
-        DiagnosticProvider.Disable(this);
     }
 
     protected override void ApplyDocumentTextChanged(DocumentId id, SourceText text)

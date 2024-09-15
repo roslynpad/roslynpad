@@ -89,11 +89,19 @@ public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
             _updatding = false;
             Document.EndUpdate();
             if (caretOffset < 0)
+            {
                 caretOffset = 0;
+            }
+
             if (caretOffset > newText.Length)
+            {
                 caretOffset = newText.Length;
+            }
+
             if (editor != null)
+            {
                 editor.CaretOffset = caretOffset;
+            }
         }
     }
 
@@ -112,10 +120,8 @@ public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
             _sourceText = sourceText;
         }
 
-        public override void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
-        {
+        public override void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count) => 
             _sourceText.CopyTo(sourceIndex, destination, destinationIndex, count);
-        }
 
         public override Encoding? Encoding => _sourceText.Encoding;
 
@@ -125,10 +131,8 @@ public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
 
         public override SourceText GetSubText(TextSpan span) => new AvalonEditSourceText(_container, _sourceText.GetSubText(span));
 
-        public override void Write(TextWriter writer, TextSpan span, CancellationToken cancellationToken = new CancellationToken())
-        {
+        public override void Write(TextWriter writer, TextSpan span, CancellationToken cancellationToken = new CancellationToken()) => 
             _sourceText.Write(writer, span, cancellationToken);
-        }
 
         public override string ToString() => _sourceText.ToString();
 
@@ -149,14 +153,10 @@ public sealed class AvalonEditTextContainer : SourceTextContainer, IDisposable
 
         public override int GetHashCode() => _sourceText.GetHashCode();
 
-        public override SourceText WithChanges(IEnumerable<TextChange> changes)
-        {
-            return new AvalonEditSourceText(_container, _sourceText.WithChanges(changes));
-        }
+        public override SourceText WithChanges(IEnumerable<TextChange> changes) =>
+            new AvalonEditSourceText(_container, _sourceText.WithChanges(changes));
 
-        private static SourceText GetInnerSourceText(SourceText oldText)
-        {
-            return (oldText as AvalonEditSourceText)?._sourceText ?? oldText;
-        }
+        private static SourceText GetInnerSourceText(SourceText oldText) =>
+            (oldText as AvalonEditSourceText)?._sourceText ?? oldText;
     }
 }

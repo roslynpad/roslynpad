@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls.Primitives;
+﻿using System.Runtime.CompilerServices;
+using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 
 #pragma warning disable IDE0060 // Remove unused parameter
@@ -87,4 +88,17 @@ internal static class AvaloniaExtensions
     public static void SetContent(this ToolTip toolTip, Control control, object content) => ToolTip.SetTip(control, content);
 
     public static void Open(this FlyoutBase flyout, Control control) => flyout.ShowAt(control);
+
+    public static DispatcherYieldAwaiter GetAwaiter(this Dispatcher dispatcher) => new(dispatcher, default);
+
+    public readonly struct DispatcherYieldAwaiter(Dispatcher dispatcher, DispatcherPriority priority) : ICriticalNotifyCompletion
+    {
+        public bool IsCompleted => dispatcher.CheckAccess();
+
+        public void GetResult() => dispatcher.VerifyAccess();
+
+        public void OnCompleted(Action continuation) => dispatcher.Post(continuation, priority);
+
+        public void UnsafeOnCompleted(Action continuation) => OnCompleted(continuation);
+    }
 }

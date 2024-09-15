@@ -7,7 +7,7 @@ internal class ExecutionHostParameters(
     string buildPath,
     string nuGetConfigPath,
     ImmutableArray<string> imports,
-    ImmutableArray<string> disabledDiagnostics,
+    ImmutableHashSet<string> disabledDiagnostics,
     string workingDirectory,
     SourceCodeKind sourceCodeKind,
     bool checkOverflow = false,
@@ -16,7 +16,7 @@ internal class ExecutionHostParameters(
     public string BuildPath { get; } = buildPath;
     public string NuGetConfigPath { get; } = nuGetConfigPath;
     public ImmutableArray<string> Imports { get; set; } = imports;
-    public ImmutableArray<string> DisabledDiagnostics { get; } = disabledDiagnostics;
+    public ImmutableHashSet<string> DisabledDiagnostics { get; } = disabledDiagnostics;
     public string WorkingDirectory { get; set; } = workingDirectory;
     public SourceCodeKind SourceCodeKind { get; set; } = sourceCodeKind;
     public bool CheckOverflow { get; } = checkOverflow;

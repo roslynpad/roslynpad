@@ -8,9 +8,9 @@ public class SignatureHelpItems
 
     public TextSpan ApplicableSpan { get; }
 
-    public int ArgumentIndex { get; }
+	public int SemanticParameterIndex { get; }
 
-    public int ArgumentCount { get; }
+	public int SyntacticArgumentCount { get; }
 
     public string? ArgumentName { get; }
 
@@ -20,8 +20,8 @@ public class SignatureHelpItems
     {
         Items = inner.Items.Select(x => new SignatureHelpItem(x)).ToArray();
         ApplicableSpan = inner.ApplicableSpan;
-        ArgumentIndex = inner.ArgumentIndex;
-        ArgumentCount = inner.ArgumentCount;
+        SemanticParameterIndex = inner.SemanticParameterIndex;
+        SyntacticArgumentCount = inner.SyntacticArgumentCount;
         ArgumentName = inner.ArgumentName;
         SelectedItemIndex = inner.SelectedItemIndex;
     }

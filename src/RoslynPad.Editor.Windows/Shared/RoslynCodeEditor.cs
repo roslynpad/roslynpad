@@ -101,12 +101,14 @@ public class RoslynCodeEditor : CodeTextEditor
 
         var avalonEditTextContainer = new AvalonEditTextContainer(Document) { Editor = this };
 
-        var creatingDocumentArgs = new CreatingDocumentEventArgs(avalonEditTextContainer, ProcessDiagnostics);
+        var creatingDocumentArgs = new CreatingDocumentEventArgs(avalonEditTextContainer);
         OnCreatingDocument(creatingDocumentArgs);
 
         _documentId = creatingDocumentArgs.DocumentId ??
             roslynHost.AddDocument(new DocumentCreationArgs(avalonEditTextContainer, workingDirectory, sourceCodeKind,
-                ProcessDiagnostics, avalonEditTextContainer.UpdateText));
+                avalonEditTextContainer.UpdateText));
+
+        roslynHost.GetWorkspaceService<IDiagnosticsUpdater>(_documentId).DiagnosticsChanged += ProcessDiagnostics;
 
         if (roslynHost.GetDocument(_documentId) is { } document)
         {
@@ -241,22 +243,18 @@ public class RoslynCodeEditor : CodeTextEditor
         }
     }
 
-    protected void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
+    protected async void ProcessDiagnostics(DiagnosticsChangedArgs args)
     {
-        if (this.GetDispatcher().CheckAccess())
+        if (args.DocumentId != _documentId)
         {
-            ProcessDiagnosticsOnUiThread(args);
             return;
         }
 
-        this.GetDispatcher().InvokeAsync(() => ProcessDiagnosticsOnUiThread(args));
-    }
+        await this.GetDispatcher();
 
-    private void ProcessDiagnosticsOnUiThread(DiagnosticsUpdatedArgs args)
-    {
-        _textMarkerService.RemoveAll(marker => Equals(args.Id, marker.Tag));
+        _textMarkerService.RemoveAll(d => d.Tag is DiagnosticData diagnosticData && args.RemovedDiagnostics.Contains(diagnosticData));
 
-        if (_roslynHost == null || _documentId == null || args.Kind != DiagnosticsUpdatedKind.DiagnosticsCreated)
+        if (_roslynHost == null || _documentId == null)
         {
             return;
         }
@@ -267,7 +265,7 @@ public class RoslynCodeEditor : CodeTextEditor
             return;
         }
 
-        foreach (var diagnosticData in args.Diagnostics)
+        foreach (var diagnosticData in args.AddedDiagnostics)
         {
             if (diagnosticData.Severity == DiagnosticSeverity.Hidden || diagnosticData.IsSuppressed)
             {
@@ -283,7 +281,7 @@ public class RoslynCodeEditor : CodeTextEditor
             var marker = _textMarkerService.TryCreate(span.Value.Start, span.Value.Length);
             if (marker != null)
             {
-                marker.Tag = args.Id;
+                marker.Tag = diagnosticData;
                 marker.MarkerColor = GetDiagnosticsColor(diagnosticData);
                 marker.ToolTip = diagnosticData.Message;
             }
@@ -315,20 +313,4 @@ public class RoslynCodeEditor : CodeTextEditor
             }
         }
     }
-}
-
-public class CreatingDocumentEventArgs : RoutedEventArgs
-{
-    public CreatingDocumentEventArgs(AvalonEditTextContainer textContainer, Action<DiagnosticsUpdatedArgs> processDiagnostics)
-    {
-        TextContainer = textContainer;
-        ProcessDiagnostics = processDiagnostics;
-        RoutedEvent = RoslynCodeEditor.CreatingDocumentEvent;
-    }
-
-    public AvalonEditTextContainer TextContainer { get; }
-
-    public Action<DiagnosticsUpdatedArgs> ProcessDiagnostics { get; }
-
-    public DocumentId? DocumentId { get; set; }
 }

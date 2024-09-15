@@ -12,7 +12,7 @@
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <Version>4.9.0</Version>
+    <Version>4.12.0</Version>
     <RoslynPadVersion>20.0.0</RoslynPadVersion>
     <ApplicationVersion>$(RoslynPadVersion.Replace('.', ''))</ApplicationVersion>
     <ApplicationDisplayVersion>$(RoslynPadVersion)</ApplicationDisplayVersion>

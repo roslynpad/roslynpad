@@ -19,7 +19,7 @@
   </ItemGroup>
   <Target Name="GetLibReferences" Outputs="@(Reference)">
     <ItemGroup>
-      <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/net7.0/*.dll" />
+      <Reference Include="$(PkgMicrosoft_CodeAnalysis_LanguageServer_Protocol)/lib/$(LtsTargetFramework)/*.dll" />
     </ItemGroup>
   </Target>
 </Project>

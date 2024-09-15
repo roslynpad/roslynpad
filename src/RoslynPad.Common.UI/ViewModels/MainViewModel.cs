@@ -176,15 +176,14 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
-    protected virtual ImmutableArray<Assembly> CompositionAssemblies => ImmutableArray.Create(
-        typeof(MainViewModel).Assembly);
+    protected virtual ImmutableArray<Assembly> CompositionAssemblies => [typeof(MainViewModel).Assembly];
 
     private async Task InitializeInternal()
     {
         RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
             RoslynHostReferences.NamespaceDefault.With(imports: ["RoslynPad.Runtime"]),
-            disabledDiagnostics: ImmutableArray.Create("CS1701", "CS1702", "CS7011", "CS8097"),
-            analyzerConfigFiles: ImmutableArray.Create(_editorConfigPath)))
+            disabledDiagnostics: ["CS1701", "CS1702", "CS7011", "CS8097"],
+            analyzerConfigFiles: [_editorConfigPath]))
             .ConfigureAwait(true);
 
         OpenDocumentFromCommandLine();

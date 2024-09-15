@@ -24,7 +24,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 {
     #region Fields
 
-    private readonly TextSegmentCollection<TextMarker> _markers;
+    private readonly TextSegmentCollection<TextMarker>? _markers;
     private readonly TextDocument _document;
     private readonly List<TextView> _textViews;
 
@@ -87,12 +87,12 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
 
     public IEnumerable<TextMarker> GetMarkersAtOffset(int offset)
     {
-        if (_markers == null)
-            return Enumerable.Empty<TextMarker>();
-        return _markers.FindSegmentsContaining(offset);
+        return _markers == null ? [] : _markers.FindSegmentsContaining(offset);
     }
 
     public IEnumerable<TextMarker> TextMarkers => _markers ?? Enumerable.Empty<TextMarker>();
+
+    public void Clear() => _markers?.Clear();
 
     public void RemoveAll(Predicate<TextMarker> predicate)
     {

@@ -75,7 +75,7 @@ internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProv
 
     private void AddParameterSignatureHelp(SignatureHelpItem item, int index, SignatureHelpParameter param, Panel headerPanel, Panel contentPanel)
     {
-        var isSelected = _signatureHelp.ArgumentIndex == index;
+        var isSelected = _signatureHelp.SelectedItemIndex == index;
         headerPanel.Children.Add(param.DisplayParts.ToTextBlock(isBold: isSelected));
         if (index != item.Parameters.Length - 1)
         {

@@ -5,9 +5,14 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.Diagnostics;
 
-public sealed class DiagnosticData
+public sealed class DiagnosticData : IEquatable<DiagnosticData>
 {
     private readonly Microsoft.CodeAnalysis.Diagnostics.DiagnosticData _inner;
+
+    internal DiagnosticData(Microsoft.CodeAnalysis.Diagnostics.DiagnosticData inner)
+    {
+        _inner = inner;
+    }
 
     public string Id => _inner.Id;
     public string Category => _inner.Category;
@@ -26,9 +31,8 @@ public sealed class DiagnosticData
     public DocumentId? DocumentId => _inner.DocumentId;
 
     public TextSpan? GetTextSpan(SourceText sourceText) => _inner.DataLocation.MappedFileSpan.GetClampedTextSpan(sourceText);
-
-    internal DiagnosticData(Microsoft.CodeAnalysis.Diagnostics.DiagnosticData inner)
-    {
-        _inner = inner;
-    }
+    
+    public bool Equals(DiagnosticData? other) => _inner.Equals(other?._inner);
+    public override bool Equals(object? obj) => obj is DiagnosticData other && Equals(other);
+    public override int GetHashCode() => _inner.GetHashCode();
 }

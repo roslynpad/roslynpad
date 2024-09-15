@@ -316,11 +316,11 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
     private void NoDotNetError()
     {
-        CompilationErrors?.Invoke(new[]
-        {
+        CompilationErrors?.Invoke(
+        [
             CompilationErrorResultObject.Create("Error", errorCode: "",
                 message: "The .NET SDK is required to use RoslynPad. https://aka.ms/dotnet/download", line: 0, column: 0)
-        });
+        ]);
     }
 
     private void Disassemble()
