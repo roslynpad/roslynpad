@@ -1,10 +1,8 @@
 ﻿using System.Composition;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RoslynPad.Themes;
-using RoslynPad.UI.Services;
 
 namespace RoslynPad.UI;
 
@@ -28,15 +26,13 @@ internal class ApplicationSettings : IApplicationSettings
     };
 
     private readonly ITelemetryProvider? _telemetryProvider;
-    private readonly IFontFamilyValidator? _fontFamilyValidator;
     private SerializableValues _values;
     private string? _path;
 
     [ImportingConstructor]
-    public ApplicationSettings([Import(AllowDefault = true)] ITelemetryProvider telemetryProvider, [Import(AllowDefault = true)] IFontFamilyValidator fontFamilyValidator)
+    public ApplicationSettings([Import(AllowDefault = true)] ITelemetryProvider telemetryProvider)
     {
         _telemetryProvider = telemetryProvider;
-        _fontFamilyValidator = fontFamilyValidator;
         _values = new SerializableValues();
         InitializeValues();
     }
@@ -87,7 +83,7 @@ internal class ApplicationSettings : IApplicationSettings
     {
         if (!File.Exists(path))
         {
-            _values.LoadDefaultSettings(_fontFamilyValidator);
+            _values.LoadDefaultSettings();
             return;
         }
 
@@ -99,7 +95,7 @@ internal class ApplicationSettings : IApplicationSettings
         }
         catch (Exception e)
         {
-            _values.LoadDefaultSettings(_fontFamilyValidator);
+            _values.LoadDefaultSettings();
             _telemetryProvider?.ReportError(e);
         }
     }
@@ -129,7 +125,7 @@ internal class ApplicationSettings : IApplicationSettings
         private string? _windowBounds;
         private string? _dockLayout;
         private string? _windowState;
-        private string _editorFontFamily = string.Empty;
+        private string _editorFontFamily = GetDefaultPlatformFontFamily();
         private double _editorFontSize = DefaultFontSize;
         private double _outputFontSize = DefaultFontSize;
         private string? _documentPath;
@@ -146,26 +142,21 @@ internal class ApplicationSettings : IApplicationSettings
         private string? _customThemePath;
         private ThemeType? _customThemeType;
 
-        public void LoadDefaultSettings(IFontFamilyValidator? fontFamilyValidator)
+        public void LoadDefaultSettings()
         {
             SendErrors = true;
             FormatDocumentOnComment = true;
             EditorFontSize = DefaultFontSize;
             OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
-            EditorFontFamily = GetDefaultPlatformFontFamily(fontFamilyValidator);
+            EditorFontFamily = GetDefaultPlatformFontFamily();
         }
 
-        private string GetDefaultPlatformFontFamily(IFontFamilyValidator? fontFamilyValidator)
+        private static string GetDefaultPlatformFontFamily()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                if (fontFamilyValidator is null)
-                {
-                    return "Consolas";
-                }
-
-                return fontFamilyValidator.IsValid("Cascadia Code") ? "Cascadia Code" : "Consolas";
+                return "Cascadia Code,Consolas";
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {

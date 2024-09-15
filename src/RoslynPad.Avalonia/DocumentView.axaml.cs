@@ -37,7 +37,7 @@ partial class DocumentView : UserControl, IDisposable
         viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
         viewModel.MainViewModel.ThemeChanged += OnThemeChanged;
         _editor.FontSize = viewModel.MainViewModel.EditorFontSize;
-        _editor.FontFamily = new FontFamily(viewModel.MainViewModel.EditorFontFamily);
+        SetFontFamily();
 
         var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 
@@ -50,7 +50,24 @@ partial class DocumentView : UserControl, IDisposable
             this);
 
         _editor.Document.TextChanged += (o, e) => viewModel.OnTextChanged();
+
+        void SetFontFamily()
+        {
+            var fonts = viewModel.MainViewModel.Settings.EditorFontFamily.Split(',');
+            foreach (var font in fonts)
+            {
+                try
+                {
+                    _editor.FontFamily = FontFamily.Parse(font);
+                    break;
+                }
+                catch
+                {
+                }
+            }
+        }
     }
+
     private void OnThemeChanged(object? sender, EventArgs e)
     {
         Editor.ClassificationHighlightColors = new ThemeClassificationColors(ViewModel.MainViewModel.Theme);

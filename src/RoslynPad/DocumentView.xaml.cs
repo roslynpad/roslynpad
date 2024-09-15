@@ -72,7 +72,6 @@ public partial class DocumentView : IDisposable
 
         _viewModel.MainViewModel.EditorFontSizeChanged += EditorFontSizeChanged;
         Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
-        Editor.FontFamily = new FontFamily(_viewModel.MainViewModel.EditorFontFamily);
 
         var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
 
