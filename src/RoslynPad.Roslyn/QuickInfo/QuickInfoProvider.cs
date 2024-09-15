@@ -292,7 +292,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
 
             if (documentation != null)
             {
-                return _contentProvider.CreateClassifiableDeferredContent(documentation.ToList());
+                return _contentProvider.CreateClassifiableDeferredContent([.. documentation]);
             }
         }
 
@@ -326,7 +326,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
                     semanticModel,
                     symbols.First() is ITypeParameterSymbol typeParameter && typeParameter.TypeParameterKind == TypeParameterKind.Cref
                         ? SpecializedCollections.EmptyList<ISymbol>()
-                        : symbols.ToList());
+                        : [.. symbols]);
             }
 
             // Couldn't bind the token to specific symbols.  If it's an operator, see if we can at
@@ -337,7 +337,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
                 var typeInfo = semanticModel.GetTypeInfo(token.Parent, cancellationToken);
                 if (IsOk(typeInfo.Type!))
                 {
-                    return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, new List<ISymbol>(1) { typeInfo.Type! });
+                    return new ValueTuple<SemanticModel, IList<ISymbol>>(semanticModel, [typeInfo.Type!]);
                 }
             }
         }

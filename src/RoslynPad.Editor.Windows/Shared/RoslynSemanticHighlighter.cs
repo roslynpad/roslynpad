@@ -304,7 +304,7 @@ internal sealed class RoslynSemanticHighlighter : IHighlighter
             }
         }
 
-        return Array.Empty<ClassifiedSpan>();
+        return [];
     }
 
     HighlightingColor IHighlighter.DefaultTextColor => _highlightColors.DefaultBrush;

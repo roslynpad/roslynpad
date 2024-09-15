@@ -7,6 +7,7 @@
     <TargetFrameworks Condition=" '$(DefaultTargetFramework)' != '$(EarliestSupportedTargetFramework)' ">$(DefaultTargetFramework);$(TargetFrameworks)</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   
   <!-- Do not add any references or packages to this assembly -->

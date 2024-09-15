@@ -13,7 +13,7 @@ public partial class ILViewer
     static ILViewer()
     {
         HighlightingManager.Instance.RegisterHighlighting(
-            "ILAsm", new[] { ".il" },
+            "ILAsm", [".il"],
             () =>
             {
                 using var stream = typeof(ILViewer).Assembly.GetManifestResourceStream(typeof(ILViewer), "ILAsm-Mode.xshd")!;

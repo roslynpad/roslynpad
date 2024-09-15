@@ -47,12 +47,9 @@ internal static class IOUtilities
     {
         var fileInfo = new FileInfo(filename);
         var directoryInfo = fileInfo.Directory;
-        if (directoryInfo == null)
-        {
-            throw new ArgumentException("Invalid path", nameof(filename));
-        }
-
-        return Path.Combine(NormalizeDirectory(directoryInfo),
+        return directoryInfo == null
+            ? throw new ArgumentException("Invalid path", nameof(filename))
+            : Path.Combine(NormalizeDirectory(directoryInfo),
             directoryInfo.GetFiles(fileInfo.Name)[0].Name);
     }
 
@@ -77,7 +74,7 @@ internal static class IOUtilities
 
     public static IEnumerable<string> ReadLines(string path)
     {
-        var lines = PerformIO(() => File.ReadLines(path), Array.Empty<string>());
+        var lines = PerformIO(() => File.ReadLines(path), []);
         using var enumerator = lines.GetEnumerator();
         while (PerformIO(enumerator.MoveNext))
         {
@@ -97,7 +94,7 @@ internal static class IOUtilities
     public static IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*")
     {
         var files = PerformIO(() => Directory.EnumerateFiles(path, searchPattern),
-            Array.Empty<string>());
+            []);
 
         using var enumerator = files.GetEnumerator();
         while (PerformIO(enumerator.MoveNext))
@@ -108,8 +105,7 @@ internal static class IOUtilities
 
     public static IEnumerable<string> EnumerateDirectories(string path, string searchPattern = "*")
     {
-        var directories = PerformIO(() => Directory.EnumerateDirectories(path, searchPattern),
-            Array.Empty<string>());
+        var directories = PerformIO(() => Directory.EnumerateDirectories(path, searchPattern), []);
 
         using var enumerator = directories.GetEnumerator();
         while (PerformIO(enumerator.MoveNext))

@@ -24,7 +24,7 @@ internal class PlatformsFactory : IPlatformsFactory
 
         if (string.IsNullOrEmpty(sdkPath))
         {
-            return Array.Empty<ExecutionPlatform>();
+            return [];
         }
 
         var versions = new List<(string name, string tfm, NuGetVersion version)>();

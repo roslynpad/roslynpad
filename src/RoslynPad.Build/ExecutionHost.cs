@@ -923,7 +923,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
 
         static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result) =>
-            new[] { result.StandardError ?? string.Empty };
+            [result.StandardError ?? string.Empty];
     }
 
     private CancellationTokenSource CancelAndCreateNew(ref CancellationTokenSource? cts, CancellationToken cancellationToken)

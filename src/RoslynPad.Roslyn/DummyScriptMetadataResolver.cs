@@ -19,5 +19,5 @@ public class DummyScriptMetadataResolver : MetadataReferenceResolver
     public override PortableExecutableReference? ResolveMissingAssembly(MetadataReference definition, AssemblyIdentity referenceIdentity) => null;
 
     public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string? baseFilePath, MetadataReferenceProperties properties) =>
-        ImmutableArray<PortableExecutableReference>.Empty;
+        [];
 }

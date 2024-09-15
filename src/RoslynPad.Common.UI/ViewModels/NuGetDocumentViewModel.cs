@@ -27,7 +27,7 @@ public sealed class NuGetDocumentViewModel : NotificationObject
     {
         _nuGetViewModel = nuGetViewModel;
         _telemetryProvider = telemetryProvider;
-        _packages = Array.Empty<PackageData>();
+        _packages = [];
 
         InstallPackageCommand = commands.Create<PackageData>(InstallPackage);
     }
@@ -108,7 +108,7 @@ public sealed class NuGetDocumentViewModel : NotificationObject
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
         {
-            Packages = Array.Empty<PackageData>();
+            Packages = [];
             IsPackagesMenuOpen = false;
             return;
         }
@@ -133,7 +133,7 @@ public sealed class NuGetDocumentViewModel : NotificationObject
                 Packages = packages;
                 IsPackagesMenuOpen = Packages.Count > 0;
             }
-            catch (Exception e) when (!(e is OperationCanceledException))
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 _telemetryProvider.ReportError(e);
             }

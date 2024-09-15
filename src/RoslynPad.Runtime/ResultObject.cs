@@ -93,7 +93,7 @@ internal class ResultObject
                     PopulateChildren(o, targetQuotas, members, headerPrefix);
                     var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                     enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
-                    Children = (Children ?? Enumerable.Empty<ResultObject>()).Concat(new[] { enumerable }).ToList();
+                    Children = (Children ?? Enumerable.Empty<ResultObject>()).Concat([enumerable]).ToList();
                 }
                 else
                 {
@@ -317,10 +317,7 @@ internal class ResultObject
                 while (index < _quotas.MaxEnumerableLength && enumerator.MoveNext())
                 {
                     var item = new ResultObject(enumerator.Current, targetQuotas, $"[{index}]");
-                    if (item.Type == null)
-                    {
-                        item.Type = enumerableTypeName;
-                    }
+                    item.Type ??= enumerableTypeName;
                     items.Add(item);
                     ++index;
                 }

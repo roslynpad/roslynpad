@@ -30,7 +30,7 @@ public abstract class ThemeDictionaryBase : ResourceDictionary
         return theme.TryGetColor(id) is { } color ? CreateBrush(ParseColor(color)) : null;
     }
 
-    private static SolidColorBrush CreateBrush(Color color) => new SolidColorBrush(color);
+    private static SolidColorBrush CreateBrush(Color color) => new(color);
 
     private static Color ParseColor(string color) => Color.Parse(color);
 }

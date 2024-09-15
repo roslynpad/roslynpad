@@ -17,19 +17,19 @@ public static class CommonProperty
 
         if (typeof(Visual).IsAssignableFrom(typeof(TOwner)) && options.Has(PropertyOptions.AffectsRender))
         {
-            AffectsRender(new[] { property });
+            AffectsRender([property]);
         }
 
         if (typeof(Layoutable).IsAssignableFrom(typeof(TOwner)))
         {
             if (options.Has(PropertyOptions.AffectsArrange))
             {
-                AffectsArrange(new[] { property });
+                AffectsArrange([property]);
             }
 
             if (options.Has(PropertyOptions.AffectsMeasure))
             {
-                AffectsMeasure(new[] { property });
+                AffectsMeasure([property]);
             }
         }
 

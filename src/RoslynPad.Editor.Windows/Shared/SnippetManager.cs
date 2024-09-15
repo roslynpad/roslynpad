@@ -23,21 +23,21 @@ namespace RoslynPad.Editor;
 
 internal sealed class SnippetManager
 {
-    internal readonly ImmutableDictionary<string, CodeSnippet> DefaultSnippets;
+    internal readonly ImmutableDictionary<string, CodeSnippet> _defaultSnippets;
 
     public SnippetManager()
     {
         var snippets = GetGeneralSnippets();
         snippets.AddRange(GetPlatformSnippets());
 
-        DefaultSnippets = snippets.ToImmutableDictionary(x => x.Name);
+        _defaultSnippets = snippets.ToImmutableDictionary(x => x.Name);
     }
 
-    public IEnumerable<CodeSnippet> Snippets => DefaultSnippets.Values;
+    public IEnumerable<CodeSnippet> Snippets => _defaultSnippets.Values;
     
     public CodeSnippet? FindSnippet(string name)
     {
-        DefaultSnippets.TryGetValue(name, out var snippet);
+        _defaultSnippets.TryGetValue(name, out var snippet);
         return snippet;
     }
 
@@ -45,78 +45,67 @@ internal sealed class SnippetManager
     {
         var snippets = new List<CodeSnippet>
         {
-            new CodeSnippet
-            (
+            new            (
                 "for",
                 "for loop",
                 "for (int ${counter=i} = 0; ${counter} < ${end}; ${counter}++)\n{\n\t${Selection}\n}",
                 "for"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "foreach",
                 "foreach loop",
                 "foreach (${var} ${element} in ${collection})\n{\n\t${Selection}\n}",
                 "foreach"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "if",
                 "if statement",
                 "if (${condition})\n{\n\t${Selection}\n}",
                 "if"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "ifnull",
                 "if-null statement",
                 "if (${condition} == null)\n{\n\t${Selection}\n}",
                 "if"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "ifnotnull",
                 "if-not-null statement",
                 "if (${condition} != null)\n{\n\t${Selection}\n}",
                 "if"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "ifelse",
                 "if-else statement",
                 "if (${condition})\n{\n\t${Selection}\n}\nelse\n{\n\t${Caret}\n}",
                 "if"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "while",
                 "while loop",
                 "while (${condition})\n{\n\t${Selection}\n}",
                 "while"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "prop",
                 "Property",
                 "public ${Type=object} ${Property=Property} { get; set; }${Caret}",
                 "event" // properties can be declared where events can be.
             ),
-            new CodeSnippet
-            (
+            new            (
                 "propg",
                 "Property with private setter",
                 "public ${Type=object} ${Property=Property} { get; private set; }${Caret}",
                 "event"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "propfull",
                 "Property with backing field",
                 "${type} ${toFieldName(name)};\n\npublic ${type=int} ${name=Property}\n{\n\tget { return ${toFieldName(name)}; }\n\tset { ${toFieldName(name)} = value; }\n}${Caret}",
                 "event"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "propdp",
                 "Dependency Property",
                 "public static readonly DependencyProperty ${name}Property =" + Environment.NewLine
@@ -130,43 +119,37 @@ internal sealed class SnippetManager
                        + Environment.NewLine + "}${Caret}",
                 "event"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "switch",
                 "Switch statement",
                 "switch (${condition})\n{\n\t${Caret}\n}",
                 "switch"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "try",
                 "Try-catch statement",
                 "try\n{\n\t${Selection}\n}\ncatch (Exception)\n{\n\t${Caret}\n\tthrow;\n}",
                 "try"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "trycf",
                 "Try-catch-finally statement",
                 "try\n{\n\t${Selection}\n}\ncatch (Exception)\n{\n\t${Caret}\n\tthrow;\n}\nfinally\n{\n\t\n}",
                 "try"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "tryf",
                 "Try-finally statement",
                 "try\n{\n\t${Selection}\n}\nfinally\n{\n\t${Caret}\n}",
                 "try"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "using",
                 "Using statement",
                 "using (${resource=null})\n{\n\t${Selection}\n}",
                 "try"
             ),
-            new CodeSnippet
-            (
+            new            (
                 "cw",
                 "Console.WriteLine",
                 "Console.WriteLine(${Selection})",

@@ -36,7 +36,7 @@ public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataEr
             LazyInitializer.EnsureInitialized(ref _propertyErrors, () => new ConcurrentDictionary<string, List<ErrorInfo>>());
         }
 
-        var errors = _propertyErrors.GetOrAdd(propertyName, _ => new List<ErrorInfo>());
+        var errors = _propertyErrors.GetOrAdd(propertyName, _ => []);
         errors.RemoveAll(e => e.Id == id);
         errors.Add(new ErrorInfo(id, message));
 
@@ -76,7 +76,7 @@ public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataEr
 
         List<ErrorInfo>? errors = null;
         _propertyErrors?.TryGetValue(propertyName, out errors);
-        return errors?.AsEnumerable() ?? Array.Empty<ErrorInfo>();
+        return errors?.AsEnumerable() ?? [];
     }
 
     public bool HasErrors => _propertyErrors?.Any(c => c.Value.Count != 0) == true;

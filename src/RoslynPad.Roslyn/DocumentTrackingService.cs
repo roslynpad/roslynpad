@@ -18,7 +18,7 @@ internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
 
         public DocumentId? TryGetActiveDocument() => _workspace.OpenDocumentId;
 
-        public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? [_workspace.OpenDocumentId] : ImmutableArray<DocumentId>.Empty;
+        public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? [_workspace.OpenDocumentId] : [];
 
         public event EventHandler<DocumentId?>? ActiveDocumentChanged = delegate { };
 

@@ -34,10 +34,10 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
 
         if (Filter != null)
         {
-            options.FileTypeFilter = new[]
-            {
+            options.FileTypeFilter =
+            [
                 new FilePickerFileType(Filter.Header) { Patterns = Filter.Extensions.AsReadOnly() }
-            };
+            ];
         }
 
         var files = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);

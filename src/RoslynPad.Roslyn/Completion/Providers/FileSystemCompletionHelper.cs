@@ -31,16 +31,16 @@ internal class FileSystemCompletionHelper(
     private readonly CompletionItemRules _itemRules = itemRules;
 
     private string[] GetLogicalDrives()
-        => IOUtilities.PerformIO(Directory.GetLogicalDrives, Array.Empty<string>());
+        => IOUtilities.PerformIO(Directory.GetLogicalDrives, []);
 
     private bool DirectoryExists(string fullPath) =>
         Directory.Exists(fullPath);
 
     private IEnumerable<string> EnumerateDirectories(string fullDirectoryPath) =>
-        IOUtilities.PerformIO(() => Directory.EnumerateDirectories(fullDirectoryPath), Array.Empty<string>());
+        IOUtilities.PerformIO(() => Directory.EnumerateDirectories(fullDirectoryPath), []);
 
     private IEnumerable<string> EnumerateFiles(string fullDirectoryPath) =>
-        IOUtilities.PerformIO(() => Directory.EnumerateFiles(fullDirectoryPath), Array.Empty<string>());
+        IOUtilities.PerformIO(() => Directory.EnumerateFiles(fullDirectoryPath), []);
 
     private bool IsVisibleFileSystemEntry(string fullPath) =>
         IOUtilities.PerformIO(() => (File.GetAttributes(fullPath) & (FileAttributes.Hidden | FileAttributes.System)) == 0, false);

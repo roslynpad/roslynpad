@@ -48,7 +48,7 @@ public static class Helpers
 
         var dispatcher = await tcs.Task.ConfigureAwait(false);
 
-        return (SynchronizationContext)dispatcherSyncContextCtor.Invoke(new[] { dispatcher });
+        return (SynchronizationContext)dispatcherSyncContextCtor.Invoke([dispatcher]);
     }
 
     /// <summary>

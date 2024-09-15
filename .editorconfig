@@ -177,6 +177,7 @@ dotnet_diagnostic.CA1852.severity = none
 dotnet_diagnostic.CA2007.severity = error
 dotnet_diagnostic.IDE0042.severity = none
 dotnet_diagnostic.IDE0058.severity = none
+dotnet_diagnostic.IDE0130.severity = none
 dotnet_diagnostic.VSTHRD002.severity = none
 dotnet_diagnostic.VSTHRD003.severity = none
 dotnet_diagnostic.VSTHRD011.severity = none

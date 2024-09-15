@@ -31,11 +31,11 @@ public sealed class RoslynContextActionProvider : IContextActionProvider
         var document = _roslynHost.GetDocument(_documentId);
         if (document == null)
         {
-            return Array.Empty<object>();
+            return [];
         }
 
         var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
-        if (textSpan.End >= text.Length) return Array.Empty<object>();
+        if (textSpan.End >= text.Length) return [];
 
         var codeFixes = await _codeFixService.StreamFixesAsync(document, textSpan, cancellationToken).ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 

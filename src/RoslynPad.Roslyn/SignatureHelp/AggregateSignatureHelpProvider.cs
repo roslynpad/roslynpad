@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.SignatureHelp;
 using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn.SignatureHelp;
@@ -11,7 +10,7 @@ namespace RoslynPad.Roslyn.SignatureHelp;
 [method: ImportingConstructor]
 internal sealed class AggregateSignatureHelpProvider([ImportMany] IEnumerable<Lazy<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider, OrderableLanguageMetadata>> providers) : ISignatureHelpProvider
 {
-    private ImmutableArray<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider> _providers = providers.Where(x => x.Metadata.Language == LanguageNames.CSharp)
+    private readonly ImmutableArray<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider> _providers = providers.Where(x => x.Metadata.Language == LanguageNames.CSharp)
             .Select(x => x.Value).ToImmutableArray();
 
     public bool IsTriggerCharacter(char ch)
