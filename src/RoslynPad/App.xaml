@@ -499,7 +499,7 @@
                         <TextBlock Text="{Binding Header, Mode=OneTime}" />
                     </DockPanel>
                     <TextBlock Grid.Column="2"
-                               av:BindingHelpers.Inlines="{Binding Value, Mode=OneTime, Converter={x:Static converters:ControlCharacterInlinesConverter.Instance}}"
+                               rp:BindingHelpers.Inlines="{Binding Value, Mode=OneTime, Converter={x:Static converters:ControlCharacterInlinesConverter.Instance}}"
                                TextWrapping="Wrap"
                                Margin="{Binding Path=Level, Mode=OneTime, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType=controls:TreeListViewItem}}" />
                     <TextBlock Grid.Column="4"
