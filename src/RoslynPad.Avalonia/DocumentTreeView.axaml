@@ -42,7 +42,7 @@
                 Background="Transparent"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
                 CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
-                ToolTip.Tip="New Document (Ctrl+N)">
+                ToolTip.Tip="{OnPlatform New Document (Ctrl+N), macOS=New Document (⌘ N)}">
           <Image Source="{StaticResource CsFile}"
               Width="16"
               Height="16" />
@@ -52,7 +52,7 @@
                 Background="Transparent"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
                 CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
-                ToolTip.Tip="New Script Document (Ctrl+Shift+N)">
+                ToolTip.Tip="{OnPlatform New Script Document (Ctrl+Shift+N), macOS=New Script Document (⌘ ⇧ N)}">
           <Image Source="{StaticResource CsFile}"
                  Width="16"
                  Height="16" />
@@ -61,7 +61,7 @@
                 BorderBrush="Transparent"
                 Background="Transparent"
                 Command="{Binding OpenFileCommand, Mode=OneTime}"
-                ToolTip.Tip="Open File (Ctrl+O)">
+                ToolTip.Tip="{OnPlatform Open File (Ctrl+O), macOS=Open File (⌘ O)}">
           <Image Source="{StaticResource OpenFolder}"
                  Width="16"
                  Height="16" />

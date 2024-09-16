@@ -6,7 +6,7 @@
              MinWidth="300"
              BorderThickness="1"
              BorderBrush="Gray"
-             Background="White">
+             Background="{DynamicResource ThemeBackgroundColor}">
     <StackPanel Margin="10">
         <TextBlock Text="Save Document"
                    Classes="Title" />

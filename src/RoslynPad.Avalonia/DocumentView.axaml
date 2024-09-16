@@ -15,13 +15,13 @@
                 Command="{Binding RunCommand, Mode=OneTime}" />
     <KeyBinding Gesture="Shift+F5"
                 Command="{Binding TerminateCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="Ctrl+S"
+    <KeyBinding Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}"
                 Command="{Binding SaveCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="Ctrl+D"
+    <KeyBinding Gesture="{OnPlatform Ctrl+D, macOS=Cmd+D}"
                 Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="Ctrl+K"
+    <KeyBinding Gesture="{OnPlatform Ctrl+K, macOS=Cmd+K}"
                 Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="Ctrl+U"
+    <KeyBinding Gesture="{OnPlatform Ctrl+U, macOS=Cmd+U}"
                 Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
     <KeyBinding Gesture="F2"
                 Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
@@ -77,7 +77,7 @@
                        VerticalAlignment="Center" />
       </Grid>
       <Button Command="{Binding TerminateCommand, Mode=OneTime}"
-              ToolTip.Tip="Terminate process (Shift+F5)"
+              ToolTip.Tip="{OnPlatform Terminate process (Shift+F5), macOS=Terminate process (⇧ F5)}"
               IsEnabled="{Binding IsRunning}" >
         <Image Source="{StaticResource Stop}"
                Width="16"
@@ -93,7 +93,7 @@
       </Button>
       <Separator />
       <Button Command="{Binding SaveCommand, Mode=OneTime}"
-              ToolTip.Tip="Save (Ctrl+S)" >
+              ToolTip.Tip="{OnPlatform Save (Ctrl+S), macOS=Save (⌘ S)}" >
         <Image Source="{StaticResource Save}"
                Width="16"
                Height="16"/>
@@ -150,7 +150,7 @@
       <TextBox Name="NuGetSearch"
                BorderBrush="#eeeeee"
                Text="{Binding NuGet.SearchTerm}"
-               Watermark="Search NuGet (Ctrl+T)"
+               Watermark="{OnPlatform Search NuGet (Ctrl+T), macOS=Search NuGet (⌘ T)}"
                Width="200" />
       <Decorator VerticalAlignment="Center">
         <CheckBox IsChecked="{Binding NuGet.Prerelease}"
@@ -175,19 +175,19 @@
         </ContentPresenter.ContentTemplate>
       </ContentPresenter>
       <Separator />
-      <Button ToolTip.Tip="Format Document (Ctrl+D)"
+      <Button ToolTip.Tip="{OnPlatform Format Document (Ctrl+D), macOS=Format Document (⌘ D)}"
               Command="{Binding FormatDocumentCommand, Mode=OneTime}">
         <Image Source="{StaticResource FormatDocument}"
                Width="16"
                Height="16" />
       </Button>
-      <Button ToolTip.Tip="Comment Selection (Ctrl+K)"
+      <Button ToolTip.Tip="{OnPlatform Comment Selection (Ctrl+K), macOS=Comment Selection (⌘ K)}"
               Command="{Binding CommentSelectionCommand, Mode=OneTime}">
         <Image Source="{StaticResource CommentCode}"
                Width="16"
                Height="16" />
       </Button>
-      <Button ToolTip.Tip="Uncomment Selection (Ctrl+U)"
+      <Button ToolTip.Tip="{OnPlatform Uncomment Selection (Ctrl+U), macOS=Uncomment Selection (⌘ U)}"
               Command="{Binding UncommentSelectionCommand, Mode=OneTime}" >
         <Image Source="{StaticResource UncommentCode}"
                Width="16"

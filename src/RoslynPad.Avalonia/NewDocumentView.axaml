@@ -16,7 +16,7 @@
         <Image Source="{StaticResource CsFile}"
                Width="64"
                Height="64" />
-        <TextBlock Text="New&#xA;(Ctrl+N)"
+        <TextBlock Text="{OnPlatform New&#xA;(Ctrl+N), macOS=New&#xA;(⌘ N)}"
                        TextAlignment="Center"
                        HorizontalAlignment="Center" />
       </StackPanel>
@@ -31,7 +31,7 @@
         <Image Source="{StaticResource CsFile}"
                Width="64"
                Height="64" />
-        <TextBlock Text="New Script&#xA;(Ctrl+Shift+N)"
+        <TextBlock Text="{OnPlatform New Script&#xA;(Ctrl+Shift+N), macOS=New Script&#xA;(⌘ ⇧ N)}"
                    TextAlignment="Center"
                    HorizontalAlignment="Center" />
       </StackPanel>
