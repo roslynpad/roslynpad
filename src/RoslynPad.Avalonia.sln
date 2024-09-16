@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "RoslynP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Runtime", "RoslynPad.Runtime\RoslynPad.Runtime.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Themes", "RoslynPad.Themes\RoslynPad.Themes.csproj", "{5404C741-111E-46F2-9394-B59A97B1309F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5404C741-111E-46F2-9394-B59A97B1309F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5404C741-111E-46F2-9394-B59A97B1309F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5404C741-111E-46F2-9394-B59A97B1309F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5404C741-111E-46F2-9394-B59A97B1309F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
