@@ -1,4 +1,3 @@
-using System.Composition;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;

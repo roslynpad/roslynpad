@@ -5,8 +5,12 @@
   </ItemGroup>
   <Target Name="CopyRoslynPadRuntimeAssembliesOnBuild" AfterTargets="Build"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
-    <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\net" />
-    <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\netfx" />
+    <PropertyGroup>
+      <_RoslynPadRuntimeOutputPath Condition=" '$(IsMacBuild)' == 'true' ">$(PublishDir)/../RoslynPad.app/Contents/MonoBundle</_RoslynPadRuntimeOutputPath>
+      <_RoslynPadRuntimeOutputPath Condition=" '$(_RoslynPadRuntimeOutputPath)' == '' ">$(OutputPath)</_RoslynPadRuntimeOutputPath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(_RoslynPadRuntimeOutputPath)\runtimes\net" />
+    <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(_RoslynPadRuntimeOutputPath)\runtimes\netfx" />
   </Target>
   <Target Name="CopyRoslynPadRuntimeAssembliesOnPublish" AfterTargets="Publish"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' and '$(PublishSingleFile)' != '' ">

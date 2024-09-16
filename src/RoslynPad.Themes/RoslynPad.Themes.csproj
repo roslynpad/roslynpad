@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-      <None Remove="Themes\vs2019*.json" />
-      <EmbeddedResource Include="Themes\vs2019*.json" />
+      <None Remove="Themes\*.json" />
     </ItemGroup>
     <ItemGroup>
-        <None Update="Themes\*.json" CopyToOutputDirectory="PreserveNewest" />
+      <EmbeddedResource Include="Themes\*.json" />
+      <Content Include="Themes\*.json" Exclude="Themes\vs2019*.json"
+               CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>
-

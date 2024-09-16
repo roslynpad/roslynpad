@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
@@ -143,8 +144,13 @@ public abstract class MainViewModel : NotificationObject, IDisposable
                 _ => throw new ArgumentOutOfRangeException(nameof(builtInTheme)),
             };
 
-            return (Path.Combine(AppContext.BaseDirectory, "Themes", theme.file), theme.type);
+            return (GetOsSpecificThemePath(theme.file), theme.type);
         }
+
+        static string GetOsSpecificThemePath(string path) =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            ? Path.Combine(AppContext.BaseDirectory, "..", "Resources", "Themes", path)
+            : Path.Combine(AppContext.BaseDirectory, "Themes", path);
 
         void LoadTheme(string? themeFile, ThemeType type)
         {

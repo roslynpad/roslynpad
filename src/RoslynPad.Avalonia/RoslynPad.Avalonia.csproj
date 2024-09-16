@@ -10,8 +10,10 @@
     <Version>$(RoslynPadVersion)</Version>
     <TargetFramework Condition=" '$(IsMacBuild)' == 'true' ">$(DefaultTargetFramework)-macos</TargetFramework>
     <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
-    <SelfContained>true</SelfContained>
+    <SelfContained>false</SelfContained>
     <CreatePackage>false</CreatePackage>
+    <LinkMode>None</LinkMode>
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
   <!-- hack to force resizetizer to work outside of MAUI -->
   <PropertyGroup Condition=" '$(IsMacBuild)' == 'true' ">
@@ -44,5 +46,9 @@
     <Compile Update="ResultsView.axaml.cs">
       <DependentUpon>ResultsView.axaml</DependentUpon>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\RoslynPad.Themes\Themes\*.json"
+             Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
   </ItemGroup>
 </Project>

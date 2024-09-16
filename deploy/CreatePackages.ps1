@@ -95,4 +95,5 @@ if ($IsMacOS) {
 }
 elseif ($IsWindows) {
   Build-Package -PackageName 'windows-x64' -RuntimeIdentifier 'win-x64'
+  Build-Package -PackageName 'windows-arm64' -RuntimeIdentifier 'win-arm64'
 }

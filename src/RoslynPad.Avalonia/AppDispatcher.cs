@@ -1,5 +1,4 @@
-﻿using System.Composition;
-using RoslynPad.UI;
+﻿using RoslynPad.UI;
 using Avalonia.Threading;
 
 namespace RoslynPad;
