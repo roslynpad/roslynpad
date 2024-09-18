@@ -16,12 +16,14 @@ A cross-platform C# editor based on Roslyn and AvalonEdit
 
 ### Running on macOS
 
-1. Copy the app to the `Applications` directory.
+1. Open the .dmg file and drag RoslynPad to the Applications directory.
 1. On the first run, right click the app on Finder and select **Open**.
-   
+
    You will be prompted that the app is not signed by a known developer - click **Open**.
 
-   For more information see [Open a Mac app from an unidentified developer](https://support.apple.com/guide/mac-help/mh40616).
+   In **macOS Sequoia** you must go to **Settings > Privacy & Security** to approve non-notarized apps after the first run attempt.
+
+   For more information see [Open a Mac app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616).
 
 ## Packages
 

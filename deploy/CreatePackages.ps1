@@ -47,13 +47,13 @@ function Build-MacOSPackage($PackageName, $RootPath) {
   appdmg $dmgSpecPath $dmgPath
 }
 
-function Build-LinuxPackage($PackageName, $RootPath) {
+function Build-MacOSLinuxPackage($PackageName, $RootPath, [switch] $IsMacOSPackage) {
   Push-Location $RootPath
   try {
     $archiveFile = Join-Path $PSScriptRoot "RoslynPad-$PackageName.tgz"
     Remove-Item $archiveFile -ErrorAction Ignore
     Write-Host "Compressing $PackageName into $archiveFile..."
-    tar -czf $archiveFile *
+    tar -czf $archiveFile ($IsMacOSPackage ? 'RoslynPad.app' : '*')
   }
   finally {
     Pop-Location
@@ -104,10 +104,11 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
   $rootPath = Get-PackageRoot -RuntimeIdentifier $RuntimeIdentifier
 
   if ($RuntimeIdentifier -like 'osx-*') {
-    Build-MacOSPackage $PackageName $rootPath
+    # Build-MacOSPackage $PackageName $rootPath
+    Build-MacOSLinuxPackage $PackageName $rootPath -IsMacOSPackage
   }
   elseif ($RuntimeIdentifier -like 'linux-*') {
-    Build-LinuxPackage $PackageName $rootPath
+    Build-LinuxBuild-MacOSLinuxPackagePackage $PackageName $rootPath
   }
   elseif ($isWindowsPackage) {
     Build-WindowsPackages $PackageName $rootPath
