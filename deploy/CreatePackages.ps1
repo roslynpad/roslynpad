@@ -81,7 +81,7 @@ function Build-WindowsPackages($PackageName, $RootPath) {
 
   Write-Host 'Updating winget manifest...'
 
-  $wingetManifestPath = 'winget.yaml'
+  $wingetManifestPath = "winget-$PackageName.yaml"
   $wingetManifest = Get-Content $wingetManifestPath
   $version = [Version] (Get-RoslynPadVersion)
   $releaseVersion = $version.Minor -le 0 -and $version.Build -le 0 ? $version.Major : $version
@@ -91,7 +91,7 @@ function Build-WindowsPackages($PackageName, $RootPath) {
   $wingetManifest = $wingetManifest -replace 'InstallerSha256:.*', "InstallerSha256: $hash"
   Set-Content -Path $wingetManifestPath -Value $wingetManifest
 
-  ./CreateAppxPackage.ps1 -RootPath $RootPath
+  ./CreateAppxPackage.ps1 -PackageName $PackageName -RootPath $RootPath
 }
 
 function Build-Package($PackageName, $RuntimeIdentifier) {

@@ -13,7 +13,7 @@
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(_RoslynPadRuntimeOutputPath)\runtimes\netfx" />
   </Target>
   <Target Name="CopyRoslynPadRuntimeAssembliesOnPublish" AfterTargets="Publish"
-          Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' and '$(PublishSingleFile)' != '' ">
+          Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\$(_RoslynPadInitialRuntimeIdentifier)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\netfx" />
   </Target>
