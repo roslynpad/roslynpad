@@ -104,11 +104,11 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
   $rootPath = Get-PackageRoot -RuntimeIdentifier $RuntimeIdentifier
 
   if ($RuntimeIdentifier -like 'osx-*') {
-    # Build-MacOSPackage $PackageName $rootPath
+    Build-MacOSPackage $PackageName $rootPath
     Build-MacOSLinuxPackage $PackageName $rootPath -IsMacOSPackage
   }
   elseif ($RuntimeIdentifier -like 'linux-*') {
-    Build-LinuxBuild-MacOSLinuxPackagePackage $PackageName $rootPath
+    Build-MacOSLinuxPackage $PackageName $rootPath
   }
   elseif ($isWindowsPackage) {
     Build-WindowsPackages $PackageName $rootPath
