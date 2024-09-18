@@ -4,4 +4,6 @@
 *.mapping
 *.appx
 *.zip
+*.tgz
 *.pri
+*.dmg

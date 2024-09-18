@@ -696,7 +696,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable
                 AddResult(CompilationErrorResultObject.Create(diagnostic.Severity.ToString(), diagnostic.Id, diagnostic.GetMessage(CultureInfo.InvariantCulture), startLinePosition.Line, startLinePosition.Character));
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             AddResult(new ExceptionResultObject { Value = ex.ToString() });
         }
