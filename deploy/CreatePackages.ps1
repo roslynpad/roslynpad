@@ -105,7 +105,6 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
 
   if ($RuntimeIdentifier -like 'osx-*') {
     Build-MacOSPackage $PackageName $rootPath
-    Build-MacOSLinuxPackage $PackageName $rootPath -IsMacOSPackage
   }
   elseif ($RuntimeIdentifier -like 'linux-*') {
     Build-MacOSLinuxPackage $PackageName $rootPath
