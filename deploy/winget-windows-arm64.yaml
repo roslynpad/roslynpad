@@ -16,6 +16,6 @@ Installers:
   - RelativeFilePath: ./RoslynPad.exe
     PortableCommandAlias: RoslynPad
   InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/20/RoslynPad-windows-arm64.zip
-  InstallerSha256: ED216792B398AF9F957175DB1D939B094637AF3C2D3A8A42F46051BED6B52634
+  InstallerSha256: EC64C4C4C73E0DAF400D2EA2FEE0B8BE12A91E3DF6716886CEE116B3F693C662
 ManifestType: singleton
 ManifestVersion: 1.4.0
