@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿#pragma warning disable CS8618 
+
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,6 +12,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Editor;
+using RoslynPad.Folding;
 using RoslynPad.Themes;
 using RoslynPad.UI;
 
@@ -31,6 +34,14 @@ public partial class DocumentView : IDisposable
         Editor.TextArea.SelectionChanged += EditorSelectionChanged;
 
         DataContextChanged += OnDataContextChanged;
+
+        FoldingStrategy = new CShapRoslynFoldingStrategy();
+
+        InstallFoldingManager();
+
+        //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleFold, (s, e) => ToggleCurrentFolding()));
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();

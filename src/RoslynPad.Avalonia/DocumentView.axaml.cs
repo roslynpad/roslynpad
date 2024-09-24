@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS8618 
+
 using Avalonia.Controls;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
@@ -6,6 +7,7 @@ using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
 using Avalonia.Media;
+using RoslynPad.Folding;
 
 namespace RoslynPad;
 
@@ -21,6 +23,14 @@ partial class DocumentView : UserControl, IDisposable
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
 
         DataContextChanged += OnDataContextChanged;
+
+        FoldingStrategy = new CShapRoslynFoldingStrategy();
+
+        InstallFoldingManager();
+
+        //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleFold, (s, e) => ToggleCurrentFolding()));
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
