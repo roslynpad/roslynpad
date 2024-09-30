@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS8618 
-
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -12,7 +10,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Editor;
-using RoslynPad.Folding;
 using RoslynPad.Themes;
 using RoslynPad.UI;
 
@@ -35,9 +32,6 @@ public partial class DocumentView : IDisposable
 
         DataContextChanged += OnDataContextChanged;
 
-        FoldingStrategy = new CShapRoslynFoldingStrategy();
-
-        InstallFoldingManager();
 
         //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
         //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
@@ -79,7 +73,11 @@ public partial class DocumentView : IDisposable
 
         _viewModel.EditorFocus += (o, e) => Editor.Focus();
         _viewModel.EditorChangeLocation += ((int line, int column) value) => ChangePosition(value.line, value.column);
-        _viewModel.DocumentUpdated += (o, e) => Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
+        _viewModel.DocumentUpdated += (o, e) => 
+        {
+            Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
+            Dispatcher.InvokeAsync(() => Editor.RefreshFoldings());            
+        };
 
         _viewModel.MainViewModel.EditorFontSizeChanged += EditorFontSizeChanged;
         Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;

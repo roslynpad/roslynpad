@@ -18,6 +18,7 @@
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable

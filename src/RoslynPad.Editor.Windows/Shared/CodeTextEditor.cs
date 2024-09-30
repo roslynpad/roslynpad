@@ -184,7 +184,7 @@ public partial class CodeTextEditor : TextEditor
         AfterToolTipOpen();
     }
 
-    partial void InitializeToolTip();
+    partial void InitializeToolTip()
     partial void AfterToolTipOpen();
 
     #region Open & Save File

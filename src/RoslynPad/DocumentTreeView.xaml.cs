@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿#pragma warning disable CS8618
+
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
@@ -12,9 +14,7 @@ public partial class DocumentTreeView
 {
     private MainViewModel _viewModel;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public DocumentTreeView()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         InitializeComponent();
 
