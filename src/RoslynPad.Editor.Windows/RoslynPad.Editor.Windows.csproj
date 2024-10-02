@@ -20,4 +20,9 @@
     <None Remove="Shared\Resources\*.json" />
     <EmbeddedResource Include="Shared\Resources\*.json" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis.Features">
+      <HintPath>..\RoslynPad.Roslyn\obj\Debug\net8.0\IgnoresAccessChecksToGenerator\Microsoft.CodeAnalysis.Features.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
