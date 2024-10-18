@@ -31,6 +31,11 @@ public partial class DocumentView : IDisposable
         Editor.TextArea.SelectionChanged += EditorSelectionChanged;
 
         DataContextChanged += OnDataContextChanged;
+
+
+        //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleFold, (s, e) => ToggleCurrentFolding()));
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
@@ -68,7 +73,11 @@ public partial class DocumentView : IDisposable
 
         _viewModel.EditorFocus += (o, e) => Editor.Focus();
         _viewModel.EditorChangeLocation += ((int line, int column) value) => ChangePosition(value.line, value.column);
-        _viewModel.DocumentUpdated += (o, e) => Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
+        _viewModel.DocumentUpdated += (o, e) => 
+        {
+            Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
+            Dispatcher.InvokeAsync(() => Editor.RefreshFoldings());            
+        };
 
         _viewModel.MainViewModel.EditorFontSizeChanged += EditorFontSizeChanged;
         Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
