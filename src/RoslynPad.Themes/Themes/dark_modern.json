@@ -110,6 +110,7 @@
 		"terminal.tab.activeBorder": "#0078D4",
 		"textBlockQuote.background": "#2B2B2B",
 		"textBlockQuote.border": "#616161",
+        "textBox.background": "#FFFFFF",
 		"textCodeBlock.background": "#2B2B2B",
 		"textLink.activeForeground": "#4daafc",
 		"textLink.foreground": "#4daafc",

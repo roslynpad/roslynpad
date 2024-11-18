@@ -20,6 +20,7 @@
                  TextChanged="DocumentName_TextChanged"
                  IsEnabled="{Binding AllowNameEdit}"
                  MaxLength="200"
+                 Background="{DynamicResource {x:Static rp:ThemeDictionary.TextBoxBackground}}"
                  Margin="0,10,0,0" />
         <StackPanel HorizontalAlignment="Right"
                     Orientation="Horizontal"

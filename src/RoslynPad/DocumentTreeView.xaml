@@ -148,6 +148,7 @@
                              BorderThickness="0"
                              Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                             Foreground="White"
                              KeyDown="Search_OnKeyDown" />
                     <TextBlock Text="Search documents (press Enter)"
                                IsHitTestVisible="False"
