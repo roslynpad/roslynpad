@@ -17,7 +17,8 @@
                  KeyDown="SymbolText_KeyDown"
                  Text="{Binding SymbolName, UpdateSourceTrigger=PropertyChanged}"
                  MaxLength="200"
-                 Background="{DynamicResource {x:Static rp:ThemeDictionary.TextBoxBackground}}"
+                 Background="{DynamicResource {x:Static rp:ThemeDictionary.InputBackground}}"
+                 Foreground="{DynamicResource {x:Static rp:ThemeDictionary.Foreground}}"
                  Margin="0,10,0,0" />
         <StackPanel HorizontalAlignment="Right"
                     Orientation="Horizontal"
