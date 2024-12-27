@@ -148,6 +148,7 @@
                              BorderThickness="0"
                              Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                             Foreground="{DynamicResource {x:Static roslynPad:ThemeDictionary.InputForeground}}"
                              KeyDown="Search_OnKeyDown" />
                     <TextBlock Text="Search documents (press Enter)"
                                IsHitTestVisible="False"
