@@ -1,10 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <ItemGroup>
-      <None Remove="Themes\*.json" />
-    </ItemGroup>
-    <ItemGroup>
-      <EmbeddedResource Include="Themes\*.json" />
-      <Content Include="Themes\*.json" Exclude="Themes\vs2019*.json"
-               CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Themes\*.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Themes\*.json" />
+    <Content Include="Themes\*.json" Exclude="Themes\vs2019*.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

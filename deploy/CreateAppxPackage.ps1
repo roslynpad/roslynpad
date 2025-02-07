@@ -29,6 +29,12 @@ $appManifest = [xml] (Get-Content $appManifestPath)
 $appManifest.Package.Identity.Version = (Get-RoslynPadVersion $PatchVersion) + '.0'
 $appManifest.Save($appManifestPath)
 
+if ($PackageName -like '*-arm64') {
+    $appManifestPath = Join-Path (New-TemporaryDirectory) 'AppxManifest.xml'
+    $appManifest.Package.Identity.ProcessorArchitecture = 'arm64'
+    $appManifest.Save($appManifestPath)
+}
+
 $files = Get-PackageFiles $RootPath
 
 Write-Host 'Creating mapping...'
