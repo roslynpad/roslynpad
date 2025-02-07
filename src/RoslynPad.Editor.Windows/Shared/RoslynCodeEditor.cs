@@ -2,14 +2,11 @@
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.Structure;
 using RoslynPad.Roslyn.QuickInfo;
 using Microsoft.CodeAnalysis.Formatting;
-using RoslynPad.Roslyn.Folding;
 using System.Threading;
 using Microsoft.CodeAnalysis.Structure;
-
-
-
 
 #if AVALONIA
 using AvaloniaEdit.Folding;
@@ -18,7 +15,6 @@ using AvaloniaEdit.Folding;
 #if !AVALONIA
 using ICSharpCode.AvalonEdit.Folding;
 #endif
-
 
 namespace RoslynPad.Editor;
 
@@ -34,7 +30,7 @@ public class RoslynCodeEditor : CodeTextEditor
     private IBraceMatchingService? _braceMatchingService;
     private CancellationTokenSource? _braceMatchingCts;
     private RoslynHighlightingColorizer? _colorizer;
-    private FoldingBlockStructureProvider? _blockStructureService;
+    private IBlockStructureService? _blockStructureService;
 
     public RoslynCodeEditor()
     {
@@ -47,7 +43,7 @@ public class RoslynCodeEditor : CodeTextEditor
 
     private async void OnTextChanged(object? sender, EventArgs e) 
     {
-        await RefreshFoldings().ConfigureAwait(false);
+        await RefreshFoldings().ConfigureAwait(true);
     }
 
     public FoldingManager? FoldingManager { get; private set; }
@@ -154,7 +150,8 @@ public class RoslynCodeEditor : CodeTextEditor
             var options = await document.GetOptionsAsync().ConfigureAwait(true);
             Options.IndentationSize = options.GetOption(FormattingOptions.IndentationSize);
             Options.ConvertTabsToSpaces = !options.GetOption(FormattingOptions.UseTabs);
-            _blockStructureService = new FoldingBlockStructureProvider();
+
+            _blockStructureService = document.GetLanguageService<IBlockStructureService>();
         }
 
         AppendText(documentText);
@@ -171,10 +168,8 @@ public class RoslynCodeEditor : CodeTextEditor
 
         RefreshHighlighting();
 
-        #region  -- code folding --
         InstallFoldingManager();
-        await RefreshFoldings().ConfigureAwait(false);
-        #endregion  -- code folding --
+        await RefreshFoldings().ConfigureAwait(true);
 
         return _documentId;
     }
@@ -219,7 +214,7 @@ public class RoslynCodeEditor : CodeTextEditor
 
         try
         {
-            var text = await document.GetTextAsync(token).ConfigureAwait(false);
+            var text = await document.GetTextAsync(token).ConfigureAwait(true);
             var caretOffset = CaretOffset;
             if (caretOffset <= text.Length)
             {
@@ -281,7 +276,7 @@ public class RoslynCodeEditor : CodeTextEditor
             return;
         }
 
-        var info = await _quickInfoProvider.GetItemAsync(document, arg.Position, CancellationToken.None).ConfigureAwait(true);
+        var info = await _quickInfoProvider.GetItemAsync(document, arg.Position).ConfigureAwait(true);
         if (info != null)
         {
             arg.SetToolTip(info.Create());
@@ -359,7 +354,6 @@ public class RoslynCodeEditor : CodeTextEditor
         }
     }
 
-    #region  -- code folding --
     public async Task RefreshFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
@@ -372,14 +366,13 @@ public class RoslynCodeEditor : CodeTextEditor
         if (document == null)
             return;
 
-        var elements = await _blockStructureService.GetCodeFoldingsAsync(document, CancellationToken.None).ConfigureAwait(false);
+        var elements = await _blockStructureService.GetBlockStructureAsync(document).ConfigureAwait(true);
 
-        var foldings = elements.Select(s => new NewFolding { Name = s.Text, StartOffset = s.StartOffset, EndOffset = s.EndOffset }).ToList();
-        var firstErrorOffset = 0;
+        var foldings = elements.Spans
+            .Select(s => new NewFolding { Name = s.BannerText, StartOffset = s.TextSpan.Start, EndOffset = s.TextSpan.End })
+            .OrderBy(item => item.StartOffset);
 
-        foldings.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
-
-        FoldingManager?.UpdateFoldings(foldings, firstErrorOffset);
+        FoldingManager?.UpdateFoldings(foldings, firstErrorOffset: 0);
     }
     
     private void InstallFoldingManager()
@@ -468,5 +461,4 @@ public class RoslynCodeEditor : CodeTextEditor
         FoldingManager.Clear();
         FoldingManager.UpdateFoldings(list, -1);
     }
-    #endregion  -- code folding --
 }
