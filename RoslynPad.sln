@@ -3,21 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad", "RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad", "src\RoslynPad\RoslynPad.csproj", "{2F7723C1-297B-416F-9A78-153156D319B9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{AC9F325F-A3FF-4561-941E-49CE4736CBD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn", "src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{AC9F325F-A3FF-4561-941E-49CE4736CBD0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Runtime", "RoslynPad.Runtime\RoslynPad.Runtime.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Runtime", "src\RoslynPad.Runtime\RoslynPad.Runtime.csproj", "{FAE8AF1B-5004-42B6-8B42-EFF1DB5B677F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows", "RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows", "src\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj", "{5FC3A02C-33B5-4E32-8512-7053474D9C57}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common.UI", "RoslynPad.Common.UI\RoslynPad.Common.UI.csproj", "{47C8DFA4-E7E9-4E44-86C4-B906229A25E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Common.UI", "src\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj", "{47C8DFA4-E7E9-4E44-86C4-B906229A25E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Windows", "RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj", "{075292F0-DBCD-4A01-9791-9637D396CCB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Windows", "src\RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj", "{075292F0-DBCD-4A01-9791-9637D396CCB8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Avalonia", "RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Roslyn.Avalonia", "src\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{284A9A91-3B8A-4D28-A14A-C9F11B8FCE71}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Avalonia", "RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Avalonia", "src\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{8A9BFF57-9025-4BBC-B77C-C85937528210}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{52BBDF63-C2F5-439C-AFD6-E7BAC5A868C8}"
 EndProject
@@ -27,25 +27,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{E219D424
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Roslyn", "Roslyn", "{33A4C07C-3BBB-4BA5-8A4E-CC22883B8ED5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows.Test", "RoslynPad.Editor.Windows.Test\RoslynPad.Editor.Windows.Test.csproj", "{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Editor.Windows.Test", "src\RoslynPad.Editor.Windows.Test\RoslynPad.Editor.Windows.Test.csproj", "{B3080E72-B24C-40A8-9AD6-08D7AC99B8C4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Avalonia", "RoslynPad.Avalonia\RoslynPad.Avalonia.csproj", "{76D87CB7-F6D8-4230-A526-1AEFEE6E3C40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Avalonia", "src\RoslynPad.Avalonia\RoslynPad.Avalonia.csproj", "{76D87CB7-F6D8-4230-A526-1AEFEE6E3C40}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Build", "RoslynPad.Build\RoslynPad.Build.csproj", "{561DF8E8-68D0-41B0-8268-51213C466E1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Build", "src\RoslynPad.Build\RoslynPad.Build.csproj", "{561DF8E8-68D0-41B0-8268-51213C466E1C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestoreHelper", "RestoreHelper\RestoreHelper.csproj", "{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RestoreHelper", "src\RestoreHelper\RestoreHelper.csproj", "{A00977C6-5C07-4B08-9524-FD4F9DE94BD7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{16CCBCD4-59D6-4E3C-A1DB-3AF8EE960530}"
 	ProjectSection(SolutionItems) = preProject
-		..\.editorconfig = ..\.editorconfig
-		..\Directory.Build.props = ..\Directory.Build.props
-		..\Directory.Build.targets = ..\Directory.Build.targets
-		..\Directory.Packages.props = ..\Directory.Packages.props
-		..\global.json = ..\global.json
-		..\nuget.config = ..\nuget.config
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Themes", "RoslynPad.Themes\RoslynPad.Themes.csproj", "{2763C291-F1E6-4C22-8217-0E2032620130}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoslynPad.Themes", "src\RoslynPad.Themes\RoslynPad.Themes.csproj", "{2763C291-F1E6-4C22-8217-0E2032620130}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

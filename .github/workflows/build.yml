@@ -11,9 +11,13 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v1
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+    - uses: actions/checkout@v4
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    - name: Setup .NET (current)
+      uses: actions/setup-dotnet@v4
     - name: Build with dotnet
       run: dotnet build -bl -c Release -m:1 src/RoslynPad.sln
     - uses: actions/upload-artifact@v4
