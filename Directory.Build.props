@@ -12,7 +12,7 @@
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <Version>4.12.0</Version>
+    <Version>4.12.1</Version>
     <RoslynPadVersion>20.0.0</RoslynPadVersion>
     <ApplicationVersion>$(RoslynPadVersion.Replace('.', ''))</ApplicationVersion>
     <ApplicationDisplayVersion>$(RoslynPadVersion)</ApplicationDisplayVersion>
@@ -26,6 +26,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>Roslyn;RoslynPad</PackageTags>
     <PackageIcon>RoslynPad.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -47,5 +48,6 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)\src\RoslynPad\Resources\RoslynPad.png" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)\docs\packages\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

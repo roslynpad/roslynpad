@@ -99,7 +99,7 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
 
   $isWindowsPackage = $RuntimeIdentifier -like 'win-*'
   $buildPath = Join-Path '..' 'src' ($isWindowsPackage ? 'RoslynPad' : 'RoslynPad.Avalonia')
-  dotnet publish $buildPath -r $RuntimeIdentifier
+  dotnet publish $buildPath -r $RuntimeIdentifier -p:ContinuousIntegrationBuild=true
 
   $rootPath = Get-PackageRoot -RuntimeIdentifier $RuntimeIdentifier
 
