@@ -269,36 +269,83 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             await File.WriteAllTextAsync(targetPath, finalCode, cancellationToken).ConfigureAwait(false);
         }
 
-        var csprojPath = Path.Combine(BuildPath, "program.csproj");
+        var csprojPath = Path.Combine(BuildPath, UseCache ? "program.csproj" : $"{Name}.csproj");
         if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
         {
-            var moduleInitAttributeFile = Path.Combine(BuildPath, BuildCode.ModuleInitAttributeName + ".cs");
+            var moduleInitAttributeFile = Path.Combine(BuildPath, BuildCode.ModuleInitAttributeFileName);
             if (!File.Exists(moduleInitAttributeFile))
             {
                 await File.WriteAllTextAsync(moduleInitAttributeFile, BuildCode.ModuleInitAttribute, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitName + ".cs");
+        var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitFileName);
         if (!File.Exists(moduleInitFile))
         {
             await File.WriteAllTextAsync(moduleInitFile, BuildCode.ModuleInit, cancellationToken).ConfigureAwait(false);
         }
 
+        var buildWarningsPath = Path.Combine(BuildPath, "build-warnings.log");
+        var buildErrorsPath = Path.Combine(BuildPath, "build-errors.log");
+
         var buildArgs =
-            $"-nologo -v:q -p:Configuration={optimizationLevel} -p:AssemblyName={Name} " +
-            $"-bl:ProjectImports=None \"{csprojPath}\" ";
+            $"-nologo -v:q -p:Configuration={optimizationLevel} \"-p:AssemblyName={Name}\" " +
+            $"\"-flp1:logfile={buildWarningsPath};warningsonly\" \"-flp2:logfile={buildErrorsPath};errorsonly\" \"{csprojPath}\" ";
         using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
             $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
         await buildResult.WaitForExitAsync().ConfigureAwait(false);
 
-        var binaryLogPath = Path.Combine(BuildPath, "msbuild.binlog");
-        var reader = Microsoft.Build.Logging.StructuredLogger.BinaryLog.ReadBuild(binaryLogPath);
-        var diagnostics = reader.FindChildrenRecursive<Microsoft.Build.Logging.StructuredLogger.AbstractDiagnostic>();
-        CompilationErrors?.Invoke(diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Code))
-                .Select(GetCompilationErrorResultObject).ToImmutableArray());
+        var compilationErrors = await ReadBuildLogAsync(buildWarningsPath, "Warning")
+            .Concat(ReadBuildLogAsync(buildErrorsPath, "Error"))
+            .ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        return buildResult.ExitCode == 0;
+        var success = buildResult.ExitCode == 0;
+        if (!success && compilationErrors.Length > 0)
+        {
+            compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + buildResult.StandardError }];
+        }
+
+        CompilationErrors?.Invoke(compilationErrors);
+
+        return success;
+    }
+
+    private async IAsyncEnumerable<CompilationErrorResultObject> ReadBuildLogAsync(string path, string severity)
+    {
+        if (!File.Exists(path))
+        {
+            yield break;
+        }
+
+        await foreach (var line in File.ReadLinesAsync(path).ConfigureAwait(false))
+        {
+            var match = MsbuildLogRegex().Match(line);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            var code = match.Groups["code"].Value;
+            if (_parameters.DisabledDiagnostics.Contains(code))
+            {
+                continue;
+            }
+
+            var error = new CompilationErrorResultObject
+            {
+                Severity = severity,
+                ErrorCode = code,
+                Message = match.Groups["message"].Value,
+            };
+
+            if (match.Groups["file"].Value.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            {
+                error.LineNumber = int.Parse(match.Groups["line"].ValueSpan, CultureInfo.InvariantCulture);
+                error.Column = int.Parse(match.Groups["column"].ValueSpan, CultureInfo.InvariantCulture);
+            }
+
+            yield return error;
+        }
     }
 
     private bool CompileInProcess(string path, OptimizationLevel? optimizationLevel, string assemblyPath, CancellationToken cancellationToken)
@@ -560,18 +607,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     {
         if (diagnostics.Length > 0)
         {
-            CompilationErrors?.Invoke(diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Id))
-                .Select(GetCompilationErrorResultObject).ToImmutableArray());
+            CompilationErrors?.Invoke([.. diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Id)).Select(GetCompilationErrorResultObject)]);
         }
     }
-
-    private static CompilationErrorResultObject GetCompilationErrorResultObject(Microsoft.Build.Logging.StructuredLogger.AbstractDiagnostic diagnostic) =>
-        CompilationErrorResultObject.Create(
-            diagnostic.TypeName,
-            diagnostic.Code,
-            diagnostic.Text,
-            diagnostic.LineNumber,
-            diagnostic.ColumnNumber);
 
     private static CompilationErrorResultObject GetCompilationErrorResultObject(Diagnostic diagnostic)
     {
@@ -748,14 +786,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                     await BuildGlobalJson(projBuildResult.RestorePath).ConfigureAwait(false);
                     File.Copy(_parameters.NuGetConfigPath, Path.Combine(projBuildResult.RestorePath, "nuget.config"), overwrite: true);
 
-                    var errorsPath = Path.Combine(projBuildResult.RestorePath, "errors.log");
-                    File.Delete(errorsPath);
+                    var restoreErrorsPath = Path.Combine(projBuildResult.RestorePath, "restore-errors.log");
+                    File.Delete(restoreErrorsPath);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var buildArgs =
                         $"--interactive -nologo " +
-                        $"-flp:errorsonly;logfile=\"{errorsPath}\" \"{projBuildResult.CsprojPath}\" " +
+                        $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\" \"{projBuildResult.CsprojPath}\" " +
                         $"-getTargetResult:build -getItem:ReferencePathWithRefAssemblies,Analyzer ";
                     using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
                         $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
@@ -764,7 +802,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                     if (restoreResult.ExitCode != 0)
                     {
-                        var errors = await GetErrorsAsync(errorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
+                        var errors = await GetRestoreErrorsAsync(restoreErrorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
                         RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
                         return;
                     }
@@ -830,17 +868,15 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 return;
             }
 
-            MetadataReferences = output.Items.ReferencePathWithRefAssemblies
+            MetadataReferences = [.. output.Items.ReferencePathWithRefAssemblies
                 .Select(r => r.FullPath)
                 .Where(r => !string.IsNullOrWhiteSpace(r))
-                .Select(_roslynHost.CreateMetadataReference)
-                .ToImmutableArray();
+                .Select(_roslynHost.CreateMetadataReference)];
 
-            Analyzers = output.Items.Analyzer
+            Analyzers = [.. output.Items.Analyzer
                 .Select(r => r.FullPath)
                 .Where(r => !string.IsNullOrWhiteSpace(r))
-                .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))
-                .ToImmutableArray();
+                .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))];
         }
 
         async Task BuildGlobalJson(string restorePath)
@@ -892,7 +928,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return new(_restorePath, csprojPath, markerPath, markerExists);
         }
 
-        static async Task<string[]> GetErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
+        static async Task<string[]> GetRestoreErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
         {
             string[] errors;
             try
@@ -906,7 +942,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 {
                     for (var i = 0; i < errors.Length; i++)
                     {
-                        var match = ErrorMatcher().Match(errors[i]);
+                        var match = RestoreErrorRegex().Match(errors[i]);
                         if (match.Success)
                         {
                             errors[i] = match.Value;
@@ -964,8 +1000,11 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) => throw new NotSupportedException();
     }
 
-    [GeneratedRegex("(?<=\\: error )[^\\]]+")]
-    private static partial Regex ErrorMatcher();
+    [GeneratedRegex(@"(?<=\: error )[^\]]+")]
+    private static partial Regex RestoreErrorRegex();
+
+    [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)\): (warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
+    private static partial Regex MsbuildLogRegex();
 
     private record BuildOutput(BuildOutputItems Items);
     private record BuildOutputItems(BuildOutputReferenceItem[] ReferencePathWithRefAssemblies, BuildOutputReferenceItem[] Analyzer);
