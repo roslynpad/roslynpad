@@ -30,14 +30,14 @@
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Features" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Features" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.EditorFeatures" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Scripting" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.Workspaces" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <InternalsAssemblyName Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.EditorFeatures" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
   </ItemGroup>
 </Project>

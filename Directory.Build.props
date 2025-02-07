@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
-    <DefaultTargetFramework>net8.0</DefaultTargetFramework>
+    <DefaultTargetFramework>net9.0</DefaultTargetFramework>
     <LtsTargetFramework>net8.0</LtsTargetFramework>
-    <EarliestSupportedTargetFramework>net6.0</EarliestSupportedTargetFramework>
+    <EarliestSupportedTargetFramework>net8.0</EarliestSupportedTargetFramework>
     <UseWPF Condition=" $(MSBuildProjectName.Contains('Windows')) ">true</UseWPF>
     <TargetFramework Condition=" '$(UseWPF)' == 'true' ">$(LtsTargetFramework)-windows</TargetFramework>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>

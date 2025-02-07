@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>$(LtsTargetFramework)</TargetFramework>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>

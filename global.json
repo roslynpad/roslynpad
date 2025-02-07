@@ -1,9 +1,9 @@
 {
   "sdk": {
-    "version": "8.0.401"
+    "version": "9.0.102"
   },
   "msbuild-sdks": {
     "Microsoft.Build.NoTargets": "3.7.56",
-    "Microsoft.Build.Traversal": "4.1.0"
+    "Microsoft.Build.Traversal": "4.1.82"
   }
 }
