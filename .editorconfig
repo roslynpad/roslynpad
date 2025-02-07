@@ -188,9 +188,11 @@ dotnet_diagnostic.VSTHRD200.severity = none
 
 # XAML
 [*.{xaml,axaml}]
-indent_style = space
 indent_size = 4
 charset = utf-8-bom
-insert_final_newline = true
 trim_trailing_whitespace = true
 end_of_line = crlf
+
+# project files
+[{*.*proj,*.props,*.targets}]
+indent_size = 2

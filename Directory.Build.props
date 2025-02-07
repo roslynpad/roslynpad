@@ -36,6 +36,9 @@
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(GITHUB_ACTIONS)' == 'true' ">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
   <PropertyGroup>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
