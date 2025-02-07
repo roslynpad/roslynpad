@@ -19,7 +19,7 @@ jobs:
     - name: Setup .NET (current)
       uses: actions/setup-dotnet@v4
     - name: Build with dotnet
-      run: dotnet build -bl -c Release -m:1 src/RoslynPad.sln
+      run: dotnet build -bl -c Release -m:1 RoslynPad.sln
     - uses: actions/upload-artifact@v4
       if: always()
       with:
