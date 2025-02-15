@@ -29,16 +29,16 @@ public partial class MainWindow : Window
         _documents = new ObservableCollection<DocumentViewModel>();
         Items.ItemsSource = _documents;
 
-        _host = new CustomRoslynHost(additionalAssemblies: new[]
-        {
+        _host = new CustomRoslynHost(additionalAssemblies:
+        [
                     Assembly.Load("RoslynPad.Roslyn.Windows"),
                     Assembly.Load("RoslynPad.Editor.Windows")
-                }, RoslynHostReferences.NamespaceDefault.With(assemblyReferences: new[]
-        {
+                ], RoslynHostReferences.NamespaceDefault.With(assemblyReferences:
+        [
             typeof(object).Assembly,
             typeof(System.Text.RegularExpressions.Regex).Assembly,
             typeof(Enumerable).Assembly,
-        }));
+        ]));
 
         AddNewDocument();
     }
@@ -63,7 +63,7 @@ public partial class MainWindow : Window
             editor.CreatingDocument += (o, args) =>
             {
                 args.DocumentId = _host.AddRelatedDocument(previous.Id, new DocumentCreationArgs(
-                    args.TextContainer, workingDirectory, SourceCodeKind.Script, args.ProcessDiagnostics,
+                    args.TextContainer, workingDirectory, SourceCodeKind.Script,
                     args.TextContainer.UpdateText));
             };
         }
@@ -102,7 +102,7 @@ public partial class MainWindow : Window
     {
         private bool _addedAnalyzers;
 
-        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableArray<string>? disabledDiagnostics = null) : base(additionalAssemblies, references, disabledDiagnostics)
+        public CustomRoslynHost(IEnumerable<Assembly>? additionalAssemblies = null, RoslynHostReferences? references = null, ImmutableHashSet<string>? disabledDiagnostics = null) : base(additionalAssemblies, references, disabledDiagnostics)
         {
         }
 
