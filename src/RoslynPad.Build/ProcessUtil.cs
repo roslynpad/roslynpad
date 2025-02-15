@@ -45,20 +45,20 @@ internal class ProcessUtil
         private readonly Process _process;
         private readonly TaskCompletionSource<object?> _exitTcs;
         private readonly StringBuilder _standardOutput;
+        private readonly Task _endTask;
 
         internal ProcessResult(Process process, TaskCompletionSource<object?> exitTcs)
         {
             _process = process;
             _exitTcs = exitTcs;
             _standardOutput = new StringBuilder();
-
-            _ = Task.Run(ReadStandardErrorAsync);
+            _endTask = Task.WhenAll(Task.Run(ReadStandardErrorAsync), _exitTcs.Task);
         }
 
         private async Task ReadStandardErrorAsync() =>
             StandardError = await _process.StandardError.ReadToEndAsync().ConfigureAwait(false);
 
-        public Task WaitForExitAsync() => _exitTcs.Task;
+        public Task WaitForExitAsync() => _endTask;
 
         public async IAsyncEnumerable<string> GetStandardOutputLinesAsync()
         {

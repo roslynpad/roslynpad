@@ -300,7 +300,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             .ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var success = buildResult.ExitCode == 0;
-        if (!success && compilationErrors.Length > 0)
+        if (!success && compilationErrors.Length == 0)
         {
             compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + buildResult.StandardError }];
         }
