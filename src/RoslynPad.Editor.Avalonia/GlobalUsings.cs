@@ -11,6 +11,7 @@ global using Avalonia.Styling;
 global using Avalonia.Threading;
 global using AvaloniaEdit;
 global using AvaloniaEdit.CodeCompletion;
+global using AvaloniaEdit.Folding;
 global using AvaloniaEdit.Document;
 global using AvaloniaEdit.Editing;
 global using AvaloniaEdit.Highlighting;

@@ -8,7 +8,7 @@
     <RoslynVersion>4.12.0</RoslynVersion>
     <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
     <RoslynPrivateVersion>4.12.0-3.24574.8</RoslynPrivateVersion>
-    <AvaloniaVersion>11.2.3</AvaloniaVersion>
+    <AvaloniaVersion>11.2.4</AvaloniaVersion>
     <NuGetVersion>6.12.1</NuGetVersion>
   </PropertyGroup>
   <ItemGroup>

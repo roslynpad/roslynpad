@@ -9,6 +9,7 @@ global using ICSharpCode.AvalonEdit;
 global using ICSharpCode.AvalonEdit.CodeCompletion;
 global using ICSharpCode.AvalonEdit.Document;
 global using ICSharpCode.AvalonEdit.Editing;
+global using ICSharpCode.AvalonEdit.Folding;
 global using ICSharpCode.AvalonEdit.Highlighting;
 global using ICSharpCode.AvalonEdit.Rendering;
 global using ICSharpCode.AvalonEdit.Snippets;

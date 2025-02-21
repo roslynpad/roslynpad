@@ -169,6 +169,7 @@ dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.CA1816.severity = none
 dotnet_diagnostic.CA1822.severity = silent
 dotnet_diagnostic.CA1826.severity = none

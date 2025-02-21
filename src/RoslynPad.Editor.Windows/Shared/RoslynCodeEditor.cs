@@ -5,16 +5,7 @@ using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.Structure;
 using RoslynPad.Roslyn.QuickInfo;
 using Microsoft.CodeAnalysis.Formatting;
-using System.Threading;
-using Microsoft.CodeAnalysis.Structure;
-
-#if AVALONIA
-using AvaloniaEdit.Folding;
-#endif
-
-#if !AVALONIA
-using ICSharpCode.AvalonEdit.Folding;
-#endif
+using System.Reactive.Linq;
 
 namespace RoslynPad.Editor;
 
@@ -38,10 +29,16 @@ public class RoslynCodeEditor : CodeTextEditor
         TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
         TextArea.TextView.LineTransformers.Add(_textMarkerService);
         TextArea.Caret.PositionChanged += CaretOnPositionChanged;
-        TextArea.TextView.Document.TextChanged += OnTextChanged;
+
+        Observable.FromEventPattern<EventHandler, EventArgs>(
+            h => TextArea.TextView.Document.TextChanged += h,
+            h => TextArea.TextView.Document.TextChanged -= h)
+            .Throttle(TimeSpan.FromSeconds(2))
+            .ObserveOn(SynchronizationContext.Current!)
+            .Subscribe(_ => RefreshFoldings().ConfigureAwait(true));
     }
 
-    private async void OnTextChanged(object? sender, EventArgs e) 
+    private async void OnTextChanged(object? sender, EventArgs e)
     {
         await RefreshFoldings().ConfigureAwait(true);
     }
@@ -357,50 +354,65 @@ public class RoslynCodeEditor : CodeTextEditor
     public async Task RefreshFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
+        }
 
         if (_documentId == null || _roslynHost == null || _blockStructureService == null)
+        {
             return;
+        }
 
         var document = _roslynHost.GetDocument(_documentId);
         if (document == null)
+        {
             return;
+        }
 
-        var elements = await _blockStructureService.GetBlockStructureAsync(document).ConfigureAwait(true);
+        try
+        {
+            var elements = await _blockStructureService.GetBlockStructureAsync(document).ConfigureAwait(true);
 
-        var foldings = elements.Spans
-            .Select(s => new NewFolding { Name = s.BannerText, StartOffset = s.TextSpan.Start, EndOffset = s.TextSpan.End })
-            .OrderBy(item => item.StartOffset);
+            var foldings = elements.Spans
+                .Select(s => new NewFolding { Name = s.BannerText, StartOffset = s.TextSpan.Start, EndOffset = s.TextSpan.End })
+                .OrderBy(item => item.StartOffset);
 
-        FoldingManager?.UpdateFoldings(foldings, firstErrorOffset: 0);
+            FoldingManager?.UpdateFoldings(foldings, firstErrorOffset: 0);
+        }
+        catch
+        {
+        }
     }
-    
+
     private void InstallFoldingManager()
     {
         if (!IsCodeFoldingEnabled)
+        {
             return;
+        }
 
         FoldingManager = FoldingManager.Install(TextArea);
-    }
-
-    private void UninstallFoldingManager()
-    {
-        FoldingManager.Uninstall(FoldingManager);
     }
 
     public void FoldAllFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
+        }
 
         foreach (var foldingSection in FoldingManager.AllFoldings)
+        {
             foldingSection.IsFolded = true;
+        }
     }
 
     public void UnfoldAllFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
+        }
 
         foreach (var foldingSection in FoldingManager.AllFoldings)
             foldingSection.IsFolded = false;
@@ -409,7 +421,9 @@ public class RoslynCodeEditor : CodeTextEditor
     public void ToggleAllFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
+        }
 
         var fold = FoldingManager.AllFoldings.All(folding => !folding.IsFolded);
 
@@ -420,11 +434,12 @@ public class RoslynCodeEditor : CodeTextEditor
     public void ToggleCurrentFolding()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
-       
+        }
 
         var folding = FoldingManager.GetNextFolding(TextArea.Caret.Offset);
-        if (folding == null || TextArea.Document.GetLocation(folding.StartOffset).Line != TextArea.Document.GetLocation(TextArea.Caret.Offset).Line)
+        if (folding == null || TextArea.Document.GetLocation(folding.StartOffset).Line !=      TextArea.Document.GetLocation(TextArea.Caret.Offset).Line)
         {
             folding = FoldingManager.GetFoldingsContaining(TextArea.Caret.Offset).LastOrDefault();
         }
@@ -433,32 +448,33 @@ public class RoslynCodeEditor : CodeTextEditor
             folding.IsFolded = !folding.IsFolded;
     }
 
-    public object? SaveFoldings()
+    public IEnumerable<NewFolding> SaveFoldings()
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
-            return null;
+        {
+            return [];
+        }
 
         return FoldingManager?.AllFoldings
-                              .Select(folding => new NewFolding
-                              {
-                                  StartOffset = folding.StartOffset,
-                                  EndOffset = folding.EndOffset,
-                                  Name = folding.Title,
-                                  DefaultClosed = folding.IsFolded
-                              })
-                              .ToList();
+            .Select(folding => new NewFolding
+            {
+                StartOffset = folding.StartOffset,
+                EndOffset = folding.EndOffset,
+                Name = folding.Title,
+                DefaultClosed = folding.IsFolded
+            })
+            .ToList() ?? [];
     }
 
-    public void RestoreFoldings(object foldings)
+    public void RestoreFoldings(IEnumerable<NewFolding> foldings)
     {
         if (FoldingManager == null || !IsCodeFoldingEnabled)
+        {
             return;
+        }
 
-        var list = foldings as IEnumerable<NewFolding>;
-        if (list == null)
-            return;
 
         FoldingManager.Clear();
-        FoldingManager.UpdateFoldings(list, -1);
+        FoldingManager.UpdateFoldings(foldings, -1);
     }
 }

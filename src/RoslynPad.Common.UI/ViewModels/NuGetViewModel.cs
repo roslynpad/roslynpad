@@ -78,10 +78,15 @@ public sealed class NuGetViewModel : NotificationObject, INuGetCompletionProvide
     {
         _initializationException?.Throw();
 
+        if (_sourceRepositoryProvider is null)
+        {
+            return [];
+        }
+
         var filter = new SearchFilter(includePrerelease);
         var packages = new List<PackageData>();
 
-        foreach (var sourceRepository in _sourceRepositoryProvider!.GetRepositories())
+        foreach (var sourceRepository in _sourceRepositoryProvider.GetRepositories())
         {
             IPackageSearchMetadata[]? result;
             try
