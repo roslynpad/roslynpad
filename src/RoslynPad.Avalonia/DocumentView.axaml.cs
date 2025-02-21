@@ -1,12 +1,13 @@
-﻿#pragma warning disable CS8618 
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
 using Avalonia.Media;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using DialogHostAvalonia;
 
 namespace RoslynPad;
 
@@ -22,10 +23,6 @@ partial class DocumentView : UserControl, IDisposable
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
 
         DataContextChanged += OnDataContextChanged;
-
-        //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
-        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
-        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleFold, (s, e) => ToggleCurrentFolding()));
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
@@ -37,6 +34,7 @@ partial class DocumentView : UserControl, IDisposable
 
         viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
+        viewModel.ReadInput += OnReadInput;
         viewModel.EditorFocus += (o, e) => _editor.Focus();
 
         viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
@@ -71,6 +69,32 @@ partial class DocumentView : UserControl, IDisposable
                 }
             }
         }
+    }
+
+    private async void OnReadInput()
+    {
+        var textBox = new TextBox();
+
+        var dialog = new HeaderedContentControl
+        {
+            Header = "Console Input",
+            Content = textBox,
+            Background = Brushes.White,
+        };
+
+        textBox.Loaded += (o, e) => textBox.Focus();
+
+        textBox.KeyDown += (o, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                DialogHost.Close(MainWindow.DialogHostIdentifier);
+            }
+        };
+
+        await DialogHost.Show(dialog, MainWindow.DialogHostIdentifier).ConfigureAwait(true);
+
+        ViewModel.SendInput(textBox.Text ?? string.Empty);
     }
 
     private void OnThemeChanged(object? sender, EventArgs e)

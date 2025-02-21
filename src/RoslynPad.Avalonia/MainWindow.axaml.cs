@@ -17,6 +17,8 @@ namespace RoslynPad;
 
 partial class MainWindow : Window
 {
+    public const string DialogHostIdentifier = "Main";
+
     private readonly MainViewModel _viewModel;
     private ThemeDictionary? _themeDictionary;
 
