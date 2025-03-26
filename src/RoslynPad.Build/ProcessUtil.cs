@@ -18,6 +18,8 @@ internal class ProcessUtil
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 UseShellExecute = false,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
             },
             EnableRaisingEvents = true,
         };

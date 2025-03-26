@@ -290,7 +290,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         var buildArgs =
             $"-nologo -v:q -p:Configuration={optimizationLevel} \"-p:AssemblyName={Name}\" " +
-            $"\"-flp1:logfile={buildWarningsPath};warningsonly\" \"-flp2:logfile={buildErrorsPath};errorsonly\" \"{csprojPath}\" ";
+            $"\"-flp1:logfile={buildWarningsPath};warningsonly;Encoding=UTF-8\" \"-flp2:logfile={buildErrorsPath};errorsonly;Encoding=UTF-8\" \"{csprojPath}\" ";
         using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
             $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
         await buildResult.WaitForExitAsync().ConfigureAwait(false);
@@ -793,7 +793,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                     var buildArgs =
                         $"--interactive -nologo " +
-                        $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\" \"{projBuildResult.CsprojPath}\" " +
+                        $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
                         $"-getTargetResult:build -getItem:ReferencePathWithRefAssemblies,Analyzer ";
                     using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
                         $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
