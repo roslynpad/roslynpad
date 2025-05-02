@@ -13,7 +13,7 @@ internal sealed class ExtractInterfaceOptionsService(ExportFactory<IExtractInter
 {
     private readonly ExportFactory<IExtractInterfaceDialog> _dialogFactory = dialogFactory;
 
-    public Task<ExtractInterfaceOptionsResult> GetExtractInterfaceOptionsAsync(
+    public ExtractInterfaceOptionsResult GetExtractInterfaceOptions(
         ISyntaxFactsService syntaxFactsService,
         INotificationService notificationService,
         List<ISymbol> extractableMembers,
@@ -44,7 +44,7 @@ internal sealed class ExtractInterfaceOptionsService(ExportFactory<IExtractInter
                 fileName: viewModel.FileName.Trim(),
                 location: GetLocation(viewModel.Destination))
             : ExtractInterfaceOptionsResult.Cancelled;
-        return Task.FromResult(options);
+        return options;
     }
 
     private static ExtractInterfaceOptionsResult.ExtractLocation GetLocation(InterfaceDestination destination) => destination switch

@@ -11,7 +11,7 @@ internal sealed class ChangeSignatureOptionsService(ExportFactory<IChangeSignatu
 {
     private readonly ExportFactory<IChangeSignatureDialog> _dialogFactory = dialogFactory;
 
-    public ChangeSignatureOptionsResult? GetChangeSignatureOptions(Document document, int positionForTypeBinding, ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters)
+    public ChangeSignatureOptionsResult? GetChangeSignatureOptions(SemanticDocument document, int positionForTypeBinding, ISymbol symbol, Microsoft.CodeAnalysis.ChangeSignature.ParameterConfiguration parameters)
     {
         var viewModel = new ChangeSignatureDialogViewModel(new ParameterConfiguration(parameters), symbol);
 

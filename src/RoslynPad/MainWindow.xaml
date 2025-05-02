@@ -6,7 +6,7 @@
         xmlns:rp="clr-namespace:RoslynPad"
         xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
-        xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
+        xmlns:av="https://github.com/aelij/wpfcontrib"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI" xmlns:controls="clr-namespace:RoslynPad.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance ui:MainViewModel}"
