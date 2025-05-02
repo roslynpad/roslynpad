@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cross-platform C# code editor and runner. Built with Roslyn and AvalonEdit.">
+    <title>RoslynPad</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#download">Download
+                            <img class="centered"
+                                src="https://img.shields.io/github/downloads/roslynpad/roslynpad/total?style=flat-square&label=&color=2E7D32">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12"
+                                fill="none" stroke="white" stroke-width="1">
+                                <path vector-effect="non-scaling-stroke" d="M12 2v20M5 13l7 7 7-7" />
+                            </svg>
+                            <span id="github-downloads" class="centered"></span>
+                        </a></li>
+                    <li><a href="https://github.com/roslynpad/roslynpad">GitHub
+                            <img class="centered"
+                                src="https://img.shields.io/github/stars/roslynpad/roslynpad?style=flat-square&label=&color=2E7D32">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12"
+                                fill="none" stroke="white" stroke-width="1">
+                                <path vector-effect="non-scaling-stroke"
+                                    d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.869 1.4-8.168L.132 9.21l8.2-1.192z" />
+                            </svg>
+                        </a></li>
+                    <li><a href="https://github.com/sponsors/roslynpad">Sponsor
+                            <svg style="margin-left: 10px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                width="12" height="12" fill="none" stroke="white" stroke-width="1">
+                                <path vector-effect="non-scaling-stroke"
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+                        </a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div id="particles" class="particles"></div>
+        <div class="particles-overlay">
+            <div style="display: flex; justify-content: center; align-items: center; text-align: center;">
+                <h1>
+                    <img src="../roslynpad.svg" alt="RoslynPad Logo" class="logo centered">
+                    RoslynPad
+                </h1>
+
+                <p style="text-align: left; margin-left: 50px;">Open source C# code editor and runner.<br>Built with <a
+                        href="https://github.com/dotnet/roslyn">Roslyn</a> and <a
+                        href="https://github.com/icsharpcode/AvalonEdit">AvalonEdit</a>.<br>
+                    Works on Windows, macOS, and Linux.</p>
+            </div>
+
+            <div style="display: block; z-index: 10;">
+                <a href="https://github.com/roslynpad/roslynpad/releases/latest" class="cta-button">
+                    Download</a>
+                <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge">
+                    <img src="https://get.microsoft.com/images/en-us%20light.svg" alt="Microsoft Store badge logo"
+                        height="57" class="centered" style="margin-bottom: 5px;" />
+                </a>
+
+                <div><a href="https://github.com/roslynpad/roslynpad#installing">Other ways to install</a></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            particlesJS.load('particles', 'particlesjs-config.json', function () {
+                console.log('particles.js config loaded');
+            });
+        });
+    </script>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Features</h2>
+            <div class="feature-cards">
+                <div class="feature-item">
+                    <img src="feature1.png" alt="Feature 1">
+                    <div class="feature-text">
+                        <h3>Intelligent Code Completion</h3>
+                        <p>Get smart suggestions as you type, powered by Roslyn.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <img src="feature2.png" alt="Feature 2">
+                    <div class="feature-text">
+                        <h3>Real-time Code Execution</h3>
+                        <p>Execute your C# scripts instantly with built-in REPL support.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2024 RoslynPad. Open source under the MIT License.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
