@@ -106,8 +106,10 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
         // Instead, we need to find the head in which we get the best binding, 
         // which in this case is the one with no errors.
 
-        var candidateProjects = new List<ProjectId> { document.Project.Id };
-        var invalidProjects = new List<ProjectId>();
+        var candidateProjects = ImmutableArray.CreateBuilder<ProjectId>();
+        candidateProjects.Add(document.Project.Id);
+
+        var invalidProjects = ImmutableArray.CreateBuilder<ProjectId>();
 
         var candidateResults = new List<Tuple<DocumentId, SemanticModel, IList<ISymbol>>>
         {
@@ -150,7 +152,7 @@ internal sealed class QuickInfoProvider(IDeferredQuickInfoContentProvider conten
             }
         }
 
-        var supportedPlatforms = new SupportedPlatformData(document.Project.Solution, invalidProjects, candidateProjects);
+        var supportedPlatforms = new SupportedPlatformData(document.Project.Solution, invalidProjects.ToImmutable(), candidateProjects.ToImmutable());
         return await CreateContentAsync(document.Project.Solution.Workspace, token, bestBinding.Item2, bestBinding.Item3, supportedPlatforms, cancellationToken).ConfigureAwait(false);
     }
 

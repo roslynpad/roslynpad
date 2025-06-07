@@ -29,7 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="Avalonia.ThemeManager" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="DialogHost.Avalonia" />
     <PackageReference Include="Dock.Avalonia" />
     <PackageReference Include="Dock.Model.Avalonia" />
@@ -48,7 +48,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\RoslynPad.Themes\Themes\*.json"
-             Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
+    <Content Include="..\RoslynPad.Themes\Themes\*.json" Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
   </ItemGroup>
 </Project>

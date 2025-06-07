@@ -25,6 +25,6 @@ internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
         public event EventHandler<EventArgs>? NonRoslynBufferTextChanged = delegate { };
     }
 
-    public IWorkspaceService? CreateService(HostWorkspaceServices workspaceServices) =>
+    public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices) =>
         new DocumentTrackingService(workspaceServices.Workspace);
 }

@@ -7,7 +7,7 @@ namespace RoslynPad.Roslyn.Diagnostics;
 [Export(typeof(IAnalyzerAssemblyLoader)), Shared]
 internal class AnalyzerAssemblyLoaderWrapper : IAnalyzerAssemblyLoader, IDisposable
 {
-    private readonly DefaultAnalyzerAssemblyLoader _inner = new();
+    private readonly AnalyzerAssemblyLoader _inner = new();
     
     public void Dispose() => _inner.Dispose();
 

@@ -8,7 +8,10 @@ internal class NullDiagnosticsRefresher : IDiagnosticsRefresher
 {
     public int GlobalStateVersion { get; }
 
+    public event Action? WorkspaceRefreshRequested;
+
     public void RequestWorkspaceRefresh()
     {
+        WorkspaceRefreshRequested?.Invoke();
     }
 }

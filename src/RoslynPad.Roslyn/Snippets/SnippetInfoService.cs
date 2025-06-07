@@ -11,11 +11,11 @@ internal sealed class SnippetInfoService([Import(AllowDefault = true)] ISnippetI
     public IEnumerable<Microsoft.CodeAnalysis.Snippets.SnippetInfo> GetSnippetsIfAvailable()
     {
         return inner?.GetSnippets().Select(x => 
-            new Microsoft.CodeAnalysis.Snippets.SnippetInfo(x.Shortcut, x.Title, x.Description, null))
+            new Microsoft.CodeAnalysis.Snippets.SnippetInfo(x.Shortcut, x.Title, x.Description, ""))
             ?? [];
     }
 
-    public bool SnippetShortcutExists_NonBlocking(string shortcut)
+    public bool SnippetShortcutExists_NonBlocking(string? shortcut)
     {
         return false;
     }
