@@ -302,7 +302,7 @@ public partial class CodeTextEditor : TextEditor
                 else
                 {
                     // Select first item
-                    if (_completionWindow.CompletionList.CompletionData.FirstOrDefault(v => true) is { } firstCompletionItem)
+                    if (_completionWindow.CompletionList.CompletionData.FirstOrDefault() is { } firstCompletionItem)
                     {
                         _completionWindow.CompletionList.SelectedItem = firstCompletionItem;
                         _completionWindow.CompletionList.ScrollIntoView(firstCompletionItem);
