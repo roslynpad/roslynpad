@@ -48,7 +48,7 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
 
     public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
     {
-        IList<ICompletionDataEx>? completionData = null;
+        IReadOnlyList<ICompletionDataEx>? completionData = null;
         IOverloadProviderEx? overloadProvider = null;
         var useHardSelection = true;
 
@@ -93,10 +93,20 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
                 var text = await document.GetTextAsync().ConfigureAwait(false);
                 var textSpanToText = new Dictionary<TextSpan, string>();
 
-                completionData = data.ItemsList
+                var unsortedcompletionData = data.ItemsList
                     .Where(item => MatchesFilterText(completionService, document, item, text, textSpanToText))
-                    .Select(item => new RoslynCompletionData(document, item, _snippetService.SnippetManager))
-                        .ToArray<ICompletionDataEx>();
+                    .Select(item => new RoslynCompletionData(document, item, _snippetService.SnippetManager));
+
+                if (data.ItemsList.FirstOrDefault() is { } firstItem && text.GetSubText(firstItem.Span).ToString() is { } fiterText)
+                {
+                    completionData = unsortedcompletionData
+                        .OrderBy(v => GetSortPriority(v.Text, fiterText))
+                        .ToArray();
+                }
+                else
+                {
+                    completionData = unsortedcompletionData.ToArray();
+                }
             }
             else
             {
@@ -130,5 +140,16 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
         return triggerChar != null
             ? CompletionTrigger.CreateInsertionTrigger(triggerChar.Value)
             : CompletionTrigger.Invoke;
+    }
+
+    private int GetSortPriority(string itemText, string filterText)
+    {
+        if (itemText.Equals(filterText, StringComparison.OrdinalIgnoreCase))
+            return 0;
+        if (itemText.StartsWith(filterText, StringComparison.OrdinalIgnoreCase))
+            return 1;
+        if (itemText.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) > -1)
+            return 2;
+        return 3;
     }
 }
