@@ -294,7 +294,20 @@ public partial class CodeTextEditor : TextEditor
 
             try
             {
-                _completionWindow.CompletionList.SelectedItem = selected;
+                if (selected != null)
+                {
+                    _completionWindow.CompletionList.SelectedItem = selected;
+                    _completionWindow.CompletionList.ScrollIntoView(selected);
+                }
+                else
+                {
+                    // Select first item
+                    if (_completionWindow.CompletionList.CompletionData.FirstOrDefault(v => true) is { } firstCompletionItem)
+                    {
+                        _completionWindow.CompletionList.SelectedItem = firstCompletionItem;
+                        _completionWindow.CompletionList.ScrollIntoView(firstCompletionItem);
+                    }
+                }
             }
             catch (Exception)
             {
