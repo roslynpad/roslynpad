@@ -35,6 +35,12 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
             return;
         }
 
+        var textArgs = e as CommonTextEventArgs;
+        if (textArgs != null && textArgs.Text?.Length > 0)
+        {
+            return;
+        }
+        
         var changes = await completionService.GetChangeAsync(_document, _item, null).ConfigureAwait(true);
 
         var textChange = changes.TextChange;
