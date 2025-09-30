@@ -20,6 +20,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
+using AvaloniaEdit.Utils;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
 
@@ -37,7 +38,7 @@ public sealed class ContextActionsRenderer
     private readonly ContextActionsBulbContextMenu _contextMenu;
 
     private CancellationTokenSource? _cancellationTokenSource;
-    private List<object>? _actions;
+    private ObservableCollection<object> _actions = new ObservableCollection<object>();
     private ImageSource? _iconImage;
 
     public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
@@ -88,7 +89,7 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        _contextMenu.ItemsSource = _actions!;
+        //_contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         OpenContextMenu();
     }
@@ -101,7 +102,7 @@ public sealed class ContextActionsRenderer
     private ContextActionsBulbContextMenu CreateContextMenu()
     {
         var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
-
+        /*
         // TODO: workaround to refresh menu with latest document
 #if AVALONIA
         contextMenu.Opening
@@ -112,13 +113,14 @@ public sealed class ContextActionsRenderer
             {
                 if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
                 {
+                    
                     if (sender is ContextActionsBulbContextMenu menu)
                     {
                         menu.ItemsSource = _actions;
                     }
                 }
             };
-
+        */
         return contextMenu;
     }
 
@@ -127,7 +129,7 @@ public sealed class ContextActionsRenderer
         _cancellationTokenSource = new CancellationTokenSource();
         try
         {
-            _actions = await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
             return true;
         }
         catch (Exception)
@@ -142,9 +144,10 @@ public sealed class ContextActionsRenderer
         _providers.Select(provider => provider.GetActionCommand(action))
             .FirstOrDefault(command => command != null);
 
-    private async Task<List<object>> LoadActionsAsync(CancellationToken cancellationToken)
+    private async Task<ObservableCollection<object>> LoadActionsAsync(CancellationToken cancellationToken)
     {
-        var allActions = new List<object>();
+        _actions.Clear();
+
         foreach (var provider in _providers)
         {
             var offset = _editor.TextArea.Caret.Offset;
@@ -156,9 +159,9 @@ public sealed class ContextActionsRenderer
                 length = marker.Length;
             }
             var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(true);
-            allActions.AddRange(actions);
+            _actions.AddRange(actions);
         }
-        return allActions;
+        return _actions;
     }
 
     private void ScrollChanged(object? sender, EventArgs e) => StartTimer();
