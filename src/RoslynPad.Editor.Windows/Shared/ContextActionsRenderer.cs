@@ -47,6 +47,8 @@ public sealed class ContextActionsRenderer
         _textMarkerService = textMarkerService;
 
         _contextMenu = CreateContextMenu();
+        _contextMenu.ItemsSource = _actions; // Set ItemsSource immediately to ensure binding
+        
         _bulbMargin = new MarkerMargin { Width = 16, Margin = new Thickness(0, 0, 5, 0) };
         _bulbMargin.MarkerPointerDown += (o, e) => OpenContextMenu();
         var index = editor.TextArea.LeftMargins.Count > 0 ? editor.TextArea.LeftMargins.Count - 1 : 0;
@@ -83,27 +85,28 @@ public sealed class ContextActionsRenderer
         if (!(e.Key == Key.OemPeriod && e.HasModifiers(ModifierKeys.Control))) return;
 
         Cancel();
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions.Count < 1)
         {
             HideBulb();
             return;
         }
 
-        //_contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         OpenContextMenu();
     }
 
     private void OpenContextMenu()
     {
+        // Force menu to recreate its items by setting ItemsSource again
+        _contextMenu.ItemsSource = null;
+        _contextMenu.ItemsSource = _actions;
         _contextMenu.Open(_bulbMargin.Marker);
     }
 
     private ContextActionsBulbContextMenu CreateContextMenu()
     {
         var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
-        /*
-        // TODO: workaround to refresh menu with latest document
+        
 #if AVALONIA
         contextMenu.Opening
 #else
@@ -111,16 +114,16 @@ public sealed class ContextActionsRenderer
 #endif
             += async (sender, args) =>
             {
-                if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
+                // This ensures the menu will show the latest actions
+                await LoadActionsWithCancellationAsync().ConfigureAwait(true);
+                // Force menu to recreate its items by setting ItemsSource again
+                if (sender is ContextActionsBulbContextMenu menu)
                 {
-                    
-                    if (sender is ContextActionsBulbContextMenu menu)
-                    {
-                        menu.ItemsSource = _actions;
-                    }
+                    menu.ItemsSource = null;
+                    menu.ItemsSource = _actions;
                 }
             };
-        */
+        
         return contextMenu;
     }
 
@@ -130,7 +133,7 @@ public sealed class ContextActionsRenderer
         try
         {
             await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-            return true;
+            return _actions.Count > 0;
         }
         catch (Exception)
         {
@@ -185,13 +188,12 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions.Count < 1)
         {
             HideBulb();
             return;
         }
 
-        _contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
     }
 
