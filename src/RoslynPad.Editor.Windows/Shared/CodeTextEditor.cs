@@ -32,18 +32,18 @@ public partial class CodeTextEditor : TextEditor
         {
             commandBindings.Remove(deleteLineCommand);
         }
-
+#if !AVALONIA
         var contextMenu = new ContextMenu
         {
             ItemsSource = new[]
             {
-                new MenuItem { Command = ApplicationCommands.Cut },
-                new MenuItem { Command = ApplicationCommands.Copy },
-                new MenuItem { Command = ApplicationCommands.Paste }
+                new MenuItem { Header = "Cut", Command = ApplicationCommands.Cut },
+                new MenuItem { Header = "Copy", Command = ApplicationCommands.Copy },
+                new MenuItem { Header = "Paste", Command = ApplicationCommands.Paste }
             }
         };
         ContextMenu = contextMenu;
-
+#endif
         Initialize();
     }
 

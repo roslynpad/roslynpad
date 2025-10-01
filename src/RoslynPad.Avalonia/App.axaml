@@ -10,10 +10,6 @@
              xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn"
              xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
              Name="RoslynPad">
-    <NativeMenu.Menu>
-        <NativeMenu>
-        </NativeMenu>
-    </NativeMenu.Menu>
     <Application.Styles>
         <FluentTheme />
         <DockFluentTheme />
