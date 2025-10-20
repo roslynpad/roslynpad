@@ -26,6 +26,29 @@ public static class SymbolDisplayPartExtensions
         return text;
     }
 
+    private static IBrush _lightKeywordBrush = Brushes.Blue;
+    private static IBrush _lightTypeBrush = Brushes.Teal;
+
+    private static IBrush _darkKeywordBrush = new SolidColorBrush(Color.FromRgb(86, 156, 214));
+    private static IBrush _darkTypeBrush = new SolidColorBrush(Color.FromRgb(78, 201, 176));
+
+    private static IBrush _currentKeywordBrush = _lightKeywordBrush;
+    private static IBrush _currentTypeBrush = _lightTypeBrush;
+
+    public static void SetTheme(bool isLightTheme)
+    {
+        if (isLightTheme)
+        {
+            _currentKeywordBrush = _lightKeywordBrush;
+            _currentTypeBrush = _lightTypeBrush;
+        }
+        else
+        {
+            _currentKeywordBrush = _darkKeywordBrush;
+            _currentTypeBrush = _darkTypeBrush;
+        }
+    }
+
     public static TextBlock ToRun(this TaggedText text, bool isBold = false)
     {
         var s = text.ToVisibleDisplayString(includeLeftToRightMarker: false);
@@ -40,7 +63,7 @@ public static class SymbolDisplayPartExtensions
         switch (text.Tag)
         {
             case TextTags.Keyword:
-                run.Foreground = Brushes.Blue;
+                run.Foreground = _currentKeywordBrush;
                 break;
             case TextTags.Struct:
             case TextTags.Enum:
@@ -48,7 +71,7 @@ public static class SymbolDisplayPartExtensions
             case TextTags.Class:
             case TextTags.Delegate:
             case TextTags.Interface:
-                run.Foreground = Brushes.Teal;
+                run.Foreground = _currentTypeBrush;
                 break;
         }
 
