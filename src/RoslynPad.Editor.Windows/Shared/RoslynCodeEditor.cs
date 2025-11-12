@@ -22,6 +22,7 @@ public class RoslynCodeEditor : CodeTextEditor
     private CancellationTokenSource? _braceMatchingCts;
     private RoslynHighlightingColorizer? _colorizer;
     private IBlockStructureService? _blockStructureService;
+    private SnippetManager? _snippetManager;
 
     public RoslynCodeEditor()
     {
@@ -125,6 +126,7 @@ public class RoslynCodeEditor : CodeTextEditor
     {
         _roslynHost = roslynHost ?? throw new ArgumentNullException(nameof(roslynHost));
         _classificationHighlightColors = highlightColors ?? throw new ArgumentNullException(nameof(highlightColors));
+        _snippetManager = new SnippetManager();
 
         _braceMatcherHighlighter = new BraceMatcherHighlightRenderer(TextArea.TextView, _classificationHighlightColors);
 
@@ -349,6 +351,123 @@ public class RoslynCodeEditor : CodeTextEditor
                     break;
             }
         }
+    }
+
+    protected override async Task<bool> TryExpandSnippetAsync()
+    {
+        if (_snippetManager == null)
+        {
+            return false;
+        }
+
+        // Get the word before the caret
+        var offset = CaretOffset;
+        if (offset == 0)
+        {
+            return false;
+        }
+
+        var document = Document;
+        var line = document.GetLineByOffset(offset);
+        var lineText = document.GetText(line.Offset, offset - line.Offset);
+        
+        // Find the last word (snippet keyword)
+        // Support alphanumeric, underscore, special characters like ~, #, and symbols
+        var wordStart = lineText.Length;
+        while (wordStart > 0)
+        {
+            var c = lineText[wordStart - 1];
+            // Allow letters, digits, underscore, and special characters commonly used in snippets
+            // This includes: ~, #, -, and other symbols that might be snippet shortcuts
+            if (char.IsLetterOrDigit(c) || c == '_' || c == '~' || c == '#' || c == '-' || c == '!')
+            {
+                wordStart--;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (wordStart == lineText.Length)
+        {
+            return false; // No word found
+        }
+
+        var word = lineText.Substring(wordStart);
+        var snippet = _snippetManager.FindSnippet(word);
+        
+        if (snippet != null)
+        {
+            var snippetStartOffset = line.Offset + wordStart;
+            var snippetEndOffset = offset;
+            
+            // Get the current class name from Roslyn semantic model
+            string? className = null;
+            if (_roslynHost != null && _documentId != null)
+            {
+                className = await GetCurrentClassName(snippetStartOffset).ConfigureAwait(false);
+            }
+            
+            // Remove the keyword and insert the snippet
+            var avalonEditSnippet = snippet.CreateAvalonEditSnippet(className);
+            using (document.RunUpdate())
+            {
+                document.Remove(snippetStartOffset, snippetEndOffset - snippetStartOffset);
+                CaretOffset = snippetStartOffset;
+                avalonEditSnippet.Insert(TextArea);
+            }
+            
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<string?> GetCurrentClassName(int position)
+    {
+        if (_roslynHost == null || _documentId == null)
+        {
+            return null;
+        }
+
+        var document = _roslynHost.GetDocument(_documentId);
+        if (document == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var semanticModel = await document.GetSemanticModelAsync().ConfigureAwait(false);
+            if (semanticModel == null)
+            {
+                return null;
+            }
+
+            var root = await document.GetSyntaxRootAsync().ConfigureAwait(false);
+            if (root == null)
+            {
+                return null;
+            }
+
+            var node = root.FindToken(position).Parent;
+            while (node != null)
+            {
+                var symbol = semanticModel.GetDeclaredSymbol(node);
+                if (symbol is Microsoft.CodeAnalysis.INamedTypeSymbol namedType)
+                {
+                    return namedType.Name;
+                }
+                node = node.Parent;
+            }
+        }
+        catch
+        {
+            // Ignore errors
+        }
+
+        return null;
     }
 
     public async Task RefreshFoldings()

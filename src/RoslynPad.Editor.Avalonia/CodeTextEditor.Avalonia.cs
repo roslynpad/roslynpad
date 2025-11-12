@@ -8,6 +8,7 @@ public partial class CodeTextEditor
     {
         PointerHover += OnMouseHover;
         PointerHoverStopped += OnMouseHoverStopped;
+        KeyDownEvent.AddClassHandler<CodeTextEditor>(OnPreviewKeyDown, RoutingStrategies.Tunnel);
     }
 
     partial void InitializeToolTip()
