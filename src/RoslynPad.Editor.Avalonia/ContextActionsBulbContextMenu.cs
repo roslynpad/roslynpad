@@ -7,6 +7,9 @@ namespace RoslynPad.Editor;
 
 internal class ContextActionsBulbContextMenu : MenuFlyout
 {
+    private static readonly CodeActionTitleConverter s_titleConverter = new();
+    private static readonly CodeActionsConverter s_actionsConverter = new();
+    
     private readonly ActionCommandConverter _converter;
 
     public ContextActionsBulbContextMenu(ActionCommandConverter converter)
@@ -19,8 +22,8 @@ internal class ContextActionsBulbContextMenu : MenuFlyout
     {
         Setters =
         {
-            new Setter(MenuItem.HeaderProperty, new Binding { Converter = new CodeActionTitleConverter() }),
-            new Setter(MenuItem.ItemsSourceProperty, new Binding { Converter = new CodeActionsConverter() }),
+            new Setter(MenuItem.HeaderProperty, new Binding { Converter = s_titleConverter }),
+            new Setter(MenuItem.ItemsSourceProperty, new Binding { Converter = s_actionsConverter }),
             new Setter(MenuItem.CommandProperty, new Binding { Converter = _converter })
         }
     };
@@ -33,7 +36,7 @@ internal class ContextActionsBulbContextMenu : MenuFlyout
     }
 }
 
-internal class CodeActionTitleConverter : IValueConverter
+internal sealed class CodeActionTitleConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
@@ -51,7 +54,7 @@ internal class CodeActionTitleConverter : IValueConverter
     }
 }
 
-internal class CodeActionsConverter : IValueConverter
+internal sealed class CodeActionsConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
