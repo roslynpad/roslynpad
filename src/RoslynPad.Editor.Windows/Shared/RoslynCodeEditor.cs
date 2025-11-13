@@ -371,103 +371,31 @@ public class RoslynCodeEditor : CodeTextEditor
         var line = document.GetLineByOffset(offset);
         var lineText = document.GetText(line.Offset, offset - line.Offset);
         
-        // Find the last word (snippet keyword)
-        // Support alphanumeric, underscore, special characters like ~, #, and symbols
-        var wordStart = lineText.Length;
-        while (wordStart > 0)
-        {
-            var c = lineText[wordStart - 1];
-            // Allow letters, digits, underscore, and special characters commonly used in snippets
-            // This includes: ~, #, -, and other symbols that might be snippet shortcuts
-            if (char.IsLetterOrDigit(c) || c == '_' || c == '~' || c == '#' || c == '-' || c == '!')
-            {
-                wordStart--;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        if (wordStart == lineText.Length)
+        // Extract snippet text from the line
+        var result = SnippetExpandHelper.ExtractSnippetTextFromLine(lineText, lineText.Length);
+        if (result == null)
         {
             return false; // No word found
         }
 
-        var word = lineText.Substring(wordStart);
-        var snippet = _snippetManager.FindSnippet(word);
+        var (wordStart, _) = result.Value;
+        var snippetStartOffset = line.Offset + wordStart;
+        var snippetLength = offset - snippetStartOffset;
         
-        if (snippet != null)
+        // Get the Roslyn document if available
+        Document? roslynDocument = null;
+        if (_roslynHost != null && _documentId != null)
         {
-            var snippetStartOffset = line.Offset + wordStart;
-            var snippetEndOffset = offset;
-            
-            // Get the current class name from Roslyn semantic model
-            string? className = null;
-            if (_roslynHost != null && _documentId != null)
-            {
-                className = await GetCurrentClassName(snippetStartOffset).ConfigureAwait(false);
-            }
-            
-            // Remove the keyword and insert the snippet
-            var avalonEditSnippet = snippet.CreateAvalonEditSnippet(className);
-            using (document.RunUpdate())
-            {
-                document.Remove(snippetStartOffset, snippetEndOffset - snippetStartOffset);
-                CaretOffset = snippetStartOffset;
-                avalonEditSnippet.Insert(TextArea);
-            }
-            
-            return true;
+            roslynDocument = _roslynHost.GetDocument(_documentId);
         }
-
-        return false;
-    }
-
-    private async Task<string?> GetCurrentClassName(int position)
-    {
-        if (_roslynHost == null || _documentId == null)
-        {
-            return null;
-        }
-
-        var document = _roslynHost.GetDocument(_documentId);
-        if (document == null)
-        {
-            return null;
-        }
-
-        try
-        {
-            var semanticModel = await document.GetSemanticModelAsync().ConfigureAwait(false);
-            if (semanticModel == null)
-            {
-                return null;
-            }
-
-            var root = await document.GetSyntaxRootAsync().ConfigureAwait(false);
-            if (root == null)
-            {
-                return null;
-            }
-
-            var node = root.FindToken(position).Parent;
-            while (node != null)
-            {
-                var symbol = semanticModel.GetDeclaredSymbol(node);
-                if (symbol is Microsoft.CodeAnalysis.INamedTypeSymbol namedType)
-                {
-                    return namedType.Name;
-                }
-                node = node.Parent;
-            }
-        }
-        catch
-        {
-            // Ignore errors
-        }
-
-        return null;
+        
+        // Expand the snippet (extraction, class name resolution happens internally)
+        return await SnippetExpandHelper.ExpandSnippetAsync(
+            _snippetManager,
+            TextArea,
+            snippetStartOffset,
+            snippetLength,
+            roslynDocument).ConfigureAwait(false);
     }
 
     public async Task RefreshFoldings()

@@ -75,73 +75,23 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
 
         if (completionChar == '\t')
         {
-            var snippet = _snippetManager.FindSnippet(_item.DisplayText);
-            if (snippet != null)
+            // Expand the snippet (extraction and class name resolution happens internally)
+            var expanded = await SnippetExpandHelper.ExpandSnippetAsync(
+                _snippetManager,
+                textArea,
+                completionSegment.Offset,
+                completionSegment.Length,
+                _document).ConfigureAwait(false);
+
+            if (expanded && textArgs != null)
             {
-                // Get the current class name at the completion position
-                string? className = null;
-                try
-                {
-                    className = await GetCurrentClassNameAsync(completionSegment.Offset).ConfigureAwait(false);
-                }
-                catch
-                {
-                    // Ignore errors
-                }
-
-                var editorSnippet = snippet.CreateAvalonEditSnippet(className);
-                using (textArea.Document.RunUpdate())
-                {
-                    textArea.Document.Remove(completionSegment.Offset, completionSegment.Length);
-                    editorSnippet.Insert(textArea);
-                }
-                if (textArgs != null)
-                {
-                    textArgs.Handled = true;
-                }
-
-                return true;
+                textArgs.Handled = true;
             }
+
+            return expanded;
         }
 
         return false;
-    }
-
-    private async Task<string?> GetCurrentClassNameAsync(int position)
-    {
-        try
-        {
-            var semanticModel = await _document.GetSemanticModelAsync().ConfigureAwait(false);
-            if (semanticModel == null)
-            {
-                return null;
-            }
-
-            var root = await _document.GetSyntaxRootAsync().ConfigureAwait(false);
-            if (root == null)
-            {
-                return null;
-            }
-
-            // Use the actual completion position instead of document end
-            var node = root.FindToken(position).Parent;
-            
-            while (node != null)
-            {
-                var symbol = semanticModel.GetDeclaredSymbol(node);
-                if (symbol is Microsoft.CodeAnalysis.INamedTypeSymbol namedType)
-                {
-                    return namedType.Name;
-                }
-                node = node.Parent;
-            }
-        }
-        catch
-        {
-            // Ignore errors
-        }
-
-        return null;
     }
 
     public CommonImage? Image => _glyph.ToImageSource();
