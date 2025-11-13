@@ -13,6 +13,7 @@ partial class CodeTextEditor
     {
         MouseHover += OnMouseHover;
         MouseHoverStopped += OnMouseHoverStopped;
+        PreviewKeyDown += OnPreviewKeyDown;
 
         ToolTipService.SetInitialShowDelay(this, 0);
         _searchReplacePanel = SearchReplacePanel.Install(this);

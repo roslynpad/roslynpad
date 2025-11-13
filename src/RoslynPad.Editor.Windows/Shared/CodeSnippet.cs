@@ -41,50 +41,73 @@ internal sealed partial class CodeSnippet(string name, string description, strin
 
     public Snippet CreateAvalonEditSnippet()
     {
-        return CreateAvalonEditSnippet(Text);
+        return CreateAvalonEditSnippet(Text, null);
+    }
+
+    public Snippet CreateAvalonEditSnippet(string? className)
+    {
+        return CreateAvalonEditSnippet(Text, className);
     }
 
     private static readonly Regex s_pattern = Pattern();
 
-    public static Snippet CreateAvalonEditSnippet(string snippetText)
+    public static Snippet CreateAvalonEditSnippet(string snippetText, string? className = null)
     {
         ArgumentNullException.ThrowIfNull(snippetText);
-        var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
-        foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
+        
+        // Store the class name in thread-local storage for GetCurrentClass to access
+        // Treat empty string as null (no class name found)
+        if (!string.IsNullOrEmpty(className))
         {
-            var val = match.Groups[1].Value;
-            var equalsSign = val.IndexOf('=');
-            if (equalsSign > 0)
+            s_currentClassName.Value = className;
+        }
+        
+        try
+        {
+            var replaceableElements = new Dictionary<string, SnippetReplaceableTextElement>(StringComparer.OrdinalIgnoreCase);
+            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
             {
-                var name = val.Substring(0, equalsSign);
-                replaceableElements[name] = new SnippetReplaceableTextElement();
+                var val = match.Groups[1].Value;
+                var equalsSign = val.IndexOf('=');
+                if (equalsSign > 0)
+                {
+                    var name = val.Substring(0, equalsSign);
+                    replaceableElements[name] = new SnippetReplaceableTextElement();
+                }
             }
-        }
-        var snippet = new Snippet();
-        var pos = 0;
-        foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
-        {
-            if (pos < match.Index)
+            var snippet = new Snippet();
+            var pos = 0;
+            foreach (var match in s_pattern.Matches(snippetText).OfType<Match>())
             {
-                snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos, match.Index - pos) });
+                if (pos < match.Index)
+                {
+                    snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos, match.Index - pos) });
+                }
+                snippet.Elements.Add(CreateElementForValue(replaceableElements, match.Groups[1].Value, match.Index, snippetText));
+                pos = match.Index + match.Length;
             }
-            snippet.Elements.Add(CreateElementForValue(replaceableElements, match.Groups[1].Value, match.Index, snippetText));
-            pos = match.Index + match.Length;
+            if (pos < snippetText.Length)
+            {
+                snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos) });
+            }
+            if (!snippet.Elements.Any(e => e is SnippetCaretElement))
+            {
+                var element = snippet.Elements.Select((s, i) => new { s, i }).FirstOrDefault(s => s.s is SnippetSelectionElement);
+                var index = element?.i ?? -1;
+                if (index > -1)
+                    snippet.Elements.Insert(index + 1, new SnippetCaretElement());
+            }
+            return snippet;
         }
-        if (pos < snippetText.Length)
+        finally
         {
-            snippet.Elements.Add(new SnippetTextElement { Text = snippetText.Substring(pos) });
+            // Clear the thread-local storage
+            s_currentClassName.Value = null;
         }
-        if (!snippet.Elements.Any(e => e is SnippetCaretElement))
-        {
-            var element = snippet.Elements.Select((s, i) => new { s, i }).FirstOrDefault(s => s.s is SnippetSelectionElement);
-            var index = element?.i ?? -1;
-            if (index > -1)
-                snippet.Elements.Insert(index + 1, new SnippetCaretElement());
-        }
-        return snippet;
     }
 
+    private static readonly ThreadLocal<string?> s_currentClassName = new();
+    
     private static readonly Regex s_functionPattern = FunctionPattern();
 
     private static SnippetElement CreateElementForValue(Dictionary<string, SnippetReplaceableTextElement> replaceableElements, string val, int offset, string snippetText)
@@ -169,8 +192,7 @@ internal sealed partial class CodeSnippet(string name, string description, strin
 
     private static string? GetCurrentClass()
     {
-        // TODO
-        return null;
+        return s_currentClassName.Value;
     }
 
     private static Func<string, string>? GetFunction(string name)

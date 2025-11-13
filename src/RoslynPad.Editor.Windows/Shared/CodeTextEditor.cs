@@ -116,7 +116,24 @@ public partial class CodeTextEditor : TextEditor
             e.Handled = true;
         }
     }
-
+    private async void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        // Handle double-tab snippet expansion before the editor processes Tab for indentation
+        if (e.Key == Key.Tab &&
+            !IsCompletionWindowOpen &&
+            !IsInsightWindowOpen &&
+            !e.HasModifiers(ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift))
+        {
+            if (await TryExpandSnippetAsync().ConfigureAwait(true))
+            {
+                e.Handled = true;
+            }
+        }
+    }
+    protected virtual Task<bool> TryExpandSnippetAsync()
+    {
+        return Task.FromResult(false);
+    }
     private async void OnMouseHover(object? sender, MouseEventArgs e)
     {
         TextViewPosition? position;

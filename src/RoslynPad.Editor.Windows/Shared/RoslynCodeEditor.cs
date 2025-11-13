@@ -22,6 +22,7 @@ public class RoslynCodeEditor : CodeTextEditor
     private CancellationTokenSource? _braceMatchingCts;
     private RoslynHighlightingColorizer? _colorizer;
     private IBlockStructureService? _blockStructureService;
+    private SnippetManager? _snippetManager;
 
     public RoslynCodeEditor()
     {
@@ -125,6 +126,7 @@ public class RoslynCodeEditor : CodeTextEditor
     {
         _roslynHost = roslynHost ?? throw new ArgumentNullException(nameof(roslynHost));
         _classificationHighlightColors = highlightColors ?? throw new ArgumentNullException(nameof(highlightColors));
+        _snippetManager = new SnippetManager();
 
         _braceMatcherHighlighter = new BraceMatcherHighlightRenderer(TextArea.TextView, _classificationHighlightColors);
 
@@ -349,6 +351,51 @@ public class RoslynCodeEditor : CodeTextEditor
                     break;
             }
         }
+    }
+
+    protected override async Task<bool> TryExpandSnippetAsync()
+    {
+        if (_snippetManager == null)
+        {
+            return false;
+        }
+
+        // Get the word before the caret
+        var offset = CaretOffset;
+        if (offset == 0)
+        {
+            return false;
+        }
+
+        var document = Document;
+        var line = document.GetLineByOffset(offset);
+        var lineText = document.GetText(line.Offset, offset - line.Offset);
+        
+        // Extract snippet text from the line
+        var result = SnippetExpandHelper.ExtractSnippetTextFromLine(lineText, lineText.Length);
+        if (result == null)
+        {
+            return false; // No word found
+        }
+
+        var (wordStart, _) = result.Value;
+        var snippetStartOffset = line.Offset + wordStart;
+        var snippetLength = offset - snippetStartOffset;
+        
+        // Get the Roslyn document if available
+        Document? roslynDocument = null;
+        if (_roslynHost != null && _documentId != null)
+        {
+            roslynDocument = _roslynHost.GetDocument(_documentId);
+        }
+        
+        // Expand the snippet (extraction, class name resolution happens internally)
+        return await SnippetExpandHelper.ExpandSnippetAsync(
+            _snippetManager,
+            TextArea,
+            snippetStartOffset,
+            snippetLength,
+            roslynDocument).ConfigureAwait(false);
     }
 
     public async Task RefreshFoldings()
