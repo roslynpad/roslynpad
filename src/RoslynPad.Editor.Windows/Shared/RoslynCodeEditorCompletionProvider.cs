@@ -48,7 +48,6 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
 
     public async Task<CompletionResult> GetCompletionData(int position, char? triggerChar, bool useSignatureHelp)
     {
-        System.Diagnostics.Debug.WriteLine(triggerChar.ToString());
         IList<ICompletionDataEx>? completionData = null;
         IOverloadProviderEx? overloadProvider = null;
         var useHardSelection = true;
