@@ -36,7 +36,7 @@ public sealed class ContextActionsRenderer
     private readonly ContextActionsBulbContextMenu _contextMenu;
 
     private CancellationTokenSource? _cancellationTokenSource;
-    private List<object>? _actions;
+    private ObservableCollection<object>? _actions;
     private ImageSource? _iconImage;
 
     public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
@@ -44,6 +44,7 @@ public sealed class ContextActionsRenderer
         _editor = editor ?? throw new ArgumentNullException(nameof(editor));
         _textMarkerService = textMarkerService;
 
+        _actions = new ObservableCollection<object>();
         _contextMenu = CreateContextMenu();
         _bulbMargin = new MarkerMargin { Width = 16, Margin = new Thickness(0, 0, 5, 0) };
         _bulbMargin.MarkerPointerDown += (o, e) => OpenContextMenu();
@@ -87,7 +88,6 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        _contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
         OpenContextMenu();
     }
@@ -100,7 +100,7 @@ public sealed class ContextActionsRenderer
     private ContextActionsBulbContextMenu CreateContextMenu()
     {
         var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
-
+        contextMenu.ItemsSource = _actions;
         // TODO: workaround to refresh menu with latest document
 #if AVALONIA
         contextMenu.Opening
@@ -109,13 +109,8 @@ public sealed class ContextActionsRenderer
 #endif
             += async (sender, args) =>
             {
-                if (await LoadActionsWithCancellationAsync().ConfigureAwait(true))
-                {
-                    if (sender is ContextActionsBulbContextMenu menu)
-                    {
-                        menu.ItemsSource = _actions;
-                    }
-                }
+                // Reload actions when menu opens to ensure fresh data
+                await LoadActionsWithCancellationAsync().ConfigureAwait(true);
             };
 
         return contextMenu;
@@ -123,27 +118,42 @@ public sealed class ContextActionsRenderer
 
     private async Task<bool> LoadActionsWithCancellationAsync()
     {
+        // Cancel any previous operation before starting a new one
+        var previousCancellationTokenSource = _cancellationTokenSource;
+        if (previousCancellationTokenSource != null)
+        {
+            await previousCancellationTokenSource.CancelAsync().ConfigureAwait(false);
+        }
+        
         _cancellationTokenSource = new CancellationTokenSource();
         try
         {
-            _actions = await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
             return true;
+        }
+        catch (OperationCanceledException)
+        {
+            // Operation was cancelled, this is expected
+            return false;
         }
         catch (Exception)
         {
             // ignored
+            return false;
         }
-        _cancellationTokenSource = null;
-        return false;
+        finally
+        {
+            _cancellationTokenSource = null;
+        }
     }
 
     private ICommand? GetActionCommand(object action) =>
         _providers.Select(provider => provider.GetActionCommand(action))
             .FirstOrDefault(command => command != null);
 
-    private async Task<List<object>> LoadActionsAsync(CancellationToken cancellationToken)
+    private async Task LoadActionsAsync(CancellationToken cancellationToken)
     {
-        var allActions = new List<object>();
+        var newActions = new List<object>();
         foreach (var provider in _providers)
         {
             var offset = _editor.TextArea.Caret.Offset;
@@ -154,10 +164,25 @@ public sealed class ContextActionsRenderer
                 offset = marker.StartOffset;
                 length = marker.Length;
             }
-            var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(true);
-            allActions.AddRange(actions);
+            var actions = await provider.GetActions(offset, length, cancellationToken).ConfigureAwait(false);
+            newActions.AddRange(actions);
         }
-        return allActions;
+
+        // Update the ObservableCollection on the UI thread
+        await _editor.GetDispatcher();
+        
+        if (_actions == null)
+        {
+            _actions = new ObservableCollection<object>(newActions);
+        }
+        else
+        {
+            _actions.Clear();
+            foreach (var action in newActions)
+            {
+                _actions.Add(action);
+            }
+        }
     }
 
     private void ScrollChanged(object? sender, EventArgs e) => StartTimer();
@@ -187,7 +212,6 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        _contextMenu.ItemsSource = _actions!;
         _bulbMargin.LineNumber = _editor.TextArea.Caret.Line;
     }
 

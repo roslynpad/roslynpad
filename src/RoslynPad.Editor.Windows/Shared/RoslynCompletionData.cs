@@ -29,7 +29,7 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
 
     public async void Complete(TextArea textArea, ISegment completionSegment, EventArgs e)
     {
-        if (_glyph == Glyph.Snippet && CompleteSnippet(textArea, completionSegment, e) ||
+        if (_glyph == Glyph.Snippet && await CompleteSnippetAsync(textArea, completionSegment, e).ConfigureAwait(true) ||
             CompletionService.GetService(_document) is not { } completionService)
         {
             return;
@@ -66,7 +66,7 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
         }
     }
 
-    private bool CompleteSnippet(TextArea textArea, ISegment completionSegment, EventArgs e)
+    private async Task<bool> CompleteSnippetAsync(TextArea textArea, ISegment completionSegment, EventArgs e)
     {
         char? completionChar = null;
         var textArgs = e as CommonTextEventArgs;
@@ -81,22 +81,20 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
 
         if (completionChar == '\t')
         {
-            var snippet = _snippetManager.FindSnippet(_item.DisplayText);
-            if (snippet != null)
-            {
-                var editorSnippet = snippet.CreateAvalonEditSnippet();
-                using (textArea.Document.RunUpdate())
-                {
-                    textArea.Document.Remove(completionSegment.Offset, completionSegment.Length);
-                    editorSnippet.Insert(textArea);
-                }
-                if (textArgs != null)
-                {
-                    textArgs.Handled = true;
-                }
+            // Expand the snippet (extraction and class name resolution happens internally)
+            var expanded = await SnippetExpandHelper.ExpandSnippetAsync(
+                _snippetManager,
+                textArea,
+                completionSegment.Offset,
+                completionSegment.Length,
+                _document).ConfigureAwait(false);
 
-                return true;
+            if (expanded && textArgs != null)
+            {
+                textArgs.Handled = true;
             }
+
+            return expanded;
         }
 
         return false;
