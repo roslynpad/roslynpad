@@ -122,12 +122,10 @@ public partial class CodeTextEditor : TextEditor
         if (e.Key == Key.Tab &&
             !IsCompletionWindowOpen &&
             !IsInsightWindowOpen &&
-            !e.HasModifiers(ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift))
+            !e.HasModifiers(ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift) &&
+            await TryExpandSnippetAsync().ConfigureAwait(true))
         {
-            if (await TryExpandSnippetAsync().ConfigureAwait(true))
-            {
-                e.Handled = true;
-            }
+            e.Handled = true;
         }
     }
     protected virtual Task<bool> TryExpandSnippetAsync()
