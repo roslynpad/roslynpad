@@ -175,9 +175,9 @@ internal static class SnippetExpandHelper
                 node = node.Parent;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors
+            System.Diagnostics.Debug.WriteLine($"GetCurrentClassNameAsync error: {ex}");
         }
 
         return null;
