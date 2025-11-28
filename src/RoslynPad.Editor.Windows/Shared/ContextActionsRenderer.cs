@@ -120,9 +120,10 @@ public sealed class ContextActionsRenderer
     private async Task<bool> LoadActionsWithCancellationAsync()
     {
         // Cancel any previous operation before starting a new one
-        if (_cancellationTokenSource != null)
+        var previousCancellationTokenSource = _cancellationTokenSource;
+        if (previousCancellationTokenSource != null)
         {
-            await _cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+            await previousCancellationTokenSource.CancelAsync().ConfigureAwait(false);
         }
         
         _cancellationTokenSource = new CancellationTokenSource();
