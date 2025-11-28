@@ -151,6 +151,20 @@ internal class ApplicationSettings : IApplicationSettings
             OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
             EditorFontFamily = GetDefaultPlatformFontFamily();
+            DefaultUsings =
+            [
+                "System",
+                "System.Threading",
+                "System.Threading.Tasks",
+                "System.Collections",
+                "System.Collections.Generic",
+                "System.Text",
+                "System.Text.RegularExpressions",
+                "System.Linq",
+                "System.IO",
+                "System.Reflection",
+                "RoslynPad.Runtime",
+            ];
         }
 
         private static string GetDefaultPlatformFontFamily()
