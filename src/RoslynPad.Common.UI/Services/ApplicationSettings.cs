@@ -141,6 +141,7 @@ internal class ApplicationSettings : IApplicationSettings
         private string? _effectiveDocumentPath;
         private string? _customThemePath;
         private ThemeType? _customThemeType;
+        private string[]? _defaultUsings;
 
         public void LoadDefaultSettings()
         {
@@ -293,6 +294,12 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get => _builtInTheme;
             set => SetProperty(ref _builtInTheme, value);
+        }
+
+        public string[]? DefaultUsings
+        {
+            get => _defaultUsings;
+            set => SetProperty(ref _defaultUsings, value);
         }
 
         [JsonIgnore]
