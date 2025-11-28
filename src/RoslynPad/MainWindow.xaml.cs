@@ -1,10 +1,5 @@
-﻿using System.ComponentModel;
-using System.Composition.Hosting;
+﻿using System.Composition.Hosting;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Windows;
-using System.Windows.Controls;
 using System.Xml.Linq;
 using Avalon.Windows.Controls;
 using AvalonDock;

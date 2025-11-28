@@ -1,1 +1,5 @@
-<Project />
+<Project>
+    <PropertyGroup>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    </PropertyGroup>
+</Project>

@@ -29,16 +29,16 @@
   <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
     <DockPanel>
 
-      <Border Padding="3"
+      <Button Padding="3"
                 Margin="1"
                 Background="#eebbbb"
                 DockPanel.Dock="Bottom"
+                Click="OnErrorButtonClick"
+                VerticalAlignment="Stretch"
                 IsVisible="{Binding HasError}">
-        <DockPanel LastChildFill="False">
           <TextBlock VerticalAlignment="Center"
                      Text="{Binding LastError.Message}" />
-        </DockPanel>
-      </Border>
+      </Button>
 
       <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>

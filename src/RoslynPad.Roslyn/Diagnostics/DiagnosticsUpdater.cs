@@ -22,21 +22,20 @@ public class DiagnosticsUpdater : IDiagnosticsUpdater, IDisposable
     public ImmutableHashSet<string> DisabledDiagnostics { get; set; } = [];
 
     [ExportWorkspaceServiceFactory(typeof(IDiagnosticsUpdater))]
-    [method: ImportingConstructor]
-    internal class Factory(IDiagnosticAnalyzerService diagnosticAnalyzerService) : IWorkspaceServiceFactory
+    internal class Factory : IWorkspaceServiceFactory
     {
         public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)
         {
-            return new DiagnosticsUpdater(workspaceServices.Workspace, diagnosticAnalyzerService);
+            return new DiagnosticsUpdater(workspaceServices.Workspace, workspaceServices.GetRequiredService<IDiagnosticAnalyzerService>());
         }
     }
 
     [ImportingConstructor]
     public DiagnosticsUpdater(Workspace workspace, IDiagnosticAnalyzerService diagnosticAnalyzerService)
     {
-        workspace.DocumentOpened += OnDocumentOpened;
-        workspace.DocumentActiveContextChanged += OnDocumentActiveContextChanged;
-        workspace.WorkspaceChanged += OnWorkspaceChanged;
+        workspace.RegisterDocumentOpenedHandler(OnDocumentOpened);
+        workspace.RegisterDocumentActiveContextChangedHandler(OnDocumentActiveContextChanged);
+        workspace.RegisterWorkspaceChangedHandler(OnWorkspaceChanged);
         foreach (var document in workspace.CurrentSolution.Projects.SelectMany(p => p.Documents))
         {
             ConnectDocument(document);
@@ -63,17 +62,14 @@ public class DiagnosticsUpdater : IDiagnosticsUpdater, IDisposable
 
     public void Dispose()
     {
-        _workspace.DocumentOpened -= OnDocumentOpened;
-        _workspace.DocumentActiveContextChanged -= OnDocumentActiveContextChanged;
-        _workspace.WorkspaceChanged -= OnWorkspaceChanged;
         _cts.Cancel();
     }
 
-    private void OnDocumentOpened(object? sender, DocumentEventArgs args) => ConnectDocument(args.Document);
+    private void OnDocumentOpened(DocumentEventArgs args) => ConnectDocument(args.Document);
 
-    private void OnDocumentActiveContextChanged(object? sender, DocumentActiveContextChangedEventArgs e) => _workQueue.AddWork(e.NewActiveContextDocumentId);
+    private void OnDocumentActiveContextChanged(DocumentActiveContextChangedEventArgs e) => _workQueue.AddWork(e.NewActiveContextDocumentId);
 
-    private void OnWorkspaceChanged(object? sender, WorkspaceChangeEventArgs e)
+    private void OnWorkspaceChanged(WorkspaceChangeEventArgs e)
     {
         if (e.DocumentId is { } documentId)
         {

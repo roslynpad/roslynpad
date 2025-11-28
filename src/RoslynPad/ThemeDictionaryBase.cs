@@ -1,8 +1,6 @@
-﻿using System.Windows;
-using System.Windows.Media;
-using RoslynPad.Themes;
+﻿#pragma warning disable CA1010 // Generic interface should also be implemented
 
-#pragma warning disable CA1010 // Generic interface should also be implemented
+using RoslynPad.Themes;
 
 namespace RoslynPad;
 

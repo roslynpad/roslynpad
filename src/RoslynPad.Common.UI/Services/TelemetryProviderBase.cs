@@ -1,4 +1,6 @@
-﻿namespace RoslynPad.UI;
+﻿using System.Diagnostics;
+
+namespace RoslynPad.UI;
 
 public abstract class TelemetryProviderBase : ITelemetryProvider
 {
@@ -28,6 +30,7 @@ public abstract class TelemetryProviderBase : ITelemetryProvider
         }
 
         LastError = exception;
+        Debug.WriteLine(exception);
     }
 
     public void ReportError(Exception exception)

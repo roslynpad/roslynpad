@@ -1,7 +1,4 @@
-﻿using System.Globalization;
-using System.Windows.Data;
-
-namespace RoslynPad.Converters;
+﻿namespace RoslynPad.Converters;
 
 public class DoubleToPercentageTextConverter : IValueConverter
 {

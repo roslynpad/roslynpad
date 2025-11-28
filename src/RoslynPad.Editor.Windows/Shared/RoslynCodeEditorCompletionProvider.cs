@@ -61,7 +61,7 @@ public sealed class RoslynCodeEditorCompletionProvider : ICodeEditorCompletionPr
         if (useSignatureHelp || triggerChar != null)
         {
             var signatureHelpProvider = _roslynHost.GetService<ISignatureHelpProvider>();
-            var isSignatureHelp = useSignatureHelp || signatureHelpProvider.IsTriggerCharacter(triggerChar.GetValueOrDefault());
+            var isSignatureHelp = useSignatureHelp || signatureHelpProvider.TriggerCharacters.Contains(triggerChar.GetValueOrDefault());
             if (isSignatureHelp)
             {
                 var signatureHelp = await signatureHelpProvider.GetItemsAsync(

@@ -1,5 +1,3 @@
-using System.Composition;
-using System.Windows;
 using Microsoft.Win32;
 using RoslynPad.UI;
 

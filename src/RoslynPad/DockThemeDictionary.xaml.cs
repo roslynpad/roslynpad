@@ -1,7 +1,7 @@
-﻿using AvalonDock.Themes.VS2013.Themes;
-using RoslynPad.Themes;
+﻿#pragma warning disable CA1010 // Generic interface should also be implemented
 
-#pragma warning disable CA1010 // Generic interface should also be implemented
+using AvalonDock.Themes.VS2013.Themes;
+using RoslynPad.Themes;
 
 namespace RoslynPad;
 

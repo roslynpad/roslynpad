@@ -28,9 +28,15 @@ public class RoslynHost : IRoslynHost
             typeof(RoslynHost).Assembly,
         ];
 
+    private static readonly ImmutableArray<string> ExcludedTypeNames = [
+        "NullDiagnosticsRefresher"
+    ];
+
     internal static readonly ImmutableArray<Type> DefaultCompositionTypes =
         DefaultCompositionAssemblies.SelectMany(t => t.DefinedTypes).Select(t => t.AsType())
         .Concat(GetDiagnosticCompositionTypes())
+        .Where(t => !ExcludedTypeNames.Contains(t.Name))
+        .Distinct()
         .ToImmutableArray();
 
     private static IEnumerable<Type> GetDiagnosticCompositionTypes() => MetadataUtil.LoadTypesByNamespaces(

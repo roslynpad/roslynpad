@@ -26,7 +26,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Threading" />
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Composition" />
-    <PackageReference Include="System.Linq.Async" />
+    <PackageReference Include="System.Linq.AsyncEnumerable" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
   </ItemGroup>
   <ItemGroup>

@@ -117,7 +117,10 @@ partial class SaveDocumentDialog : UserControl, ISaveDocumentDialog, INotifyProp
 
     public void Close()
     {
-        DialogHost.Close(MainWindow.DialogHostIdentifier);
+        if (DialogHost.IsDialogOpen(MainWindow.DialogHostIdentifier))
+        {
+            DialogHost.Close(MainWindow.DialogHostIdentifier);
+        }
     }
 
     private void PerformSave()

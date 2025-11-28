@@ -206,7 +206,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return;
         }
 
-        _logger.LogInformation("Start ExecuteAsync");
+        _logger.StartExecuteAsync();
 
         await new NoContextYieldAwaitable();
 
@@ -355,7 +355,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         var diagnostics = script.CompileAndSaveAssembly(assemblyPath, cancellationToken);
         var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-        _logger.LogInformation("Assembly saved at {AssemblyPath}, has errors = {HasErrors}", _assemblyPath, hasErrors);
+        _logger.AssemblySaved(_assemblyPath, hasErrors);
 
         SendDiagnostics(diagnostics);
         return !hasErrors;
@@ -387,14 +387,16 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         var optimization = optimizationLevel ?? OptimizationLevel.Release;
 
-        _logger.LogInformation("Creating script runner, platform = {Platform}, " +
-            "references = {References}, imports = {Imports}, directory = {Directory}, " +
-            "optimization = {Optimization}",
-            platform,
-            MetadataReferences.Select(t => t.Display),
-            _imports,
-            _parameters.WorkingDirectory,
-            optimizationLevel);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            var referenceDisplays = MetadataReferences.Select(static reference => reference.Display).ToArray();
+            _logger.CreatingScriptRunner(
+                platform,
+                referenceDisplays,
+                _imports,
+                _parameters.WorkingDirectory,
+                optimizationLevel);
+        }
 
         var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
 
@@ -437,14 +439,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error killing process");
+                _logger.ErrorKillingProcess(ex);
             }
         });
 
-        _logger.LogInformation("Starting process {Executable}, arguments = {Arguments}", process.StartInfo.FileName, process.StartInfo.Arguments);
+        _logger.StartingProcess(process.StartInfo.FileName, process.StartInfo.Arguments);
         if (!process.Start())
         {
-            _logger.LogWarning("Process.Start returned false");
+            _logger.ProcessStartReturnedFalse();
             return;
         }
 
@@ -481,13 +483,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
     private async Task ReadProcessStreamAsync(StreamReader reader)
     {
-        while (!reader.EndOfStream)
+        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
         {
-            var line = await reader.ReadLineAsync().ConfigureAwait(false);
-            if (line != null)
-            {
-                Dumped?.Invoke(new ResultObject { Value = line });
-            }
+            Dumped?.Invoke(new ResultObject { Value = line });
         }
     }
 
@@ -773,7 +771,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error in previous restore task");
+                    _logger.ErrorInPreviousRestoreTask(ex);
                 }
 
                 var projBuildResult = await BuildCsproj().ConfigureAwait(false);
@@ -850,7 +848,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogWarning(ex, "Restore error");
+                _logger.RestoreError(ex);
                 RestoreCompleted?.Invoke(RestoreResult.FromErrors([ex.ToString()]));
             }
             finally

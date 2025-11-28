@@ -1,8 +1,4 @@
-﻿using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows;
-
-namespace RoslynPad;
+﻿namespace RoslynPad;
 
 internal static class BindingHelpers
 {

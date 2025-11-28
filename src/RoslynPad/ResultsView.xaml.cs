@@ -1,8 +1,4 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using RoslynPad.Build;
+﻿using RoslynPad.Build;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -45,7 +41,7 @@ public partial class ResultsView : UserControl
 
         if (result != null)
         {
-            Clipboard.SetText(ReferenceEquals(sender, CopyValueWithChildren) ? result.ToString() : result.Value);
+            Clipboard.SetText((ReferenceEquals(sender, CopyValueWithChildren) ? result.ToString() : result.Value) ?? string.Empty);
         }
     }
 

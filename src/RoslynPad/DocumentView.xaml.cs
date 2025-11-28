@@ -1,16 +1,8 @@
-﻿using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Input;
-using System.Windows.Media;
-using Avalon.Windows.Controls;
+﻿using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Editor;
-using RoslynPad.Themes;
 using RoslynPad.UI;
 
 namespace RoslynPad;

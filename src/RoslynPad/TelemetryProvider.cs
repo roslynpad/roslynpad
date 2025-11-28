@@ -1,7 +1,4 @@
-﻿using System.Composition;
-using System.Windows;
-using System.Windows.Threading;
-using RoslynPad.UI;
+﻿using RoslynPad.UI;
 
 namespace RoslynPad;
 

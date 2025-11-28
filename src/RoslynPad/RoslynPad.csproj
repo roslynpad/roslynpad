@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFramework)-windows</TargetFramework>
+    <RuntimeIdentifier Condition=" '$(IsMacOs)' == 'true' ">win-x64</RuntimeIdentifier>
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
@@ -28,5 +29,31 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Bug in SDK? -->
+    <Using Include="System" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.Composition" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Collections.Immutable" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.IO" />
+    <Using Include="System.Text" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Net.Http" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Windows" />
+    <Using Include="System.Windows.Data" />
+    <Using Include="System.Windows.Documents" />
+    <Using Include="System.Windows.Media" />
+    <Using Include="System.Windows.Media.Animation" />
+    <Using Include="System.Windows.Input" />
+    <Using Include="System.Windows.Controls" />
+    <Using Include="System.Windows.Threading" />
   </ItemGroup>
 </Project>

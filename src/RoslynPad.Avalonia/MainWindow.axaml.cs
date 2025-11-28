@@ -4,6 +4,7 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Dock.Model.Avalonia.Controls;
@@ -52,6 +53,22 @@ partial class MainWindow : Window
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
+    }
+
+    private void OnErrorButtonClick(object sender, RoutedEventArgs e)
+    {
+        new Window
+        {
+            Title = "Error Details",
+            Width = 600,
+            Height = 400,
+            Content = new TextBox
+            {
+                Text = _viewModel.LastError?.ToString(),
+                IsReadOnly = true,
+                AcceptsReturn = true
+            }
+        }.ShowDialog(this);
     }
 
     private void OnActiveDockableChanged(object sender, ActiveDockableChangedEventArgs e)

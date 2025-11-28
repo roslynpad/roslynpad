@@ -1,8 +1,5 @@
-﻿using System.Composition;
-using System.Reflection;
+﻿using Microsoft.Win32;
 using RoslynPad.UI;
-using System.Collections.Immutable;
-using Microsoft.Win32;
 
 namespace RoslynPad;
 
