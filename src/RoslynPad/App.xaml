@@ -19,6 +19,9 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:KeySequenceToGestureConverter x:Key="KeySequenceToGestureConverter" />
+            <converters:CommandToDescriptionConverter x:Key="CommandToDescriptionConverter" />
+            
             <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
             <formatting:BooleanToVisibilityConverter x:Key="BooleanToVisibilityHiddenConverter"
                                                      FalseValue="Hidden" />

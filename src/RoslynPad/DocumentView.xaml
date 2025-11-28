@@ -9,19 +9,26 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
-        <KeyBinding Key="F5"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.RunScript}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.RunScript}}"
                     Command="{Binding RunCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Shift+F5"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.TerminateRunningScript}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.TerminateRunningScript}}"
                     Command="{Binding TerminateCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+S"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.SaveDocument}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.SaveDocument}}"
                     Command="{Binding SaveCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+D"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.FormatDocument}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.FormatDocument}}"
                     Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+K"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.CommentSelection}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.CommentSelection}}"
                     Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+U"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.UncommentSelection}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.UncommentSelection}}"
                     Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="F2"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.RenameSymbol}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.RenameSymbol}}"
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <DockPanel>
@@ -50,7 +57,7 @@
                      BorderBrush="{DynamicResource {x:Static rp:ThemeDictionary.TabBarBorder}}"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand, Mode=OneTime}"
-                        ToolTip="Run (F5)">
+                        ToolTip="{Binding Converter={StaticResource CommandToDescriptionConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.RunScript}}">
                     <Grid>
                         <Image>
                             <Image.Style>

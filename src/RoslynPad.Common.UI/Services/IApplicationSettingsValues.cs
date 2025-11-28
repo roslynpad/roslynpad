@@ -5,6 +5,7 @@ namespace RoslynPad.UI;
 
 public interface IApplicationSettingsValues : INotifyPropertyChanged
 {
+    IList<KeyBinding>? KeyBindings { get; set; }
     bool SendErrors { get; set; }
     bool EnableBraceCompletion { get; set; }
     string? LatestVersion { get; set; }
