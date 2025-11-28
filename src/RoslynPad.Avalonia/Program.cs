@@ -1,15 +1,13 @@
 ﻿using Avalonia;
-using System;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+class Program
 {
-    class Program
-    {
-        public static AppBuilder BuildAvaloniaApp()
-          => AppBuilder.Configure<App>().UsePlatformDetect();
+    public static AppBuilder BuildAvaloniaApp()
+      => AppBuilder.Configure<App>().UsePlatformDetect();
 
-        [STAThread]
-        public static int Main(string[] args)
-          => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-    }
+    [STAThread]
+    public static int Main(string[] args)
+      => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 }

@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:roslynPad="clr-namespace:RoslynPad"
+        xmlns:rp="clr-namespace:RoslynPad"
         xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
-        xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
-        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+        xmlns:av="https://github.com/aelij/wpfcontrib"
+        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI" xmlns:controls="clr-namespace:RoslynPad.Controls"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance ui:MainViewModelBase}"
+        d:DataContext="{d:DesignInstance ui:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         Title="{Binding WindowTitle, Mode=OneTime}"
@@ -39,7 +39,7 @@
     <FrameworkElement.Resources>
 
         <DataTemplate DataType="{x:Type ui:OpenDocumentViewModel}">
-            <roslynPad:DocumentView />
+            <rp:DocumentView />
         </DataTemplate>
 
     </FrameworkElement.Resources>
@@ -47,7 +47,8 @@
         <DockPanel>
             <Border Padding="3"
                     Margin="1"
-                    Background="#eebbbb"
+                    Background="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarItemErrorBackground}}"
+                    TextBlock.Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarItemErrorForeground}}"
                     DockPanel.Dock="Bottom"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel LastChildFill="False">
@@ -69,7 +70,8 @@
             <Grid IsEnabled="{Binding IsInitialized}">
                 <dock:DockingManager Name="DockingManager"
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
-                                     ActiveContent="{Binding CurrentOpenDocument, Mode=TwoWay}"
+                                     ActiveContent="{Binding ActiveContent, Mode=TwoWay}"
+                                     ActiveContentChanged="DockingManager_ActiveContentChanged"
                                      DocumentClosing="DockingManager_OnDocumentClosing"
                                      AnchorableContextMenu="{x:Null}">
                     <dock:DockingManager.DocumentHeaderTemplate>
@@ -112,18 +114,49 @@
                                                        Title="Documents">
                                     <DockPanel x:Name="DocumentTree">
                                         <AdornerDecorator>
-                                            <roslynPad:DocumentTreeView />
+                                            <rp:DocumentTreeView />
                                         </AdornerDecorator>
                                     </DockPanel>
                                 </dock:LayoutAnchorable>
                             </dock:LayoutAnchorablePane>
-                            <dock:LayoutDocumentPane />
+                            <dock:LayoutPanel Orientation="Vertical">
+                                <dock:LayoutDocumentPane />
+                                <dock:LayoutAnchorablePane Name="ResultsPane"
+                                                           DockHeight="250">
+                                    <dock:LayoutAnchorable x:Name="Results"
+                                                           CanClose="False"
+                                                           CanHide="False"
+                                                           CanAutoHide="True"
+                                                           Title="Results">
+                                        <DockPanel x:Name="ResultsView">
+                                            <AdornerDecorator DataContext="{Binding CurrentOpenDocument}">
+                                                <rp:ResultsView />
+                                            </AdornerDecorator>
+                                        </DockPanel>
+                                    </dock:LayoutAnchorable>
+                                    <dock:LayoutAnchorable x:Name="IL"
+                                                           CanHide="False"
+                                                           CanClose="False"
+                                                           CanAutoHide="True"
+                                                           Title="IL">
+                                        <DockPanel x:Name="ILViewer">
+                                            <AdornerDecorator DataContext="{Binding CurrentOpenDocument}">
+                                                <controls:ILViewer Text="{Binding ILText}"
+                                                                   IsVisibleChanged="ILViewer_IsVisibleChanged"
+                                                                   FontFamily="{Binding MainViewModel.Settings.EditorFontFamily}"
+                                                                   FontSize="{Binding MainViewModel.EditorFontSize}" />
+                                            </AdornerDecorator>
+                                        </DockPanel>
+                                    </dock:LayoutAnchorable>
+                                </dock:LayoutAnchorablePane>
+                            </dock:LayoutPanel>
                         </dock:LayoutPanel>
                     </dock:LayoutRoot>
                 </dock:DockingManager>
 
                 <UniformGrid HorizontalAlignment="Center"
-                             VerticalAlignment="Center"
+                             VerticalAlignment="Top"
+                             Margin="0,100,0,0"
                              Rows="1"
                              Visibility="{Binding HasNoOpenDocuments, Converter={StaticResource BooleanToVisibilityConverter}}">
 
@@ -162,6 +195,7 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
+                            TextBlock.Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarForeground}}"
                             Margin="5">
 
                     <ToggleButton Margin="20 0 0 0"
@@ -215,8 +249,8 @@
                             ToolTip="Font Size"
                             ToolTipService.Placement="Top"
                             Margin="5 0 0 0"
-                            Minimum="{Binding MinimumEditorFontSize, Mode=OneTime}"
-                            Maximum="{Binding MaximumEditorFontSize, Mode=OneTime}"
+                            Minimum="{x:Static ui:MainViewModel.MinimumFontSize}"
+                            Maximum="{x:Static ui:MainViewModel.MaximumFontSize}"
                             SmallChange="1"
                             LargeChange="10"
                             IsSnapToTickEnabled="True"

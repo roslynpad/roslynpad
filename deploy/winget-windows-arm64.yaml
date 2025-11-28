@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.4.0.schema.json
+
+PackageIdentifier: RoslynPad.RoslynPad
+PackageName: RoslynPad
+PackageVersion: 20.0.0
+PackageLocale: en-US
+PublisherUrl: https://roslynpad.net
+Publisher: Eli Arbel
+ShortDescription: C# editor and runner based on Roslyn
+License: MIT
+InstallerType: zip
+Installers:
+- Architecture: arm64
+  NestedInstallerType: portable
+  NestedInstallerFiles:
+  - RelativeFilePath: ./RoslynPad.exe
+    PortableCommandAlias: RoslynPad
+  InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/20/RoslynPad-windows-arm64.zip
+  InstallerSha256: EC64C4C4C73E0DAF400D2EA2FEE0B8BE12A91E3DF6716886CEE116B3F693C662
+ManifestType: singleton
+ManifestVersion: 1.4.0

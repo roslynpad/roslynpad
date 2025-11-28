@@ -1,9 +1,8 @@
-﻿namespace RoslynPad.Roslyn.LanguageServices
-{
-    internal interface IRoslynDialog
-    {
-        object ViewModel { get; set; }
+﻿namespace RoslynPad.Roslyn.LanguageServices;
 
-        bool? Show();
-    }
+internal interface IRoslynDialog
+{
+    object ViewModel { get; set; }
+
+    bool? Show();
 }

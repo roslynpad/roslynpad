@@ -1,0 +1,40 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             x:Class="RoslynPad.SaveDocumentDialog"
+             x:DataType="local:SaveDocumentDialog"
+             MinWidth="300"
+             BorderThickness="1"
+             BorderBrush="Gray"
+             Background="{DynamicResource ThemeBackgroundColor}">
+    <StackPanel Margin="10">
+        <TextBlock Text="Save Document"
+                   Classes="Title" />
+        <TextBox Name="DocumentTextBox"
+                 KeyDown="DocumentText_KeyDown"
+                 Text="{Binding DocumentName}"
+                 IsEnabled="{Binding AllowNameEdit}"
+                 MaxLength="200"
+                 Margin="0,10,0,0" />
+        <StackPanel HorizontalAlignment="Right"
+                    Orientation="Horizontal"
+                    Margin="50,30,0,0">
+            <Button Name="OverwriteButton"
+                    BorderBrush="Red"
+                    IsVisible="false"
+                    Content="_Overwrite"
+                    Click="Overwrite_Click"/>
+            <Button IsDefault="True"
+                    Name="SaveButton"
+                    Content="_Save"
+                    Click="Save_Click" />
+            <Button Content="_Don't Save"
+                    IsVisible="{Binding ShowDoNotSave}"
+                    Name="DontSaveButton"
+                    Click="DoNotSave_Click" />
+            <Button Content="_Cancel"
+                    IsCancel="True"
+                    Click="Cancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

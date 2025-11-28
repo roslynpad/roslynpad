@@ -2,13 +2,15 @@
 using Microsoft.CodeAnalysis.CSharp;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace RoslynPad.Build
-{
-    internal static class BuildCode
-    {
-        public const string ScriptInit = "RoslynPad.Runtime.RuntimeInitializer.Initialize();";
+namespace RoslynPad.Build;
 
-        public const string ModuleInitAttribute = @"
+internal static class BuildCode
+{
+    public const string ScriptInit = "RoslynPad.Runtime.RuntimeInitializer.Initialize();";
+
+    public const string ModuleInitAttributeFileName = "ModuleInitializerAttribute.cs";
+
+    public const string ModuleInitAttribute = @"
             using System;
 
             namespace System.Runtime.CompilerServices
@@ -18,7 +20,9 @@ namespace RoslynPad.Build
             }
         ";
 
-        public const string ModuleInit = @"
+    public const string ModuleInitFileName = "ModuleInitializer.cs";
+
+    public const string ModuleInit = @"
             internal static class ModuleInitializer
             {
                 [System.Runtime.CompilerServices.ModuleInitializer]
@@ -27,13 +31,12 @@ namespace RoslynPad.Build
             }
         ";
 
-        public static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
-            GlobalStatement(
-                ExpressionStatement(
-                InvocationExpression(
-                    MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        statement.Expression,
-                        IdentifierName("Dump")))));
-    }
+    public static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
+        GlobalStatement(
+            ExpressionStatement(
+            InvocationExpression(
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    statement.Expression,
+                    IdentifierName("Dump")))));
 }

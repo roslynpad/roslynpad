@@ -1,9 +1,8 @@
-namespace RoslynPad.Roslyn.SignatureHelp
+namespace RoslynPad.Roslyn.SignatureHelp;
+
+public enum SignatureHelpTriggerReason
 {
-    public enum SignatureHelpTriggerReason
-    {
-        InvokeSignatureHelpCommand,
-        TypeCharCommand,
-        RetriggerCommand
-    }
+    InvokeSignatureHelpCommand,
+    TypeCharCommand,
+    RetriggerCommand
 }

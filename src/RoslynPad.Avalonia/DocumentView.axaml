@@ -1,0 +1,208 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RoslynPad.DocumentView"
+             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:build="clr-namespace:RoslynPad.Build;assembly=RoslynPad.Build"
+             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
+             xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+             xmlns:converters="clr-namespace:RoslynPad.Converters"
+             x:DataType="ui:OpenDocumentViewModel">
+  <UserControl.Resources>
+    <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
+  </UserControl.Resources>
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="F5"
+                Command="{Binding RunCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="Shift+F5"
+                Command="{Binding TerminateCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}"
+                Command="{Binding SaveCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+D, macOS=Cmd+D}"
+                Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+K, macOS=Cmd+K}"
+                Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+U, macOS=Cmd+U}"
+                Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="F2"
+                Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
+  </UserControl.KeyBindings>
+  <Grid RowDefinitions="Auto,*">
+    <StackPanel Grid.Row="0"
+                Name="Toolbar"
+                Orientation="Horizontal">
+      <StackPanel.Styles>
+        <Style Selector="#Toolbar > :is(Control)">
+          <Setter Property="Margin"
+                  Value="2" />
+        </Style>
+        <Style Selector="Button">
+          <Setter Property="Background"
+                  Value="Transparent" />
+          <Setter Property="BorderThickness"
+                  Value="0" />
+          <Setter Property="Padding"
+                  Value="0" />
+          <Setter Property="Margin"
+                  Value="0 0 3 0" />
+          <Setter Property="Width"
+                  Value="18" />
+          <Setter Property="Height"
+                  Value="18" />
+        </Style>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+          <Setter Property="Background"
+                  Value="#eeeeee" />
+        </Style>
+      </StackPanel.Styles>
+      <Button Command="{Binding RunCommand, Mode=OneTime}"
+              ToolTip.Tip="Run (F5)">
+        <Grid>
+          <Image Source="{StaticResource Run}"
+                 Width="16"
+                 Height="16"/>
+          <ProgressBar VerticalAlignment="Bottom"
+                       Height="4"
+                       IsIndeterminate="{Binding IsRunning}"
+                       BorderThickness="0"
+                       IsVisible="{Binding IsRunning}" />
+        </Grid>
+      </Button>
+      <Grid Margin="5, 0"
+            IsVisible="{Binding HasReportedProgress}" >
+        <ProgressBar Value="{Binding ReportedProgress, Mode=OneWay}"
+                     Minimum="0.0"
+                     Maximum="1.0" />
+        <TextBlock Text="{Binding ReportedProgress, Mode=OneWay, Converter={StaticResource DoubleToPercentageTextConverter}}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+      </Grid>
+      <Button Command="{Binding TerminateCommand, Mode=OneTime}"
+              ToolTip.Tip="{OnPlatform Terminate process (Shift+F5), macOS=Terminate process (⇧ F5)}"
+              IsEnabled="{Binding IsRunning}" >
+        <Image Source="{StaticResource Stop}"
+               Width="16"
+               Height="16" />
+      </Button>
+      <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
+                SelectedItem="{Binding Platform}" />
+      <Button ToolTip.Tip="Set platform as default"
+              Command="{Binding SetDefaultPlatformCommand, Mode=OneTime}">
+        <Image Source="{StaticResource SetPlatform}"
+               Width="16"
+               Height="16"/>
+      </Button>
+      <Separator />
+      <Button Command="{Binding SaveCommand, Mode=OneTime}"
+              ToolTip.Tip="{OnPlatform Save (Ctrl+S), macOS=Save (⌘ S)}" >
+        <Image Source="{StaticResource Save}"
+               Width="16"
+               Height="16"/>
+      </Button>
+      <Button Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
+              ToolTip.Tip="Open Build Folder">
+        <Image Source="{StaticResource PackageFolder}"
+               Width="16"
+               Height="16"/>
+      </Button>
+      <Separator />
+      <Menu Background="Transparent"
+            Name="RootMenu">
+        <MenuItem Name="RootNuGetMenu"
+                  IsSubMenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
+                  ItemsSource="{Binding NuGet.Packages}"
+                  Header="{Binding NuGet, Mode=OneTime}"
+                  ToolTip.Tip="NuGet Packages">
+          <MenuItem.Styles>
+            <Style Selector="MenuItem Popup">
+              <Setter Property="MaxHeight" Value="400" />
+            </Style>
+            <Style Selector="MenuItem > MenuItem"
+                   x:DataType="ui:PackageData">
+              <Setter Property="Command"
+                      Value="{Binding InstallPackageCommand}" />
+              <Setter Property="CommandParameter"
+                      Value="{Binding}" />
+            </Style>
+          </MenuItem.Styles>
+          <MenuItem.DataTemplates>
+            <DataTemplate DataType="ui:PackageData">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Id, Mode=OneTime}" />
+                <TextBlock Text="{Binding Version, Mode=OneTime}" />
+              </StackPanel>
+            </DataTemplate>
+            <DataTemplate DataType="ui:NuGetDocumentViewModel">
+              <Grid>
+                <Image Source="{StaticResource NuGet}"
+                       Width="16"
+                       Height="16" />
+                <ProgressBar VerticalAlignment="Bottom"
+                             Height="4"
+                             MinWidth="0"
+                             BorderThickness="0"
+                             IsIndeterminate="{Binding IsSearching}"
+                             IsVisible="{Binding IsSearching}" />
+              </Grid>
+            </DataTemplate>
+          </MenuItem.DataTemplates>
+        </MenuItem>
+      </Menu>
+      <TextBox Name="NuGetSearch"
+               BorderBrush="#eeeeee"
+               Text="{Binding NuGet.SearchTerm}"
+               Watermark="{OnPlatform Search NuGet (Ctrl+T), macOS=Search NuGet (⌘ T)}"
+               Width="200" />
+      <Decorator VerticalAlignment="Center">
+        <CheckBox IsChecked="{Binding NuGet.Prerelease}"
+                  ToolTip.Tip="Include prerelease packages"
+                  Content="Prerelease" />
+      </Decorator>
+      <ContentPresenter Content="{Binding NuGet}">
+        <ContentPresenter.ContentTemplate>
+          <DataTemplate DataType="ui:NuGetDocumentViewModel">
+            <Grid>
+              <Image Source="{StaticResource NuGet}"
+                     Width="16"
+                     Height="16"/>
+              <ProgressBar VerticalAlignment="Bottom"
+                               Height="4"
+                               MinWidth="0"
+                               BorderThickness="0"
+                               IsIndeterminate="{Binding IsSearching}"
+                               IsVisible="{Binding IsSearching}" />
+            </Grid>
+          </DataTemplate>
+        </ContentPresenter.ContentTemplate>
+      </ContentPresenter>
+      <Separator />
+      <Button ToolTip.Tip="{OnPlatform Format Document (Ctrl+D), macOS=Format Document (⌘ D)}"
+              Command="{Binding FormatDocumentCommand, Mode=OneTime}">
+        <Image Source="{StaticResource FormatDocument}"
+               Width="16"
+               Height="16" />
+      </Button>
+      <Button ToolTip.Tip="{OnPlatform Comment Selection (Ctrl+K), macOS=Comment Selection (⌘ K)}"
+              Command="{Binding CommentSelectionCommand, Mode=OneTime}">
+        <Image Source="{StaticResource CommentCode}"
+               Width="16"
+               Height="16" />
+      </Button>
+      <Button ToolTip.Tip="{OnPlatform Uncomment Selection (Ctrl+U), macOS=Uncomment Selection (⌘ U)}"
+              Command="{Binding UncommentSelectionCommand, Mode=OneTime}" >
+        <Image Source="{StaticResource UncommentCode}"
+               Width="16"
+               Height="16" />
+      </Button>
+      <Button ToolTip.Tip="Rename Symbol (F2)"
+              Command="{Binding RenameSymbolCommand, Mode=OneTime}" >
+        <Image Source="{StaticResource Rename}"
+               Width="16"
+               Height="16"/>
+      </Button>
+    </StackPanel>
+
+    <Editor:RoslynCodeEditor Name="Editor"
+                             ContextActionsIcon="{DynamicResource Bulb}"
+                             Grid.Row="1" />
+  </Grid>
+</UserControl>

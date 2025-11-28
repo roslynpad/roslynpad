@@ -1,16 +1,14 @@
-﻿using System;
-using System.Runtime;
+﻿using System.Runtime;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+public partial class App
 {
-    public partial class App
-    {
-        private const string ProfileFileName = "RoslynPad.jitprofile";
+    private const string ProfileFileName = "RoslynPad.jitprofile";
 
-        public App()
-        {
-            ProfileOptimization.SetProfileRoot(AppContext.BaseDirectory);
-            ProfileOptimization.StartProfile(ProfileFileName);
-        }
+    public App()
+    {
+        ProfileOptimization.SetProfileRoot(AppContext.BaseDirectory);
+        ProfileOptimization.StartProfile(ProfileFileName);
     }
 }

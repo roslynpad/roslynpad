@@ -1,52 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace RoslynPad.Build;
 
-namespace RoslynPad.Build
+internal record LibraryRef(LibraryRef.RefKind Kind, string Value, string Version) : IComparable<LibraryRef>
 {
-    internal class LibraryRef : IEquatable<LibraryRef>
+    public static LibraryRef Reference(string path) => new(RefKind.Reference, path, string.Empty);
+    public static LibraryRef FrameworkReference(string id) => new(RefKind.FrameworkReference, id.ToLowerInvariant(), string.Empty);
+    public static LibraryRef PackageReference(string id, string versionRange) => new(RefKind.PackageReference, id.ToLowerInvariant(), versionRange);
+
+    public int CompareTo(LibraryRef? other)
     {
-        private LibraryRef(RefKind kind, string value, string version)
+        if (other == null) return 1;
+
+        if (Kind.CompareTo(other.Kind) is var kindCompare and not 0)
         {
-            Kind = kind;
-            Value = value;
-            Version = version;
+            return kindCompare;
         }
 
-        public static LibraryRef Reference(string path) => new(RefKind.Reference, path, string.Empty);
-        public static LibraryRef FrameworkReference(string id) => new(RefKind.FrameworkReference, id, string.Empty);
-        public static LibraryRef PackageReference(string id, string versionRange) => new(RefKind.PackageReference, id, versionRange);
-
-        public override bool Equals(object? obj)
+        if (StringComparer.Ordinal.Compare(Value, other.Value) is var valueCompare and not 0)
         {
-            return Equals(obj as LibraryRef);
+            return valueCompare;
         }
 
-        public bool Equals(LibraryRef? other)
-        {
-            return other != null &&
-                   Kind == other.Kind &&
-                   Value == other.Value &&
-                   Version == other.Version;
-        }
+        return StringComparer.Ordinal.Compare(Version, other.Version);
+    }
 
-        public override int GetHashCode()
-        {
-            var hashCode = -282739388;
-            hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Value);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Version);
-            return hashCode;
-        }
-
-        public RefKind Kind { get; }
-        public string Value { get; }
-        public string Version { get; }
-
-        public enum RefKind
-        {
-            Reference,
-            FrameworkReference,
-            PackageReference
-        }
+    public enum RefKind
+    {
+        Reference,
+        FrameworkReference,
+        PackageReference
     }
 }

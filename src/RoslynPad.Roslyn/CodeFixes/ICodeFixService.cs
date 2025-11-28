@@ -1,16 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Text;
 
-namespace RoslynPad.Roslyn.CodeFixes
-{
-    public interface ICodeFixService
-    {
-        Task<IEnumerable<CodeFixCollection>> GetFixesAsync(Document document, TextSpan textSpan, bool includeSuppressionFixes, CancellationToken cancellationToken);
+namespace RoslynPad.Roslyn.CodeFixes;
 
-        CodeFixProvider? GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds);
-    }
+public interface ICodeFixService
+{
+    IAsyncEnumerable<CodeFixCollection> StreamFixesAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken);
+
+    CodeFixProvider? GetSuppressionFixer(string language, IEnumerable<string> diagnosticIds);
 }

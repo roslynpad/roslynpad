@@ -1,42 +1,27 @@
-﻿using System.Collections.Generic;
-using System.Composition;
-using System.Linq;
+﻿using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host.Mef;
 
-namespace RoslynPad.Roslyn.Snippets
+namespace RoslynPad.Roslyn.Snippets;
+
+[ExportLanguageService(typeof(Microsoft.CodeAnalysis.Snippets.ISnippetInfoService), LanguageNames.CSharp)]
+[method: ImportingConstructor]
+internal sealed class SnippetInfoService([Import(AllowDefault = true)] ISnippetInfoService inner) : Microsoft.CodeAnalysis.Snippets.ISnippetInfoService
 {
-    public interface ISnippetInfoService
+    public IEnumerable<Microsoft.CodeAnalysis.Snippets.SnippetInfo> GetSnippetsIfAvailable()
     {
-        IEnumerable<SnippetInfo> GetSnippets();
+        return inner?.GetSnippets().Select(x => 
+            new Microsoft.CodeAnalysis.Snippets.SnippetInfo(x.Shortcut, x.Title, x.Description, ""))
+            ?? [];
     }
 
-    [ExportLanguageService(typeof(Microsoft.CodeAnalysis.Snippets.ISnippetInfoService), LanguageNames.CSharp)]
-    internal sealed class SnippetInfoService : Microsoft.CodeAnalysis.Snippets.ISnippetInfoService
+    public bool SnippetShortcutExists_NonBlocking(string? shortcut)
     {
-        private readonly ISnippetInfoService _inner;
+        return false;
+    }
 
-        [ImportingConstructor]
-        public SnippetInfoService([Import(AllowDefault = true)] ISnippetInfoService inner)
-        {
-            _inner = inner;
-        }
-
-        public IEnumerable<Microsoft.CodeAnalysis.Snippets.SnippetInfo> GetSnippetsIfAvailable()
-        {
-            return _inner?.GetSnippets().Select(x => 
-                new Microsoft.CodeAnalysis.Snippets.SnippetInfo(x.Shortcut, x.Title, x.Description, null))
-                ?? Enumerable.Empty<Microsoft.CodeAnalysis.Snippets.SnippetInfo>();
-        }
-
-        public bool SnippetShortcutExists_NonBlocking(string shortcut)
-        {
-            return false;
-        }
-
-        public bool ShouldFormatSnippet(Microsoft.CodeAnalysis.Snippets.SnippetInfo snippetInfo)
-        {
-            return false;
-        }
+    public bool ShouldFormatSnippet(Microsoft.CodeAnalysis.Snippets.SnippetInfo snippetInfo)
+    {
+        return false;
     }
 }

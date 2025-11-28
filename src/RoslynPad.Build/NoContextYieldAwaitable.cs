@@ -1,48 +1,40 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
+﻿using System.Runtime.CompilerServices;
 
-#pragma warning disable CA1822
+namespace RoslynPad.Build;
 
-namespace RoslynPad.Build
+/// <summary>
+/// Yields to the thread-pool.
+/// </summary>
+public readonly struct NoContextYieldAwaitable
 {
-    /// <summary>
-    /// Yields to the thread-pool.
-    /// </summary>
-    public readonly struct NoContextYieldAwaitable
+    public NoContextYieldAwaiter GetAwaiter() => new();
+
+    public readonly struct NoContextYieldAwaiter : ICriticalNotifyCompletion
     {
-        public NoContextYieldAwaiter GetAwaiter() => new();
+        public bool IsCompleted => Thread.CurrentThread.IsThreadPoolThread;
 
-        public readonly struct NoContextYieldAwaiter : ICriticalNotifyCompletion
+        public void OnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
+
+        public void UnsafeOnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
+
+        private static void QueueContinuation(Action continuation, bool flowContext)
         {
-            public bool IsCompleted => Thread.CurrentThread.IsThreadPoolThread;
+            ArgumentNullException.ThrowIfNull(continuation);
 
-            public void OnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
-
-            public void UnsafeOnCompleted(Action continuation) => QueueContinuation(continuation, flowContext: false);
-
-            private static void QueueContinuation(Action continuation, bool flowContext)
+            if (flowContext)
             {
-                if (continuation == null)
-                {
-                    throw new ArgumentNullException(nameof(continuation));
-                }
-
-                if (flowContext)
-                {
-                    ThreadPool.QueueUserWorkItem(s_waitCallbackRunAction, continuation);
-                }
-                else
-                {
-                    ThreadPool.UnsafeQueueUserWorkItem(s_waitCallbackRunAction, continuation);
-                }
+                ThreadPool.QueueUserWorkItem(s_waitCallbackRunAction, continuation);
             }
-
-            private static readonly WaitCallback s_waitCallbackRunAction = RunAction!;
-
-            private static void RunAction(object state) => ((Action)state)();
-
-            public void GetResult() { }
+            else
+            {
+                ThreadPool.UnsafeQueueUserWorkItem(s_waitCallbackRunAction, continuation);
+            }
         }
+
+        private static readonly WaitCallback s_waitCallbackRunAction = RunAction!;
+
+        private static void RunAction(object state) => ((Action)state)();
+
+        public void GetResult() { }
     }
 }

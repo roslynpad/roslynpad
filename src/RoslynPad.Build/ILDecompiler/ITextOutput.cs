@@ -16,12 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.IO;
+using System.Globalization;
 
-namespace RoslynPad.Build.ILDecompiler
-{
-	internal interface ITextOutput
+namespace RoslynPad.Build.ILDecompiler;
+
+internal interface ITextOutput
 	{
 		void Indent();
 		void Unindent();
@@ -31,7 +30,7 @@ namespace RoslynPad.Build.ILDecompiler
 		void WriteDefinition(string text, object definition, bool isLocal = true);
 		void WriteReference(string text, object reference, bool isLocal = false);
 
-        void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
+    void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
 		void MarkFoldEnd();
 	}
 	
@@ -39,7 +38,7 @@ namespace RoslynPad.Build.ILDecompiler
 	{
 		public static void Write(this ITextOutput output, string format, params object[] args)
 		{
-			output.Write(string.Format(format, args));
+			output.Write(string.Format(CultureInfo.InvariantCulture, format, args));
 		}
 		
 		public static void WriteLine(this ITextOutput output, string text)
@@ -50,87 +49,91 @@ namespace RoslynPad.Build.ILDecompiler
 		
 		public static void WriteLine(this ITextOutput output, string format, params object[] args)
 		{
-			output.WriteLine(string.Format(format, args));
+			output.WriteLine(string.Format(CultureInfo.InvariantCulture, format, args));
 		}
 	}
 
-    internal sealed class PlainTextOutput : ITextOutput
+internal sealed class PlainTextOutput : ITextOutput, IDisposable
+{
+    private readonly TextWriter _writer;
+    private int _indent;
+    private bool _needsIndent;
+
+    public PlainTextOutput(TextWriter writer)
     {
-        private readonly TextWriter _writer;
-        private int _indent;
-        private bool _needsIndent;
+        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+    }
 
-        public PlainTextOutput(TextWriter writer)
-        {
-            _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-        }
+    public PlainTextOutput()
+    {
+        _writer = new StringWriter();
+    }
+    
+    public override string ToString()
+    {
+        return _writer.ToString()!;
+    }
 
-        public PlainTextOutput()
-        {
-            _writer = new StringWriter();
-        }
-        
-        public override string ToString()
-        {
-            return _writer.ToString()!;
-        }
+    public void Indent()
+    {
+        _indent++;
+    }
 
-        public void Indent()
-        {
-            _indent++;
-        }
+    public void Unindent()
+    {
+        _indent--;
+    }
 
-        public void Unindent()
+    private void WriteIndent()
+    {
+        if (_needsIndent)
         {
-            _indent--;
-        }
-
-        private void WriteIndent()
-        {
-            if (_needsIndent)
+            _needsIndent = false;
+            for (var i = 0; i < _indent; i++)
             {
-                _needsIndent = false;
-                for (var i = 0; i < _indent; i++)
-                {
-                    _writer.Write('\t');
-                }
+                _writer.Write('\t');
             }
         }
+    }
 
-        public void Write(char ch)
-        {
-            WriteIndent();
-            _writer.Write(ch);
-        }
+    public void Write(char ch)
+    {
+        WriteIndent();
+        _writer.Write(ch);
+    }
 
-        public void Write(string? text)
-        {
-            WriteIndent();
-            _writer.Write(text);
-        }
+    public void Write(string? text)
+    {
+        WriteIndent();
+        _writer.Write(text);
+    }
 
-        public void WriteLine()
-        {
-            _writer.WriteLine();
-            _needsIndent = true;
-        }
+    public void WriteLine()
+    {
+        _writer.WriteLine();
+        _needsIndent = true;
+    }
 
-        public void WriteDefinition(string text, object definition, bool isLocal)
-        {
-            Write(text);
-        }
+    public void WriteDefinition(string text, object definition, bool isLocal)
+    {
+        Write(text);
+    }
 
-        public void WriteReference(string text, object reference, bool isLocal)
-        {
-            Write(text);
-        }
+    public void WriteReference(string text, object reference, bool isLocal)
+    {
+        Write(text);
+    }
 
-        void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
-        {
-        }
+    void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
+    {
+    }
 
-        void ITextOutput.MarkFoldEnd()
-        {
-        }
+    void ITextOutput.MarkFoldEnd()
+    {
+    }
+
+    public void Dispose()
+    {
+        _writer.Dispose();
     }
 }

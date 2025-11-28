@@ -1,37 +1,24 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynPad.Build
-{
-    internal class ExecutionHostParameters
-    {
-        public ExecutionHostParameters(
-            string buildPath,
-            string nuGetConfigPath,
-            ImmutableArray<string> imports,
-            ImmutableArray<string> disabledDiagnostics,
-            string workingDirectory,
-            SourceCodeKind sourceCodeKind,
-            bool checkOverflow = false,
-            bool allowUnsafe = true)
-        {
-            BuildPath = buildPath;
-            NuGetConfigPath = nuGetConfigPath;
-            Imports = imports;
-            DisabledDiagnostics = disabledDiagnostics;
-            WorkingDirectory = workingDirectory;
-            SourceCodeKind = sourceCodeKind;
-            CheckOverflow = checkOverflow;
-            AllowUnsafe = allowUnsafe;
-        }
+namespace RoslynPad.Build;
 
-        public string BuildPath { get; }
-        public string NuGetConfigPath { get; }
-        public ImmutableArray<string> Imports { get; set; }
-        public ImmutableArray<string> DisabledDiagnostics { get; }
-        public string WorkingDirectory { get; set; }
-        public SourceCodeKind SourceCodeKind { get; }
-        public bool CheckOverflow { get; }
-        public bool AllowUnsafe { get; }
-    }
+internal class ExecutionHostParameters(
+    string buildPath,
+    string nuGetConfigPath,
+    ImmutableArray<string> imports,
+    ImmutableHashSet<string> disabledDiagnostics,
+    string workingDirectory,
+    SourceCodeKind sourceCodeKind,
+    bool checkOverflow = false,
+    bool allowUnsafe = true)
+{
+    public string BuildPath { get; } = buildPath;
+    public string NuGetConfigPath { get; } = nuGetConfigPath;
+    public ImmutableArray<string> Imports { get; set; } = imports;
+    public ImmutableHashSet<string> DisabledDiagnostics { get; } = disabledDiagnostics;
+    public string WorkingDirectory { get; set; } = workingDirectory;
+    public SourceCodeKind SourceCodeKind { get; set; } = sourceCodeKind;
+    public bool CheckOverflow { get; } = checkOverflow;
+    public bool AllowUnsafe { get; } = allowUnsafe;
 }

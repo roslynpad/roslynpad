@@ -1,0 +1,3 @@
+{
+    "dotnet.defaultSolution": "src/RoslynPad.Avalonia.sln"
+}

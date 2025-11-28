@@ -1,19 +1,21 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Host;
 
-namespace RoslynPad.Roslyn
+namespace RoslynPad.Roslyn;
+
+public interface IRoslynHost
 {
-    public interface IRoslynHost
-    {
-        ParseOptions ParseOptions { get; }
+    ParseOptions ParseOptions { get; }
 
-        TService GetService<TService>();
+    TService GetService<TService>();
 
-        DocumentId AddDocument(DocumentCreationArgs args);
+    TService GetWorkspaceService<TService>(DocumentId documentId) where TService : IWorkspaceService;
 
-        Document? GetDocument(DocumentId documentId);
+    DocumentId AddDocument(DocumentCreationArgs args);
 
-        void CloseDocument(DocumentId documentId);
+    Document? GetDocument(DocumentId documentId);
 
-        MetadataReference CreateMetadataReference(string location);
-    }
+    void CloseDocument(DocumentId documentId);
+
+    MetadataReference CreateMetadataReference(string location);
 }

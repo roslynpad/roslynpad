@@ -1,108 +1,99 @@
-using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
-namespace RoslynPad.UI
+namespace RoslynPad.UI;
+
+public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataErrorInfo
 {
-    public abstract class NotificationObject : INotifyPropertyChanged, INotifyDataErrorInfo
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected bool SetProperty<T>([NotNullIfNotNull(nameof(value))] ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        if (!EqualityComparer<T>.Default.Equals(field, value))
         {
-            if (!EqualityComparer<T>.Default.Equals(field, value))
-            {
-                field = value;
-                OnPropertyChanged(propertyName);
-                return true;
-            }
-            return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        return false;
+    }
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private ConcurrentDictionary<string, List<ErrorInfo>>? _propertyErrors;
+
+    protected void SetError(string propertyName, string id, string message)
+    {
+        if (_propertyErrors == null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            LazyInitializer.EnsureInitialized(ref _propertyErrors, () => new ConcurrentDictionary<string, List<ErrorInfo>>());
         }
 
-        private ConcurrentDictionary<string, List<ErrorInfo>>? _propertyErrors;
+        var errors = _propertyErrors.GetOrAdd(propertyName, _ => []);
+        errors.RemoveAll(e => e.Id == id);
+        errors.Add(new ErrorInfo(id, message));
 
-        protected void SetError(string propertyName, string id, string message)
+        OnErrorsChanged(propertyName);
+    }
+
+    protected void ClearError(string propertyName, string id)
+    {
+        if (_propertyErrors == null) return;
+
+        _propertyErrors.TryGetValue(propertyName, out var errors);
+        if (errors?.RemoveAll(e => e.Id == id) > 0)
         {
-            if (_propertyErrors == null)
-            {
-                LazyInitializer.EnsureInitialized(ref _propertyErrors, () => new ConcurrentDictionary<string, List<ErrorInfo>>());
-            }
+            OnErrorsChanged(propertyName);
+        }
+    }
 
-            var errors = _propertyErrors.GetOrAdd(propertyName, _ => new List<ErrorInfo>());
-            errors.RemoveAll(e => e.Id == id);
-            errors.Add(new ErrorInfo(id, message));
+    protected void ClearErrors(string propertyName)
+    {
+        if (_propertyErrors == null) return;
+
+        _propertyErrors.TryGetValue(propertyName, out var errors);
+        if (errors?.Count > 0)
+        {
+            errors.Clear();
 
             OnErrorsChanged(propertyName);
         }
+    }
 
-        protected void ClearError(string propertyName, string id)
+    public IEnumerable GetErrors(string? propertyName)
+    {
+        if (propertyName == null)
         {
-            if (_propertyErrors == null) return;
-
-            _propertyErrors.TryGetValue(propertyName, out var errors);
-            if (errors?.RemoveAll(e => e.Id == id) > 0)
-            {
-                OnErrorsChanged(propertyName);
-            }
+            return Array.Empty<ErrorInfo>();
         }
 
-        protected void ClearErrors(string propertyName)
-        {
-            if (_propertyErrors == null) return;
+        List<ErrorInfo>? errors = null;
+        _propertyErrors?.TryGetValue(propertyName, out errors);
+        return errors?.AsEnumerable() ?? [];
+    }
 
-            _propertyErrors.TryGetValue(propertyName, out var errors);
-            if (errors?.Count > 0)
-            {
-                errors.Clear();
+    public bool HasErrors => _propertyErrors?.Any(c => c.Value.Count != 0) == true;
 
-                OnErrorsChanged(propertyName);
-            }
-        }
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
-        public IEnumerable GetErrors(string? propertyName)
-        {
-            if (propertyName == null)
-            {
-                return Array.Empty<ErrorInfo>();
-            }
+    protected virtual void OnErrorsChanged(string propertyName)
+    {
+        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+    }
 
-            List<ErrorInfo>? errors = null;
-            _propertyErrors?.TryGetValue(propertyName, out errors);
-            return errors?.AsEnumerable() ?? Array.Empty<ErrorInfo>();
-        }
+    protected class ErrorInfo(string id, string message)
+    {
+        public string Id { get; } = id;
 
-        public bool HasErrors => _propertyErrors?.Any(c => c.Value.Any()) == true;
+        public string Message { get; } = message;
 
-        public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
-
-        protected virtual void OnErrorsChanged(string propertyName)
-        {
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-        }
-
-        protected class ErrorInfo
-        {
-            public ErrorInfo(string id, string message)
-            {
-                Id = id;
-                Message = message;
-            }
-
-            public string Id { get; }
-
-            public string Message { get; }
-
-            public override string ToString() => Message;
-        }
+        public override string ToString() => Message;
     }
 }

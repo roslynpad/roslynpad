@@ -48,6 +48,7 @@
         <Style x:Key="DocumentItemContainerStyle"
                TargetType="controls:TreeListViewItem"
                BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
             <EventSetter Event="MouseDoubleClick"
                          Handler="OnDocumentClick" />
             <EventSetter Event="KeyDown"
@@ -72,63 +73,11 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition />
             <RowDefinition Height="Auto" />
+            <RowDefinition />
         </Grid.RowDefinitions>
 
-        <Border BorderBrush="#ABADB3"
-                BorderThickness="1,1,1,0"
-                Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
-            <DockPanel>
-                <ToggleButton DockPanel.Dock="Right"
-                              Style="{StaticResource SearchButtonStyle}"
-                              IsChecked="{Binding SearchUsingRegex}"
-                              ToolTip="Use Regular Expressions"
-                              Content="{StaticResource RegularExpression}" />
-                <ToggleButton DockPanel.Dock="Right"
-                              Style="{StaticResource SearchButtonStyle}"
-                              IsChecked="{Binding SearchFileContents}"
-                              ToolTip="Search File Contents"
-                              Content="{StaticResource FileCollection}" />
-                <Button DockPanel.Dock="Right"
-                        Style="{StaticResource SearchButtonStyle}"
-                        Command="{Binding ClearSearchCommand}"
-                        Visibility="{Binding CanClearSearch, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="Clear search (Esc)"
-                        Content="{StaticResource Close}" />
-                <Grid>
-                    <TextBox Name="SearchText"
-                             BorderThickness="0"
-                             Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
-                             KeyDown="Search_OnKeyDown" />
-                    <TextBlock Text="Search documents (press Enter)"
-                               IsHitTestVisible="False"
-                               Foreground="DarkGray">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility"
-                                        Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ElementName=SearchText, Path=Text}"
-                                                 Value="">
-                                        <Setter Property="Visibility"
-                                                Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
-            </DockPanel>
-        </Border>
-
-        <controls:TreeListView Grid.Row="1"
-                               ShowSeparator="False"
-                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"
-                               ItemsSource="{Binding DocumentRoot.Children, Converter={StaticResource FilterCollectionViewConverter}}" />
-
-        <ToolBar Grid.Row="2"
+        <ToolBar Grid.Row="0"
                  Background="Transparent"
                  BorderBrush="DarkGray"
                  BorderThickness="0 0 0 1"
@@ -164,7 +113,67 @@
                        Width="16"
                        Height="16" />
             </Button>
+            <Button ToolTip="Clear Restore Cache"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding ClearRestoreCacheCommand, Mode=OneTime}">
+                <Image Source="{StaticResource ClearContent}"
+                       Width="16"
+                       Height="16" />
+            </Button>
         </ToolBar>
 
+        <Border Grid.Row="1"
+                BorderBrush="#ABADB3"
+                BorderThickness="1,1,1,0"
+                Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+            <DockPanel>
+                <ToggleButton DockPanel.Dock="Right"
+                              Style="{StaticResource SearchButtonStyle}"
+                              IsChecked="{Binding SearchUsingRegex}"
+                              ToolTip="Use Regular Expressions"
+                              Content="{StaticResource RegularExpression}" />
+                <ToggleButton DockPanel.Dock="Right"
+                              Style="{StaticResource SearchButtonStyle}"
+                              IsChecked="{Binding SearchFileContents}"
+                              ToolTip="Search File Contents"
+                              Content="{StaticResource FileCollection}" />
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource SearchButtonStyle}"
+                        Command="{Binding ClearSearchCommand}"
+                        Visibility="{Binding CanClearSearch, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        ToolTip="Clear search (Esc)"
+                        Content="{StaticResource Close}" />
+                <Grid>
+                    <TextBox Name="SearchText"
+                             BorderThickness="0"
+                             Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                             Foreground="{DynamicResource {x:Static roslynPad:ThemeDictionary.InputForeground}}"
+                             KeyDown="Search_OnKeyDown" />
+                    <TextBlock Text="Search documents (press Enter)"
+                               IsHitTestVisible="False"
+                               Foreground="DarkGray">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=SearchText, Path=Text}"
+                                                 Value="">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <controls:TreeListView Grid.Row="2"
+                               ShowSeparator="False"
+                               ItemContainerStyle="{StaticResource DocumentItemContainerStyle}"
+                               ItemsSource="{Binding DocumentRoot.Children, Converter={StaticResource FilterCollectionViewConverter}}" />
     </Grid>
 </UserControl>

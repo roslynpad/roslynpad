@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
-using RoslynPad.Build;
+﻿using RoslynPad.Build;
 
-namespace RoslynPad.UI
+namespace RoslynPad.UI;
+
+internal interface IPlatformsFactory
 {
-    internal interface IPlatformsFactory
-    {
-        IEnumerable<ExecutionPlatform> GetExecutionPlatforms();
+    IReadOnlyList<ExecutionPlatform> GetExecutionPlatforms();
 
-        string DotNetExecutable { get; }
-    }
+    string DotNetExecutable { get; }
 }

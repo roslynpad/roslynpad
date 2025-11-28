@@ -1,0 +1,108 @@
+﻿<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+             xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
+             xmlns:roslynPadReplSample="clr-namespace:RoslynPadAvaloniaReplSample"
+             xmlns:codeFixes="clr-namespace:RoslynPad.Roslyn.CodeFixes;assembly=RoslynPad.Roslyn"
+             xmlns:codeCompletion="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
+             x:Class="RoslynPadAvaloniaReplSample.App">
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <Style Selector="TextBlock.h3">
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
+<Style Selector="codeCompletion|CompletionList">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <codeCompletion:CompletionListBox Name="PART_ListBox">
+            <codeCompletion:CompletionListBox.ItemTemplate>
+              <DataTemplate x:DataType="codeCompletion:ICompletionData">
+                <StackPanel Orientation="Horizontal">
+                  <Image Source="{CompiledBinding Image}"
+                         Width="16"
+                         Height="16"
+                         Margin="0,0,2,0" />
+                  <TextBlock Text="{CompiledBinding Content}" />
+                </StackPanel>
+              </DataTemplate>
+            </codeCompletion:CompletionListBox.ItemTemplate>
+          </codeCompletion:CompletionListBox>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+
+    <Style Selector="TextBlock.Title">
+      <Setter Property="FontSize" Value="16" />
+    </Style>
+
+    <Style Selector="DataValidationErrors">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <DockPanel LastChildFill="True">
+            <ContentControl DockPanel.Dock="Right"
+                            ContentTemplate="{TemplateBinding ErrorTemplate}"
+                            DataContext="{TemplateBinding Owner}"
+                            Content="{Binding (DataValidationErrors.Errors)}"
+                            IsVisible="{Binding (DataValidationErrors.HasErrors)}"/>
+            <ContentPresenter Name="PART_ContentPresenter"
+                              Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="{TemplateBinding BorderThickness}"
+                              CornerRadius="{TemplateBinding CornerRadius}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"/>
+          </DockPanel>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="ErrorTemplate">
+        <DataTemplate>
+          <Canvas Width="14" Height="14" Margin="4 0 1 0"
+                  Background="Transparent">
+            <Canvas.Styles>
+              <Style Selector="ToolTip">
+                <Setter Property="BorderBrush" Value="Red"/>
+              </Style>
+            </Canvas.Styles>
+            <ToolTip.Tip>
+                <TextBlock>Welllll</TextBlock>
+                <!--<ItemsControl ItemsSource="{Binding}"/>-->
+            </ToolTip.Tip>
+            <Path Data="M14,7 A7,7 0 0,0 0,7 M0,7 A7,7 0 1,0 14,7 M7,3l0,5 M7,9l0,2"
+                  Stroke="Red"
+                  StrokeThickness="2"/>
+          </Canvas>
+        </DataTemplate>
+      </Setter>
+    </Style>
+
+  </Application.Styles>
+  <Application.DataTemplates>
+
+    <DataTemplate DataType="{x:Type Drawing}">
+      <Image Source="{CompiledBinding Mode=OneTime}" />
+    </DataTemplate>
+
+    <TreeDataTemplate DataType="{x:Type codeFixes:CodeFixCollection}"
+                      ItemsSource="{CompiledBinding Fixes, Mode=OneTime}">
+      <TextBlock Text="{CompiledBinding Provider, Mode=OneTime}" />
+    </TreeDataTemplate>
+
+    <TreeDataTemplate DataType="{x:Type codeFixes:CodeFix}"
+                      ItemsSource="{CompiledBinding Action, Mode=OneTime, Converter={roslynPadReplSample:CodeActionsConverter}}">
+      <ContentPresenter Content="{CompiledBinding Action, Mode=OneTime}" />
+    </TreeDataTemplate>
+
+    <DataTemplate DataType="{x:Type codeActions:CodeAction}">
+      <DockPanel>
+        <Image Source="{CompiledBinding Mode=OneTime, Converter={roslynPadReplSample:CodeActionToGlyphConverter}}" />
+        <TextBlock Text="{CompiledBinding Title, Mode=OneTime}" />
+      </DockPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type codeAnalysis:Diagnostic}">
+      <TextBlock Text="{CompiledBinding Descriptor.Title, Mode=OneTime}" />
+    </DataTemplate>
+  </Application.DataTemplates>
+</Application>

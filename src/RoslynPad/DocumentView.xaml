@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="clr-namespace:RoslynPad.Controls"
+             xmlns:rp="clr-namespace:RoslynPad"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
              mc:Ignorable="d"
@@ -32,7 +32,9 @@
                     Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom"
+                   Background="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarBackground}}"
+                   Foreground="{DynamicResource {x:Static rp:ThemeDictionary.StatusBarForeground}}">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <DockPanel LastChildFill="False" />
@@ -49,13 +51,10 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition />
-                <RowDefinition Height="5" />
-                <RowDefinition Name="ResultPaneRow"
-                               Height="0" />
             </Grid.RowDefinitions>
             <ToolBar Grid.ColumnSpan="3"
                      Background="Transparent"
-                     BorderBrush="DarkGray"
+                     BorderBrush="{DynamicResource {x:Static rp:ThemeDictionary.TabBarBorder}}"
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand, Mode=OneTime}"
                         ToolTip="{Binding Converter={StaticResource KeyBindToDescriptionConverter}, ConverterParameter={x:Static ui:KEY_BIND.RunScript}}">
@@ -170,7 +169,7 @@
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Command"
-                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
+                                        Value="{Binding InstallPackageCommand, Mode=OneTime}" />
                                 <Setter Property="CommandParameter"
                                         Value="{Binding Mode=OneTime}" />
                                 <Setter Property="Icon"
@@ -241,6 +240,7 @@
                 </Grid>
                 <Decorator VerticalAlignment="Center">
                     <CheckBox IsChecked="{Binding NuGet.Prerelease}"
+                              Foreground="{DynamicResource {x:Static rp:ThemeDictionary.Foreground}}"
                               ToolTip="Include prerelease packages"
                               Content="Prerelease" />
                 </Decorator>
@@ -261,139 +261,12 @@
             <editor:RoslynCodeEditor x:Name="Editor"
                                      x:FieldModifier="private"
                                      ContextActionsIcon="{StaticResource Bulb}"
-                                     IsBraceCompletionEnabled="{Binding MainViewModel.Settings.EnableBraceCompletion}"
-                                     FontFamily="Consolas"
+                                     Background="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}"
+                                     Foreground="{DynamicResource {x:Static rp:ThemeDictionary.EditorForeground}}"
+                                     FontFamily="{Binding MainViewModel.Settings.EditorFontFamily}"
                                      Grid.Row="1"
                                      Grid.Column="0"
                                      Loaded="Editor_OnLoaded" />
-            <GridSplitter Grid.Row="2"
-                          Grid.Column="0"
-                          Background="#ccc"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Rows"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch" />
-
-            <TabControl Grid.Column="0"
-                        Grid.Row="3"
-                        TabStripPlacement="Bottom"
-                        SelectionChanged="OnTabSelectionChanged">
-                <TabItem Header="Results">
-                    <DockPanel Grid.IsSharedSizeScope="True">
-                        <ScrollViewer DockPanel.Dock="Top"
-                                      Name="HeaderScroll"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Disabled">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"
-                                                      SharedSizeGroup="ResultNameGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="450"
-                                                      SharedSizeGroup="ResultValueGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="Auto"
-                                                      SharedSizeGroup="ResultTypeGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Name"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="0" />
-                                <GridSplitter Grid.Column="1"
-                                              ResizeBehavior="PreviousAndNext"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                                <TextBlock Text="Value"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="2" />
-                                <GridSplitter Grid.Column="3"
-                                              ResizeBehavior="PreviousAndNext"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                                <TextBlock Text="Type"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="4" />
-                                <GridSplitter Grid.Column="5"
-                                              ResizeBehavior="PreviousAndCurrent"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                            </Grid>
-                        </ScrollViewer>
-                        <controls:TreeListView x:Name="ResultTree"
-                                               ItemsSource="{Binding Results}"
-                                               KeyDown="OnTreeViewKeyDown"
-                                               MouseDoubleClick="OnTreeViewDoubleClick"
-                                               VirtualizingPanel.IsVirtualizing="True"
-                                               VirtualizingPanel.VirtualizationMode="Recycling"
-                                               BorderBrush="#cccccc"
-                                               ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged"
-                                               ContextMenuOpening="ResultTree_OnContextMenuOpening">
-                            <FrameworkElement.Style>
-                                <Style TargetType="controls:TreeListView">
-                                    <Setter Property="ScrollViewer.VerticalScrollBarVisibility"
-                                            Value="Hidden" />
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver"
-                                                 Value="True">
-                                            <Setter Property="ScrollViewer.VerticalScrollBarVisibility"
-                                                    Value="Auto" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </FrameworkElement.Style>
-                            <FrameworkElement.CommandBindings>
-                                <CommandBinding Command="Copy"
-                                                Executed="CopyCommand" />
-                            </FrameworkElement.CommandBindings>
-                            <FrameworkElement.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Name="CopyValue"
-                                              Header="Copy Value"
-                                              InputGestureText="Ctrl+C"
-                                              Click="CopyClick">
-                                        <MenuItem.Icon>
-                                            <Image Source="{StaticResource Copy}"
-                                                   Height="12" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Name="CopyValueWithChildren"
-                                              Header="Copy Value with Children"
-                                              Click="CopyClick" />
-                                    <MenuItem Name="CopyAllValues"
-                                              Header="Copy All Values"
-                                              Click="CopyAllClick" />
-                                    <MenuItem Name="CopyAllValuesWithChildren"
-                                              Header="Copy All Values with Children"
-                                              InputGestureText="Ctrl+Shift+C"
-                                              Click="CopyAllClick" />
-                                </ContextMenu>
-                            </FrameworkElement.ContextMenu>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="controls:TreeListViewItem"
-                                       BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-                                    <Setter Property="IsExpanded"
-                                            Value="{Binding IsExpanded, Mode=OneTime}" />
-                                    <EventSetter Event="KeyDown"
-                                                 Handler="OnTreeViewKeyDown" />
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                        </controls:TreeListView>
-                    </DockPanel>
-                </TabItem>
-                <TabItem Name="ILViewerTab"
-                         Header="IL"
-                         IsSelected="{Binding ShowIL}" />
-            </TabControl>
         </Grid>
     </DockPanel>
 </UserControl>

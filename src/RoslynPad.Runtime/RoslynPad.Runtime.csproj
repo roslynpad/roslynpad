@@ -1,9 +1,13 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsTrimmable>false</IsTrimmable>
+    <PublishTrimmed>false</PublishTrimmed>
+    <TargetFramework Condition=" '$(TargetFramework)' != '' "></TargetFramework>
+    <TargetFrameworks>$(EarliestSupportedTargetFramework);netstandard2.0</TargetFrameworks>
+    <TargetFrameworks Condition=" '$(DefaultTargetFramework)' != '$(EarliestSupportedTargetFramework)' ">$(DefaultTargetFramework);$(TargetFrameworks)</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   
   <!-- Do not add any references or packages to this assembly -->

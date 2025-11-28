@@ -1,26 +1,59 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType Condition=" '$(IsMacOS)' == 'true' ">Exe</OutputType>
+    <OutputType Condition=" '$(IsMacOS)' != 'true' ">WinExe</OutputType>
     <AssemblyName>RoslynPad</AssemblyName>
     <RootNamespace>RoslynPad</RootNamespace>
+    <ApplicationId>net.roslynpad</ApplicationId>
+    <ApplicationTitle>RoslynPad</ApplicationTitle>
     <ApplicationIcon>../RoslynPad/Resources/RoslynPad.ico</ApplicationIcon>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <IsAvaloniaProject>True</IsAvaloniaProject>
+    <Version>$(RoslynPadVersion)</Version>
+    <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
+    <SelfContained>false</SelfContained>
+    <CreatePackage>false</CreatePackage>
+    <LinkMode>None</LinkMode>
+    <TrimMode>partial</TrimMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsMacBuild)' == 'true'">
+    <TargetFramework>$(DefaultTargetFramework)-macos</TargetFramework>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <!-- hack to force resizetizer to work outside of MAUI -->
+  <PropertyGroup Condition=" '$(IsMacBuild)' == 'true' ">
+    <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>
+    <ResizetizerIncludeSelfProject>true</ResizetizerIncludeSelfProject>
+    <OptimizePNGs>true</OptimizePNGs>
+    <_XSAppIconAssets>Assets.xcassets/appicon.appiconset</_XSAppIconAssets>
   </PropertyGroup>
   <ItemGroup>
-    <AvaloniaResource Include="**\*.xaml" Subtype="Designer" Exclude="obj\**" />
-    <Compile Update="**\*.xaml.cs" SubType="Code" DependentUpon="%(Filename)" />
+    <MauiIcon Include="$(RepoRoot)/deploy/resources/macos/appicon.svg" />
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
+    <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(DotnetVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="$(DotnetVersion)" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="DialogHost.Avalonia" />
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Model.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="Microsoft.Maui.Resizetizer" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj"
+      SetTargetFramework="TargetFramework=$(EarliestSupportedTargetFramework)" />
     <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
     <ProjectReference Include="..\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
-    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="ResultsView.axaml.cs">
+      <DependentUpon>ResultsView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\RoslynPad.Themes\Themes\*.json"
+      Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
   </ItemGroup>
 </Project>

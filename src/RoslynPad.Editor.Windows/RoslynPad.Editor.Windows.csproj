@@ -1,23 +1,28 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <UseWPF>true</UseWPF>
     <RootNamespace>RoslynPad.Editor</RootNamespace>
-    <Version>$(EditorPackageVersion)</Version>
     <Description>Provides a Roslyn-based code editor using AvalonEdit (WPF platform) with completion, diagnostics, and quick actions</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\RoslynPad.Roslyn.Windows\RoslynPad.Roslyn.Windows.csproj" />
     <ProjectReference Include="..\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+    <ProjectReference Include="..\RoslynPad.Themes\RoslynPad.Themes.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.1.2.30" />
-    <PackageReference Include="System.Reactive.Linq" Version="$(RxVersion)" />
+    <PackageReference Include="AvalonEdit" />
+    <PackageReference Include="System.Reactive.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\RoslynPad.Editor.Shared\**\*.cs">
-      <Link>Shared\%(RecursivePath)%(Filename)%(Extension)</Link>
-    </Compile>
+    <EmbeddedResource Remove="..\RoslynPad.Editor.Shared\Resources\tokens.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Shared\Resources\*.json" />
+    <EmbeddedResource Include="Shared\Resources\*.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis.Features">
+      <HintPath>..\RoslynPad.Roslyn\obj\Debug\net8.0\IgnoresAccessChecksToGenerator\Microsoft.CodeAnalysis.Features.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

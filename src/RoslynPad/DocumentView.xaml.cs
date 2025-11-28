@@ -1,322 +1,206 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using Avalon.Windows.Controls;
+﻿using Avalon.Windows.Controls;
 using ICSharpCode.AvalonEdit.Document;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using RoslynPad.Controls;
-using RoslynPad.Editor;
 using RoslynPad.Build;
+using RoslynPad.Editor;
 using RoslynPad.UI;
-using System.Windows.Data;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+public partial class DocumentView : IDisposable
 {
-    public partial class DocumentView : IDisposable
+    private readonly MarkerMargin _errorMargin;
+    private OpenDocumentViewModel? _viewModel;
+
+    public DocumentView()
     {
-        private readonly SynchronizationContext? _syncContext;
-        private readonly MarkerMargin _errorMargin;
-        private OpenDocumentViewModel _viewModel;
-        private IResultObject? _contextMenuResultObject;
+        InitializeComponent();
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
-        public DocumentView()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
+        _errorMargin = new MarkerMargin { Visibility = Visibility.Collapsed, MarkerImage = TryFindResource("ExceptionMarker") as ImageSource, Width = 10 };
+        Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
+        Editor.PreviewMouseWheel += EditorPreviewMouseWheel;
+        Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
+        Editor.TextArea.SelectionChanged += EditorSelectionChanged;
+
+        DataContextChanged += OnDataContextChanged;
+
+
+        //TODO: Add AvalonEditCommands ToggleAllFolds, ToggleFold
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleAllFolds, (s, e) => ToggleAllFoldings()));
+        //CommandBindings.Add(new CommandBinding(AvalonEditCommands.ToggleFold, (s, e) => ToggleCurrentFolding()));
+    }
+
+    public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
+
+    private void EditorSelectionChanged(object? sender, EventArgs e)
+        => ViewModel.SelectedText = Editor.SelectedText;
+
+    private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
+    {
+        Ln.Text = Editor.TextArea.Caret.Line.ToString(CultureInfo.InvariantCulture);
+        Col.Text = Editor.TextArea.Caret.Column.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void EditorPreviewMouseWheel(object? sender, MouseWheelEventArgs args)
+    {
+        if (_viewModel == null)
         {
-            InitializeComponent();
-
-            _errorMargin = new MarkerMargin { Visibility = Visibility.Collapsed, MarkerImage = TryFindResource("ExceptionMarker") as ImageSource, Width = 10 };
-            Editor.TextArea.LeftMargins.Insert(0, _errorMargin);
-            Editor.PreviewMouseWheel += EditorOnPreviewMouseWheel;
-            Editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
-            Editor.TextArea.SelectionChanged += EditorSelectionChanged;
-
-            _syncContext = SynchronizationContext.Current;
-
-            DataContextChanged += OnDataContextChanged;
+            return;
         }
 
-        private void EditorSelectionChanged(object? sender, EventArgs e) 
-            => _viewModel.SelectedText = Editor.SelectedText;
-
-        private void CaretOnPositionChanged(object? sender, EventArgs eventArgs)
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
-            Ln.Text = Editor.TextArea.Caret.Line.ToString();
-            Col.Text = Editor.TextArea.Caret.Column.ToString();
+            _viewModel.MainViewModel.EditorFontSize += args.Delta > 0 ? 1 : -1;
+            args.Handled = true;
         }
+    }
 
-        private void EditorOnPreviewMouseWheel(object sender, MouseWheelEventArgs args)
+    private async void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs args)
+    {
+        _viewModel = (OpenDocumentViewModel)args.NewValue;
+        BindingOperations.EnableCollectionSynchronization(_viewModel.Results, _viewModel.Results);
+
+        _viewModel.ReadInput += OnReadInput;
+        _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
+
+        _viewModel.EditorFocus += (o, e) => Editor.Focus();
+        _viewModel.EditorChangeLocation += ((int line, int column) value) => ChangePosition(value.line, value.column);
+        _viewModel.DocumentUpdated += (o, e) => 
         {
-            if (_viewModel == null)
+            Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
+            Dispatcher.InvokeAsync(() => Editor.RefreshFoldings());            
+        };
+
+        _viewModel.MainViewModel.EditorFontSizeChanged += EditorFontSizeChanged;
+        Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
+
+        var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
+
+        ViewModel.MainViewModel.ThemeChanged += OnThemeChanged;
+        var documentId = await Editor.InitializeAsync(_viewModel.MainViewModel.RoslynHost, new ThemeClassificationColors(_viewModel.MainViewModel.Theme),
+            _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind).ConfigureAwait(true);
+
+        _viewModel.Initialize(documentId, OnError,
+            () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
+            this);
+
+        Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        Editor.ClassificationHighlightColors = new ThemeClassificationColors(ViewModel.MainViewModel.Theme);
+    }
+
+    private void OnReadInput()
+    {
+        var textBox = new TextBox();
+
+        var dialog = new TaskDialog
+        {
+            Header = "Console Input",
+            Content = textBox,
+            Background = Brushes.White,
+        };
+
+        textBox.Loaded += (o, e) => textBox.Focus();
+
+        textBox.KeyDown += (o, e) =>
+        {
+            if (e.Key == Key.Enter)
             {
-                return;
+                TaskDialog.CancelCommand.Execute(null, dialog);
             }
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        };
+
+        dialog.ShowInline(this);
+
+        ViewModel.SendInput(textBox.Text);
+    }
+
+    private void OnError(ExceptionResultObject? e)
+    {
+        if (e != null)
+        {
+            _errorMargin.Visibility = Visibility.Visible;
+            _errorMargin.LineNumber = e.LineNumber;
+            _errorMargin.Message = "Exception: " + e.Message;
+        }
+        else
+        {
+            _errorMargin.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void EditorFontSizeChanged(double fontSize)
+    {
+        Editor.FontSize = fontSize;
+    }
+
+    private void NuGetOnPackageInstalled(PackageData package)
+    {
+        _ = Dispatcher.InvokeAsync(() =>
+        {
+            var text = ViewModel.FormatPackageReference(package.Id, package.Version);
+            Editor.Document.Insert(0, text, AnchorMovementType.Default);
+        });
+    }
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+
+        if (e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            switch (e.Key)
             {
-                _viewModel.MainViewModel.EditorFontSize += args.Delta > 0 ? 1 : -1;
-                args.Handled = true;
-            }
-        }
-
-        private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
-        {
-            _viewModel = (OpenDocumentViewModel)args.NewValue;
-            BindingOperations.EnableCollectionSynchronization(_viewModel.Results, _viewModel.Results);
-
-            _viewModel.ResultsAvailable += ResultsAvailable;
-            _viewModel.ReadInput += OnReadInput;
-            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
-
-            _viewModel.EditorFocus += (o, e) => Editor.Focus();
-            _viewModel.DocumentUpdated += (o, e) => Dispatcher.InvokeAsync(() => Editor.RefreshHighlighting());
-
-            _viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
-            Editor.FontSize = _viewModel.MainViewModel.EditorFontSize;
-
-            var documentText = await _viewModel.LoadTextAsync().ConfigureAwait(true);
-
-            var documentId = Editor.Initialize(_viewModel.MainViewModel.RoslynHost, new ClassificationHighlightColors(),
-                _viewModel.WorkingDirectory, documentText, _viewModel.SourceCodeKind);
-
-            _viewModel.Initialize(documentId, OnError,
-                () => new TextSpan(Editor.SelectionStart, Editor.SelectionLength),
-                this);
-
-            Editor.Document.TextChanged += (o, e) => _viewModel.OnTextChanged();
-        }
-
-        private void OnReadInput()
-        {
-            var textBox = new TextBox();
-
-            var dialog = new TaskDialog
-            {
-                Header = "Console Input",
-                Content = textBox,
-                Background = Brushes.White,
-            };
-
-            textBox.Loaded += (o, e) => textBox.Focus();
-
-            textBox.KeyDown += (o, e) =>
-            {
-                if (e.Key == Key.Enter)
-                {
-                    TaskDialog.CancelCommand.Execute(null, dialog);
-                }
-            };
-
-            dialog.ShowInline(this);
-
-            _viewModel.SendInput(textBox.Text);
-        }
-
-        private void ResultsAvailable()
-        {
-            _viewModel.ResultsAvailable -= ResultsAvailable;
-
-            _syncContext?.Post(o => ResultPaneRow.Height = new GridLength(1, GridUnitType.Star), null);
-        }
-
-        private void OnError(ExceptionResultObject? e)
-        {
-            if (e != null)
-            {
-                _errorMargin.Visibility = Visibility.Visible;
-                _errorMargin.LineNumber = e.LineNumber;
-                _errorMargin.Message = "Exception: " + e.Message;
-            }
-            else
-            {
-                _errorMargin.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private void OnEditorFontSizeChanged(double fontSize)
-        {
-            Editor.FontSize = fontSize;
-        }
-
-        private void NuGetOnPackageInstalled(PackageData package)
-        {
-            _ = Dispatcher.InvokeAsync(() =>
-            {
-                var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
-                Editor.Document.Insert(0, text, AnchorMovementType.Default);
-            });
-        }
-
-        protected override void OnPreviewKeyDown(KeyEventArgs e)
-        {
-            base.OnPreviewKeyDown(e);
-
-            if (e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
-            {
-                switch (e.Key)
-                {
-                    case Key.T:
-                        e.Handled = true;
-                        NuGetSearch.Focus();
-                        break;
-                }
-            }
-        }
-
-        private void Editor_OnLoaded(object sender, RoutedEventArgs e)
-        {
-            _ = Dispatcher.InvokeAsync(() => Editor.Focus(), System.Windows.Threading.DispatcherPriority.Background);
-        }
-
-        public void Dispose()
-        {
-            if (_viewModel?.MainViewModel != null)
-            {
-                _viewModel.MainViewModel.EditorFontSizeChanged -= OnEditorFontSizeChanged;
+                case Key.T:
+                    e.Handled = true;
+                    NuGetSearch.Focus();
+                    break;
             }
         }
+    }
 
-        private void OnTreeViewKeyDown(object sender, KeyEventArgs e)
+    private void Editor_OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        _ = Dispatcher.InvokeAsync(Editor.Focus, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    public void Dispose()
+    {
+        if (_viewModel?.MainViewModel is not { } mainViewModel)
         {
-            if (e.Key == Key.C && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
+            return;
+        }
+
+        mainViewModel.EditorFontSizeChanged -= EditorFontSizeChanged;
+        mainViewModel.ThemeChanged -= OnThemeChanged;
+    }
+
+    private void ChangePosition(int lineNumber, int column)
+    {
+        Editor.TextArea.Caret.Line = lineNumber;
+        Editor.TextArea.Caret.Column = column;
+        Editor.ScrollToLine(lineNumber);
+
+        _ = Dispatcher.InvokeAsync(Editor.Focus);
+    }
+
+    private void SearchTerm_OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Down && ViewModel.NuGet.Packages?.Any() == true)
+        {
+            if (!ViewModel.NuGet.IsPackagesMenuOpen)
             {
-                if (e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Shift))
-                {
-                    CopyAllResultsToClipboard(withChildren: true);
-                }
-                else
-                {
-                    CopyToClipboard(e.OriginalSource);
-                }
+                ViewModel.NuGet.IsPackagesMenuOpen = true;
             }
-            else if (e.Key == Key.Enter)
-            {
-                TryJumpToLine(e.OriginalSource);
-            }
+            RootNuGetMenu.Focus();
         }
-
-        private void OnTreeViewDoubleClick(object sender, MouseButtonEventArgs e)
+        else if (e.Key == Key.Enter)
         {
-            TryJumpToLine(e.OriginalSource);
-        }
-
-        private void TryJumpToLine(object source)
-        {
-            var result = (source as FrameworkElement)?.DataContext as CompilationErrorResultObject;
-            if (result == null) return;
-
-            Editor.TextArea.Caret.Line = result.Line;
-            Editor.TextArea.Caret.Column = result.Column;
-            Editor.ScrollToLine(result.Line);
-
-            _ = Dispatcher.InvokeAsync(() => Editor.Focus());
-        }
-
-        private void CopyCommand(object sender, ExecutedRoutedEventArgs e)
-        {
-            CopyToClipboard(e.OriginalSource);
-        }
-
-        private void CopyClick(object sender, RoutedEventArgs e)
-        {
-            CopyToClipboard(sender);
-        }
-
-        private void CopyToClipboard(object sender)
-        {
-            var result = (sender as FrameworkElement)?.DataContext as IResultObject ??
-                        _contextMenuResultObject;
-
-            if (result != null)
-            {
-                Clipboard.SetText(ReferenceEquals(sender, CopyValueWithChildren) ? result.ToString() : result.Value);
-            }
-        }
-
-        private void CopyAllClick(object sender, RoutedEventArgs e)
-        {
-            var withChildren = ReferenceEquals(sender, CopyAllValuesWithChildren);
-
-            CopyAllResultsToClipboard(withChildren);
-        }
-
-        private void CopyAllResultsToClipboard(bool withChildren)
-        {
-            var builder = new StringBuilder();
-            foreach (var result in _viewModel.Results)
-            {
-                if (withChildren)
-                {
-                    result.WriteTo(builder);
-                    builder.AppendLine();
-                }
-                else
-                {
-                    builder.AppendLine(result.Value);
-                }
-            }
-
-            if (builder.Length > 0)
-            {
-                Clipboard.SetText(builder.ToString());
-            }
-        }
-
-        private void ResultTree_OnContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-            // keyboard-activated
-            if (e.CursorLeft < 0 || e.CursorTop < 0)
-            {
-                _contextMenuResultObject = ResultTree.SelectedItem as IResultObject;
-            }
-            else
-            {
-                _contextMenuResultObject = (e.OriginalSource as FrameworkElement)?.DataContext as IResultObject;
-            }
-
-            var isResult = _contextMenuResultObject != null;
-            CopyValue.IsEnabled = isResult;
-            CopyValueWithChildren.IsEnabled = isResult;
-        }
-
-        private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Down && _viewModel.NuGet.Packages?.Any() == true)
-            {
-                if (!_viewModel.NuGet.IsPackagesMenuOpen)
-                {
-                    _viewModel.NuGet.IsPackagesMenuOpen = true;
-                }
-                RootNuGetMenu.Focus();
-            }
-            else if (e.Key == Key.Enter)
-            {
-                e.Handled = true;
-                Editor.Focus();
-            }
-        }
-
-        private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            HeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
-        }
-
-        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ILViewerTab.IsSelected && ILViewerTab.Content == null)
-            {
-                var ilViewer = new ILViewer();
-                ilViewer.SetBinding(TextElement.FontSizeProperty,
-                    nameof(_viewModel.MainViewModel) + "." + nameof(_viewModel.MainViewModel.EditorFontSize));
-                ilViewer.SetBinding(ILViewer.TextProperty, nameof(_viewModel.ILText));
-                ILViewerTab.Content = ilViewer;
-            }
+            e.Handled = true;
+            Editor.Focus();
         }
     }
 }

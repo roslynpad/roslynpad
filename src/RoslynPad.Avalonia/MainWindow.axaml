@@ -1,0 +1,93 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RoslynPad.MainWindow"
+        xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+        xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
+        xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
+        xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+        MinWidth="500"
+        MinHeight="300"
+        x:DataType="local:MainViewModelAvalonia"
+        Title="{Binding WindowTitle, Mode=OneTime}"
+        Icon="avares://RoslynPad/Resources/RoslynPad.ico"
+        Name="This">
+  <Window.KeyBindings>
+    <KeyBinding Gesture="{OnPlatform Ctrl+N, macOS=Cmd+N}"
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+Shift+N, macOS=Cmd+Shift+N}"
+                Command="{Binding NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}"
+                Command="{Binding OpenFileCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"
+                Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
+    <KeyBinding Gesture="{OnPlatform Ctrl+Shift+O, macOS=Cmd+Shift+O}"
+                Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
+  </Window.KeyBindings>
+  <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
+    <DockPanel>
+
+      <Button Padding="3"
+                Margin="1"
+                Background="#eebbbb"
+                DockPanel.Dock="Bottom"
+                Click="OnErrorButtonClick"
+                VerticalAlignment="Stretch"
+                IsVisible="{Binding HasError}">
+          <TextBlock VerticalAlignment="Center"
+                     Text="{Binding LastError.Message}" />
+      </Button>
+
+      <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
+        <DockControl.Factory>
+          <Factory ActiveDockableChanged="OnActiveDockableChanged"
+                   DockableClosed="OnDockableClosedAsync" />
+        </DockControl.Factory>
+
+        <RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{Binding #MainLayout}">
+
+          <ProportionalDock x:Name="MainLayout" Id="MainLayout" Orientation="Horizontal">
+
+            <ToolDock x:Name="LeftPane" Id="LeftPane" Proportion="0.25" Alignment="Left">
+              <Tool x:Name="Documents" Id="Documents" Title="Documents" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                <local:DocumentTreeView x:Name="DocumentTreeView" DataContext="{Binding #This.DataContext}" />
+              </Tool>
+            </ToolDock>
+
+            <ProportionalDockSplitter x:Name="LeftSplitter" Id="LeftSplitter" />
+
+            <ProportionalDock x:Name="MainPane" Id="MainPane" Orientation="Vertical">
+
+              <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane">
+                <DocumentDock.DocumentTemplate>
+                  <DocumentTemplate x:CompileBindings="false">
+                    <local:DocumentView DataContext="{Binding DataContext}" />
+                  </DocumentTemplate>
+                </DocumentDock.DocumentTemplate>
+                <Document x:Name="NewDoc" Id="NewDoc" Title="Home" x:DataType="Document" CanClose="False" CanFloat="False">
+                  <local:NewDocumentView DataContext="{Binding #This.DataContext}" />
+                </Document>
+              </DocumentDock>
+
+               <ProportionalDockSplitter x:Name="ResultSplitter" Id="ResultSplitter" />
+
+
+                <ToolDock x:Name="ResultPane" Id="ResultPane" Proportion="0.35" Alignment="Bottom">
+                  <Tool x:Name="Results" Id="Results" Title="Results" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                      <local:ResultsView x:Name="ResultsView" DataContext="{Binding #This.ViewModel.CurrentOpenDocument}" />
+                  </Tool>
+              </ToolDock>
+
+            </ProportionalDock>
+
+          </ProportionalDock>
+        </RootDock>
+
+      </DockControl>
+
+    </DockPanel>
+  </dialogHost:DialogHost>
+
+</Window>

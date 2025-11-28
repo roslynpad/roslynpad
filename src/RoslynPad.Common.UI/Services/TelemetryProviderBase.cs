@@ -1,82 +1,57 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
+﻿using System.Diagnostics;
 
-namespace RoslynPad.UI
+namespace RoslynPad.UI;
+
+public abstract class TelemetryProviderBase : ITelemetryProvider
 {
-    public abstract class TelemetryProviderBase : ITelemetryProvider
+    private Exception? _lastError;
+
+    public virtual void Initialize(string version, IApplicationSettings settings)
     {
-        private TelemetryClient? _client;
-        private Exception? _lastError;
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
+    }
 
-        public virtual void Initialize(string version, IApplicationSettings settings)
+    private void TaskSchedulerOnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
+    {
+        HandleException(args.Exception!.Flatten().InnerException!);
+    }
+
+    private void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs args)
+    {
+        HandleException((Exception)args.ExceptionObject);
+    }
+
+    protected void HandleException(Exception exception)
+    {
+        if (exception is OperationCanceledException)
         {
-            if (settings.Values.SendErrors)
-            {
-                var instrumentationKey = GetInstrumentationKey();
-
-                if (!string.IsNullOrEmpty(instrumentationKey))
-                {
-                    _client = new TelemetryClient(new TelemetryConfiguration(instrumentationKey));
-
-                    _client.Context.Component.Version = version;
-
-                    _client.TrackPageView("Main");
-                }
-            }
-
-            if (_client != null)
-            {
-                AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-                TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
-            }
+            return;
         }
 
-        protected abstract string GetInstrumentationKey();
+        LastError = exception;
+        Debug.WriteLine(exception);
+    }
 
-        private void TaskSchedulerOnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
+    public void ReportError(Exception exception)
+    {
+        HandleException(exception);
+    }
+
+    public Exception? LastError
+    {
+        get => _lastError;
+        private set
         {
-            HandleException(args.Exception!.Flatten().InnerException!);
+            _lastError = value;
+            LastErrorChanged?.Invoke();
         }
+    }
 
-        private void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs args)
-        {
-            HandleException((Exception)args.ExceptionObject);
-            _client?.Flush();
-        }
+    public event Action? LastErrorChanged;
 
-        protected void HandleException(Exception exception)
-        {
-            if (exception is OperationCanceledException)
-            {
-                return;
-            }
-
-            _client?.TrackException(exception);
-            LastError = exception;
-        }
-
-        public void ReportError(Exception exception)
-        {
-            HandleException(exception);
-        }
-
-        public Exception? LastError
-        {
-            get => _lastError;
-            private set
-            {
-                _lastError = value;
-                LastErrorChanged?.Invoke();
-            }
-        }
-
-        public event Action? LastErrorChanged;
-
-        public void ClearLastError()
-        {
-            LastError = null;
-        }
+    public void ClearLastError()
+    {
+        LastError = null;
     }
 }

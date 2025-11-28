@@ -1,63 +1,46 @@
-using System.Composition;
-using System.Linq;
-using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using RoslynPad.UI;
 
-namespace RoslynPad
+namespace RoslynPad;
+
+[Export(typeof(IOpenFileDialog))]
+internal class OpenFileDialogAdapter : IOpenFileDialog
 {
-    [Export(typeof(IOpenFileDialog))]
-    internal class OpenFileDialogAdapter : IOpenFileDialog
+    public bool AllowMultiple { get; set; }
+
+    public FileDialogFilter? Filter { get; set; }
+
+    public string InitialDirectory { get; set; } = string.Empty;
+
+    public string FileName { get; set; } = string.Empty;
+
+    public async Task<string[]?> ShowAsync()
     {
-        private readonly OpenFileDialog _dialog;
+        var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
 
-        public OpenFileDialogAdapter()
+        if (window == null)
         {
-            _dialog = new OpenFileDialog();
+            return null;
         }
 
-        public bool AllowMultiple
+        var options = new FilePickerOpenOptions
         {
-            get => _dialog.AllowMultiple;
-            set => _dialog.AllowMultiple = value;
+            AllowMultiple = AllowMultiple,
+            SuggestedStartLocation = await window.StorageProvider.TryGetFolderFromPathAsync(InitialDirectory).ConfigureAwait(false),
+        };
+
+        if (Filter != null)
+        {
+            options.FileTypeFilter =
+            [
+                new FilePickerFileType(Filter.Header) { Patterns = Filter.Extensions.AsReadOnly() }
+            ];
         }
 
-        public UI.FileDialogFilter Filter
-        {
-            set
-            {
-                _dialog.Filters.Clear();
-                if (value == null)
-                {
-                    return;
-                }
+        var files = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
 
-                _dialog.Filters.Add(new Avalonia.Controls.FileDialogFilter
-                {
-                    Name = value.Header,
-                    Extensions = value.Extensions.ToList()
-                });
-            }
-        }
-
-        public string InitialDirectory
-        {
-            get => _dialog.Directory ?? string.Empty;
-            set => _dialog.Directory = value;
-        }
-
-        public string FileName
-        {
-            get => _dialog.InitialFileName ?? string.Empty;
-            set => _dialog.InitialFileName = value;
-        }
-
-        public Task<string[]?> ShowAsync()
-        {
-            var active = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.First(w => w.IsActive);
-            return _dialog.ShowAsync(active!);
-        }
+        return files.Select(file => file.Path.ToString()).ToArray();
     }
 }

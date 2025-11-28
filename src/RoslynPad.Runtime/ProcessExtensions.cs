@@ -1,19 +1,18 @@
 ﻿using System.Diagnostics;
 
-namespace RoslynPad.Runtime
+namespace RoslynPad.Runtime;
+
+internal static class ProcessExtensions
 {
-    internal static class ProcessExtensions
+    public static bool IsAlive(this Process process)
     {
-        public static bool IsAlive(this Process process)
+        try
         {
-            try
-            {
-                return !process.HasExited;
-            }
-            catch
-            {
-                return false;
-            }
+            return !process.HasExited;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

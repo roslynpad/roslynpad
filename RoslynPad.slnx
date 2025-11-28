@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/Build/">
+    <Project Path="src/RoslynPad.Build/RoslynPad.Build.csproj" />
+  </Folder>
+  <Folder Name="/Common/">
+    <Project Path="src/RoslynPad.Common.UI/RoslynPad.Common.UI.csproj" />
+    <Project Path="src/RoslynPad.Runtime/RoslynPad.Runtime.csproj" />
+  </Folder>
+  <Folder Name="/Editor/">
+    <Project Path="src/RoslynPad.Editor.Avalonia/RoslynPad.Editor.Avalonia.csproj" />
+    <Project Path="src/RoslynPad.Editor.Windows/RoslynPad.Editor.Windows.csproj" />
+  </Folder>
+  <Folder Name="/Roslyn/">
+    <Project Path="src/RestoreHelper/RestoreHelper.csproj" />
+    <Project Path="src/RoslynPad.Roslyn.Avalonia/RoslynPad.Roslyn.Avalonia.csproj" />
+    <Project Path="src/RoslynPad.Roslyn.Windows/RoslynPad.Roslyn.Windows.csproj" />
+    <Project Path="src/RoslynPad.Roslyn/RoslynPad.Roslyn.csproj" />
+  </Folder>
+  <Folder Name="/_Build/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Project Path="src/RoslynPad.Avalonia/RoslynPad.Avalonia.csproj" />
+  <Project Path="src/RoslynPad.Themes/RoslynPad.Themes.csproj" />
+  <Project Path="src/RoslynPad/RoslynPad.csproj" />
+</Solution>

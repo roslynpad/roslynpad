@@ -1,19 +1,12 @@
-namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature
+namespace RoslynPad.Roslyn.LanguageServices.ChangeSignature;
+
+internal sealed class SignatureChange(ParameterConfiguration originalConfiguration, ParameterConfiguration updatedConfiguration)
 {
-    internal sealed class SignatureChange
+    public ParameterConfiguration OriginalConfiguration { get; } = originalConfiguration;
+    public ParameterConfiguration UpdatedConfiguration { get; } = updatedConfiguration;
+
+    internal Microsoft.CodeAnalysis.ChangeSignature.SignatureChange ToInternal()
     {
-        public SignatureChange(ParameterConfiguration originalConfiguration, ParameterConfiguration updatedConfiguration)
-        {
-            OriginalConfiguration = originalConfiguration;
-            UpdatedConfiguration = updatedConfiguration;
-        }
-
-        public ParameterConfiguration OriginalConfiguration { get; }
-        public ParameterConfiguration UpdatedConfiguration { get; }
-
-        internal Microsoft.CodeAnalysis.ChangeSignature.SignatureChange ToInternal()
-        {
-            return new Microsoft.CodeAnalysis.ChangeSignature.SignatureChange(OriginalConfiguration.ToInternal(), UpdatedConfiguration.ToInternal());
-        }
+        return new Microsoft.CodeAnalysis.ChangeSignature.SignatureChange(OriginalConfiguration.ToInternal(), UpdatedConfiguration.ToInternal());
     }
 }

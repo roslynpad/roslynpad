@@ -1,10 +1,9 @@
-﻿namespace RoslynPad.Roslyn.Resources
+﻿namespace RoslynPad.Roslyn.Resources;
+
+internal partial class Glyphs
 {
-    internal partial class Glyphs
+    public Glyphs()
     {
-        public Glyphs()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }
