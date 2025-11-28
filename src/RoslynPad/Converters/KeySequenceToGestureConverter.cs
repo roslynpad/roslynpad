@@ -1,48 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Data;
-using System.Windows.Input;
+﻿namespace RoslynPad.Converters;
 
-namespace RoslynPad.Converters
+public class CommandToDescriptionConverter : IValueConverter
 {
-    public class KeyBindToDescriptionConverter : IValueConverter
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (parameter != null && parameter is UI.KEY_BIND keybind)
-                return UI.KeybindHelper.GetDescription(keybind, true);
-            return DependencyProperty.UnsetValue;
-        }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        if (parameter is string command)
+            return UI.KeyBindings.Service.GetDescription(command, includeKeyBinding: true);
+        return DependencyProperty.UnsetValue;
     }
-    public class KeySequenceToGestureConverter : IValueConverter
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+/// <summary>
+/// Converts a key binding string (e.g., "Ctrl+S") to a KeyGesture, Key, or ModifierKeys.
+/// Can take the key binding string from either the value or the ConverterParameter (command string).
+/// When ConverterParameter is a command string, looks up the key binding from KeyBindings.Service.
+/// </summary>
+public class KeySequenceToGestureConverter : IValueConverter
+{
+    private static readonly KeyGestureConverter s_gestureConverter = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        // If parameter is a command string, look up the key binding
+        var keySequence = parameter is string command && UI.KeyBindingCommands.All.ContainsKey(command)
+            ? UI.KeyBindings.Service.GetKeyBinding(command)
+            : value as string;
+
+        if (string.IsNullOrWhiteSpace(keySequence))
+            return DependencyProperty.UnsetValue;
+
+        try
         {
-            
-            if (value == null || value is not string s || string.IsNullOrWhiteSpace(s))
+            var gesture = (KeyGesture?)s_gestureConverter.ConvertFromString(keySequence);
+            if (gesture == null)
                 return DependencyProperty.UnsetValue;
-            try
-            {
-                var res = (KeyGesture?)converter.ConvertFromString(s);
-                if (res == null)
-                    return DependencyProperty.UnsetValue;
-                if (targetType == typeof(KeyGesture))
-                    return res;
-                if (targetType == typeof(ModifierKeys))
-                    return res.Modifiers;
-                if (targetType == typeof(Key))
-                    return res.Key;
-            }
-            catch { }
-            return DependencyProperty.UnsetValue;
+
+            if (targetType == typeof(KeyGesture))
+                return gesture;
+            if (targetType == typeof(ModifierKeys))
+                return gesture.Modifiers;
+            if (targetType == typeof(Key))
+                return gesture.Key;
         }
-        private static KeyGestureConverter converter = new KeyGestureConverter();
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        catch (FormatException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"KeySequenceToGestureConverter: FormatException parsing '{keySequence}': {ex}");
+        }
+        catch (NotSupportedException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"KeySequenceToGestureConverter: NotSupportedException parsing '{keySequence}': {ex}");
+        }
+        return DependencyProperty.UnsetValue;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }

@@ -1,8 +1,6 @@
-﻿
-namespace RoslynPad.Themes
+﻿namespace RoslynPad.Themes;
+
+public interface IThemeReader
 {
-    public interface IThemeReader
-    {
-        Task<Theme> ReadThemeAsync(string file, ThemeType type);
-    }
+    Task<Theme> ReadThemeAsync(string file, ThemeType type);
 }
