@@ -27,4 +27,5 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     string? CustomThemePath { get; }
     ThemeType? CustomThemeType { get; }
     BuiltInTheme BuiltInTheme { get; }
+    string[]? DefaultUsings { get; }
 }

@@ -141,6 +141,7 @@ internal class ApplicationSettings : IApplicationSettings
         private string? _effectiveDocumentPath;
         private string? _customThemePath;
         private ThemeType? _customThemeType;
+        private string[]? _defaultUsings;
 
         public void LoadDefaultSettings()
         {
@@ -150,6 +151,20 @@ internal class ApplicationSettings : IApplicationSettings
             OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
             EditorFontFamily = GetDefaultPlatformFontFamily();
+            DefaultUsings =
+            [
+                "System",
+                "System.Threading",
+                "System.Threading.Tasks",
+                "System.Collections",
+                "System.Collections.Generic",
+                "System.Text",
+                "System.Text.RegularExpressions",
+                "System.Linq",
+                "System.IO",
+                "System.Reflection",
+                "RoslynPad.Runtime",
+            ];
         }
 
         private static string GetDefaultPlatformFontFamily()
@@ -293,6 +308,12 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get => _builtInTheme;
             set => SetProperty(ref _builtInTheme, value);
+        }
+
+        public string[]? DefaultUsings
+        {
+            get => _defaultUsings;
+            set => SetProperty(ref _defaultUsings, value);
         }
 
         [JsonIgnore]
