@@ -8,6 +8,11 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 {
     private const int MaxDumpsPerSession = 100000;
 
+    /// <summary>
+    /// Marker written to stdout when the runtime is ready. This signals the host that
+    /// build output is complete and JSON output will follow.
+    /// </summary>
+    private static readonly byte[] s_readyMarker = Encoding.UTF8.GetBytes("#roslynpad#");
     private static readonly byte[] s_newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
 
     private static readonly byte[] s_resultObjectHeader = Encoding.UTF8.GetBytes("o:");
@@ -26,6 +31,11 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
         _stream = Console.OpenStandardOutput();
 
         _lock = new object();
+
+        // Write ready marker to signal host that build is complete and JSON output begins
+        _stream.Write(s_readyMarker);
+        _stream.Write(s_newLine);
+        _stream.Flush();
     }
 
     private Utf8JsonWriter CreateJsonWriter() => new(_stream);

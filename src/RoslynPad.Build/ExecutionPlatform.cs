@@ -14,6 +14,11 @@ public class ExecutionPlatform
 
     internal bool IsDotNetFramework => !IsDotNet;
 
+    /// <summary>
+    /// Returns true if the SDK version supports .NET file-based apps (dotnet run file.cs) with #:package and #:sdk directives.
+    /// </summary>
+    public bool SupportsFileBasedApps => FrameworkVersion?.Major >= 10;
+
     internal ExecutionPlatform(string name, string targetFrameworkMoniker, NuGetVersion? frameworkVersion, Architecture architecture, bool isDotNet)
     {
         Name = name;

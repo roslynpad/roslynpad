@@ -17,6 +17,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
+using RoslynPad.Roslyn.FileBasedPrograms;
 using Nerdbank.Streams;
 using NuGet.Versioning;
 using RoslynPad.Build.ILDecompiler;
@@ -73,6 +74,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private string _name;
     private bool _running;
     private bool _initializeBuildPathAfterRun;
+    private bool _hasFileBasedDirectives;
+    private bool _hasLegacyPackageDirectives;
     private TextWriter? _processInputStream;
     private string? _dotNetExecutable;
 
@@ -89,6 +92,31 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private bool IsScript => _parameters.SourceCodeKind == SourceCodeKind.Script;
 
     public bool UseCache => Platform.FrameworkVersion?.Major >= 6;
+
+    /// <summary>
+    /// Returns true if the current platform supports .NET file-based apps (dotnet run file.cs)
+    /// and the code contains file-based directives (#:package or #:sdk).
+    /// </summary>
+    private bool UseFileBasedExecution
+    {
+        get
+        {
+            if (!Platform.SupportsFileBasedApps)
+            {
+                return false;
+            }
+
+            lock (_libraries)
+            {
+                // Check if any file-based package references exist (parsed from #:package)
+                // We detect this by checking if we have package references but no #r nuget: directives
+                // Actually, we need to track this separately since both parse to PackageReference
+                return _hasFileBasedDirectives;
+            }
+        }
+    }
+
+    public bool UseFileBasedReferences => Platform.SupportsFileBasedApps && !_hasLegacyPackageDirectives;
 
     public bool HasPlatform => _platform != null;
 
@@ -220,24 +248,33 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         try
         {
             _running = true;
-            var binPath = IsScript ? BuildPath : Path.Combine(BuildPath, "bin");
-            _assemblyPath = Path.Combine(binPath, $"{Name}.{ExecutableExtension}");
 
-            var success = IsScript
-                ? CompileInProcess(path, optimizationLevel, _assemblyPath, cancellationToken)
-                : await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
-
-            if (!success)
+            if (UseFileBasedExecution)
             {
-                return;
+                await ExecuteFileBasedAsync(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
             }
-
-            if (disassemble)
+            else
             {
-                Disassemble();
-            }
+                // Traditional execution: compile first, then run
+                var binPath = IsScript ? BuildPath : Path.Combine(BuildPath, "bin");
+                _assemblyPath = Path.Combine(binPath, $"{Name}.{ExecutableExtension}");
 
-            await ExecuteAssemblyAsync(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                var success = IsScript
+                    ? CompileInProcess(path, optimizationLevel, _assemblyPath, cancellationToken)
+                    : await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
+
+                if (!success)
+                {
+                    return;
+                }
+
+                if (disassemble)
+                {
+                    Disassemble();
+                }
+
+                await ExecuteAssemblyAsync(_assemblyPath, cancellationToken).ConfigureAwait(false);
+            }
         }
         finally
         {
@@ -308,6 +345,111 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         CompilationErrors?.Invoke(compilationErrors);
 
         return success;
+    }
+
+    /// <summary>
+    /// Executes code using .NET 10+ file-based apps (dotnet run file.cs).
+    /// This is used when the platform supports file-based apps and the code contains #:package or #:sdk directives.
+    /// </summary>
+    private async Task ExecuteFileBasedAsync(string path, OptimizationLevel? optimizationLevel, CancellationToken cancellationToken)
+    {
+        // Delete any .csproj files - they prevent dotnet run file.cs from working
+        foreach (var csprojFile in IOUtilities.EnumerateFiles(BuildPath, "*.csproj"))
+        {
+            IOUtilities.PerformIO(() => File.Delete(csprojFile));
+        }
+
+        // Transform the code (add .Dump() to last expression, etc.)
+        var targetPath = Path.Combine(BuildPath, "Program.cs");
+        var code = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+        var syntaxTree = ParseAndTransformCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
+        
+        // Remove #:framework directives (replace with newlines to preserve line numbers)
+        syntaxTree = RemoveFileBasedFrameworkDirectives(syntaxTree);
+        var finalCode = syntaxTree.ToString();
+        
+        if (!File.Exists(targetPath) || !string.Equals(await File.ReadAllTextAsync(targetPath, cancellationToken).ConfigureAwait(false), finalCode, StringComparison.Ordinal))
+        {
+            await File.WriteAllTextAsync(targetPath, finalCode, cancellationToken).ConfigureAwait(false);
+        }
+
+        var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitFileName);
+        if (!File.Exists(moduleInitFile))
+        {
+            await File.WriteAllTextAsync(moduleInitFile, BuildCode.ModuleInit, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Get framework references from parsed libraries
+        IEnumerable<LibraryRef> frameworkReferences;
+        lock (_libraries)
+        {
+            frameworkReferences = _libraries.Where(r => r.Kind == LibraryRef.RefKind.FrameworkReference).ToList();
+        }
+
+        // Generate Directory.Build.props to include RoslynPad.Runtime reference, implicit usings, framework references, and module init
+        var directoryBuildPropsPath = Path.Combine(BuildPath, "Directory.Build.props");
+        var runtimeAssemblyPath = _runtimeAssemblyLibraryRef.Value;
+        var directoryBuildProps = MSBuildHelper.CreateDirectoryBuildProps(runtimeAssemblyPath, _parameters.Imports, frameworkReferences, [BuildCode.ModuleInitFileName]);
+        await Task.Run(() => directoryBuildProps.Save(directoryBuildPropsPath), cancellationToken).ConfigureAwait(false);
+
+        // Generate global.json to pin SDK version
+        var globalJsonPath = Path.Combine(BuildPath, "global.json");
+        var globalJson = $@"{{ ""sdk"": {{ ""version"": ""{Platform.FrameworkVersion}"" }} }}";
+        await File.WriteAllTextAsync(globalJsonPath, globalJson, cancellationToken).ConfigureAwait(false);
+
+        // Copy nuget.config
+        var nugetConfigPath = Path.Combine(BuildPath, "nuget.config");
+        if (!File.Exists(nugetConfigPath))
+        {
+            File.Copy(_parameters.NuGetConfigPath, nugetConfigPath, overwrite: true);
+        }
+
+        // Build configuration
+        var configuration = optimizationLevel == OptimizationLevel.Release ? "Release" : "Debug";
+
+        // Run using dotnet run - this combines compilation and execution
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = DotNetExecutable,
+                Arguments = $"run --configuration {configuration} \"{targetPath}\" -- --pid {Environment.ProcessId}",
+                WorkingDirectory = BuildPath,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            }
+        };
+
+        using var _ = cancellationToken.Register(() =>
+        {
+            try
+            {
+                _processInputStream = null;
+                process.Kill();
+            }
+            catch (Exception ex)
+            {
+                _logger.ErrorKillingProcess(ex);
+            }
+        });
+
+        _logger.StartingProcess(process.StartInfo.FileName, process.StartInfo.Arguments);
+        if (!process.Start())
+        {
+            _logger.ProcessStartReturnedFalse();
+            return;
+        }
+
+        _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
+
+        await Task.WhenAll(
+            Task.Run(() => ReadObjectProcessStreamWithBuildOutputAsync(process.StandardOutput), cancellationToken),
+            Task.Run(() => ReadProcessStreamAsync(process.StandardError), cancellationToken)).ConfigureAwait(false);
     }
 
     private async IAsyncEnumerable<CompilationErrorResultObject> ReadBuildLogAsync(string path, string severity)
@@ -566,6 +708,32 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
+    /// <summary>
+    /// Reads process output that may contain build output before the JSON protocol begins.
+    /// Used for file-based execution where dotnet run outputs build messages before the program starts.
+    /// Reads plain text lines until it sees the ready marker, then switches to JSON protocol.
+    /// </summary>
+    private async Task ReadObjectProcessStreamWithBuildOutputAsync(StreamReader reader)
+    {
+        const string readyMarker = "#roslynpad#";
+
+        // Phase 1: Read build output as plain text until we see the ready marker
+        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
+        {
+            if (line == readyMarker)
+            {
+                // Marker found - switch to JSON protocol
+                break;
+            }
+
+            // This is build output - display it as a result
+            Dumped?.Invoke(new ResultObject { Value = line });
+        }
+
+        // Phase 2: Read JSON protocol output (same as ReadObjectProcessStreamAsync)
+        await ReadObjectProcessStreamAsync(reader).ConfigureAwait(false);
+    }
+
     private static SyntaxTree ParseAndTransformCode(string code, string path, CSharpParseOptions parseOptions, CancellationToken cancellationToken)
     {
         var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions, path, cancellationToken: cancellationToken);
@@ -599,6 +767,33 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         root = compilationUnit.WithMembers(members);
 
         return tree.WithRootAndOptions(root, parseOptions);
+    }
+
+    /// <summary>
+    /// Removes #:framework directive trivia from a syntax tree, replacing them with newlines to preserve line numbers.
+    /// This is needed because dotnet run doesn't recognize #:framework, so we handle it via Directory.Build.props.
+    /// </summary>
+    private static SyntaxTree RemoveFileBasedFrameworkDirectives(SyntaxTree syntaxTree)
+    {
+        var directives = syntaxTree.FindFileLevelDirectives();
+        var frameworkTriviaToRemove = directives
+            .Where(d => d.DirectiveKind == "framework")
+            .Select(d => d.Trivia)
+            .ToHashSet();
+
+        if (frameworkTriviaToRemove.Count == 0)
+        {
+            return syntaxTree;
+        }
+
+        var root = syntaxTree.GetRoot();
+
+        // Replace framework directive trivia with end-of-line trivia to preserve line numbers
+        var newRoot = root.ReplaceTrivia(
+            frameworkTriviaToRemove,
+            (original, _) => SyntaxFactory.EndOfLine("\n"));
+
+        return syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
     }
 
     private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -635,8 +830,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return;
         }
 
-        var libraries = ParseReferences(syntaxRoot).Append(Platform.IsDotNet ? _runtimeAssemblyLibraryRef : _runtimeNetFxAssemblyLibraryRef);
-        if (UpdateLibraries(libraries))
+        var (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives) = ParseReferences(syntaxRoot);
+        var allLibraries = libraries.Append(Platform.IsDotNet ? _runtimeAssemblyLibraryRef : _runtimeNetFxAssemblyLibraryRef);
+        if (UpdateLibraries(allLibraries, hasFileBasedDirectives, hasLegacyPackageDirectives))
         {
             await RestoreAsync().ConfigureAwait(false);
         }
@@ -652,14 +848,20 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return document != null ? await document.GetSyntaxRootAsync().ConfigureAwait(false) : null;
         }
 
-        bool UpdateLibraries(IEnumerable<LibraryRef> libraries)
+        bool UpdateLibraries(IEnumerable<LibraryRef> libraries, bool hasFileBased, bool hasLegacyPackage)
         {
             lock (_libraries)
             {
-                if (!_libraries.SetEquals(libraries))
+                var librariesChanged = !_libraries.SetEquals(libraries);
+                var fileBasedChanged = _hasFileBasedDirectives != hasFileBased;
+                var legacyChanged = _hasLegacyPackageDirectives != hasLegacyPackage;
+                
+                if (librariesChanged || fileBasedChanged || legacyChanged)
                 {
                     _libraries.Clear();
                     _libraries.UnionWith(libraries);
+                    _hasFileBasedDirectives = hasFileBased;
+                    _hasLegacyPackageDirectives = hasLegacyPackage;
                     return true;
                 }
                 else if (alwaysRestore)
@@ -671,18 +873,47 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return false;
         }
 
-        static List<LibraryRef> ParseReferences(SyntaxNode syntaxRoot)
+        static (List<LibraryRef> libraries, bool hasFileBasedDirectives, bool hasLegacyPackageDirectives) ParseReferences(SyntaxNode syntaxRoot)
         {
             const string LegacyNuGetPrefix = "$NuGet\\";
             const string FxPrefix = "framework:";
 
             var libraries = new List<LibraryRef>();
+            var hasFileBasedDirectives = false;
+            var hasLegacyPackageDirectives = false;
 
             if (syntaxRoot is not CompilationUnitSyntax compilation)
             {
-                return libraries;
+                return (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives);
             }
 
+            // Parse file-level directives (#:package, #:framework) using syntax tree
+            foreach (var directive in syntaxRoot.SyntaxTree.FindFileLevelDirectives())
+            {
+                switch (directive.DirectiveKind)
+                {
+                    case "package":
+                        var (id, version) = ReferenceDirectiveHelper.ParseFileBasedPackageDirective(directive.DirectiveText);
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
+                            hasFileBasedDirectives = true;
+                        }
+                        break;
+                    case "framework":
+                        if (!string.IsNullOrEmpty(directive.DirectiveText))
+                        {
+                            libraries.Add(LibraryRef.FrameworkReference(directive.DirectiveText));
+                            hasFileBasedDirectives = true;
+                        }
+                        break;
+                    case "sdk":
+                        hasFileBasedDirectives = true;
+                        break;
+                }
+            }
+
+            // Parse traditional #r directives
             foreach (var directive in compilation.GetReferenceDirectives())
             {
                 var value = directive.File.ValueText;
@@ -698,10 +929,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 if (HasPrefix(ReferenceDirectiveHelper.NuGetPrefix, value))
                 {
                     (id, version) = ReferenceDirectiveHelper.ParseNuGetReference(value);
+                    hasLegacyPackageDirectives = true;
                 }
                 else if (HasPrefix(LegacyNuGetPrefix, value))
                 {
                     (id, version) = ParseLegacyNuGetReference(value);
+                    hasLegacyPackageDirectives = true;
                     if (id == null)
                     {
                         continue;
@@ -722,7 +955,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
             }
 
-            return libraries;
+            return (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives);
 
             static bool HasPrefix(string prefix, string value) =>
                 value.Length > prefix.Length &&

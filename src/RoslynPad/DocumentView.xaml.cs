@@ -141,7 +141,7 @@ public partial class DocumentView : IDisposable
     {
         _ = Dispatcher.InvokeAsync(() =>
         {
-            var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
+            var text = ViewModel.FormatPackageReference(package.Id, package.Version);
             Editor.Document.Insert(0, text, AnchorMovementType.Default);
         });
     }

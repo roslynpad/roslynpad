@@ -6,23 +6,50 @@ internal static class MSBuildHelper
 {
     public const string ReferencesFile = "references.txt";
     public const string AnalyzersFile = "analyzers.txt";
-    private const string Sdk = "Microsoft.NET.Sdk";
+    public const string DefaultSdk = "Microsoft.NET.Sdk";
 
     public static XDocument CreateCsxCsproj(bool isDotNet, string targetFramework, IEnumerable<LibraryRef> references) =>
         new(new XElement("Project",
-            ImportSdkProject(Sdk, "Sdk.props"),
+            ImportSdkProject(DefaultSdk, "Sdk.props"),
             BuildProperties(targetFramework, copyBuildOutput: false),
             Reference(references),
             ReferenceAssemblies(isDotNet),
-            ImportSdkProject(Sdk, "Sdk.targets"),
+            ImportSdkProject(DefaultSdk, "Sdk.targets"),
             CoreCompileTarget()));
 
     public static XDocument CreateCsproj(string targetFramework, IEnumerable<LibraryRef> referenceItems, IEnumerable<string> usingItems) =>
-       new(new XElement("Project",
-            new XAttribute("Sdk", Sdk),
+        new(new XElement("Project",
+            new XAttribute("Sdk", DefaultSdk),
             BuildProperties(targetFramework, copyBuildOutput: true),
             Reference(referenceItems),
             Using(usingItems)));
+
+    /// <summary>
+    /// Creates a Directory.Build.props file with a Reference to the RoslynPad.Runtime assembly,
+    /// implicit usings, framework references, and additional compile items. Used for .NET 10+ file-based apps.
+    /// </summary>
+    public static XDocument CreateDirectoryBuildProps(string runtimeAssemblyPath, IEnumerable<string> usingItems, IEnumerable<LibraryRef> frameworkReferences, IEnumerable<string> compileItems)
+    {
+        var frameworkRefs = frameworkReferences
+            .Where(r => r.Kind == LibraryRef.RefKind.FrameworkReference)
+            .Select(r => new XElement("FrameworkReference", new XAttribute("Include", r.Value)))
+            .ToArray();
+
+        var itemGroup = new XElement("ItemGroup",
+            new XElement("Reference",
+                new XAttribute("Include", "RoslynPad.Runtime"),
+                new XElement("HintPath", runtimeAssemblyPath)));
+
+        if (frameworkRefs.Length > 0)
+        {
+            foreach (var fxRef in frameworkRefs)
+            {
+                itemGroup.Add(fxRef);
+            }
+        }
+
+        return new(new XElement("Project", itemGroup, Compile(compileItems), Using(usingItems)));
+    }
 
     private static XElement ReferenceAssemblies(bool isDotNet) =>
         isDotNet ? new XElement("ItemGroup") : new XElement("ItemGroup",

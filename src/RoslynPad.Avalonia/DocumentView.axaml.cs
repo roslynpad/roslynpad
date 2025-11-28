@@ -106,7 +106,7 @@ partial class DocumentView : UserControl, IDisposable
     {
         _ = this.GetDispatcher().InvokeAsync(() =>
         {
-            var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
+            var text = ViewModel.FormatPackageReference(package.Id, package.Version);
             _editor.Document.Insert(0, text, AnchorMovementType.Default);
         });
     }

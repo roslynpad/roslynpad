@@ -94,7 +94,8 @@ public class RoslynHost : IRoslynHost
 
     protected virtual ParseOptions CreateDefaultParseOptions() => new CSharpParseOptions(
         preprocessorSymbols: PreprocessorSymbols,
-        languageVersion: LanguageVersion.Preview);
+        languageVersion: LanguageVersion.Preview)
+        .WithFeatures([new(nameof(CSharpParseOptions.FileBasedProgram), bool.TrueString)]);
 
     public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
         documentation: _documentationProviderService.GetDocumentationProvider(location));
