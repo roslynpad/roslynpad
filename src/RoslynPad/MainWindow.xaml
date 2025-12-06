@@ -18,17 +18,22 @@
         Name="This">
 
     <FrameworkElement.InputBindings>
-        <KeyBinding Gesture="Ctrl+N"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.NewDocument}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.NewDocument}}"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}"
                     CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
-        <KeyBinding Gesture="Ctrl+Shift+N"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.NewScript}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.NewScript}}"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}"
                     CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
-        <KeyBinding Gesture="Ctrl+O"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.OpenFile}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.OpenFile}}"
                     Command="{Binding OpenFileCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+W"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.CloseCurrentFile}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.CloseCurrentFile}}"
                     Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Ctrl+Shift+O"
+        <KeyBinding Key="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.ToggleOptimization}}"
+                    Modifiers="{Binding Converter={StaticResource KeySequenceToGestureConverter}, ConverterParameter={x:Static ui:KeyBindingCommands.ToggleOptimization}}"
                     Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
     </FrameworkElement.InputBindings>
     <FrameworkElement.Resources>

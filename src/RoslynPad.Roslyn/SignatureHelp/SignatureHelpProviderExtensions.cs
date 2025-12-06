@@ -10,6 +10,6 @@ public static class SignatureHelpProviderExtensions
         ArgumentNullException.ThrowIfNull(provider);
         var text = await document.GetTextAsync().ConfigureAwait(false);
         var character = text.GetSubText(new TextSpan(position, 1))[0];
-        return provider.IsTriggerCharacter(character);
+        return provider.TriggerCharacters.Contains(character);
     }
 }

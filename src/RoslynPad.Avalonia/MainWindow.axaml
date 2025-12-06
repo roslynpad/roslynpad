@@ -12,33 +12,19 @@
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
-  <Window.KeyBindings>
-    <KeyBinding Gesture="{OnPlatform Ctrl+N, macOS=Cmd+N}"
-                Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+Shift+N, macOS=Cmd+Shift+N}"
-                Command="{Binding NewDocumentCommand, Mode=OneTime}"
-                CommandParameter="{x:Static roslyn:SourceCodeKind.Script}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}"
-                Command="{Binding OpenFileCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"
-                Command="{Binding CloseCurrentDocumentCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+Shift+O, macOS=Cmd+Shift+O}"
-                Command="{Binding ToggleOptimizationCommand, Mode=OneTime}" />
-  </Window.KeyBindings>
   <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
     <DockPanel>
 
-      <Border Padding="3"
+      <Button Padding="3"
                 Margin="1"
                 Background="#eebbbb"
                 DockPanel.Dock="Bottom"
+                Click="OnErrorButtonClick"
+                VerticalAlignment="Stretch"
                 IsVisible="{Binding HasError}">
-        <DockPanel LastChildFill="False">
           <TextBlock VerticalAlignment="Center"
                      Text="{Binding LastError.Message}" />
-        </DockPanel>
-      </Border>
+      </Button>
 
       <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>

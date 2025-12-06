@@ -18,7 +18,6 @@
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Globalization;
 using AvaloniaEdit.Utils;
 
@@ -46,6 +45,7 @@ public sealed class ContextActionsRenderer
         _editor = editor ?? throw new ArgumentNullException(nameof(editor));
         _textMarkerService = textMarkerService;
 
+        _actions = new ObservableCollection<object>();
         _contextMenu = CreateContextMenu();
         _contextMenu.ItemsSource = _actions; // Set ItemsSource immediately to ensure binding
         
@@ -129,18 +129,33 @@ public sealed class ContextActionsRenderer
 
     private async Task<bool> LoadActionsWithCancellationAsync()
     {
+        // Cancel any previous operation before starting a new one
+        var previousCancellationTokenSource = _cancellationTokenSource;
+        if (previousCancellationTokenSource != null)
+        {
+            await previousCancellationTokenSource.CancelAsync().ConfigureAwait(false);
+        }
+        
         _cancellationTokenSource = new CancellationTokenSource();
         try
         {
             await LoadActionsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
             return _actions.Count > 0;
         }
+        catch (OperationCanceledException)
+        {
+            // Operation was cancelled, this is expected
+            return false;
+        }
         catch (Exception)
         {
             // ignored
+            return false;
         }
-        _cancellationTokenSource = null;
-        return false;
+        finally
+        {
+            _cancellationTokenSource = null;
+        }
     }
 
     private ICommand? GetActionCommand(object action) =>

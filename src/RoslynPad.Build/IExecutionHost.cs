@@ -7,6 +7,7 @@ namespace RoslynPad.Build;
 internal interface IExecutionHost
 {
     ExecutionPlatform Platform { get; set; }
+    bool UseFileBasedReferences { get; }
     string Name { get; set; }
     string DotNetExecutable { get; set; }
     ImmutableArray<MetadataReference> MetadataReferences { get; }

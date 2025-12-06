@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Windows.Data;
-using RoslynPad.UI;
+﻿using RoslynPad.UI;
 
 namespace RoslynPad.Formatting;
 

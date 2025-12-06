@@ -7,22 +7,21 @@ using Microsoft.CodeAnalysis.Text;
 namespace RoslynPad.Roslyn.SignatureHelp;
 
 [Export(typeof(ISignatureHelpProvider)), Shared]
-[method: ImportingConstructor]
-internal sealed class AggregateSignatureHelpProvider([ImportMany] IEnumerable<Lazy<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider, OrderableLanguageMetadata>> providers) : ISignatureHelpProvider
+internal sealed class AggregateSignatureHelpProvider : ISignatureHelpProvider
 {
-    private readonly ImmutableArray<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider> _providers = providers.Where(x => x.Metadata.Language == LanguageNames.CSharp)
-            .Select(x => x.Value).ToImmutableArray();
+    private readonly ImmutableArray<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider> _providers;
 
-    public bool IsTriggerCharacter(char ch)
+    [ImportingConstructor]
+    public AggregateSignatureHelpProvider([ImportMany] IEnumerable<Lazy<Microsoft.CodeAnalysis.SignatureHelp.ISignatureHelpProvider, OrderableLanguageMetadata>> providers)
     {
-        return _providers.Any(p => p.IsTriggerCharacter(ch));
+        _providers = [.. providers.Where(x => x.Metadata.Language == LanguageNames.CSharp).Select(x => x.Value)];
+        TriggerCharacters = [.. _providers.SelectMany(p => p.TriggerCharacters)];
+        RetriggerCharacters = [.. _providers.SelectMany(p => p.RetriggerCharacters)];
     }
 
-    public bool IsRetriggerCharacter(char ch)
-    {
-        return _providers.Any(p => p.IsRetriggerCharacter(ch));
-    }
-
+    public ImmutableArray<char> TriggerCharacters { get; }
+    public ImmutableArray<char> RetriggerCharacters { get; }
+    
     public async Task<SignatureHelpItems?> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo trigger, CancellationToken cancellationToken)
     {
         Microsoft.CodeAnalysis.SignatureHelp.SignatureHelpItems? bestItems = null;

@@ -1,7 +1,3 @@
-using System.Windows;
-using System.Windows.Controls;
-using RoslynPad.Editor;
-
 namespace RoslynPad.Controls;
 
 internal class TreeListView : TreeView

@@ -187,7 +187,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private async Task InitializeInternal()
     {
         RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
-            RoslynHostReferences.NamespaceDefault.With(imports: ["RoslynPad.Runtime"]),
+            RoslynHostReferences.Empty.With(imports: Settings.DefaultUsings ?? []),
             disabledDiagnostics: ["CS1701", "CS1702", "CS7011", "CS8097"],
             analyzerConfigFiles: [_editorConfigPath]))
             .ConfigureAwait(true);

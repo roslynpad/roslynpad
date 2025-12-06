@@ -1,12 +1,13 @@
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace RoslynPad.Roslyn.SignatureHelp;
 
 public interface ISignatureHelpProvider
 {
-    bool IsTriggerCharacter(char ch);
+    ImmutableArray<char> TriggerCharacters { get; }
 
-    bool IsRetriggerCharacter(char ch);
+    ImmutableArray<char> RetriggerCharacters { get; }
 
     Task<SignatureHelpItems?> GetItemsAsync(Document document, int position, SignatureHelpTriggerInfo triggerInfo, CancellationToken cancellationToken = default);
 }

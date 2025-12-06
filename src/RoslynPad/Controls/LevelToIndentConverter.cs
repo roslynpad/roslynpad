@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
-
-namespace RoslynPad.Controls;
+﻿namespace RoslynPad.Controls;
 
 internal sealed class LevelToIndentConverter : IValueConverter
 {

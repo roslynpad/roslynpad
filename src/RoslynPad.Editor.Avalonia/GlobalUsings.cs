@@ -26,7 +26,6 @@ global using FontStyles = Avalonia.Media.FontStyle;
 global using FontWeights = Avalonia.Media.FontWeight;
 global using CommonFontWeights = Avalonia.Media.FontWeight;
 global using CommonBrush = Avalonia.Media.IBrush;
-global using Brush = Avalonia.Media.IBrush;
 global using ImageSource = Avalonia.Media.IImage;
 global using CommonImage = Avalonia.Media.IImage;
 global using AvalonEditCommands = AvaloniaEdit.AvaloniaEditCommands;

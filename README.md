@@ -6,7 +6,7 @@ A cross-platform C# editor based on Roslyn and AvalonEdit
 
 ## Installing
 
-**You must also install a supported .NET SDK to allow RoslynPad to compile programs.**
+**You must also install a supported [.NET SDK](https://aka.ms/dotnet) to allow RoslynPad to compile programs.**
 
 | Source | |
 |-|-|
@@ -30,12 +30,8 @@ See [Packages](docs/packages/README.md) for more information.
 
 To build the source code, use one of the following:
 * `dotnet build`
-* Visual Studio 2022
-* Visual Studio Code with the C# Dev Kit extension
-
-Solutions:
-* `RoslynPad.sln` - contains all projects (recommended only on Windows)
-* `src/RoslynPad.Avalonia.sln` - contains only cross-platform projects
+* Visual Studio Code with the C# extension
+* Visual Studio 2026 (Windows only)
 
 ## Features
 

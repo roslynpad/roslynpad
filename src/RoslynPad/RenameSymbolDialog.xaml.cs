@@ -1,10 +1,4 @@
-﻿using System.ComponentModel;
-using System.Composition;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Input;
-using Avalon.Windows.Controls;
+﻿using Avalon.Windows.Controls;
 using RoslynPad.UI;
 
 namespace RoslynPad;

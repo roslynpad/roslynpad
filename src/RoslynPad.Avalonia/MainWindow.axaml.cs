@@ -4,6 +4,7 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Dock.Model.Avalonia.Controls;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RoslynPad.Themes;
 using RoslynPad.UI;
+using SourceCodeKind = Microsoft.CodeAnalysis.SourceCodeKind;
 
 namespace RoslynPad;
 
@@ -47,11 +49,37 @@ partial class MainWindow : Window
         DataContext = _viewModel;
 
         InitializeComponent();
+        InitializeKeyBindings();
 
         if (_viewModel.Settings.WindowFontSize.HasValue)
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
+    }
+
+    private void InitializeKeyBindings()
+    {
+        this.AddKeyBinding(KeyBindingCommands.NewDocument, _viewModel.NewDocumentCommand, SourceCodeKind.Regular);
+        this.AddKeyBinding(KeyBindingCommands.NewScript, _viewModel.NewDocumentCommand, SourceCodeKind.Script);
+        this.AddKeyBinding(KeyBindingCommands.OpenFile, _viewModel.OpenFileCommand);
+        this.AddKeyBinding(KeyBindingCommands.CloseCurrentFile, _viewModel.CloseCurrentDocumentCommand);
+        this.AddKeyBinding(KeyBindingCommands.ToggleOptimization, _viewModel.ToggleOptimizationCommand);
+    }
+
+    private void OnErrorButtonClick(object sender, RoutedEventArgs e)
+    {
+        new Window
+        {
+            Title = "Error Details",
+            Width = 600,
+            Height = 400,
+            Content = new TextBox
+            {
+                Text = _viewModel.LastError?.ToString(),
+                IsReadOnly = true,
+                AcceptsReturn = true
+            }
+        }.ShowDialog(this);
     }
 
     private void OnActiveDockableChanged(object sender, ActiveDockableChangedEventArgs e)

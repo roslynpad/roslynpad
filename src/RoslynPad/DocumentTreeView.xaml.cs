@@ -1,11 +1,6 @@
 ﻿#pragma warning disable CS8618
 
-using System.Collections;
 using System.Diagnostics;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
-using System.Windows.Input;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -87,7 +82,7 @@ internal class FilterCollectionViewConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is IList list)
+        if (value is System.Collections.IList list)
         {
             var collectionView = new ListCollectionView(list)
             {

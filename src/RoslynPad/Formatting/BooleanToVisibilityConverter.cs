@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
-
-namespace RoslynPad.Formatting;
+﻿namespace RoslynPad.Formatting;
 
 internal sealed class BooleanToVisibilityConverter : IValueConverter
 {

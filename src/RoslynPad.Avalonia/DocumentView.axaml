@@ -10,22 +10,6 @@
   <UserControl.Resources>
     <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
   </UserControl.Resources>
-  <UserControl.KeyBindings>
-    <KeyBinding Gesture="F5"
-                Command="{Binding RunCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="Shift+F5"
-                Command="{Binding TerminateCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}"
-                Command="{Binding SaveCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+D, macOS=Cmd+D}"
-                Command="{Binding FormatDocumentCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+K, macOS=Cmd+K}"
-                Command="{Binding CommentSelectionCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="{OnPlatform Ctrl+U, macOS=Cmd+U}"
-                Command="{Binding UncommentSelectionCommand, Mode=OneTime}" />
-    <KeyBinding Gesture="F2"
-                Command="{Binding RenameSymbolCommand, Mode=OneTime}" />
-  </UserControl.KeyBindings>
   <Grid RowDefinitions="Auto,*">
     <StackPanel Grid.Row="0"
                 Name="Toolbar"

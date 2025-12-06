@@ -32,6 +32,8 @@ partial class DocumentView : UserControl, IDisposable
         if (DataContext is not OpenDocumentViewModel viewModel) return;
         _viewModel = viewModel;
 
+        InitializeKeyBindings(viewModel);
+
         viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
         viewModel.ReadInput += OnReadInput;
@@ -71,6 +73,17 @@ partial class DocumentView : UserControl, IDisposable
         }
     }
 
+    private void InitializeKeyBindings(OpenDocumentViewModel viewModel)
+    {
+        this.AddKeyBinding(KeyBindingCommands.RunScript, viewModel.RunCommand);
+        this.AddKeyBinding(KeyBindingCommands.TerminateRunningScript, viewModel.TerminateCommand);
+        this.AddKeyBinding(KeyBindingCommands.SaveDocument, viewModel.SaveCommand);
+        this.AddKeyBinding(KeyBindingCommands.FormatDocument, viewModel.FormatDocumentCommand);
+        this.AddKeyBinding(KeyBindingCommands.CommentSelection, viewModel.CommentSelectionCommand);
+        this.AddKeyBinding(KeyBindingCommands.UncommentSelection, viewModel.UncommentSelectionCommand);
+        this.AddKeyBinding(KeyBindingCommands.RenameSymbol, viewModel.RenameSymbolCommand);
+    }
+
     private async void OnReadInput()
     {
         var textBox = new TextBox();
@@ -106,7 +119,7 @@ partial class DocumentView : UserControl, IDisposable
     {
         _ = this.GetDispatcher().InvokeAsync(() =>
         {
-            var text = $"#r \"nuget: {package.Id}, {package.Version}\"{Environment.NewLine}";
+            var text = ViewModel.FormatPackageReference(package.Id, package.Version);
             _editor.Document.Insert(0, text, AnchorMovementType.Default);
         });
     }

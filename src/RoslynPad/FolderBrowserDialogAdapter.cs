@@ -1,6 +1,4 @@
-﻿using System.Composition;
-using System.Windows;
-using Avalon.Windows.Dialogs;
+﻿using Avalon.Windows.Dialogs;
 using RoslynPad.UI;
 
 namespace RoslynPad;

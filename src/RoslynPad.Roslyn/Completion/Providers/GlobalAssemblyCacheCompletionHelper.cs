@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Shared.Utilities;
-using Roslyn.Utilities;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.PooledObjects;
 
@@ -49,7 +48,6 @@ internal sealed class GlobalAssemblyCacheCompletionHelper(CompletionItemRules it
 
     private IEnumerable<AssemblyIdentity> GetAssemblyIdentities(string partialName)
     {
-        return IOUtilities.PerformIO(() => GlobalAssemblyCache.Instance.GetAssemblyIdentities(partialName),
-            SpecializedCollections.EmptyEnumerable<AssemblyIdentity>());
+        return IOUtilities.PerformIO(() => GlobalAssemblyCache.Instance.GetAssemblyIdentities(partialName), []);
     }
 }
