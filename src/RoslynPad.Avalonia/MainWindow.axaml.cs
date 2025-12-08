@@ -23,6 +23,7 @@ partial class MainWindow : Window
 
     private readonly MainViewModel _viewModel;
     private ThemeDictionary? _themeDictionary;
+    private Document? _settingsDocument;
 
     public MainViewModel ViewModel => _viewModel;
 
@@ -44,6 +45,7 @@ partial class MainWindow : Window
         _viewModel = locator.GetRequiredService<MainViewModel>();
         _viewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
         _viewModel.ThemeChanged += OnViewModelThemeChanged;
+        _viewModel.SettingsOpened += OnSettingsOpened;
         _viewModel.InitializeTheme();
 
         DataContext = _viewModel;
@@ -55,6 +57,40 @@ partial class MainWindow : Window
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
+    }
+
+    private void OnSettingsOpened(object? sender, EventArgs e)
+    {
+        if (DocumentsPane.Factory is not { } factory)
+        {
+            return;
+        }
+
+        if (_settingsDocument != null)
+        {
+            // Settings already open, just activate it
+            factory.SetActiveDockable(_settingsDocument);
+            factory.SetFocusedDockable(DocumentsPane, _settingsDocument);
+            return;
+        }
+
+        var settingsView = new SettingsView
+        {
+            DataContext = _viewModel.SettingsViewModel
+        };
+
+        _settingsDocument = new Document
+        {
+            Id = "settings",
+            Title = "Settings",
+            DataContext = _viewModel.SettingsViewModel,
+            Content = settingsView,
+            CanClose = true
+        };
+
+        factory.AddDockable(DocumentsPane, _settingsDocument);
+        factory.SetActiveDockable(_settingsDocument);
+        factory.SetFocusedDockable(DocumentsPane, _settingsDocument);
     }
 
     private void InitializeKeyBindings()
@@ -117,9 +153,17 @@ partial class MainWindow : Window
 
     private async void OnDockableClosedAsync(object? sender, DockableClosedEventArgs e)
     {
-        if (e.Dockable is Document document && document.DataContext is OpenDocumentViewModel viewModel)
+        if (e.Dockable is Document document)
         {
-            await _viewModel.CloseDocument(viewModel).ConfigureAwait(true);
+            if (document.DataContext is OpenDocumentViewModel viewModel)
+            {
+                await _viewModel.CloseDocument(viewModel).ConfigureAwait(true);
+            }
+            else if (document.Id == "settings")
+            {
+                _settingsDocument = null;
+                _viewModel.SettingsViewModel = null;
+            }
         }
     }
 

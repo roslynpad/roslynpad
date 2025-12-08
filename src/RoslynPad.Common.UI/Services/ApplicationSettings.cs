@@ -129,30 +129,6 @@ internal class ApplicationSettings : IApplicationSettings
     {
         private const int LiveModeDelayMsDefault = 2000;
         private const int DefaultFontSize = 12;
-        private IList<KeyBinding>? _keyBindings;
-        private BuiltInTheme _builtInTheme;
-        private bool _sendErrors;
-        private string? _latestVersion;
-        private string? _windowBounds;
-        private string? _dockLayout;
-        private string? _windowState;
-        private string _editorFontFamily = GetDefaultPlatformFontFamily();
-        private double _editorFontSize = DefaultFontSize;
-        private double _outputFontSize = DefaultFontSize;
-        private string? _documentPath;
-        private bool _searchFileContents;
-        private bool _searchUsingRegex;
-        private bool _optimizeCompilation;
-        private int _liveModeDelayMs = LiveModeDelayMsDefault;
-        private bool _searchWhileTyping;
-        private bool _enableBraceCompletion = true;
-        private string _defaultPlatformName = string.Empty;
-        private double? _windowFontSize;
-        private bool _formatDocumentOnComment = true;
-        private string? _effectiveDocumentPath;
-        private string? _customThemePath;
-        private ThemeType? _customThemeType;
-        private string[]? _defaultUsings;
 
         public void LoadDefaultSettings()
         {
@@ -162,21 +138,22 @@ internal class ApplicationSettings : IApplicationSettings
             OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
             EditorFontFamily = GetDefaultPlatformFontFamily();
-            DefaultUsings =
-            [
-                "System",
-                "System.Threading",
-                "System.Threading.Tasks",
-                "System.Collections",
-                "System.Collections.Generic",
-                "System.Text",
-                "System.Text.RegularExpressions",
-                "System.Linq",
-                "System.IO",
-                "System.Reflection",
-                "RoslynPad.Runtime",
-            ];
+            DefaultUsings = GetDefaultUsings();
         }
+
+        private static string[] GetDefaultUsings() => [
+            "System",
+            "System.Threading",
+            "System.Threading.Tasks",
+            "System.Collections",
+            "System.Collections.Generic",
+            "System.Text",
+            "System.Text.RegularExpressions",
+            "System.Linq",
+            "System.IO",
+            "System.Reflection",
+            "RoslynPad.Runtime",
+        ];
 
         private static string GetDefaultPlatformFontFamily()
         {
@@ -196,141 +173,141 @@ internal class ApplicationSettings : IApplicationSettings
 
         public IList<KeyBinding>? KeyBindings
         {
-            get => _keyBindings;
-            set => SetProperty(ref _keyBindings, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool SendErrors
         {
-            get => _sendErrors;
-            set => SetProperty(ref _sendErrors, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool EnableBraceCompletion
         {
-            get => _enableBraceCompletion;
-            set => SetProperty(ref _enableBraceCompletion, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = true;
 
         public string? LatestVersion
         {
-            get => _latestVersion;
-            set => SetProperty(ref _latestVersion, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public string? WindowBounds
         {
-            get => _windowBounds;
-            set => SetProperty(ref _windowBounds, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         [JsonPropertyName("dockLayoutV2")]
         public string? DockLayout
         {
-            get => _dockLayout;
-            set => SetProperty(ref _dockLayout, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public string? WindowState
         {
-            get => _windowState;
-            set => SetProperty(ref _windowState, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public double EditorFontSize
         {
-            get => _editorFontSize;
-            set => SetProperty(ref _editorFontSize, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = DefaultFontSize;
 
         public string EditorFontFamily
         {
-            get => _editorFontFamily;
-            set => SetProperty(ref _editorFontFamily, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = GetDefaultPlatformFontFamily();
 
         public double OutputFontSize
         {
-            get => _outputFontSize;
-            set => SetProperty(ref _outputFontSize, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = DefaultFontSize;
 
         public string? DocumentPath
         {
-            get => _documentPath;
-            set => SetProperty(ref _documentPath, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool SearchFileContents
         {
-            get => _searchFileContents;
-            set => SetProperty(ref _searchFileContents, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool SearchUsingRegex
         {
-            get => _searchUsingRegex;
-            set => SetProperty(ref _searchUsingRegex, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool OptimizeCompilation
         {
-            get => _optimizeCompilation;
-            set => SetProperty(ref _optimizeCompilation, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public int LiveModeDelayMs
         {
-            get => _liveModeDelayMs;
-            set => SetProperty(ref _liveModeDelayMs, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = LiveModeDelayMsDefault;
 
         public bool SearchWhileTyping
         {
-            get => _searchWhileTyping;
-            set => SetProperty(ref _searchWhileTyping, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public string DefaultPlatformName
         {
-            get => _defaultPlatformName;
-            set => SetProperty(ref _defaultPlatformName, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = string.Empty;
 
         public double? WindowFontSize
         {
-            get => _windowFontSize;
-            set => SetProperty(ref _windowFontSize, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public bool FormatDocumentOnComment
         {
-            get => _formatDocumentOnComment;
-            set => SetProperty(ref _formatDocumentOnComment, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = true;
 
         public string? CustomThemePath
         {
-            get => _customThemePath;
-            set => SetProperty(ref _customThemePath, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public ThemeType? CustomThemeType
         {
-            get => _customThemeType;
-            set => SetProperty(ref _customThemeType, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public BuiltInTheme BuiltInTheme
         {
-            get => _builtInTheme;
-            set => SetProperty(ref _builtInTheme, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         public string[]? DefaultUsings
         {
-            get => _defaultUsings;
-            set => SetProperty(ref _defaultUsings, value);
+            get;
+            set => SetProperty(ref field, value);
         }
 
         [JsonIgnore]
@@ -338,16 +315,16 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get
             {
-                if (_effectiveDocumentPath == null)
+                if (field == null)
                 {
 
                     var userDefinedPath = DocumentPath;
-                    _effectiveDocumentPath = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
+                    field = !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
                         ? userDefinedPath!
                         : Settings?.GetDefaultDocumentPath() ?? string.Empty;
                 }
 
-                return _effectiveDocumentPath;
+                return field;
             }
         }
 

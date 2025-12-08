@@ -93,6 +93,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
         ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
+        OpenSettingsCommand = commands.Create(OpenSettings);
 
         _editorFontSize = Settings.EditorFontSize;
 
@@ -391,6 +392,24 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     public IDelegateCommand ToggleOptimizationCommand { get; }
 
     public IDelegateCommand ClearRestoreCacheCommand { get; }
+
+    public IDelegateCommand OpenSettingsCommand { get; }
+
+    private SettingsViewModel? _settingsViewModel;
+
+    public SettingsViewModel? SettingsViewModel
+    {
+        get => _settingsViewModel;
+        set => SetProperty(ref _settingsViewModel, value);
+    }
+
+    public event EventHandler? SettingsOpened;
+
+    protected virtual void OpenSettings()
+    {
+        SettingsViewModel = new SettingsViewModel(Settings);
+        SettingsOpened?.Invoke(this, EventArgs.Empty);
+    }
 
     public void OpenDocument(DocumentViewModel document)
     {

@@ -42,6 +42,10 @@
             <rp:DocumentView />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type ui:SettingsViewModel}">
+            <rp:SettingsView />
+        </DataTemplate>
+
     </FrameworkElement.Resources>
     <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}">
         <DockPanel>

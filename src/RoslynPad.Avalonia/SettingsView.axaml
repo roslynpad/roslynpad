@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:RoslynPad.UI"
+             xmlns:local="using:RoslynPad"
+             mc:Ignorable="d"
+             d:DesignHeight="400"
+             d:DesignWidth="500"
+             x:Class="RoslynPad.SettingsView"
+             x:DataType="ui:SettingsViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.SettingName">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.Description">
+            <Setter Property="Foreground" Value="Gray" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="0,5,0,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Filter TextBox -->
+        <Border Grid.Row="0"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                Margin="10,10,10,5">
+            <Grid>
+                <TextBox x:Name="FilterTextBox"
+                         Text="{Binding FilterText}"
+                         BorderThickness="0"
+                         Padding="5" />
+                <TextBlock Text="Filter settings..."
+                           IsHitTestVisible="False"
+                           Foreground="Gray"
+                           Padding="7,5,5,5"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding FilterText, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+            </Grid>
+        </Border>
+
+        <!-- Settings List -->
+        <ScrollViewer Grid.Row="1"
+                      Margin="10,5,10,10">
+            <ItemsControl ItemsSource="{Binding FilteredSettings}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type ui:SettingItem}">
+                        <Border BorderBrush="Gray"
+                                BorderThickness="0,0,0,1"
+                                Padding="5,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Setting Name -->
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="0"
+                                           Text="{Binding DisplayName}"
+                                           Classes="SettingName" />
+
+                                <!-- Setting Editor -->
+                                <ContentControl Grid.Row="0"
+                                                Grid.Column="1"
+                                                Content="{Binding}"
+                                                HorizontalAlignment="Right"
+                                                Margin="10,0,0,0">
+                                    <ContentControl.DataTemplates>
+                                        <DataTemplate DataType="{x:Type ui:SettingItem}">
+                                            <Panel>
+                                                <CheckBox IsChecked="{Binding BoolValue}"
+                                                          IsVisible="{Binding IsBoolean}"
+                                                          VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding StringValue}"
+                                                         IsVisible="{Binding IsString}"
+                                                         VerticalAlignment="Center"
+                                                         MinWidth="200" />
+                                                <TextBox Text="{Binding NumericValue}"
+                                                         IsVisible="{Binding IsNumeric}"
+                                                         VerticalAlignment="Center"
+                                                         MinWidth="100" />
+                                                <ComboBox ItemsSource="{Binding EnumValues}"
+                                                          SelectedItem="{Binding Value}"
+                                                          IsVisible="{Binding IsEnum}"
+                                                          VerticalAlignment="Center"
+                                                          MinWidth="150" />
+                                                <TextBox Text="{Binding StringArrayValue}"
+                                                         IsVisible="{Binding IsStringArray}"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="Wrap"
+                                                         MinWidth="200"
+                                                         MinHeight="60"
+                                                         MaxHeight="120" />
+                                            </Panel>
+                                        </DataTemplate>
+                                    </ContentControl.DataTemplates>
+                                </ContentControl>
+
+                                <!-- Description -->
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="0"
+                                           Grid.ColumnSpan="2"
+                                           Text="{Binding Description}"
+                                           Classes="Description"
+                                           IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

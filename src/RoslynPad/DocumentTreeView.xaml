@@ -120,6 +120,13 @@
                        Width="16"
                        Height="16" />
             </Button>
+            <Button ToolTip="Settings"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding OpenSettingsCommand, Mode=OneTime}">
+                <Image Source="{StaticResource Settings}"
+                       Width="16"
+                       Height="16" />
+            </Button>
         </ToolBar>
 
         <Border Grid.Row="1"
