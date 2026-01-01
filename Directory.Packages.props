@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetExtensionsVersion>10.0.0</DotNetExtensionsVersion>
+    <DotNetExtensionsVersion>10.0.1</DotNetExtensionsVersion>
     <RoslynVersion>5.0.0</RoslynVersion>
     <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
     <RoslynPrivateVersion>5.0.0-2.25567.12</RoslynPrivateVersion>
