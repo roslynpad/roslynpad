@@ -1,15 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <UseProjectReferences Condition="'$(UseProjectReferences)' == ''">true</UseProjectReferences>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.4" />
-    <PackageReference Include="RoslynPad.Editor.Avalonia" Version="4.12.1" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Diagnostics" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="RoslynPad.Editor.Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\..\src\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
+    <ProjectReference Include="..\..\src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
   </ItemGroup>
 </Project>

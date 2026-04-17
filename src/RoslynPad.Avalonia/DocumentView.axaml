@@ -134,7 +134,7 @@
       <TextBox Name="NuGetSearch"
                BorderBrush="#eeeeee"
                Text="{Binding NuGet.SearchTerm}"
-               Watermark="{OnPlatform Search NuGet (Ctrl+T), macOS=Search NuGet (⌘ T)}"
+               PlaceholderText="{OnPlatform Search NuGet (Ctrl+T), macOS=Search NuGet (⌘ T)}"
                Width="200" />
       <Decorator VerticalAlignment="Center">
         <CheckBox IsChecked="{Binding NuGet.Prerelease}"

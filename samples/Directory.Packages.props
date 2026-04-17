@@ -1,1 +1,9 @@
-<Project />
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <Import Project="../Directory.Packages.props" />
+  <ItemGroup>
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+</Project>

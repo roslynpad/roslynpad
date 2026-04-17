@@ -35,4 +35,8 @@
       <_ComputedTargetFrameworkMoniker>$(Original_ComputedTargetFrameworkMoniker)</_ComputedTargetFrameworkMoniker>
     </PropertyGroup>
   </Target>
+  <PropertyGroup Condition=" '$([System.OperatingSystem]::IsWindows())' == 'false' AND '$(UseWPF)' == 'true' ">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
 </Project>

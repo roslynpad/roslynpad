@@ -1,4 +1,5 @@
 <Project>
+    <Import Project="../Directory.Build.props" />
     <PropertyGroup>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
