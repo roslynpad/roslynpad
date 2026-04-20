@@ -5,16 +5,22 @@ namespace RoslynPad;
 
 public static partial class WindowExtensions
 {
+    // DWMWA_USE_IMMERSIVE_DARK_MODE requires Windows 10 version 2004 (build 19041) or later
+    private static readonly bool s_immersiveDarkModeSupported = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041);
+
     public static void UseImmersiveDarkMode(this Window window, bool value)
     {
+        if (!s_immersiveDarkModeSupported)
+        {
+            return;
+        }
+
         var hwnd = new WindowInteropHelper(window).EnsureHandle();
         DwmSetWindowAttribute(
             hwnd,
             DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE,
             value,
             Marshal.SizeOf<bool>());
-        // Ignore errors - DWMWA_USE_IMMERSIVE_DARK_MODE is not supported on all Windows versions
-        // (e.g. Windows Server 2016/2019), so a failure here is expected and should not crash the app.
     }
 
     [LibraryImport("dwmapi")]
