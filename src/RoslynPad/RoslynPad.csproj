@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFramework)-windows</TargetFramework>
-    <RuntimeIdentifier Condition=" '$(IsMacOs)' == 'true' ">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition=" '$(IsMacOs)' == 'true' or '$(IsLinux)' == 'true' ">win-x64</RuntimeIdentifier>
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
