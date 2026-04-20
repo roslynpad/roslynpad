@@ -11,7 +11,6 @@
     <IsMacOS>$([System.OperatingSystem]::IsMacOS())</IsMacOS>
     <IsLinux>$([System.OperatingSystem]::IsLinux())</IsLinux>
     <IsMacBuild Condition=" '$(IsMacOS)' == 'true' and ( '$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.Contains('osx')) ) ">true</IsMacBuild>
-    <RuntimeIdentifier Condition=" '$(IsLinux)' == 'true' and '$(UseWPF)' == 'true' ">win-x64</RuntimeIdentifier>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
