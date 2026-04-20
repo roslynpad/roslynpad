@@ -168,21 +168,13 @@ public sealed class ContextActionsRenderer
             newActions.AddRange(actions);
         }
 
-        // Update the ObservableCollection on the UI thread
+        // Update on the UI thread; assign a new collection so that
+        // Avalonia's MenuFlyout (which does not observe in-place collection
+        // changes) picks up the updated items via a property-changed notification.
         await _editor.GetDispatcher();
-        
-        if (_actions == null)
-        {
-            _actions = new ObservableCollection<object>(newActions);
-        }
-        else
-        {
-            _actions.Clear();
-            foreach (var action in newActions)
-            {
-                _actions.Add(action);
-            }
-        }
+
+        _actions = new ObservableCollection<object>(newActions);
+        _contextMenu.ItemsSource = _actions;
     }
 
     private void ScrollChanged(object? sender, EventArgs e) => StartTimer();
