@@ -27,7 +27,7 @@ jobs:
     - name: Setup .NET (current)
       uses: actions/setup-dotnet@v4
     - name: Restore workloads
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macos-26'
       run: dotnet workload restore
     - name: Build with dotnet
       run: dotnet build -bl -c release -m:1
