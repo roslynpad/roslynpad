@@ -26,6 +26,9 @@ jobs:
         dotnet-version: '8.0.x'
     - name: Setup .NET (current)
       uses: actions/setup-dotnet@v4
+    - name: Restore workloads
+      if: matrix.os == 'macos-latest'
+      run: dotnet workload restore
     - name: Build with dotnet
       run: dotnet build -bl -c release -m:1
     - uses: actions/upload-artifact@v4
