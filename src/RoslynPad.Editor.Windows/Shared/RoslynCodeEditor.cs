@@ -334,7 +334,7 @@ public class RoslynCodeEditor : CodeTextEditor
             DiagnosticSeverity.Info => Colors.LimeGreen,
             DiagnosticSeverity.Warning => Colors.DodgerBlue,
             DiagnosticSeverity.Error => Colors.Red,
-            _ => throw new ArgumentOutOfRangeException(nameof(diagnosticData)),
+            _ => Colors.LimeGreen,
         };
     }
 
