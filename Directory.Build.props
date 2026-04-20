@@ -37,6 +37,7 @@
     <TrimMode>partial</TrimMode>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <ImplicitUsings>true</ImplicitUsings>
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(GITHUB_ACTIONS)' == 'true' ">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

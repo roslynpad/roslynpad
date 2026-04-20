@@ -4,27 +4,29 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetExtensionsVersion>10.0.1</DotNetExtensionsVersion>
-    <RoslynVersion>5.0.0</RoslynVersion>
+    <DotNetExtensionsVersion>10.0.6</DotNetExtensionsVersion>
+    <RoslynVersion>5.3.0</RoslynVersion>
     <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
-    <RoslynPrivateVersion>5.0.0-2.25567.12</RoslynPrivateVersion>
-    <AvaloniaVersion>11.3.10</AvaloniaVersion>
-    <NuGetVersion>7.0.1</NuGetVersion>
+    <RoslynPrivateVersion>5.3.0-2.26078.5</RoslynPrivateVersion>
+    <AvaloniaVersion>12.0.1</AvaloniaVersion>
+    <NuGetVersion>7.3.1</NuGetVersion>
     <MessagePackVersion>3.1.4</MessagePackVersion>
+    <AvalonDockVersion>4.74.0</AvalonDockVersion>
+    <DockAvaloniaVersion>12.0.0.1</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
-    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvalonLibrary" Version="4.0.1" />
-    <PackageVersion Include="DialogHost.Avalonia" Version="0.10.3" />
-    <PackageVersion Include="Dirkster.AvalonDock" Version="4.72.1" />
-    <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
-    <PackageVersion Include="Dock.Avalonia" Version="11.3.8" />
-    <PackageVersion Include="Dock.Model.Avalonia" Version="11.3.8" />
-    <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageVersion Include="DialogHost.Avalonia" Version="0.12.0" />
+    <PackageVersion Include="Dirkster.AvalonDock" Version="$(AvalonDockVersion)" />
+    <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="$(AvalonDockVersion)" />
+    <PackageVersion Include="Dock.Avalonia" Version="$(DockAvaloniaVersion)" />
+    <PackageVersion Include="Dock.Model.Avalonia" Version="$(DockAvaloniaVersion)" />
+    <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.8.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
@@ -34,7 +36,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.51" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="17.14.15" />
     <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="17.8.8" />
