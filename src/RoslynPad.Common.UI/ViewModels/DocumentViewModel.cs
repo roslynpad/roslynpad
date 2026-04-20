@@ -26,11 +26,14 @@ public partial class DocumentViewModel : NotificationObject
         Path = rootPath;
         IsFolder = isFolder;
 
-        var nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(Name);
-        IsAutoSave = nameWithoutExtension.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
-        if (IsAutoSave)
+        if (!isFolder)
         {
-            Name = string.Concat(nameWithoutExtension.AsSpan(0, nameWithoutExtension.Length - AutoSaveSuffix.Length), System.IO.Path.GetExtension(Name));
+            var nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(Name);
+            IsAutoSave = nameWithoutExtension.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
+            if (IsAutoSave)
+            {
+                Name = string.Concat(nameWithoutExtension.AsSpan(0, nameWithoutExtension.Length - AutoSaveSuffix.Length), System.IO.Path.GetExtension(Name));
+            }
         }
 
         IsSearchMatch = true;
