@@ -144,6 +144,22 @@
     <TreeView Grid.Row="2"
               ItemsSource="{Binding DocumentRoot.Children}"
               Name="Tree">
+      <TreeView.Styles>
+        <Style Selector="TreeViewItem">
+          <Setter Property="ContextMenu">
+            <Setter.Value>
+              <ContextMenu>
+                <MenuItem Header="{OnPlatform _Open in File Explorer, macOS=_Open in Finder}"
+                          Click="DocumentsContextMenu_OpenFolder_Click" />
+                <MenuItem Header="_Rename..."
+                          Click="DocumentsContextMenu_Rename_Click" />
+                <MenuItem Header="_Save As..."
+                          Click="DocumentsContextMenu_SaveAs_Click" />
+              </ContextMenu>
+            </Setter.Value>
+          </Setter>
+        </Style>
+      </TreeView.Styles>
       <TreeView.ItemTemplate>
         <TreeDataTemplate ItemsSource="{Binding Children}">
           <DockPanel Margin="0 2 0 2"

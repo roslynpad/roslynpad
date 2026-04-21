@@ -555,6 +555,105 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         return DocumentRoot.CreateNew(documentName);
     }
 
+    public async Task RenameDocument(DocumentViewModel document)
+    {
+        if (document.IsFolder) return;
+
+        var dialog = _serviceProvider.GetRequiredService<IRenameDocumentDialog>();
+        dialog.Initialize(Path.GetFileNameWithoutExtension(document.Name));
+        await dialog.ShowAsync().ConfigureAwait(true);
+
+        if (!dialog.ShouldRename || string.IsNullOrWhiteSpace(dialog.DocumentName))
+        {
+            return;
+        }
+
+        var extension = Path.GetExtension(document.Name);
+        var newName = dialog.DocumentName + extension;
+        var directory = Path.GetDirectoryName(document.Path)!;
+        var newPath = Path.Combine(directory, newName);
+
+        if (string.Equals(document.Path, newPath, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (File.Exists(newPath))
+        {
+            return;
+        }
+
+        // Rename autosave file if it exists
+        var autoSavePath = document.GetAutoSavePath();
+        var newAutoSavePath = Path.Combine(directory, DocumentViewModel.GetAutoSaveName(newName));
+        if (File.Exists(autoSavePath))
+        {
+            IOUtilities.PerformIO(() => File.Move(autoSavePath, newAutoSavePath));
+        }
+
+        IOUtilities.PerformIO(() => File.Move(document.Path, newPath));
+    }
+
+    public async Task SaveDocumentAs(DocumentViewModel document)
+    {
+        if (document.IsFolder) return;
+
+        var directory = Path.GetDirectoryName(document.Path)!;
+
+        var dialog = _serviceProvider.GetRequiredService<ISaveDocumentDialog>();
+        dialog.ShowDoNotSave = false;
+        dialog.AllowNameEdit = true;
+        dialog.DocumentName = Path.GetFileNameWithoutExtension(document.Name);
+        dialog.FilePathFactory = name => DocumentViewModel.GetDocumentPathFromName(directory, name + Path.GetExtension(document.Name));
+        await dialog.ShowAsync().ConfigureAwait(true);
+
+        if (dialog.Result != SaveResult.Save || string.IsNullOrWhiteSpace(dialog.DocumentName))
+        {
+            return;
+        }
+
+        var extension = Path.GetExtension(document.Name);
+        var newPath = Path.Combine(directory, dialog.DocumentName + extension);
+
+        // Check if the document is currently open and has unsaved changes
+        var openDoc = OpenDocuments.FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
+        if (openDoc != null && openDoc.IsDirty && openDoc.HasDocumentId)
+        {
+            // Save the current content to the new path
+            var roslynDocument = RoslynHost.GetDocument(openDoc.DocumentId);
+            if (roslynDocument != null)
+            {
+                var text = await roslynDocument.GetTextAsync().ConfigureAwait(false);
+                using var writer = File.CreateText(newPath);
+                for (int lineIndex = 0; lineIndex < text.Lines.Count - 1; ++lineIndex)
+                {
+                    await writer.WriteLineAsync(text.Lines[lineIndex].ToString()).ConfigureAwait(false);
+                }
+                await writer.WriteAsync(text.Lines[text.Lines.Count - 1].ToString()).ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            // Copy the file on disk
+            IOUtilities.PerformIO(() => File.Copy(document.Path, newPath, overwrite: true));
+        }
+    }
+
+    public void OpenDocumentInExplorer(DocumentViewModel document)
+    {
+        string path;
+        if (document.IsFolder)
+        {
+            path = document.Path;
+        }
+        else
+        {
+            path = Path.GetDirectoryName(document.Path) ?? document.Path;
+        }
+
+        _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }));
+    }
+
     public string? SearchText
     {
         get => _searchText;
