@@ -23,7 +23,6 @@ partial class MainWindow : Window
 
     private readonly MainViewModel _viewModel;
     private ThemeDictionary? _themeDictionary;
-    private Document? _settingsDocument;
 
     public MainViewModel ViewModel => _viewModel;
 
@@ -45,7 +44,6 @@ partial class MainWindow : Window
         _viewModel = locator.GetRequiredService<MainViewModel>();
         _viewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
         _viewModel.ThemeChanged += OnViewModelThemeChanged;
-        _viewModel.SettingsOpened += OnSettingsOpened;
         _viewModel.InitializeTheme();
 
         DataContext = _viewModel;
@@ -57,40 +55,6 @@ partial class MainWindow : Window
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
         }
-    }
-
-    private void OnSettingsOpened(object? sender, EventArgs e)
-    {
-        if (DocumentsPane.Factory is not { } factory)
-        {
-            return;
-        }
-
-        if (_settingsDocument != null)
-        {
-            // Settings already open, just activate it
-            factory.SetActiveDockable(_settingsDocument);
-            factory.SetFocusedDockable(DocumentsPane, _settingsDocument);
-            return;
-        }
-
-        var settingsView = new SettingsView
-        {
-            DataContext = _viewModel.SettingsViewModel
-        };
-
-        _settingsDocument = new Document
-        {
-            Id = "settings",
-            Title = "Settings",
-            DataContext = _viewModel.SettingsViewModel,
-            Content = settingsView,
-            CanClose = true
-        };
-
-        factory.AddDockable(DocumentsPane, _settingsDocument);
-        factory.SetActiveDockable(_settingsDocument);
-        factory.SetFocusedDockable(DocumentsPane, _settingsDocument);
     }
 
     private void InitializeKeyBindings()
@@ -120,9 +84,9 @@ partial class MainWindow : Window
 
     private void OnActiveDockableChanged(object sender, ActiveDockableChangedEventArgs e)
     {
-        if (e.Dockable is Document document)
+        if (e.Dockable is Document document && document.DataContext is IDocumentContent content)
         {
-            ViewModel.ActiveContent = document.DataContext;
+            ViewModel.ActiveContent = content;
         }
     }
 
@@ -153,17 +117,9 @@ partial class MainWindow : Window
 
     private async void OnDockableClosedAsync(object? sender, DockableClosedEventArgs e)
     {
-        if (e.Dockable is Document document)
+        if (e.Dockable is Document document && document.DataContext is IDocumentContent content)
         {
-            if (document.DataContext is OpenDocumentViewModel viewModel)
-            {
-                await _viewModel.CloseDocument(viewModel).ConfigureAwait(true);
-            }
-            else if (document.Id == "settings")
-            {
-                _settingsDocument = null;
-                _viewModel.SettingsViewModel = null;
-            }
+            await _viewModel.CloseTab(content).ConfigureAwait(true);
         }
     }
 
@@ -176,25 +132,28 @@ partial class MainWindow : Window
 
         if (e.OldItems is not null)
         {
-            foreach (var item in e.OldItems.OfType<OpenDocumentViewModel>())
+            foreach (var item in e.OldItems.OfType<IDocumentContent>())
             {
                 if (factory.FindDockable(DocumentsPane, d => d.Id == item.Id) is { } dockable)
                 {
                     factory.RemoveDockable(dockable, collapse: false);
                 }
-
             }
         }
         if (e.NewItems is not null)
         {
-            foreach (var item in e.NewItems.OfType<OpenDocumentViewModel>())
+            foreach (var item in e.NewItems.OfType<IDocumentContent>())
             {
+                var content = item is SettingsViewModel
+                    ? (object)new SettingsView { DataContext = item }
+                    : DocumentsPane.DocumentTemplate?.Content;
+
                 var document = new Document
                 {
                     Id = item.Id,
                     Title = item.Title,
                     DataContext = item,
-                    Content = DocumentsPane.DocumentTemplate?.Content
+                    Content = content
                 };
 
                 factory.AddDockable(DocumentsPane, document);

@@ -101,8 +101,7 @@
                                                          AcceptsReturn="True"
                                                          TextWrapping="Wrap"
                                                          MinWidth="200"
-                                                         MinHeight="60"
-                                                         MaxHeight="120" />
+                                                         MinHeight="60" />
                                             </Panel>
                                         </DataTemplate>
                                     </ContentControl.DataTemplates>

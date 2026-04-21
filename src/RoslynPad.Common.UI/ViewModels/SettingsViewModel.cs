@@ -19,6 +19,8 @@ public partial class SettingsViewModel : NotificationObject, IDocumentContent
         FilteredSettings = new ObservableCollection<SettingItem>(AllSettings);
     }
 
+    public string Id => "settings";
+
     public string Title => "Settings";
 
     public bool IsDirty => false;

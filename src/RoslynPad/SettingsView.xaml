@@ -53,8 +53,7 @@
                      TextWrapping="Wrap"
                      VerticalScrollBarVisibility="Auto"
                      MinWidth="200"
-                     MinHeight="60"
-                     MaxHeight="120" />
+                     MinHeight="60" />
         </DataTemplate>
 
         <rp:SettingTemplateSelector x:Key="SettingTemplateSelector"

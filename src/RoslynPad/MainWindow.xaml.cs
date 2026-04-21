@@ -22,7 +22,6 @@ public partial class MainWindow
     private bool _isClosing;
     private bool _isClosed;
     private ThemeDictionary? _themeDictionary;
-    private LayoutDocument? _settingsDocument;
 
     public MainWindow()
     {
@@ -44,7 +43,6 @@ public partial class MainWindow
 
         _viewModel = serviceProvider.GetRequiredService<MainViewModel>();
         _viewModel.ThemeChanged += OnViewModelThemeChanged;
-        _viewModel.SettingsOpened += OnSettingsOpened;
         _viewModel.InitializeTheme();
 
         DataContext = _viewModel;
@@ -53,39 +51,6 @@ public partial class MainWindow
         SetDockTheme(_viewModel.Theme);
         LoadWindowLayout();
         LoadDockLayout();
-    }
-
-    private void OnSettingsOpened(object? sender, EventArgs e)
-    {
-        if (_settingsDocument != null)
-        {
-            // Settings already open, just activate it
-            _settingsDocument.IsSelected = true;
-            return;
-        }
-
-        var settingsView = new SettingsView
-        {
-            DataContext = _viewModel.SettingsViewModel
-        };
-
-        _settingsDocument = new LayoutDocument
-        {
-            Title = "Settings",
-            Content = settingsView,
-            CanClose = true
-        };
-
-        _settingsDocument.Closed += (s, args) =>
-        {
-            _settingsDocument = null;
-            _viewModel.SettingsViewModel = null;
-        };
-
-        // Find the document pane and add the settings document
-        var documentPane = DockingManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
-        documentPane?.Children.Add(_settingsDocument);
-        _settingsDocument.IsSelected = true;
     }
 
     private bool IsDark => _viewModel.ThemeType == ThemeType.Dark;
@@ -245,8 +210,11 @@ public partial class MainWindow
     private async void DockingManager_OnDocumentClosing(object? sender, DocumentClosingEventArgs e)
     {
         e.Cancel = true;
-        var document = (OpenDocumentViewModel)e.Document.Content;
-        await _viewModel.CloseDocument(document).ConfigureAwait(false);
+
+        if (e.Document.Content is IDocumentContent content)
+        {
+            await _viewModel.CloseTab(content).ConfigureAwait(false);
+        }
     }
 
     private void ViewErrorDetails_OnClick(object? sender, RoutedEventArgs e)

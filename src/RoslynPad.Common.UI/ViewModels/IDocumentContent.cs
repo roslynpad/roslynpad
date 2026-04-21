@@ -6,6 +6,11 @@ namespace RoslynPad.UI;
 public interface IDocumentContent
 {
     /// <summary>
+    /// Gets a unique identifier for the document tab.
+    /// </summary>
+    string Id { get; }
+
+    /// <summary>
     /// Gets the title displayed in the document tab.
     /// </summary>
     string Title { get; }
