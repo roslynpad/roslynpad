@@ -143,5 +143,6 @@ partial class DocumentView : UserControl, IDisposable
 
     public void Dispose()
     {
+        _editor.TextArea.Caret.PositionChanged -= CaretOnPositionChanged;
     }
 }
