@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using System.Globalization;
+using Avalonia.Controls;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
@@ -14,6 +15,8 @@ namespace RoslynPad;
 partial class DocumentView : UserControl, IDisposable
 {
     private readonly RoslynCodeEditor _editor;
+    private readonly TextBlock _lnTextBlock;
+    private readonly TextBlock _colTextBlock;
     private OpenDocumentViewModel? _viewModel;
 
     public DocumentView()
@@ -21,11 +24,21 @@ partial class DocumentView : UserControl, IDisposable
         InitializeComponent();
 
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
+        _lnTextBlock = this.FindControl<TextBlock>("Ln") ?? throw new InvalidOperationException("Missing Ln");
+        _colTextBlock = this.FindControl<TextBlock>("Col") ?? throw new InvalidOperationException("Missing Col");
+
+        _editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
 
         DataContextChanged += OnDataContextChanged;
     }
 
     public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
+
+    private void CaretOnPositionChanged(object? sender, EventArgs e)
+    {
+        _lnTextBlock.Text = _editor.TextArea.Caret.Line.ToString(CultureInfo.InvariantCulture);
+        _colTextBlock.Text = _editor.TextArea.Caret.Column.ToString(CultureInfo.InvariantCulture);
+    }
 
     private async void OnDataContextChanged(object? sender, EventArgs args)
     {

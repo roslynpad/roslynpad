@@ -10,7 +10,7 @@
   <UserControl.Resources>
     <converters:DoubleToPercentageTextConverter x:Key="DoubleToPercentageTextConverter" />
   </UserControl.Resources>
-  <Grid RowDefinitions="Auto,*">
+  <Grid RowDefinitions="Auto,*,Auto">
     <StackPanel Grid.Row="0"
                 Name="Toolbar"
                 Orientation="Horizontal">
@@ -188,5 +188,26 @@
     <Editor:RoslynCodeEditor Name="Editor"
                              ContextActionsIcon="{DynamicResource Bulb}"
                              Grid.Row="1" />
+
+    <Border Grid.Row="2"
+            Padding="8 2"
+            Background="{DynamicResource {x:Static local:ThemeDictionary.StatusBarBackground}}">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}"
+                   FontSize="12"
+                   Text="Ln " />
+        <TextBlock Name="Ln"
+                   Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}"
+                   FontSize="12"
+                   Text="1" />
+        <TextBlock Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}"
+                   FontSize="12"
+                   Text="  Col " />
+        <TextBlock Name="Col"
+                   Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}"
+                   FontSize="12"
+                   Text="1" />
+      </StackPanel>
+    </Border>
   </Grid>
 </UserControl>
