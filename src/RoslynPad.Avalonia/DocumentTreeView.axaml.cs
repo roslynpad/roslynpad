@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using RoslynPad.UI;
 using Avalonia.VisualTree;
-using System.Diagnostics;
 
 namespace RoslynPad;
 
@@ -60,22 +59,9 @@ public partial class DocumentTreeView : UserControl
 
     private void DocumentsContextMenu_OpenFolder_Click(object? sender, RoutedEventArgs e)
     {
-        if (GetDocumentFromSource(sender) is not { } documentViewModel)
+        if (GetDocumentFromSource(sender) is { } documentViewModel)
         {
-            return;
-        }
-
-        if (documentViewModel.IsFolder)
-        {
-            _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = documentViewModel.Path, UseShellExecute = true }));
-        }
-        else
-        {
-            var directory = Path.GetDirectoryName(documentViewModel.Path);
-            if (directory != null)
-            {
-                _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = directory, UseShellExecute = true }));
-            }
+            _viewModel?.OpenDocumentInExplorer(documentViewModel);
         }
     }
 

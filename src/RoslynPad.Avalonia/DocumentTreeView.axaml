@@ -144,20 +144,26 @@
     <TreeView Grid.Row="2"
               ItemsSource="{Binding DocumentRoot.Children}"
               Name="Tree">
-      <TreeView.ItemTemplate>
-        <TreeDataTemplate ItemsSource="{Binding Children}">
-          <DockPanel Margin="0 2 0 2"
-                     VerticalAlignment="Center">
-            <DockPanel.ContextMenu>
+      <TreeView.Styles>
+        <Style Selector="TreeViewItem">
+          <Setter Property="ContextMenu">
+            <Setter.Value>
               <ContextMenu>
-                <MenuItem Header="_Open in File Explorer"
+                <MenuItem Header="{OnPlatform _Open in File Explorer, macOS=_Open in Finder}"
                           Click="DocumentsContextMenu_OpenFolder_Click" />
                 <MenuItem Header="_Rename..."
                           Click="DocumentsContextMenu_Rename_Click" />
                 <MenuItem Header="_Save As..."
                           Click="DocumentsContextMenu_SaveAs_Click" />
               </ContextMenu>
-            </DockPanel.ContextMenu>
+            </Setter.Value>
+          </Setter>
+        </Style>
+      </TreeView.Styles>
+      <TreeView.ItemTemplate>
+        <TreeDataTemplate ItemsSource="{Binding Children}">
+          <DockPanel Margin="0 2 0 2"
+                     VerticalAlignment="Center">
             <Image Name="Icon"
                    Source="{StaticResource CsFile}"
                    Height="12"

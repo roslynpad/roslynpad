@@ -639,6 +639,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
+    public void OpenDocumentInExplorer(DocumentViewModel document)
+    {
+        string path;
+        if (document.IsFolder)
+        {
+            path = document.Path;
+        }
+        else
+        {
+            path = Path.GetDirectoryName(document.Path) ?? document.Path;
+        }
+
+        _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }));
+    }
+
     public string? SearchText
     {
         get => _searchText;
