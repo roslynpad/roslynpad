@@ -88,6 +88,8 @@ public sealed class TextMarker : TextSegment
 
     public object? Tag { get; set; }
 
+    public int Priority { get; set; }
+
     private Color _markerColor;
 
     public Color MarkerColor

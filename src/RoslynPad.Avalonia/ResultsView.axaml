@@ -9,6 +9,11 @@
              x:DataType="ui:OpenDocumentViewModel">
   <Grid>
     <TreeView ItemsSource="{Binding Results}">
+      <TreeView.Styles>
+        <Style Selector="TreeViewItem" x:DataType="build:ResultObject">
+          <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=OneTime}" />
+        </Style>
+      </TreeView.Styles>
       <TreeView.DataTemplates>
         <TreeDataTemplate x:DataType="build:ResultObject"
                           ItemsSource="{Binding Children}">

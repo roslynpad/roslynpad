@@ -43,6 +43,10 @@
                      x:Shared="False">
             <MenuItem Header="_Open in File Explorer"
                       Click="DocumentsContextMenu_OpenFolder_Click" />
+            <MenuItem Header="_Rename..."
+                      Click="DocumentsContextMenu_Rename_Click" />
+            <MenuItem Header="_Save As..."
+                      Click="DocumentsContextMenu_SaveAs_Click" />
         </ContextMenu>
 
         <Style x:Key="DocumentItemContainerStyle"

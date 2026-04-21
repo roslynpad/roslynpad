@@ -51,4 +51,33 @@ public partial class DocumentTreeView : UserControl
             _viewModel?.OpenDocument(documentViewModel);
         }
     }
+
+    private static DocumentViewModel? GetDocumentFromSource(object? sender)
+    {
+        return (sender as MenuItem)?.DataContext as DocumentViewModel;
+    }
+
+    private void DocumentsContextMenu_OpenFolder_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is { } documentViewModel)
+        {
+            _viewModel?.OpenDocumentInExplorer(documentViewModel);
+        }
+    }
+
+    private async void DocumentsContextMenu_Rename_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is { IsFolder: false } documentViewModel && _viewModel != null)
+        {
+            await _viewModel.RenameDocument(documentViewModel).ConfigureAwait(true);
+        }
+    }
+
+    private async void DocumentsContextMenu_SaveAs_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is { IsFolder: false } documentViewModel && _viewModel != null)
+        {
+            await _viewModel.SaveDocumentAs(documentViewModel).ConfigureAwait(true);
+        }
+    }
 }

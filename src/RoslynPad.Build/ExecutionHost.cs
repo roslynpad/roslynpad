@@ -716,6 +716,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private async Task ReadObjectProcessStreamWithBuildOutputAsync(StreamReader reader)
     {
         const string readyMarker = "#roslynpad#";
+        var compilationErrors = new List<CompilationErrorResultObject>();
 
         // Phase 1: Read build output as plain text until we see the ready marker
         while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
@@ -726,8 +727,34 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 break;
             }
 
-            // This is build output - display it as a result
-            Dumped?.Invoke(new ResultObject { Value = line });
+            // Try to parse as a structured diagnostic (warning/error)
+            var match = MsbuildLogRegex().Match(line);
+            if (match.Success)
+            {
+                var code = match.Groups["code"].Value;
+                if (!_parameters.DisabledDiagnostics.Contains(code))
+                {
+                    var error = new CompilationErrorResultObject
+                    {
+                        Severity = match.Groups["severity"].Value == "warning" ? "Warning" : "Error",
+                        ErrorCode = code,
+                        Message = match.Groups["message"].Value,
+                    };
+
+                    if (match.Groups["file"].Value.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        error.LineNumber = int.Parse(match.Groups["line"].ValueSpan, CultureInfo.InvariantCulture);
+                        error.Column = int.Parse(match.Groups["column"].ValueSpan, CultureInfo.InvariantCulture);
+                    }
+
+                    compilationErrors.Add(error);
+                }
+            }
+        }
+
+        if (compilationErrors.Count > 0)
+        {
+            CompilationErrors?.Invoke(compilationErrors);
         }
 
         // Phase 2: Read JSON protocol output (same as ReadObjectProcessStreamAsync)
@@ -1234,7 +1261,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     [GeneratedRegex(@"(?<=\: error )[^\]]+")]
     private static partial Regex RestoreErrorRegex();
 
-    [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)\): (warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
+    [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)\): (?<severity>warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
     private static partial Regex MsbuildLogRegex();
 
     private record BuildOutput(BuildOutputItems Items);
