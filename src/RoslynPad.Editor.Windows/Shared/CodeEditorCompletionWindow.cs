@@ -9,8 +9,7 @@ public partial class CodeEditorCompletionWindow : CompletionWindow
     {
         _isSoftSelectionActive = true;
         CompletionList.SelectionChanged += CompletionListOnSelectionChanged;
-
-        Initialize();
+        Loaded += (_,_) => Initialize();
     }
 
     partial void Initialize();
