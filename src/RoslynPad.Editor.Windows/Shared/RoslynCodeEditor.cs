@@ -322,7 +322,8 @@ public class RoslynCodeEditor : CodeTextEditor
             {
                 marker.Tag = diagnosticData;
                 marker.MarkerColor = GetDiagnosticsColor(diagnosticData);
-                marker.ToolTip = diagnosticData.Message;
+                marker.Priority = (int)diagnosticData.Severity;
+                marker.ToolTip = $"{diagnosticData.Id}: {diagnosticData.Message}";
             }
         }
     }
