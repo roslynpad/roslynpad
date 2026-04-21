@@ -41,17 +41,10 @@ internal sealed class TextMarkerToolTipProvider(TextMarkerService textMarkerServ
         //}
 
         var markersAtOffset = _textMarkerService.GetMarkersAtOffset(offset);
-        var markersWithToolTips = markersAtOffset
-            .Where(marker => marker.ToolTip != null)
-            .OrderByDescending(marker => marker.Priority)
-            .ToList();
-        if (markersWithToolTips.Count == 1)
+        var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
+        if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
         {
-            args.SetToolTip(markersWithToolTips[0].ToolTip!);
-        }
-        else if (markersWithToolTips.Count > 1)
-        {
-            args.SetToolTip(string.Join(Environment.NewLine, markersWithToolTips.Select(m => m.ToolTip)));
+            args.SetToolTip(markerWithToolTip.ToolTip);
         }
     }
 
