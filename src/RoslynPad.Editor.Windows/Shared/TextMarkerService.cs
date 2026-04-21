@@ -58,10 +58,17 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
         //}
 
         var markersAtOffset = GetMarkersAtOffset(offset);
-        var markerWithToolTip = markersAtOffset.FirstOrDefault(marker => marker.ToolTip != null);
-        if (markerWithToolTip != null && markerWithToolTip.ToolTip != null)
+        var markersWithToolTips = markersAtOffset
+            .Where(marker => marker.ToolTip != null)
+            .OrderByDescending(marker => marker.Priority)
+            .ToList();
+        if (markersWithToolTips.Count == 1)
         {
-            args.SetToolTip(markerWithToolTip.ToolTip);
+            args.SetToolTip(markersWithToolTips[0].ToolTip!);
+        }
+        else if (markersWithToolTips.Count > 1)
+        {
+            args.SetToolTip(string.Join(Environment.NewLine, markersWithToolTips.Select(m => m.ToolTip)));
         }
     }
 
@@ -184,7 +191,7 @@ public sealed class TextMarkerService : DocumentColorizingTransformer, IBackgrou
             return;
         var viewStart = visualLines.First().FirstDocumentLine.Offset;
         var viewEnd = visualLines.Last().LastDocumentLine.EndOffset;
-        foreach (var marker in _markers.FindOverlappingSegments(viewStart, viewEnd - viewStart))
+        foreach (var marker in _markers.FindOverlappingSegments(viewStart, viewEnd - viewStart).OrderBy(m => m.Priority))
         {
             if (marker.BackgroundColor != null)
             {
