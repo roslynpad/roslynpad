@@ -411,7 +411,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         if (!IsInitialized) return;
 
         var dialog = _serviceProvider.GetRequiredService<IOpenFileDialog>();
-        dialog.Filter = new FileDialogFilter("C# Files", "cs", "csx");
+        dialog.Filter = new FileDialogFilter("C# Files", "*.cs", "*.csx");
         var fileNames = await dialog.ShowAsync().ConfigureAwait(true);
         if (fileNames == null)
         {
