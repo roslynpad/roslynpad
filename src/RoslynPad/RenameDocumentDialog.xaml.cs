@@ -9,6 +9,8 @@ namespace RoslynPad;
 [Export(typeof(IRenameDocumentDialog))]
 internal partial class RenameDocumentDialog : INotifyPropertyChanged, IRenameDocumentDialog
 {
+    private static readonly char[] s_invalidFileChars = Path.GetInvalidFileNameChars();
+
     private string? _documentName;
     private InlineModalDialog? _dialog;
 
@@ -48,20 +50,18 @@ internal partial class RenameDocumentDialog : INotifyPropertyChanged, IRenameDoc
     private static bool IsValidDocumentName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return false;
-        var invalidChars = Path.GetInvalidFileNameChars();
-        return name.IndexOfAny(invalidChars) < 0;
+        return name.IndexOfAny(s_invalidFileChars) < 0;
     }
 
     private void DocumentName_TextChanged(object? sender, TextChangedEventArgs e)
     {
         if (sender is not TextBox textBox) return;
 
-        var invalidChars = Path.GetInvalidFileNameChars();
         foreach (var c in e.Changes)
         {
             if (c.AddedLength == 0) continue;
             textBox.Select(c.Offset, c.AddedLength);
-            var filteredText = invalidChars.Aggregate(textBox.SelectedText,
+            var filteredText = s_invalidFileChars.Aggregate(textBox.SelectedText,
                 (current, invalidChar) => current.Replace(invalidChar.ToString(), string.Empty));
             if (textBox.SelectedText != filteredText)
             {
