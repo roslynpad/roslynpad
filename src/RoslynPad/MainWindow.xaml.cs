@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using Avalon.Windows.Controls;
 using AvalonDock;
 using AvalonDock.Controls;
+using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -209,8 +210,11 @@ public partial class MainWindow
     private async void DockingManager_OnDocumentClosing(object? sender, DocumentClosingEventArgs e)
     {
         e.Cancel = true;
-        var document = (OpenDocumentViewModel)e.Document.Content;
-        await _viewModel.CloseDocument(document).ConfigureAwait(false);
+
+        if (e.Document.Content is IDocumentContent content)
+        {
+            await _viewModel.CloseTab(content).ConfigureAwait(false);
+        }
     }
 
     private void ViewErrorDetails_OnClick(object? sender, RoutedEventArgs e)

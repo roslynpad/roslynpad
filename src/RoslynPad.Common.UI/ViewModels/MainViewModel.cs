@@ -28,6 +28,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private readonly VsCodeThemeReader _themeManager;
 
     private OpenDocumentViewModel? _currentOpenDocument;
+    private IDocumentContent? _activeContent;
     private bool _hasUpdate;
     private double _editorFontSize;
     private string? _searchText;
@@ -93,6 +94,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
         ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
+        OpenSettingsCommand = commands.Create(OpenSettings);
 
         _editorFontSize = Settings.EditorFontSize;
 
@@ -233,7 +235,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
         else
         {
-            CurrentOpenDocument = OpenDocuments[0];
+            ActiveContent = OpenDocuments[0];
         }
     }
 
@@ -343,7 +345,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public NuGetViewModel NuGet { get; }
 
-    public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
+    public ObservableCollection<IDocumentContent> OpenDocuments { get; }
 
     public OpenDocumentViewModel? CurrentOpenDocument
     {
@@ -352,22 +354,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         {
             if (value == null) return; // prevent binding from clearing the value
             SetProperty(ref _currentOpenDocument, value);
-            OnPropertyChanged(nameof(ActiveContent));
         }
     }
 
-    public object? ActiveContent
+    public IDocumentContent? ActiveContent
     {
-        get => _currentOpenDocument;
+        get => _activeContent;
         set
         {
-            if (value is not OpenDocumentViewModel viewModel)
+            if (SetProperty(ref _activeContent, value))
             {
-                return;
+                if (value is OpenDocumentViewModel openDoc)
+                {
+                    CurrentOpenDocument = openDoc;
+                }
             }
-
-            CurrentOpenDocument = viewModel;
-            OnPropertyChanged();
         }
     }
 
@@ -392,11 +393,27 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public IDelegateCommand ClearRestoreCacheCommand { get; }
 
+    public IDelegateCommand OpenSettingsCommand { get; }
+
+    protected virtual void OpenSettings()
+    {
+        var existing = OpenDocuments.OfType<SettingsViewModel>().FirstOrDefault();
+        if (existing != null)
+        {
+            ActiveContent = existing;
+            return;
+        }
+
+        var settings = new SettingsViewModel(Settings);
+        OpenDocuments.Add(settings);
+        ActiveContent = settings;
+    }
+
     public void OpenDocument(DocumentViewModel document)
     {
         if (document.IsFolder) return;
 
-        var openDocument = OpenDocuments.FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
+        var openDocument = OpenDocuments.OfType<OpenDocumentViewModel>().FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
         if (openDocument == null)
         {
             openDocument = GetOpenDocumentViewModel(document);
@@ -465,17 +482,29 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public async Task AutoSaveOpenDocuments()
     {
-        foreach (var document in OpenDocuments)
+        foreach (var document in OpenDocuments.OfType<OpenDocumentViewModel>())
         {
             await document.AutoSaveAsync().ConfigureAwait(false);
         }
     }
 
+    public async Task CloseTab(IDocumentContent content)
+    {
+        if (content is OpenDocumentViewModel document)
+        {
+            await CloseDocument(document).ConfigureAwait(true);
+        }
+        else
+        {
+            OpenDocuments.Remove(content);
+        }
+    }
+
     private async Task CloseCurrentDocument()
     {
-        if (CurrentOpenDocument == null) return;
-        await CloseDocument(CurrentOpenDocument).ConfigureAwait(false);
-        if (!OpenDocuments.Any())
+        if (_activeContent == null) return;
+        await CloseTab(_activeContent).ConfigureAwait(false);
+        if (!OpenDocuments.OfType<OpenDocumentViewModel>().Any())
         {
             ClearCurrentOpenDocument();
         }
@@ -484,10 +513,10 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     public async Task CloseAllDocuments()
     {
         // can't modify the collection while enumerating it.
-        var openDocs = new ObservableCollection<OpenDocumentViewModel>(OpenDocuments);
-        foreach (var document in openDocs)
+        var openDocs = OpenDocuments.ToList();
+        foreach (var tab in openDocs)
         {
-            await CloseDocument(document).ConfigureAwait(false);
+            await CloseTab(tab).ConfigureAwait(false);
         }
     }
 
@@ -616,7 +645,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         var newPath = Path.Combine(directory, dialog.DocumentName + extension);
 
         // Check if the document is currently open and has unsaved changes
-        var openDoc = OpenDocuments.FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
+        var openDoc = OpenDocuments.OfType<OpenDocumentViewModel>().FirstOrDefault(x => x.Document?.Path != null && string.Equals(x.Document.Path, document.Path, StringComparison.Ordinal));
         if (openDoc != null && openDoc.IsDirty && openDoc.HasDocumentId)
         {
             // Save the current content to the new path

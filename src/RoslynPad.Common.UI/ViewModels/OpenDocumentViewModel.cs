@@ -19,7 +19,7 @@ using RoslynPad.Utilities;
 namespace RoslynPad.UI;
 
 [Export]
-public class OpenDocumentViewModel : NotificationObject, IDisposable
+public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentContent
 {
     private const string DefaultDocumentName = "New";
     private const string RegularFileExtension = ".cs";
