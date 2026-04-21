@@ -58,6 +58,22 @@ public partial class DocumentTreeView
         }
     }
 
+    private async void DocumentsContextMenu_Rename_Click(object? sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel && !documentViewModel.IsFolder)
+        {
+            await _viewModel.RenameDocument(documentViewModel).ConfigureAwait(true);
+        }
+    }
+
+    private async void DocumentsContextMenu_SaveAs_Click(object? sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)e.Source).DataContext is DocumentViewModel documentViewModel && !documentViewModel.IsFolder)
+        {
+            await _viewModel.SaveDocumentAs(documentViewModel).ConfigureAwait(true);
+        }
+    }
+
     private void Search_OnKeyDown(object? sender, KeyEventArgs e)
     {
         switch (e.Key)

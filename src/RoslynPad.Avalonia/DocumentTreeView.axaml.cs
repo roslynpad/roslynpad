@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using RoslynPad.UI;
 using Avalonia.VisualTree;
+using System.Diagnostics;
 
 namespace RoslynPad;
 
@@ -49,6 +50,48 @@ public partial class DocumentTreeView : UserControl
         if (item?.DataContext is DocumentViewModel documentViewModel)
         {
             _viewModel?.OpenDocument(documentViewModel);
+        }
+    }
+
+    private static DocumentViewModel? GetDocumentFromSource(object? sender)
+    {
+        return (sender as MenuItem)?.DataContext as DocumentViewModel;
+    }
+
+    private void DocumentsContextMenu_OpenFolder_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is not { } documentViewModel)
+        {
+            return;
+        }
+
+        if (documentViewModel.IsFolder)
+        {
+            _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = documentViewModel.Path, UseShellExecute = true }));
+        }
+        else
+        {
+            var directory = Path.GetDirectoryName(documentViewModel.Path);
+            if (directory != null)
+            {
+                _ = Task.Run(() => Process.Start(new ProcessStartInfo { FileName = directory, UseShellExecute = true }));
+            }
+        }
+    }
+
+    private async void DocumentsContextMenu_Rename_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is { IsFolder: false } documentViewModel && _viewModel != null)
+        {
+            await _viewModel.RenameDocument(documentViewModel).ConfigureAwait(true);
+        }
+    }
+
+    private async void DocumentsContextMenu_SaveAs_Click(object? sender, RoutedEventArgs e)
+    {
+        if (GetDocumentFromSource(sender) is { IsFolder: false } documentViewModel && _viewModel != null)
+        {
+            await _viewModel.SaveDocumentAs(documentViewModel).ConfigureAwait(true);
         }
     }
 }

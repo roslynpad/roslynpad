@@ -148,6 +148,16 @@
         <TreeDataTemplate ItemsSource="{Binding Children}">
           <DockPanel Margin="0 2 0 2"
                      VerticalAlignment="Center">
+            <DockPanel.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="_Open in File Explorer"
+                          Click="DocumentsContextMenu_OpenFolder_Click" />
+                <MenuItem Header="_Rename..."
+                          Click="DocumentsContextMenu_Rename_Click" />
+                <MenuItem Header="_Save As..."
+                          Click="DocumentsContextMenu_SaveAs_Click" />
+              </ContextMenu>
+            </DockPanel.ContextMenu>
             <Image Name="Icon"
                    Source="{StaticResource CsFile}"
                    Height="12"
