@@ -26,6 +26,49 @@
                      Text="{Binding LastError.Message}" />
       </Button>
 
+      <Border DockPanel.Dock="Bottom"
+              Padding="4 2"
+              Background="{DynamicResource {x:Static local:ThemeDictionary.StatusBarBackground}}">
+        <DockPanel LastChildFill="False">
+          <StackPanel DockPanel.Dock="Right"
+                      Orientation="Horizontal"
+                      VerticalAlignment="Center"
+                      TextBlock.Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}">
+
+            <ToggleButton Margin="10 0 0 0"
+                          BorderThickness="0"
+                          Background="Transparent"
+                          Padding="2"
+                          IsChecked="{Binding Settings.OptimizeCompilation}"
+                          ToolTip.Tip="{OnPlatform Optimization (Ctrl+Shift+O), macOS=Optimization (⌘ ⇧ O)}">
+              <Image Source="{StaticResource Time}"
+                     Width="14"
+                     Height="14" />
+            </ToggleButton>
+
+            <Image Margin="10 0 0 0"
+                   Source="{StaticResource FontSize}"
+                   Height="14"
+                   Width="14" />
+            <Slider Width="100"
+                    ToolTip.Tip="Font Size"
+                    Margin="5 0 0 0"
+                    Minimum="{x:Static ui:MainViewModel.MinimumFontSize}"
+                    Maximum="{x:Static ui:MainViewModel.MaximumFontSize}"
+                    SmallChange="1"
+                    LargeChange="10"
+                    IsSnapToTickEnabled="True"
+                    TickFrequency="1"
+                    Value="{Binding EditorFontSize}" />
+            <TextBlock Text="{Binding EditorFontSize}"
+                       Margin="5 0 0 0"
+                       VerticalAlignment="Center"
+                       FontSize="12" />
+
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
       <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>
           <Factory ActiveDockableChanged="OnActiveDockableChanged"
