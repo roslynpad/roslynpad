@@ -9,6 +9,7 @@ Publisher: Eli Arbel
 ShortDescription: C# editor and runner based on Roslyn
 License: MIT
 InstallerType: zip
+ArchiveBinariesDependOnPath: true
 Installers:
 - Architecture: x64
   NestedInstallerType: portable
