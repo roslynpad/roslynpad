@@ -131,6 +131,13 @@
                        Width="16"
                        Height="16" />
             </Button>
+            <Button ToolTip="Secrets"
+                    ToolTipService.Placement="Top"
+                    Command="{Binding OpenSecretsCommand, Mode=OneTime}">
+                <Image Source="{StaticResource Secrets}"
+                       Width="16"
+                       Height="16" />
+            </Button>
         </ToolBar>
 
         <Border Grid.Row="1"

@@ -136,3 +136,7 @@ Scripts in `deploy/` handle release packaging:
 - `src/RoslynPad.Roslyn/RoslynHost.cs` - Roslyn service composition
 - `src/RoslynPad.Common.UI/ViewModels/` - Core application ViewModels
 - `deploy/CreatePackages.ps1` - Release packaging script
+
+## Maintenance
+
+- Make sure to update this document when making significant changes to the repo.

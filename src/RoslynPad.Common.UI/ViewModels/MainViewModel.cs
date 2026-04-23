@@ -95,6 +95,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
         ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
         OpenSettingsCommand = commands.Create(OpenSettings);
+        OpenSecretsCommand = commands.Create(OpenSecrets);
 
         _editorFontSize = Settings.EditorFontSize;
 
@@ -395,6 +396,8 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public IDelegateCommand OpenSettingsCommand { get; }
 
+    public IDelegateCommand OpenSecretsCommand { get; }
+
     protected virtual void OpenSettings()
     {
         var existing = OpenDocuments.OfType<SettingsViewModel>().FirstOrDefault();
@@ -407,6 +410,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         var settings = new SettingsViewModel(Settings);
         OpenDocuments.Add(settings);
         ActiveContent = settings;
+    }
+
+    private void OpenSecrets()
+    {
+        var existing = OpenDocuments.OfType<SecretsViewModel>().FirstOrDefault();
+        if (existing != null)
+        {
+            existing.Refresh();
+            ActiveContent = existing;
+            return;
+        }
+
+        var secrets = new SecretsViewModel(_commands, _serviceProvider.GetRequiredService<IClipboardService>());
+        OpenDocuments.Add(secrets);
+        ActiveContent = secrets;
     }
 
     public void OpenDocument(DocumentViewModel document)

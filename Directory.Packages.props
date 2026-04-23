@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetExtensionsVersion>10.0.6</DotNetExtensionsVersion>
+    <DotNetExtensionsVersion>10.0.7</DotNetExtensionsVersion>
     <RoslynVersion>5.3.0</RoslynVersion>
     <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
     <RoslynPrivateVersion>5.3.0-2.26078.5</RoslynPrivateVersion>
@@ -36,6 +36,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.83.3" />
     <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.51" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="17.14.15" />
@@ -46,6 +47,7 @@
     <PackageVersion Include="NuGet.Commands" Version="$(NuGetVersion)" />
     <PackageVersion Include="NuGet.Versioning" Version="$(NuGetVersion)" />
     <PackageVersion Include="System.Linq.AsyncEnumerable" Version="$(DotNetExtensionsVersion)" />
+    <PackageVersion Include="System.Memory.Data" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="System.Reactive.Core" Version="6.1.0" />
     <PackageVersion Include="System.Reactive.Linq" Version="6.1.0" />
     <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="$(DotNetExtensionsVersion)" />

@@ -146,6 +146,8 @@ partial class MainWindow : Window
             {
                 var content = item is SettingsViewModel
                     ? (object)new SettingsView { DataContext = item }
+                    : item is SecretsViewModel
+                    ? new SecretsView { DataContext = item }
                     : DocumentsPane.DocumentTemplate?.Content;
 
                 var document = new Document

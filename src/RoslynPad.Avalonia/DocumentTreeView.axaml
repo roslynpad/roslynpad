@@ -38,6 +38,7 @@
           <ColumnDefinition Width="22" />
           <ColumnDefinition Width="22" />
           <ColumnDefinition Width="22" />
+          <ColumnDefinition Width="22" />
         </Grid.ColumnDefinitions>
         <Button Grid.Column="1"
                 BorderBrush="Transparent"
@@ -92,6 +93,15 @@
                 Command="{Binding OpenSettingsCommand, Mode=OneTime}"
                 ToolTip.Tip="Settings">
           <Image Source="{DynamicResource Settings}"
+                     Width="16"
+                     Height="16" />
+        </Button>
+        <Button Grid.Column="7"
+                BorderBrush="Transparent"
+                Background="Transparent"
+                Command="{Binding OpenSecretsCommand, Mode=OneTime}"
+                ToolTip.Tip="Secrets">
+          <Image Source="{DynamicResource Secrets}"
                      Width="16"
                      Height="16" />
         </Button>

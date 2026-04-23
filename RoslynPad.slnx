@@ -5,6 +5,7 @@
   <Folder Name="/Common/">
     <Project Path="src/RoslynPad.Common.UI/RoslynPad.Common.UI.csproj" />
     <Project Path="src/RoslynPad.Runtime/RoslynPad.Runtime.csproj" />
+    <Project Path="src/RoslynPad.Runtime.Secrets/RoslynPad.Runtime.Secrets.csproj" />
   </Folder>
   <Folder Name="/Editor/">
     <Project Path="src/RoslynPad.Editor.Avalonia/RoslynPad.Editor.Avalonia.csproj" />
