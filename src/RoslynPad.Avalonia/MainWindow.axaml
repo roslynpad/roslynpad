@@ -12,6 +12,50 @@
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="File">
+        <NativeMenu>
+          <NativeMenuItem Header="New Document" Gesture="Meta+N"
+                          Click="OnNewDocumentClick" />
+          <NativeMenuItem Header="New Script" Gesture="Meta+Shift+N"
+                          Click="OnNewScriptClick" />
+          <NativeMenuItemSeparator />
+          <NativeMenuItem Header="Open..." Gesture="Meta+O"
+                          Command="{Binding OpenFileCommand}" />
+          <NativeMenuItemSeparator />
+          <NativeMenuItem Header="Save" Gesture="Meta+S"
+                          Click="OnSaveClick" />
+          <NativeMenuItem Header="Close" Gesture="Meta+W"
+                          Command="{Binding CloseCurrentDocumentCommand}" />
+        </NativeMenu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Edit">
+        <NativeMenu>
+          <NativeMenuItem Header="Format Document" Gesture="Meta+D"
+                          Click="OnFormatDocumentClick" />
+          <NativeMenuItem Header="Comment Selection" Gesture="Meta+K"
+                          Click="OnCommentSelectionClick" />
+          <NativeMenuItem Header="Uncomment Selection" Gesture="Meta+U"
+                          Click="OnUncommentSelectionClick" />
+          <NativeMenuItemSeparator />
+          <NativeMenuItem Header="Rename Symbol" Gesture="F2"
+                          Click="OnRenameSymbolClick" />
+        </NativeMenu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Run">
+        <NativeMenu>
+          <NativeMenuItem Header="Run" Gesture="F5"
+                          Click="OnRunClick" />
+          <NativeMenuItem Header="Terminate" Gesture="Shift+F5"
+                          Click="OnTerminateClick" />
+          <NativeMenuItemSeparator />
+          <NativeMenuItem Header="Toggle Live Mode"
+                          Click="OnToggleLiveModeClick" />
+        </NativeMenu>
+      </NativeMenuItem>
+    </NativeMenu>
+  </NativeMenu.Menu>
   <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
     <DockPanel>
 

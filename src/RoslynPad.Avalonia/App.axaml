@@ -12,6 +12,8 @@
              Name="RoslynPad">
   <NativeMenu.Menu>
     <NativeMenu>
+      <NativeMenuItem Header="Settings..." Click="OnSettingsClick"
+                      Gesture="Meta+OemComma" />
     </NativeMenu>
   </NativeMenu.Menu>
   <Application.Styles>

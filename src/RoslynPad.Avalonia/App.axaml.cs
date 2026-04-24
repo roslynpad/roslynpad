@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using RoslynPad.Resources;
@@ -21,5 +22,13 @@ class App : Application
     {
         Resources.MergedDictionaries.Add(new Icons());
         AvaloniaXamlLoader.Load(this);
+    }
+
+    private void OnSettingsClick(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: MainWindow mainWindow })
+        {
+            mainWindow.ViewModel.OpenSettingsCommand.Execute(null);
+        }
     }
 }

@@ -189,4 +189,78 @@ partial class MainWindow : Window
 
         await _viewModel.Initialize().ConfigureAwait(true);
     }
+
+    private void OnNewDocumentClick(object? sender, EventArgs e)
+    {
+        _viewModel.NewDocumentCommand.Execute(SourceCodeKind.Regular);
+    }
+
+    private void OnNewScriptClick(object? sender, EventArgs e)
+    {
+        _viewModel.NewDocumentCommand.Execute(SourceCodeKind.Script);
+    }
+
+    private void OnSaveClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.SaveCommand.Execute(null);
+        }
+    }
+
+    private void OnFormatDocumentClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.FormatDocumentCommand.Execute(null);
+        }
+    }
+
+    private void OnCommentSelectionClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.CommentSelectionCommand.Execute(null);
+        }
+    }
+
+    private void OnUncommentSelectionClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.UncommentSelectionCommand.Execute(null);
+        }
+    }
+
+    private void OnRenameSymbolClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.RenameSymbolCommand.Execute(null);
+        }
+    }
+
+    private void OnRunClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.RunCommand.Execute(null);
+        }
+    }
+
+    private void OnTerminateClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.TerminateCommand.Execute(null);
+        }
+    }
+
+    private void OnToggleLiveModeClick(object? sender, EventArgs e)
+    {
+        if (_viewModel.CurrentOpenDocument is { } doc)
+        {
+            doc.ToggleLiveModeCommand.Execute(null);
+        }
+    }
 }

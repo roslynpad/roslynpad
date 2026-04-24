@@ -18,7 +18,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/RoslynPad.Avalonia/bin/Debug/net10.0-macos/osx-x64/RoslynPad.app/Contents/MacOS/RoslynPad",
+            "program": "${workspaceFolder}/src/RoslynPad.Avalonia/bin/Debug/net10.0-macos/osx-arm64/RoslynPad.app/Contents/MacOS/RoslynPad",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
