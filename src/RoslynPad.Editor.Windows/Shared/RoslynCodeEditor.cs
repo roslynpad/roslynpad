@@ -276,9 +276,9 @@ public class RoslynCodeEditor : CodeTextEditor
         }
 
         var info = await _quickInfoProvider.GetItemAsync(document, arg.Position).ConfigureAwait(true);
-        if (info != null)
+        if (info?.Create() is { } content)
         {
-            arg.SetToolTip(info.Create());
+            arg.SetToolTip(content);
         }
     }
 
@@ -371,7 +371,7 @@ public class RoslynCodeEditor : CodeTextEditor
         var document = Document;
         var line = document.GetLineByOffset(offset);
         var lineText = document.GetText(line.Offset, offset - line.Offset);
-        
+
         // Extract snippet text from the line
         var result = SnippetExpandHelper.ExtractSnippetTextFromLine(lineText, lineText.Length);
         if (result == null)
@@ -382,14 +382,14 @@ public class RoslynCodeEditor : CodeTextEditor
         var (wordStart, _) = result.Value;
         var snippetStartOffset = line.Offset + wordStart;
         var snippetLength = offset - snippetStartOffset;
-        
+
         // Get the Roslyn document if available
         Document? roslynDocument = null;
         if (_roslynHost != null && _documentId != null)
         {
             roslynDocument = _roslynHost.GetDocument(_documentId);
         }
-        
+
         // Expand the snippet (extraction, class name resolution happens internally)
         return await SnippetExpandHelper.ExpandSnippetAsync(
             _snippetManager,
@@ -487,7 +487,7 @@ public class RoslynCodeEditor : CodeTextEditor
         }
 
         var folding = FoldingManager.GetNextFolding(TextArea.Caret.Offset);
-        if (folding == null || TextArea.Document.GetLocation(folding.StartOffset).Line !=      TextArea.Document.GetLocation(TextArea.Caret.Offset).Line)
+        if (folding == null || TextArea.Document.GetLocation(folding.StartOffset).Line != TextArea.Document.GetLocation(TextArea.Caret.Offset).Line)
         {
             folding = FoldingManager.GetFoldingsContaining(TextArea.Caret.Offset).LastOrDefault();
         }

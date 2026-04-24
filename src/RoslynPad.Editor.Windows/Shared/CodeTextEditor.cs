@@ -7,6 +7,7 @@ public partial class CodeTextEditor : TextEditor
     private CodeEditorCompletionWindow? _completionWindow;
     private CodeEditorOverloadInsightWindow? _insightWindow;
     private ToolTip? _toolTip;
+    private int _lastToolTipOffset = -1;
 
     public CodeTextEditor()
     {
@@ -106,6 +107,7 @@ public partial class CodeTextEditor : TextEditor
     private void OnVisualLinesChanged(object? sender, EventArgs e)
     {
         _toolTip?.Close(this);
+        _lastToolTipOffset = -1;
     }
 
     private void OnMouseHoverStopped(object? sender, MouseEventArgs e)
@@ -113,6 +115,7 @@ public partial class CodeTextEditor : TextEditor
         if (_toolTip != null)
         {
             _toolTip.Close(this);
+            _lastToolTipOffset = -1;
             e.Handled = true;
         }
     }
@@ -148,11 +151,18 @@ public partial class CodeTextEditor : TextEditor
         var args = new ToolTipRequestEventArgs { InDocument = position.HasValue };
         if (!position.HasValue || position.Value.Location.IsEmpty || position.Value.IsAtEndOfLine)
         {
+            _toolTip?.Close(this);
+            _lastToolTipOffset = -1;
             return;
         }
 
         args.LogicalPosition = position.Value.Location;
         args.Position = Document.GetOffset(position.Value.Line, position.Value.Column);
+
+        if (_lastToolTipOffset == args.Position)
+        {
+            return;
+        }
 
         RaiseEvent(args);
 
@@ -167,12 +177,16 @@ public partial class CodeTextEditor : TextEditor
 
         if (args.ContentToShow == null)
         {
+            _toolTip?.Close(this);
+            _lastToolTipOffset = -1;
             return;
         }
 
+        _lastToolTipOffset = args.Position;
+
         if (_toolTip == null)
         {
-            _toolTip = new ToolTip { MaxWidth = 400 };
+            _toolTip = new ToolTip { MaxWidth = 500 };
             InitializeToolTip();
         }
 
@@ -189,7 +203,7 @@ public partial class CodeTextEditor : TextEditor
             _toolTip.SetContent(this, new ContentPresenter
             {
                 Content = args.ContentToShow,
-                MaxWidth = 400
+                MaxWidth = 500
             });
         }
 

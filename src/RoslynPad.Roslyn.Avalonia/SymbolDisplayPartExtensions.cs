@@ -63,16 +63,18 @@ public static class SymbolDisplayPartExtensions
 
     public static TextBlock ToTextBlock(this IEnumerable<TaggedText> text, bool isBold = false)
     {
-        var inlines = new InlineCollection();
+        InlineCollection? inlines = null;
         foreach (var part in text)
         {
+            inlines ??= [];
             inlines.Add(part.ToInline(isBold));
         }
 
         return new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            Inlines = inlines
+            Inlines = inlines,
+            IsVisible = inlines is not null
         };
     }
 }

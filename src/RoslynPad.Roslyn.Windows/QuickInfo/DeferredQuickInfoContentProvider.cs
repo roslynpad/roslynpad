@@ -264,13 +264,7 @@ internal class DeferredQuickInfoContentProvider : IDeferredQuickInfoContentProvi
     {
         private readonly IList<TaggedText> _classifiableContent = content;
 
-        public object Create()
-        {
-            var textBlock = _classifiableContent.ToTextBlock();
-            if (textBlock.Inlines.Count == 0)
-                textBlock.Visibility = Visibility.Collapsed;
-            return textBlock;
-        }
+        public object Create() => _classifiableContent.ToTextBlock();
     }
 
     private class DocumentationCommentDeferredContent(string? documentationComment) : IDeferredQuickInfoContent

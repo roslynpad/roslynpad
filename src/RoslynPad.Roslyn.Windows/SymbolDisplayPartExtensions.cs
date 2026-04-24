@@ -10,7 +10,7 @@ namespace RoslynPad.Roslyn;
 public static class SymbolDisplayPartExtensions
 {
     private const string LeftToRightMarkerPrefix = "\u200e";
-    
+
     public static string ToVisibleDisplayString(this TaggedText part, bool includeLeftToRightMarker)
     {
         var text = part.ToString();
@@ -62,13 +62,18 @@ public static class SymbolDisplayPartExtensions
 
     public static TextBlock ToTextBlock(this IEnumerable<TaggedText> text, bool isBold = false)
     {
-        var result = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        var textBlock = new TextBlock { TextWrapping = TextWrapping.Wrap };
 
         foreach (var part in text)
         {
-            result.Inlines.Add(part.ToInline(isBold));
+            textBlock.Inlines.Add(part.ToInline(isBold));
         }
 
-        return result;
+        if (textBlock.Inlines.Count == 0)
+        {
+            textBlock.Visibility = Visibility.Collapsed;
+        }
+
+        return textBlock;
     }
 }

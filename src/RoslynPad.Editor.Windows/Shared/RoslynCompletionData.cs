@@ -114,6 +114,7 @@ internal sealed class RoslynCompletionData : ICompletionDataEx, INotifyPropertyC
             {
                 _description = new Decorator();
 #if AVALONIA
+                _description.MaxWidth = 500;
                 _description.Initialized += (o, e) => { var task = _descriptionTask.Value; };
 #else
                 _description.Loaded += (o, e) => { var task = _descriptionTask.Value; };

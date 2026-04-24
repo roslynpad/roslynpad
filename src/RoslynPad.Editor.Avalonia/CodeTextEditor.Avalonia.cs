@@ -7,8 +7,14 @@ public partial class CodeTextEditor
     partial void Initialize()
     {
         PointerHover += OnMouseHover;
-        PointerHoverStopped += OnMouseHoverStopped;
+        PointerExited += OnPointerExited;
         KeyDownEvent.AddClassHandler<CodeTextEditor>(OnPreviewKeyDown, RoutingStrategies.Tunnel);
+    }
+
+    private void OnPointerExited(object? sender, PointerEventArgs e)
+    {
+        ToolTip.SetTip(this, null);
+        _toolTip = null;
     }
 
     partial void InitializeToolTip()
@@ -20,13 +26,6 @@ public partial class CodeTextEditor
 
         ToolTip.SetShowDelay(this, 0);
         ToolTip.SetTip(this, _toolTip);
-        _toolTip.GetPropertyChangedObservable(ToolTip.IsOpenProperty).Subscribe(c =>
-        {
-            if (c.NewValue as bool? != true)
-            {
-                _toolTip = null;
-            }
-        });
     }
 
     partial void AfterToolTipOpen()

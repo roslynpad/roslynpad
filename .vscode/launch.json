@@ -24,6 +24,12 @@
             "stopAtEntry": false,
             "console": "internalConsole",
             "justMyCode": true
+        },
+        {
+            "name": ".NET Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "justMyCode": true
         }
     ]
 }
