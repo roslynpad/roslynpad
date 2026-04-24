@@ -1,44 +1,141 @@
-﻿<!DOCTYPE html>
-<html lang="en-us">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cross-platform C# code editor and runner. Built with Roslyn and AvalonEdit.">
     <title>RoslynPad</title>
-    <meta property="og:image" content="https://roslynpad.net/RoslynPad.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <section class="page-header">
-        <h1 class="project-name">
-            <img height="80" src="roslynpad.svg">
-            RoslynPad
-        </h1>
-        <h2 class="project-tagline">A cross-platform C# editor based on <a href="https://github.com/dotnet/roslyn">Roslyn</a> and <a href="https://github.com/icsharpcode/AvalonEdit">AvalonEdit</a></h2>
-        <a href="https://github.com/roslynpad/roslynpad" class="btn">View on GitHub</a>
-        <a href="https://github.com/roslynpad/roslynpad/releases/latest" class="btn">Download for Windows/macOS/Linux</a>
-        <a href="https://github.com/roslynpad/roslynpad/zipball/main" class="btn">Download Source</a>
-        <div>
-            <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="50" alt="Microsoft Store badge logo" /></a>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="header-logo">
+                    <img src="roslynpad.svg" alt="RoslynPad" height="28">
+                    <span>RoslynPad</span>
+                </a>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="https://github.com/roslynpad/roslynpad#installing" class="nav-download">Download</a></li>
+                    <li><a href="https://github.com/roslynpad/roslynpad">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <!-- Decorative icons (from product) -->
+        <svg class="shape icon-play" viewBox="0 0 40 40" width="48" height="48"><polygon points="10,4 34,20 10,36" fill="var(--pink)" stroke="var(--black)" stroke-width="2.5"/></svg>
+        <svg class="shape icon-stop" viewBox="0 0 40 40" width="40" height="40"><rect x="8" y="8" width="24" height="24" rx="2" fill="var(--yellow)" stroke="var(--black)" stroke-width="2.5"/></svg>
+        <svg class="shape icon-gear" viewBox="0 0 16 16" width="46" height="46"><path d="M7.4 1h1.2l.3 1.5c.4.1.7.3 1 .5L11.4 2.3l.8.8-.7 1.5c.2.3.4.6.5 1L13.5 6v1.2l-1.5.3c-.1.4-.3.7-.5 1l.7 1.5-.8.8-1.5-.7c-.3.2-.6.4-1 .5L8.6 12H7.4l-.3-1.5c-.4-.1-.7-.3-1-.5L4.6 10.7l-.8-.8.7-1.5c-.2-.3-.4-.6-.5-1L2.5 7V5.8l1.5-.3c.1-.4.3-.7.5-1L3.8 3l.8-.8 1.5.7c.3-.2.6-.4 1-.5L7.4 1z" fill="none" stroke="var(--black)" stroke-width="1" stroke-linejoin="round"/><circle cx="8" cy="6.5" r="2" fill="var(--pink)" stroke="var(--black)" stroke-width="0.8"/></svg>
+        <svg class="shape icon-nuget" viewBox="0 0 40 40" width="44" height="44"><rect x="8" y="8" width="26" height="26" rx="6" fill="#40C4FF" stroke="var(--black)" stroke-width="2.5"/><circle cx="24" cy="24" r="6" fill="white" stroke="var(--black)" stroke-width="1.5"/><circle cx="14" cy="14" r="3.5" fill="white" stroke="var(--black)" stroke-width="1.5"/><circle cx="8" cy="6" r="3" fill="#40C4FF" stroke="var(--black)" stroke-width="1.5"/></svg>
+        <svg class="shape icon-search" viewBox="0 0 32 32" width="42" height="42"><circle cx="14" cy="14" r="8" fill="none" stroke="var(--black)" stroke-width="2.5"/><line x1="20" y1="20" x2="28" y2="28" stroke="var(--black)" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="14" r="4" fill="var(--yellow)" opacity="0.5"/></svg>
+        <svg class="shape icon-braces" viewBox="0 0 36 36" width="46" height="46"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Space Grotesk,monospace" font-size="30" font-weight="700" fill="var(--green)" stroke="var(--black)" stroke-width="1.2" letter-spacing="4">{ }</text></svg>
+        <div class="shape shape-dots shape-d1"></div>
+        <div class="shape shape-dots shape-d2"></div>
+
+        <div class="hero-content">
+            <h1>
+                <img src="roslynpad.svg" alt="RoslynPad Logo" class="hero-logo">
+                RoslynPad
+            </h1>
+            <p>Open source C# code editor and runner.<br>
+                Built with <a href="https://github.com/dotnet/roslyn">Roslyn</a> and
+                <a href="https://github.com/icsharpcode/AvalonEdit">AvalonEdit</a>.<br>
+                Windows · macOS · Linux
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/roslynpad/roslynpad/releases/latest" class="btn btn-primary">Download</a>
+                <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge" class="btn btn-store">
+                    <img src="https://get.microsoft.com/images/en-us%20light.svg" alt="Microsoft Store" height="40">
+                </a>
+            </div>
+            <a href="https://github.com/roslynpad/roslynpad#installing" class="install-link">Other ways to install →</a>
         </div>
     </section>
 
-    <section class="main-content">
-
-        <video width="720" height="540" controls
-               poster="https://res.cloudinary.com/aelij/video/upload/v1489299110/roslynpad-jsondemo_gmxcxr.jpg">
-            <source src="https://res.cloudinary.com/aelij/video/upload/s--V-3jPJgs--/f_auto/v1489299110/roslynpad-jsondemo_gmxcxr.mp4" type="video/mp4">
-        </video>
-
-        <footer class="site-footer">
-            <span class="site-footer-owner"><a href="https://github.com/aelij/RoslynPad">RoslynPad</a> is maintained by <a href="https://github.com/aelij">aelij</a>.</span>
-
-            <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-        </footer>
-
+    <!-- Features -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <img src="Completion.png" alt="Code Completion">
+                    <h3>Code Completion</h3>
+                    <p>Smart suggestions as you type, powered by Roslyn.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="SignatureHelp.png" alt="Signature Help">
+                    <h3>Signature Help</h3>
+                    <p>Method signatures and parameter info as you write.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="Diagnostics.png" alt="Diagnostics">
+                    <h3>Diagnostics</h3>
+                    <p>Real-time error detection and warnings as you code.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="CodeFixes.png" alt="Code Fixes">
+                    <h3>Code Fixes</h3>
+                    <p>Quick actions and refactorings to fix issues instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Real-time Execution</h3>
+                    <p>Run C# scripts instantly with built-in REPL support.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>NuGet Packages</h3>
+                    <p>Add NuGet packages with integrated search and install.</p>
+                </div>
+            </div>
+        </div>
     </section>
 
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-shapes">
+                <div class="shape shape-circle"></div>
+                <div class="shape shape-triangle"></div>
+            </div>
+            <p>© 2026 RoslynPad · Open source under the MIT License</p>
+        </div>
+    </footer>
 
+    <script>
+    {
+        const header = document.querySelector('header');
+        const headerLogo = document.querySelector('.header-logo');
+        const hero = document.querySelector('.hero');
+
+        window.addEventListener('scroll', () => {
+            const heroBottom = hero.offsetTop + hero.offsetHeight * 0.3;
+            const scrollY = window.scrollY;
+            const progress = Math.min(1, Math.max(0, scrollY / heroBottom));
+
+            headerLogo.style.opacity = progress;
+            headerLogo.style.transform = `translateX(${-20 + 20 * progress}px)`;
+            header.classList.toggle('scrolled', scrollY > 0);
+        });
+
+        // Scroll reveal for feature cards
+        const cards = document.querySelectorAll('.feature-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+        cards.forEach(card => observer.observe(card));
+    }
+    </script>
 </body>
+
 </html>
