@@ -106,6 +106,7 @@ nav ul li a:hover {
 /* === Hero === */
 .hero {
     position: relative;
+    overflow: hidden;
     background: var(--cream);
     padding: 50px 5% 60px;
     overflow: hidden;
@@ -424,8 +425,16 @@ footer p {
     }
 
     .shape {
-        display: none;
+        transform: scale(0.7);
     }
+
+    .icon-play    { top: 3%; left: 2%; }
+    .icon-stop    { bottom: 5%; left: 3%; }
+    .icon-gear    { top: 3%; right: 2%; }
+    .icon-nuget   { bottom: 5%; right: 2%; }
+    .icon-search  { display: none; }
+    .icon-braces  { display: none; }
+    .shape-dots   { display: none; }
 
     nav ul {
         gap: 2px;
