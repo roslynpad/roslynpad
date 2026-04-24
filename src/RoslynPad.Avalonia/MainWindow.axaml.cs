@@ -11,6 +11,8 @@ using Dock.Model.Avalonia.Controls;
 using Dock.Model.Core.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RoslynPad.Editor;
+using RoslynPad.Roslyn.Classification;
 using RoslynPad.Themes;
 using RoslynPad.UI;
 using SourceCodeKind = Microsoft.CodeAnalysis.SourceCodeKind;
@@ -113,6 +115,22 @@ partial class MainWindow : Window
         }
 
         _themeDictionary = new ThemeDictionary(_viewModel.Theme);
+
+        UpdateTaggedTextResources(app, _viewModel.Theme);
+    }
+
+    private static void UpdateTaggedTextResources(Application app, Theme theme)
+    {
+        var colors = new ThemeClassificationColors(theme);
+        foreach (var tag in TaggedTextResources.AllTags)
+        {
+            var classificationName = TaggedTextExtensions.ToClassificationTypeName(tag);
+            var brush = colors.GetBrush(classificationName).Foreground?.GetBrush(null);
+            if (brush is not null)
+            {
+                app.Resources[TaggedTextResources.GetResourceKey(tag)] = brush;
+            }
+        }
     }
 
     private async void OnDockableClosedAsync(object? sender, DockableClosedEventArgs e)

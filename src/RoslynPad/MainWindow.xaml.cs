@@ -4,10 +4,11 @@ using System.Xml.Linq;
 using Avalon.Windows.Controls;
 using AvalonDock;
 using AvalonDock.Controls;
-using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RoslynPad.Editor;
+using RoslynPad.Roslyn.Classification;
 using RoslynPad.Themes;
 using RoslynPad.UI;
 
@@ -66,8 +67,24 @@ public partial class MainWindow
         _themeDictionary = new ThemeDictionary(_viewModel.Theme);
         app.Resources.MergedDictionaries.Add(_themeDictionary);
 
+        UpdateTaggedTextResources(app, _viewModel.Theme);
+
         SetDockTheme(_viewModel.Theme);
         this.UseImmersiveDarkMode(IsDark);
+    }
+
+    private static void UpdateTaggedTextResources(Application app, Theme theme)
+    {
+        var colors = new ThemeClassificationColors(theme);
+        foreach (var tag in TaggedTextResources.AllTags)
+        {
+            var classificationName = TaggedTextExtensions.ToClassificationTypeName(tag);
+            var brush = colors.GetBrush(classificationName).Foreground?.GetBrush(null);
+            if (brush is not null)
+            {
+                app.Resources[TaggedTextResources.GetResourceKey(tag)] = brush;
+            }
+        }
     }
 
     private void SetDockTheme(Theme theme)

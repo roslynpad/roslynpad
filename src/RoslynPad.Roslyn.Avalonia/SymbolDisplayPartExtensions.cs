@@ -1,7 +1,10 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Microsoft.CodeAnalysis;
+using RoslynPad.Roslyn.Classification;
 
 namespace RoslynPad.Roslyn;
 
@@ -26,44 +29,50 @@ public static class SymbolDisplayPartExtensions
         return text;
     }
 
-    public static TextBlock ToRun(this TaggedText text, bool isBold = false)
+    public static Inline ToInline(this TaggedText text, bool isBold = false)
     {
+        if (text.Tag == TextTags.LineBreak)
+        {
+            return new LineBreak();
+        }
+
         var s = text.ToVisibleDisplayString(includeLeftToRightMarker: false);
 
-        var run = new TextBlock { Text = s };
+        var run = new Run(s);
 
-        if (isBold)
+        var style = text.GetStyle();
+        if (isBold || style.HasFlag(TaggedTextStyle.Strong))
         {
             run.FontWeight = FontWeight.Bold;
         }
 
-        switch (text.Tag)
+        if (style.HasFlag(TaggedTextStyle.Emphasis))
         {
-            case TextTags.Keyword:
-                run.Foreground = Brushes.Blue;
-                break;
-            case TextTags.Struct:
-            case TextTags.Enum:
-            case TextTags.TypeParameter:
-            case TextTags.Class:
-            case TextTags.Delegate:
-            case TextTags.Interface:
-                run.Foreground = Brushes.Teal;
-                break;
+            run.FontStyle = FontStyle.Italic;
         }
+
+        if (style.HasFlag(TaggedTextStyle.Underline))
+        {
+            run.TextDecorations = TextDecorations.Underline;
+        }
+
+        run[!TextBlock.ForegroundProperty] = new DynamicResourceExtension(TaggedTextResources.GetResourceKey(text.Tag));
 
         return run;
     }
 
-    public static Panel ToTextBlock(this IEnumerable<TaggedText> text, bool isBold = false)
+    public static TextBlock ToTextBlock(this IEnumerable<TaggedText> text, bool isBold = false)
     {
-        var panel = new WrapPanel { Orientation = Orientation.Horizontal };
-
+        var inlines = new InlineCollection();
         foreach (var part in text)
         {
-            panel.Children.Add(part.ToRun(isBold));
+            inlines.Add(part.ToInline(isBold));
         }
 
-        return panel;
+        return new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Inlines = inlines
+        };
     }
 }

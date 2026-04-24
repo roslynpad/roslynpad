@@ -67,11 +67,7 @@ internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProv
         CurrentIndexText = $" {_selectedIndex + 1} of {_items.Count} ";
     }
 
-#if AVALONIA
-    private bool HasContent(Panel textBlock) => textBlock?.Children.Count > 0;
-#else
-    private bool HasContent(TextBlock textBlock) => textBlock?.Inlines.Count > 0;
-#endif       
+    private bool HasContent(TextBlock textBlock) => textBlock?.Inlines?.Count > 0;
 
     private void AddParameterSignatureHelp(SignatureHelpItem item, int index, SignatureHelpParameter param, Panel headerPanel, Panel contentPanel)
     {
