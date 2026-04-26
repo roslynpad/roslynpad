@@ -4,6 +4,7 @@ namespace RoslynPad.Editor;
 
 public partial class CodeTextEditor : TextEditor
 {
+    private const int ToolTipMaxWidth = 600;
     private CodeEditorCompletionWindow? _completionWindow;
     private CodeEditorOverloadInsightWindow? _insightWindow;
     private ToolTip? _toolTip;
@@ -186,7 +187,7 @@ public partial class CodeTextEditor : TextEditor
 
         if (_toolTip == null)
         {
-            _toolTip = new ToolTip { MaxWidth = 500 };
+            _toolTip = new ToolTip { MaxWidth = ToolTipMaxWidth };
             InitializeToolTip();
         }
 
@@ -203,7 +204,7 @@ public partial class CodeTextEditor : TextEditor
             _toolTip.SetContent(this, new ContentPresenter
             {
                 Content = args.ContentToShow,
-                MaxWidth = 500
+                MaxWidth = ToolTipMaxWidth
             });
         }
 

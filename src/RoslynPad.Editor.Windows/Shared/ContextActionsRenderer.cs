@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -36,7 +36,7 @@ public sealed class ContextActionsRenderer
     private readonly ContextActionsBulbContextMenu _contextMenu;
 
     private CancellationTokenSource? _cancellationTokenSource;
-    private ObservableCollection<object>? _actions;
+    private readonly ObservableCollection<object> _actions;
     private ImageSource? _iconImage;
 
     public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
@@ -82,7 +82,7 @@ public sealed class ContextActionsRenderer
         if (!(e.Key == Key.OemPeriod && e.HasModifiers(ModifierKeys.Control))) return;
 
         Cancel();
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions.Count < 1)
         {
             HideBulb();
             return;
@@ -99,8 +99,10 @@ public sealed class ContextActionsRenderer
 
     private ContextActionsBulbContextMenu CreateContextMenu()
     {
-        var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand));
-        contextMenu.ItemsSource = _actions;
+        var contextMenu = new ContextActionsBulbContextMenu(new ActionCommandConverter(GetActionCommand))
+        {
+            ItemsSource = _actions
+        };
         // TODO: workaround to refresh menu with latest document
 #if AVALONIA
         contextMenu.Opening
@@ -111,6 +113,13 @@ public sealed class ContextActionsRenderer
             {
                 // Reload actions when menu opens to ensure fresh data
                 await LoadActionsWithCancellationAsync().ConfigureAwait(true);
+#if AVALONIA
+                if (contextMenu.Popup.Child is ItemsControl itemsControl &&
+                    itemsControl.ContainerFromIndex(0) is InputElement firstItem)
+                {
+                    firstItem.Focus();
+                }
+#endif
             };
 
         return contextMenu;
@@ -124,7 +133,7 @@ public sealed class ContextActionsRenderer
         {
             await previousCancellationTokenSource.CancelAsync().ConfigureAwait(false);
         }
-        
+
         _cancellationTokenSource = new CancellationTokenSource();
         try
         {
@@ -168,13 +177,13 @@ public sealed class ContextActionsRenderer
             newActions.AddRange(actions);
         }
 
-        // Update on the UI thread; assign a new collection so that
-        // Avalonia's MenuFlyout (which does not observe in-place collection
-        // changes) picks up the updated items via a property-changed notification.
         await _editor.GetDispatcher();
 
-        _actions = new ObservableCollection<object>(newActions);
-        _contextMenu.ItemsSource = _actions;
+        _actions.Clear();
+        foreach (var action in newActions)
+        {
+            _actions.Add(action);
+        }
     }
 
     private void ScrollChanged(object? sender, EventArgs e) => StartTimer();
@@ -198,7 +207,7 @@ public sealed class ContextActionsRenderer
             return;
         }
 
-        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions?.Count < 1)
+        if (!await LoadActionsWithCancellationAsync().ConfigureAwait(true) || _actions.Count < 1)
         {
             HideBulb();
             return;

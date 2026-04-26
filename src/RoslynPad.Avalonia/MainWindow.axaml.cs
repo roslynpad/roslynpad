@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Composition.Hosting;
+using System.Globalization;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
@@ -25,6 +26,8 @@ partial class MainWindow : Window
 
     private readonly MainViewModel _viewModel;
     private ThemeDictionary? _themeDictionary;
+    private bool _isClosing;
+    private bool _isClosed;
 
     public MainViewModel ViewModel => _viewModel;
 
@@ -52,6 +55,7 @@ partial class MainWindow : Window
 
         InitializeComponent();
         InitializeKeyBindings();
+        LoadWindowLayout();
 
         if (_viewModel.Settings.WindowFontSize.HasValue)
         {
@@ -188,6 +192,67 @@ partial class MainWindow : Window
         base.OnApplyTemplate(e);
 
         await _viewModel.Initialize().ConfigureAwait(true);
+    }
+
+    private void SaveWindowLayout()
+    {
+        var position = Position;
+        var size = ClientSize;
+        var bounds = new Rect(position.X, position.Y, size.Width, size.Height);
+        _viewModel.Settings.WindowBounds = FormattableString.Invariant($"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
+        _viewModel.Settings.WindowState = WindowState.ToString();
+    }
+
+    private void LoadWindowLayout()
+    {
+        var boundsString = _viewModel.Settings.WindowBounds;
+
+        if (!string.IsNullOrEmpty(boundsString))
+        {
+            var parts = boundsString.Split(',').Select(p => double.TryParse(p, CultureInfo.InvariantCulture, out var result) ? result : double.NaN).Where(d => !double.IsNaN(d)).ToArray();
+            if (parts.Length == 4)
+            {
+                Position = new PixelPoint((int)parts[0], (int)parts[1]);
+                Width = parts[2];
+                Height = parts[3];
+            }
+        }
+
+        if (Enum.TryParse(_viewModel.Settings.WindowState, out WindowState state) &&
+            state != WindowState.Minimized)
+        {
+            WindowState = state;
+        }
+    }
+
+    protected override async void OnClosing(Avalonia.Controls.WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+
+        if (!_isClosing)
+        {
+            SaveWindowLayout();
+
+            _isClosing = true;
+            IsEnabled = false;
+            e.Cancel = true;
+
+            try
+            {
+                await Task.Run(_viewModel.OnExit).ConfigureAwait(true);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            _isClosed = true;
+            Close();
+        }
+        else
+        {
+            e.Cancel = !_isClosed;
+        }
     }
 
     private void OnNewDocumentClick(object? sender, EventArgs e)
