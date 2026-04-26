@@ -2,6 +2,7 @@
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.Indentation;
 using RoslynPad.Roslyn.Structure;
 using RoslynPad.Roslyn.QuickInfo;
 using Microsoft.CodeAnalysis.Formatting;
@@ -152,6 +153,8 @@ public class RoslynCodeEditor : CodeTextEditor
 
             _blockStructureService = document.GetLanguageService<IBlockStructureService>();
         }
+
+        TextArea.IndentationStrategy = new RoslynIndentationStrategy(roslynHost, _documentId);
 
         AppendText(documentText);
         Document.UndoStack.ClearAll();
