@@ -4,5 +4,5 @@ namespace RoslynPad.Roslyn.Indentation;
 
 public interface IIndentationService : ILanguageService
 {
-    IndentationResult GetIndentation(RoslynParsedDocument document, int lineNumber, CancellationToken cancellationToken);
+    IndentationResult GetIndentation(ParsedDocument document, int lineNumber, CancellationToken cancellationToken);
 }

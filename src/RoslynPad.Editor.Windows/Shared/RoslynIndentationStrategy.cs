@@ -20,15 +20,8 @@ internal class RoslynIndentationStrategy :
         _documentId = documentId;
     }
 
-#if AVALONIA
     public void IndentLine(TextDocument textDocument, DocumentLine line)
-#else
-    public void IndentLine(TextArea textArea, DocumentLine line)
-#endif
     {
-#if !AVALONIA
-        var textDocument = textArea.Document;
-#endif
         var document = _roslynHost.GetDocument(_documentId);
         if (document == null)
         {
@@ -46,7 +39,7 @@ internal class RoslynIndentationStrategy :
 
         try
         {
-            var parsedDocument = RoslynParsedDocument.CreateSynchronously(document);
+            var parsedDocument = ParsedDocument.CreateSynchronously(document);
             var result = indentationService.GetIndentation(parsedDocument, lineNumber, CancellationToken.None);
 
             var linePosition = parsedDocument.Text.Lines.GetLinePosition(result.BasePosition);
@@ -68,23 +61,12 @@ internal class RoslynIndentationStrategy :
         }
     }
 
-#if AVALONIA
     public void IndentLines(TextDocument textDocument, int begin, int end)
-#else
-    public void IndentLines(TextArea textArea, int begin, int end)
-#endif
     {
-#if !AVALONIA
-        var textDocument = textArea.Document;
-#endif
         for (var i = begin; i <= end; i++)
         {
             var line = textDocument.GetLineByNumber(i);
-#if AVALONIA
             IndentLine(textDocument, line);
-#else
-            IndentLine(textArea, line);
-#endif
         }
     }
 

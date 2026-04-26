@@ -6,7 +6,7 @@ namespace RoslynPad.Roslyn.Formatting;
 
 public interface ICodeFormattingService : ILanguageService
 {
-    bool ShouldFormatOnTypedCharacter(RoslynParsedDocument document, char typedChar, int caretPosition, CancellationToken cancellationToken);
+    bool ShouldFormatOnTypedCharacter(ParsedDocument document, char typedChar, int caretPosition, CancellationToken cancellationToken);
 
-    ImmutableArray<TextChange> GetFormattingChangesOnTypedCharacter(RoslynParsedDocument document, int caretPosition, CancellationToken cancellationToken);
+    ImmutableArray<TextChange> GetFormattingChangesOnTypedCharacter(ParsedDocument document, int caretPosition, CancellationToken cancellationToken);
 }

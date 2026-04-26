@@ -395,7 +395,7 @@ public class RoslynCodeEditor : CodeTextEditor
 
         try
         {
-            var parsedDocument = RoslynParsedDocument.CreateSynchronously(document);
+            var parsedDocument = ParsedDocument.CreateSynchronously(document);
 
             if (!formattingService.ShouldFormatOnTypedCharacter(parsedDocument, typedChar, caretOffset, CancellationToken.None))
             {

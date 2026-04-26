@@ -22,12 +22,12 @@ internal class CodeFormattingServiceFactory : ILanguageServiceFactory
         ISyntaxFormattingService inner,
         Microsoft.CodeAnalysis.Host.LanguageServices languageServices) : ILanguageService, ICodeFormattingService
     {
-        public bool ShouldFormatOnTypedCharacter(RoslynParsedDocument document, char typedChar, int caretPosition, CancellationToken cancellationToken)
+        public bool ShouldFormatOnTypedCharacter(ParsedDocument document, char typedChar, int caretPosition, CancellationToken cancellationToken)
         {
             return inner.ShouldFormatOnTypedCharacter(document.Inner, typedChar, caretPosition, cancellationToken);
         }
 
-        public ImmutableArray<TextChange> GetFormattingChangesOnTypedCharacter(RoslynParsedDocument document, int caretPosition, CancellationToken cancellationToken)
+        public ImmutableArray<TextChange> GetFormattingChangesOnTypedCharacter(ParsedDocument document, int caretPosition, CancellationToken cancellationToken)
         {
             var options = IndentationOptionsProviders.GetDefault(languageServices);
             return inner.GetFormattingChangesOnTypedCharacter(document.Inner, caretPosition, options, cancellationToken);
