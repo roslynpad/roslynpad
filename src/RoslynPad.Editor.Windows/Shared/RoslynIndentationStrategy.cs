@@ -48,17 +48,22 @@ internal class RoslynIndentationStrategy :
         {
             var result = indentationService.GetIndentation(document, lineNumber, CancellationToken.None);
 
-            var sourceText = document.GetTextAsync(CancellationToken.None).Result;
+            if (!document.TryGetText(out var sourceText))
+            {
+                return;
+            }
+
             var linePosition = sourceText.Lines.GetLinePosition(result.BasePosition);
             var desiredIndentation = linePosition.Character + result.Offset;
 
             if (desiredIndentation >= 0)
             {
                 var indentationString = desiredIndentation > 0 ? new string(' ', desiredIndentation) : string.Empty;
-                var currentIndentation = GetLineIndentation(textDocument, line);
+                var currentIndentLength = GetIndentLength(textDocument, line);
+                var currentIndentation = textDocument.GetText(line.Offset, currentIndentLength);
                 if (currentIndentation != indentationString)
                 {
-                    ReplaceLineIndentation(textDocument, line, indentationString);
+                    textDocument.Replace(line.Offset, currentIndentLength, indentationString);
                 }
             }
         }
@@ -87,7 +92,7 @@ internal class RoslynIndentationStrategy :
         }
     }
 
-    private static string GetLineIndentation(TextDocument document, DocumentLine line)
+    private static int GetIndentLength(TextDocument document, DocumentLine line)
     {
         var lineText = document.GetText(line.Offset, line.Length);
         var indentLength = 0;
@@ -102,24 +107,6 @@ internal class RoslynIndentationStrategy :
                 break;
             }
         }
-        return lineText[..indentLength];
-    }
-
-    private static void ReplaceLineIndentation(TextDocument document, DocumentLine line, string newIndentation)
-    {
-        var lineText = document.GetText(line.Offset, line.Length);
-        var indentLength = 0;
-        foreach (var ch in lineText)
-        {
-            if (ch is ' ' or '\t')
-            {
-                indentLength++;
-            }
-            else
-            {
-                break;
-            }
-        }
-        document.Replace(line.Offset, indentLength, newIndentation);
+        return indentLength;
     }
 }
