@@ -19,11 +19,10 @@ internal class IndentationServiceFactory : ILanguageServiceFactory
         Microsoft.CodeAnalysis.Indentation.IIndentationService inner,
         Microsoft.CodeAnalysis.Host.LanguageServices languageServices) : ILanguageService, IIndentationService
     {
-        public IndentationResult GetIndentation(Document document, int lineNumber, CancellationToken cancellationToken)
+        public IndentationResult GetIndentation(RoslynParsedDocument document, int lineNumber, CancellationToken cancellationToken)
         {
-            var parsedDocument = ParsedDocument.CreateSynchronously(document, cancellationToken);
             var options = IndentationOptionsProviders.GetDefault(languageServices);
-            var result = inner.GetIndentation(parsedDocument, lineNumber, options, cancellationToken);
+            var result = inner.GetIndentation(document.Inner, lineNumber, options, cancellationToken);
             return new IndentationResult(result.BasePosition, result.Offset);
         }
     }

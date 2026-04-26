@@ -395,12 +395,14 @@ public class RoslynCodeEditor : CodeTextEditor
 
         try
         {
-            if (!formattingService.ShouldFormatOnTypedCharacter(document, typedChar, caretOffset, CancellationToken.None))
+            var parsedDocument = RoslynParsedDocument.CreateSynchronously(document);
+
+            if (!formattingService.ShouldFormatOnTypedCharacter(parsedDocument, typedChar, caretOffset, CancellationToken.None))
             {
                 return;
             }
 
-            var changes = formattingService.GetFormattingChangesOnTypedCharacter(document, caretOffset, CancellationToken.None);
+            var changes = formattingService.GetFormattingChangesOnTypedCharacter(parsedDocument, caretOffset, CancellationToken.None);
 
             if (changes.IsDefaultOrEmpty)
             {

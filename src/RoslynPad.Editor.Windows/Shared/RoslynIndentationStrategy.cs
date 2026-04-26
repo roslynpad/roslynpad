@@ -46,14 +46,10 @@ internal class RoslynIndentationStrategy :
 
         try
         {
-            var result = indentationService.GetIndentation(document, lineNumber, CancellationToken.None);
+            var parsedDocument = RoslynParsedDocument.CreateSynchronously(document);
+            var result = indentationService.GetIndentation(parsedDocument, lineNumber, CancellationToken.None);
 
-            if (!document.TryGetText(out var sourceText))
-            {
-                return;
-            }
-
-            var linePosition = sourceText.Lines.GetLinePosition(result.BasePosition);
+            var linePosition = parsedDocument.Text.Lines.GetLinePosition(result.BasePosition);
             var desiredIndentation = linePosition.Character + result.Offset;
 
             if (desiredIndentation >= 0)
