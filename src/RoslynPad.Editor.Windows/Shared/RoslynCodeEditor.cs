@@ -2,10 +2,12 @@
 using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
+using RoslynPad.Roslyn.Formatting;
 using RoslynPad.Roslyn.Indentation;
 using RoslynPad.Roslyn.Structure;
 using RoslynPad.Roslyn.QuickInfo;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Text;
 using System.Reactive.Linq;
 
 namespace RoslynPad.Editor;
@@ -31,6 +33,7 @@ public class RoslynCodeEditor : CodeTextEditor
         TextArea.TextView.BackgroundRenderers.Add(_textMarkerService);
         TextArea.TextView.LineTransformers.Add(_textMarkerService);
         TextArea.Caret.PositionChanged += CaretOnPositionChanged;
+        TextArea.TextEntered += OnRoslynTextEntered;
 
         Observable.FromEventPattern<EventHandler, EventArgs>(
             h => TextArea.TextView.Document.TextChanged += h,
@@ -354,6 +357,81 @@ public class RoslynCodeEditor : CodeTextEditor
                     TryJumpToBrace();
                     break;
             }
+        }
+    }
+
+    private void OnRoslynTextEntered(object? sender, TextCompositionEventArgs e)
+    {
+        if (e.Text?.Length == 1)
+        {
+            var ch = e.Text[0];
+            if (ch is '{' or '}' or ';')
+            {
+                FormatOnCharTyped(ch);
+            }
+        }
+    }
+
+    private void FormatOnCharTyped(char typedChar)
+    {
+        if (_roslynHost == null || _documentId == null)
+        {
+            return;
+        }
+
+        var document = _roslynHost.GetDocument(_documentId);
+        if (document == null)
+        {
+            return;
+        }
+
+        var formattingService = document.GetLanguageService<ICodeFormattingService>();
+        if (formattingService == null)
+        {
+            return;
+        }
+
+        var caretOffset = CaretOffset;
+
+        try
+        {
+            if (!formattingService.ShouldFormatOnTypedCharacter(document, typedChar, caretOffset, CancellationToken.None))
+            {
+                return;
+            }
+
+            var changes = formattingService.GetFormattingChangesOnTypedCharacter(document, caretOffset, CancellationToken.None);
+
+            if (changes.IsDefaultOrEmpty)
+            {
+                return;
+            }
+
+            // Save logical caret position (line/column) to restore after formatting
+            var caretLine = TextArea.Caret.Line;
+            var caretColumn = TextArea.Caret.Column;
+
+            using (Document.RunUpdate())
+            {
+                // Apply changes in reverse order so earlier offsets remain valid
+                foreach (var change in changes.OrderByDescending(c => c.Span.Start))
+                {
+                    Document.Replace(change.Span.Start, change.Span.Length,
+                        new StringTextSource(change.NewText ?? string.Empty));
+                }
+            }
+
+            // Restore caret to the same logical line/column
+            if (caretLine <= Document.LineCount)
+            {
+                var line = Document.GetLineByNumber(caretLine);
+                var maxColumn = line.Length + 1;
+                TextArea.Caret.Line = caretLine;
+                TextArea.Caret.Column = Math.Min(caretColumn, maxColumn);
+            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 
