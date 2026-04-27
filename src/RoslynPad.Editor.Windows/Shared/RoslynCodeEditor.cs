@@ -3,17 +3,19 @@ using RoslynPad.Roslyn;
 using RoslynPad.Roslyn.BraceMatching;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.Formatting;
-using RoslynPad.Roslyn.Indentation;
 using RoslynPad.Roslyn.Structure;
 using RoslynPad.Roslyn.QuickInfo;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Text;
+using System.Collections.Immutable;
 using System.Reactive.Linq;
+using System.Buffers;
+using TextChange = Microsoft.CodeAnalysis.Text.TextChange;
 
 namespace RoslynPad.Editor;
 
 public class RoslynCodeEditor : CodeTextEditor
 {
+    private static readonly SearchValues<char> s_formattingTriggerChars = SearchValues.Create(";{}#nte:)");
     private readonly TextMarkerService _textMarkerService;
     private BraceMatcherHighlightRenderer? _braceMatcherHighlighter;
     private ContextActionsRenderer? _contextActionsRenderer;
@@ -25,6 +27,7 @@ public class RoslynCodeEditor : CodeTextEditor
     private CancellationTokenSource? _braceMatchingCts;
     private RoslynHighlightingColorizer? _colorizer;
     private IBlockStructureService? _blockStructureService;
+    private ICodeFormattingService? _codeFormattingService;
     private SnippetManager? _snippetManager;
 
     public RoslynCodeEditor()
@@ -155,6 +158,7 @@ public class RoslynCodeEditor : CodeTextEditor
             Options.ConvertTabsToSpaces = !options.GetOption(FormattingOptions.UseTabs);
 
             _blockStructureService = document.GetLanguageService<IBlockStructureService>();
+            _codeFormattingService = document.GetLanguageService<ICodeFormattingService>();
         }
 
         TextArea.IndentationStrategy = new RoslynIndentationStrategy(roslynHost, _documentId);
@@ -362,19 +366,19 @@ public class RoslynCodeEditor : CodeTextEditor
 
     private void OnRoslynTextEntered(object? sender, TextCompositionEventArgs e)
     {
-        if (e.Text?.Length == 1)
-        {
-            var ch = e.Text[0];
-            if (ch is '{' or '}' or ';')
-            {
-                FormatOnCharTyped(ch);
-            }
-        }
+        FormatOnCharTyped();
     }
 
-    private void FormatOnCharTyped(char typedChar)
+    private void FormatOnCharTyped()
     {
-        if (_roslynHost == null || _documentId == null)
+        if (_roslynHost == null || _documentId == null || _codeFormattingService == null)
+        {
+            return;
+        }
+
+        var caretOffset = CaretOffset;
+        var typedChar = Document.GetCharAt(caretOffset - 1);
+        if (!s_formattingTriggerChars.Contains(typedChar))
         {
             return;
         }
@@ -385,33 +389,23 @@ public class RoslynCodeEditor : CodeTextEditor
             return;
         }
 
-        var formattingService = document.GetLanguageService<ICodeFormattingService>();
-        if (formattingService == null)
-        {
-            return;
-        }
-
-        var caretOffset = CaretOffset;
 
         try
         {
             var parsedDocument = ParsedDocument.CreateSynchronously(document);
 
-            if (!formattingService.ShouldFormatOnTypedCharacter(parsedDocument, typedChar, caretOffset, CancellationToken.None))
+            if (!_codeFormattingService.ShouldFormatOnTypedCharacter(parsedDocument, typedChar, caretOffset, CancellationToken.None))
             {
                 return;
             }
 
-            var changes = formattingService.GetFormattingChangesOnTypedCharacter(parsedDocument, caretOffset, CancellationToken.None);
-
+            var changes = _codeFormattingService.GetFormattingChangesOnTypedCharacter(parsedDocument, caretOffset, CancellationToken.None);
             if (changes.IsDefaultOrEmpty)
             {
                 return;
             }
 
-            // Save logical caret position (line/column) to restore after formatting
-            var caretLine = TextArea.Caret.Line;
-            var caretColumn = TextArea.Caret.Column;
+            var newCaretOffset = TrackPositionThroughChanges(caretOffset, changes);
 
             using (Document.RunUpdate())
             {
@@ -423,18 +417,39 @@ public class RoslynCodeEditor : CodeTextEditor
                 }
             }
 
-            // Restore caret to the same logical line/column
-            if (caretLine <= Document.LineCount)
-            {
-                var line = Document.GetLineByNumber(caretLine);
-                var maxColumn = line.Length + 1;
-                TextArea.Caret.Line = caretLine;
-                TextArea.Caret.Column = Math.Min(caretColumn, maxColumn);
-            }
+            CaretOffset = Math.Min(newCaretOffset, Document.TextLength);
         }
         catch (OperationCanceledException)
         {
         }
+    }
+
+    /// <summary>
+    /// Tracks a caret position forward through text changes using negative tracking.
+    /// When the position is at the boundary of an insertion, it stays before the inserted text.
+    /// Changes must be sorted by Span.Start and non-overlapping.
+    /// </summary>
+    private static int TrackPositionThroughChanges(int position, ImmutableArray<TextChange> changes)
+    {
+        var delta = 0;
+        foreach (var change in changes)
+        {
+            if (position < change.Span.Start)
+            {
+                break;
+            }
+
+            if (position <= change.Span.End)
+            {
+                // Position is within [Start, End] of this change (includes zero-length insertions
+                // at the caret position). Negative tracking: stay at start of new text.
+                return change.Span.Start + delta;
+            }
+
+            delta += (change.NewText?.Length ?? 0) - change.Span.Length;
+        }
+
+        return position + delta;
     }
 
     protected override async Task<bool> TryExpandSnippetAsync()
