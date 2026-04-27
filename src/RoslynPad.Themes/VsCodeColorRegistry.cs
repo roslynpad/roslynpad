@@ -246,6 +246,8 @@ internal class VsCodeColorRegistry : IColorRegistry
         RegisterColor("titleBar.inactiveBackground", new ColorDefaults(Dark: Transparent(titleBarActiveBackground, 0.6), Light: Transparent(titleBarActiveBackground, 0.6)));
         RegisterColor("menubar.selectionForeground", titleBarActiveForeground);
         RegisterColor("menubar.selectionBackground", toolbarHoverBackground);
+
+        RegisterColor("editorGutter.foldingControlForeground", iconForeground);
     }
 
     private string RegisterColor(string name) => name;

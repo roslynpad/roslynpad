@@ -10,6 +10,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using DialogHostAvalonia;
 using Avalonia.Markup.Xaml.MarkupExtensions;
+using AvaloniaEdit.Folding;
 
 namespace RoslynPad;
 

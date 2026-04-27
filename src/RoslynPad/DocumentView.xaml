@@ -6,6 +6,7 @@
              xmlns:rp="clr-namespace:RoslynPad"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
+             xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance ui:OpenDocumentViewModel}">
     <FrameworkElement.InputBindings>
@@ -263,6 +264,10 @@
                                      ContextActionsIcon="{StaticResource Bulb}"
                                      Background="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}"
                                      Foreground="{DynamicResource {x:Static rp:ThemeDictionary.EditorForeground}}"
+                                     folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static rp:ThemeDictionary.FoldingControlForeground}}"
+                                     folding:FoldingMargin.SelectedFoldingMarkerBrush="#cccccc"
+                                     folding:FoldingMargin.FoldingMarkerBackgroundBrush="Transparent"
+                                     folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="Transparent"
                                      FontFamily="{Binding MainViewModel.Settings.EditorFontFamily}"
                                      Grid.Row="1"
                                      Grid.Column="0"

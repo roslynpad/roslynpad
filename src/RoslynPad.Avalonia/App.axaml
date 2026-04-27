@@ -1,6 +1,7 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
+             xmlns:folding="clr-namespace:AvaloniaEdit.Folding;assembly=AvaloniaEdit"
              x:Class="RoslynPad.App"
              xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
@@ -89,6 +90,13 @@
 
     <Style Selector="editor|RoslynCodeEditor">
       <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}" />
+    </Style>
+
+    <Style Selector="folding|FoldingMargin">
+      <Setter Property="(folding:FoldingMargin.FoldingMarkerBrush)" Value="{DynamicResource {x:Static rp:ThemeDictionary.FoldingControlForeground}}" />
+      <Setter Property="(folding:FoldingMargin.SelectedFoldingMarkerBrush)" Value="#cccccc" />
+      <Setter Property="(folding:FoldingMargin.FoldingMarkerBackgroundBrush)" Value="Transparent" />
+      <Setter Property="(folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush)" Value="Transparent" />
     </Style>
 
   </Application.Styles>

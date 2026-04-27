@@ -52,6 +52,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string TitleBarActiveBackground = "titleBar.activeBackground";
     public const string InputBackground = "input.background";
     public const string InputForeground = "input.foreground";
+    public const string FoldingControlForeground = "editorGutter.foldingControlForeground";
     private void Initialize(Theme theme)
     {
         if (theme.Colors is null)

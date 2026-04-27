@@ -43,6 +43,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string TabBorder = "tab.border";
     public const string InputBorder = "input.border";
     public const string TitleBarActiveBackground = "titleBar.activeBackground";
+    public const string FoldingControlForeground = "editorGutter.foldingControlForeground";
 
     private void Initialize(Theme theme)
     {
