@@ -5,6 +5,7 @@
              x:Class="RoslynPad.App"
              xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad"
              xmlns:editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
+             xmlns:avedit="clr-namespace:AvaloniaEdit.Editing;assembly=AvaloniaEdit"
              xmlns:formatting="clr-namespace:RoslynPad.Formatting;assembly=RoslynPad"
              xmlns:codeAnalysis="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
              xmlns:codeActions="clr-namespace:Microsoft.CodeAnalysis.CodeActions;assembly=Microsoft.CodeAnalysis.Workspaces"
@@ -90,6 +91,10 @@
 
     <Style Selector="editor|RoslynCodeEditor">
       <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.EditorBackground}}" />
+    </Style>
+
+    <Style Selector="avedit|TextArea">
+      <Setter Property="SelectionBrush" Value="{DynamicResource {x:Static rp:ThemeDictionary.EditorSelectionBackground}}" />
     </Style>
 
     <Style Selector="folding|FoldingMargin">

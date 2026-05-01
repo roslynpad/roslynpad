@@ -21,6 +21,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string ScrollBarShadow = "scrollbar.shadow";
     public const string EditorBackground = "editor.background";
     public const string EditorForeground = "editor.foreground";
+    public const string EditorSelectionBackground = "editor.selectionBackground";
     public const string Foreground = "foreground";
     public const string PanelBackground = "panel.background";
     public const string StatusBarBackground = "statusBar.background";

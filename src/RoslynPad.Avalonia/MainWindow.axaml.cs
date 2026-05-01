@@ -119,6 +119,7 @@ partial class MainWindow : Window
         }
 
         _themeDictionary = new ThemeDictionary(_viewModel.Theme);
+        app.Resources.MergedDictionaries.Add(_themeDictionary);
 
         UpdateTaggedTextResources(app, _viewModel.Theme);
     }
