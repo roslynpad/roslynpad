@@ -11,7 +11,7 @@
     <AvaloniaVersion>12.0.1</AvaloniaVersion>
     <NuGetVersion>7.3.1</NuGetVersion>
     <MessagePackVersion>3.1.4</MessagePackVersion>
-    <AvalonDockVersion>4.74.0</AvalonDockVersion>
+    <AvalonDockVersion>4.74.1</AvalonDockVersion>
     <DockAvaloniaVersion>12.0.0.1</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
