@@ -1,51 +1,198 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RoslynPad.ResultsView"
-             xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
+             xmlns:local="clr-namespace:RoslynPad"
              xmlns:build="clr-namespace:RoslynPad.Build;assembly=RoslynPad.Build"
-             xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:converters="clr-namespace:RoslynPad.Converters"
              x:DataType="ui:OpenDocumentViewModel"
              x:Name="Root">
-  <Grid>
-    <TreeView x:Name="ResultTree" ItemsSource="{Binding Results}">
+  <UserControl.Resources>
+    <converters:LevelToIndentConverter x:Key="LevelToIndentConverter" />
+  </UserControl.Resources>
+  <DockPanel Grid.IsSharedSizeScope="True">
+    <!-- Column Headers -->
+    <ScrollViewer DockPanel.Dock="Top"
+                  x:Name="HeaderScroll"
+                  HorizontalScrollBarVisibility="Hidden"
+                  VerticalScrollBarVisibility="Disabled">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="150" SharedSizeGroup="ResultNameGroup" />
+          <ColumnDefinition Width="5" />
+          <ColumnDefinition Width="450" SharedSizeGroup="ResultValueGroup" />
+          <ColumnDefinition Width="5" />
+          <ColumnDefinition Width="Auto" SharedSizeGroup="ResultTypeGroup" />
+          <ColumnDefinition Width="5" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Name"
+                   Margin="20,0"
+                   HorizontalAlignment="Center"
+                   Grid.Column="0" />
+        <GridSplitter Grid.Column="1"
+                      ResizeDirection="Columns"
+                      Background="Transparent"
+                      BorderBrush="DarkGray"
+                      BorderThickness="1,0,0,0" />
+        <TextBlock Text="Value"
+                   Margin="20,0"
+                   HorizontalAlignment="Center"
+                   Grid.Column="2" />
+        <GridSplitter Grid.Column="3"
+                      ResizeDirection="Columns"
+                      Background="Transparent"
+                      BorderBrush="DarkGray"
+                      BorderThickness="1,0,0,0" />
+        <TextBlock Text="Type"
+                   Margin="20,0"
+                   HorizontalAlignment="Center"
+                   Grid.Column="4" />
+        <GridSplitter Grid.Column="5"
+                      ResizeDirection="Columns"
+                      Background="Transparent"
+                      BorderBrush="DarkGray"
+                      BorderThickness="1,0,0,0" />
+      </Grid>
+    </ScrollViewer>
+
+    <TreeView x:Name="ResultTree"
+              ItemsSource="{Binding Results}"
+              BorderThickness="0"
+              FontSize="{Binding MainViewModel.Settings.OutputFontSize}"
+              DoubleTapped="ResultTree_DoubleTapped">
       <TreeView.KeyBindings>
-        <KeyBinding Gesture="Cmd+C" Command="{Binding #Root.CopyValue}" />
-        <KeyBinding Gesture="Ctrl+C" Command="{Binding #Root.CopyValue}" />
-        <KeyBinding Gesture="Cmd+Shift+C" Command="{Binding #Root.CopyAllValues}" />
-        <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding #Root.CopyAllValues}" />
+        <KeyBinding Gesture="{OnPlatform macOS='Cmd+C', Default='Ctrl+C'}" Command="{Binding #Root.CopyValue}" />
+        <KeyBinding Gesture="{OnPlatform macOS='Cmd+Shift+C', Default='Ctrl+Shift+C'}" Command="{Binding #Root.CopyAllValues}" />
       </TreeView.KeyBindings>
+      <TreeView.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Copy Value" Click="CopyValueClick"
+                    InputGesture="{OnPlatform macOS='Cmd+C', Default='Ctrl+C'}" />
+          <MenuItem Header="Copy Value with Children" Click="CopyValueWithChildrenClick" />
+          <Separator />
+          <MenuItem Header="Copy All Values" Click="CopyAllValuesClick" />
+          <MenuItem Header="Copy All Values with Children" Click="CopyAllValuesWithChildrenClick"
+                    InputGesture="{OnPlatform macOS='Cmd+Shift+C', Default='Ctrl+Shift+C'}" />
+        </ContextMenu>
+      </TreeView.ContextMenu>
       <TreeView.Styles>
         <Style Selector="TreeViewItem">
           <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=OneTime, FallbackValue=False}" />
+          <Setter Property="Padding" Value="0" />
+          <Setter Property="Template">
+            <ControlTemplate TargetType="TreeViewItem">
+              <StackPanel>
+                <Border x:Name="PART_LayoutRoot"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        MinHeight="{DynamicResource TreeViewItemMinHeight}"
+                        Padding="{TemplateBinding Padding}">
+                  <ContentPresenter Name="PART_HeaderPresenter"
+                                    Content="{TemplateBinding Header}"
+                                    VerticalContentAlignment="Center" />
+                </Border>
+                <ItemsPresenter Name="PART_ItemsPresenter"
+                                IsVisible="{TemplateBinding IsExpanded}" />
+              </StackPanel>
+            </ControlTemplate>
+          </Setter>
+        </Style>
+        <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelected}" />
+        </Style>
+        <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot:pointerover">
+          <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot:pointerover">
+          <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelectedPointerOver}" />
         </Style>
       </TreeView.Styles>
       <TreeView.DataTemplates>
         <TreeDataTemplate x:DataType="build:ResultObject"
                           ItemsSource="{Binding Children}">
-          <Grid ColumnDefinitions="150,*,150">
-            <TextBlock Text="{Binding Header}" Grid.Column="0" />
-            <TextBlock Text="{Binding Value}" Grid.Column="1" />
-            <TextBlock Text="{Binding Type}" Grid.Column="2" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0"
+                       Margin="{Binding $parent[TreeViewItem].Level, Converter={StaticResource LevelToIndentConverter}}">
+              <ToggleButton Theme="{StaticResource FluentTreeViewExpandCollapseChevron}"
+                            DockPanel.Dock="Left"
+                            Margin="0,0,4,0"
+                            IsChecked="{Binding $parent[TreeViewItem].IsExpanded}"
+                            IsVisible="{Binding HasChildren}">
+                <PathIcon Data="M 1,1 L 9,5 L 1,9 Z" />
+              </ToggleButton>
+              <TextBlock Text="{Binding Header}"
+                         TextTrimming="CharacterEllipsis"
+                         VerticalAlignment="Center" />
+            </DockPanel>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding Value}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="4"
+                       Text="{Binding Type}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
           </Grid>
         </TreeDataTemplate>
+
         <TreeDataTemplate x:DataType="build:CompilationErrorResultObject">
-          <Grid ColumnDefinitions="150,100,*,50,50">
-            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
-            <TextBlock Text="{Binding ErrorCode}" Grid.Column="1" />
-            <TextBlock Text="{Binding Message}" Grid.Column="2" />
-            <TextBlock Text="{Binding LineNumber}" Grid.Column="3" />
-            <TextBlock Text="{Binding Column}" Grid.Column="4" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" VerticalAlignment="Center">
+              <Image Source="{Binding Severity, Converter={x:Static local:ResultsView.SeverityToIconConverter}}"
+                     Width="12" Height="12" Margin="4,0,5,0" />
+              <TextBlock Text="{Binding Severity}" TextTrimming="CharacterEllipsis" Margin="0,0,5,0" />
+              <TextBlock Text="{Binding ErrorCode}" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding Message}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
+            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="{Binding LineNumber}" />
+              <TextBlock Text=", " />
+              <TextBlock Text="{Binding Column}" />
+            </StackPanel>
           </Grid>
         </TreeDataTemplate>
+
         <TreeDataTemplate x:DataType="build:RestoreResultObject">
-          <Grid ColumnDefinitions="*,*">
-            <TextBlock Text="{Binding Severity}" Grid.Column="0" />
-            <TextBlock Text="{Binding Message}" Grid.Column="1" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
+              <ColumnDefinition Width="1" />
+              <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+              <Image Source="{Binding Severity, Converter={x:Static local:ResultsView.SeverityToIconConverter}}"
+                     Width="12" Height="12" Margin="4,0,5,0" />
+              <TextBlock Text="Restore Error" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding Message}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
           </Grid>
         </TreeDataTemplate>
       </TreeView.DataTemplates>
     </TreeView>
-  </Grid>
+  </DockPanel>
 </UserControl>
