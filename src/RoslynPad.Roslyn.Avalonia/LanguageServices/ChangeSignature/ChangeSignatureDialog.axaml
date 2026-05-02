@@ -1,3 +1,153 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="RoslynPad.Roslyn.LanguageServices.ChangeSignature.ChangeSignatureDialog" />
+        xmlns:roslyn="clr-namespace:RoslynPad.Roslyn"
+        x:Class="RoslynPad.Roslyn.LanguageServices.ChangeSignature.ChangeSignatureDialog"
+        x:Name="dialog"
+        x:CompileBindings="False"
+        Height="420"
+        Width="560"
+        MinHeight="420"
+        MinWidth="560"
+        Title="{Binding #dialog.ChangeSignatureDialogTitle}"
+        CanResize="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <roslyn:TaggedTextToTextBlockConverter x:Key="TaggedTextConverter" />
+    </Window.Resources>
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Alt+Up" Command="{Binding #dialog.MoveUpCommand}" />
+        <KeyBinding Gesture="Alt+Down" Command="{Binding #dialog.MoveDownCommand}" />
+        <KeyBinding Gesture="Delete" Command="{Binding #dialog.ToggleRemovedCommand}" />
+    </Window.KeyBindings>
+    <Grid Margin="11,6,11,11">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0"
+                   Padding="0,4,0,0"
+                   Text="{Binding #dialog.Parameters}" />
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition MinHeight="180" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition MinWidth="400" />
+                <ColumnDefinition Width="Auto" MinWidth="35" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Column Headers -->
+            <Grid Grid.Row="0" Grid.Column="0" Margin="0,3,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="4,0,0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Modifier" FontWeight="Bold" />
+                    <TextBlock Grid.Column="1" Text="Type" FontWeight="Bold" />
+                    <TextBlock Grid.Column="2" Text="Parameter" FontWeight="Bold" />
+                    <TextBlock Grid.Column="3" Text="Default" FontWeight="Bold" />
+                </Grid>
+                <ListBox x:Name="Members"
+                         Grid.Row="1"
+                         SelectionMode="Single"
+                         BorderThickness="1"
+                         BorderBrush="Gray"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Panel>
+                                <Grid ColumnDefinitions="80,120,120,*">
+                                    <TextBlock Grid.Column="0" Text="{Binding Modifier}" Padding="4,0,8,0"
+                                               Opacity="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToOpacity}}"
+                                               Foreground="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToForeground}}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Type}" Padding="4,0,8,0"
+                                               Opacity="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToOpacity}}"
+                                               Foreground="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToForeground}}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding ParameterName}" Padding="4,0,8,0"
+                                               Opacity="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToOpacity}}"
+                                               Foreground="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToForeground}}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Default}" Padding="4,0,8,0"
+                                               Opacity="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToOpacity}}"
+                                               Foreground="{Binding IsRemoved, Converter={x:Static roslyn:ChangeSignatureConverters.RemovedToForeground}}" />
+                                </Grid>
+                                <!-- Strikethrough line for removed parameters -->
+                                <Rectangle Height="1" Fill="Red" Opacity="0.4"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding IsRemoved}" />
+                            </Panel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <!-- Signature Preview -->
+            <Border Grid.Column="0"
+                    Margin="0,3,0,0"
+                    Grid.Row="2"
+                    Height="80"
+                    BorderThickness="1"
+                    BorderBrush="LightGray">
+                <ScrollViewer x:Name="SignatureScroller"
+                              Padding="8,4,4,4"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" />
+            </Border>
+
+            <!-- Control Buttons -->
+            <StackPanel Name="ControlButtonsPanel"
+                        Grid.Column="1"
+                        Grid.Row="0"
+                        Margin="0,3,0,0">
+                <Button Name="UpButton"
+                        Margin="9,0,0,0"
+                        Click="MoveUp_Click"
+                        Content="&#x25B2;" />
+                <Button Name="DownButton"
+                        Margin="9,9,0,0"
+                        Click="MoveDown_Click"
+                        Content="&#x25BC;" />
+                <Button Name="RemoveButton"
+                        Margin="9,29,0,0"
+                        Click="Remove_Click"
+                        Content="{Binding #dialog.Remove}" />
+                <Button Name="RestoreButton"
+                        Margin="9,9,0,0"
+                        Click="Restore_Click"
+                        Content="{Binding #dialog.Restore}" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="3"
+                    HorizontalAlignment="Right"
+                    Margin="0,11,0,0"
+                    Orientation="Horizontal">
+            <Button x:Name="OkButton"
+                    Content="{Binding #dialog.OK}"
+                    Margin="0,0,0,0"
+                    Padding="9,2,9,2"
+                    Click="OK_Click"
+                    IsDefault="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+            <Button Content="{Binding #dialog.Cancel}"
+                    Margin="7,0,0,0"
+                    Padding="9,2,9,2"
+                    Click="Cancel_Click"
+                    IsCancel="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface;
@@ -8,7 +9,7 @@ namespace RoslynPad.Roslyn.LanguageServices.ExtractInterface;
 internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
 {
     private ExtractInterfaceDialogViewModel? _viewModel;
-    
+
     public string ExtractInterfaceDialogTitle => "Extract Interface";
     public string NewInterfaceName => "New Interface Name";
     public string GeneratedName => "Generated Name";
@@ -21,118 +22,105 @@ internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
 
     public ExtractInterfaceDialog()
     {
-        //SetCommandBindings();
+        InitializeComponent();
 
-        AvaloniaXamlLoader.Load(this);
-
-        //Loaded += ExtractInterfaceDialog_Loaded;
-        //IsVisibleChanged += ExtractInterfaceDialog_IsVisibleChanged;
+        Opened += (_, _) =>
+        {
+            InterfaceNameTextBox.Focus();
+            InterfaceNameTextBox.SelectAll();
+        };
     }
 
-    //private void ExtractInterfaceDialog_Loaded(object? sender, RoutedEventArgs e)
-    //{
-    //    interfaceNameTextBox.Focus();
-    //    interfaceNameTextBox.SelectAll();
-    //}
+    private void OK_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel?.TrySubmit() == true)
+        {
+            Close(true);
+        }
+    }
 
-    //private void ExtractInterfaceDialog_IsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs e)
-    //{
-    //    if ((bool)e.NewValue)
-    //    {
-    //        IsVisibleChanged -= ExtractInterfaceDialog_IsVisibleChanged;
-    //    }
-    //}
+    private void Cancel_Click(object? sender, RoutedEventArgs e)
+    {
+        Close(false);
+    }
 
-    //private void SetCommandBindings()
-    //{
-    //    CommandBindings.Add(new CommandBinding(
-    //        new RoutedCommand(
-    //            "SelectAllClickCommand",
-    //            typeof(ExtractInterfaceDialog),
-    //            new InputGestureCollection(new List<InputGesture> { new KeyGesture(Key.S, ModifierKeys.Alt) })),
-    //        Select_All_Click));
+    private void Select_All_Click(object? sender, RoutedEventArgs e)
+    {
+        _viewModel?.SelectAll();
+    }
 
-    //    CommandBindings.Add(new CommandBinding(
-    //        new RoutedCommand(
-    //            "DeselectAllClickCommand",
-    //            typeof(ExtractInterfaceDialog),
-    //            new InputGestureCollection(new List<InputGesture> { new KeyGesture(Key.D, ModifierKeys.Alt) })),
-    //        Deselect_All_Click));
-    //}
+    private void Deselect_All_Click(object? sender, RoutedEventArgs e)
+    {
+        _viewModel?.DeselectAll();
+    }
 
-    //private void OK_Click(object? sender, RoutedEventArgs e)
-    //{
-    //    if (_viewModel.TrySubmit())
-    //    {
-    //        DialogResult = true;
-    //    }
-    //}
+    private void SelectAllInTextBox(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            textBox.SelectAll();
+        }
+    }
 
-    //private void Cancel_Click(object? sender, RoutedEventArgs e)
-    //{
-    //    DialogResult = false;
-    //}
+    private void OnListBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space && e.KeyModifiers == KeyModifiers.None)
+        {
+            ToggleCheckSelection();
+            e.Handled = true;
+        }
+    }
 
-    //private void Select_All_Click(object? sender, RoutedEventArgs e)
-    //{
-    //    _viewModel.SelectAll();
-    //}
+    private void OnListBoxDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        ToggleCheckSelection();
+        e.Handled = true;
+    }
 
-    //private void Deselect_All_Click(object? sender, RoutedEventArgs e)
-    //{
-    //    _viewModel.DeselectAll();
-    //}
-
-    //private void SelectAllInTextBox(object? sender, RoutedEventArgs e)
-    //{
-    //    if (e.OriginalSource is TextBox textbox && Mouse.LeftButton == MouseButtonState.Released)
-    //    {
-    //        textbox.SelectAll();
-    //    }
-    //}
-
-    //private void OnListViewPreviewKeyDown(object? sender, KeyEventArgs e)
-    //{
-    //    if (e.Key == Key.Space && e.KeyboardDevice.Modifiers == ModifierKeys.None)
-    //    {
-    //        ToggleCheckSelection();
-    //        e.Handled = true;
-    //    }
-    //}
-
-    //private void OnListViewDoubleClick(object? sender, MouseButtonEventArgs e)
-    //{
-    //    if (e.ChangedButton == MouseButton.Left)
-    //    {
-    //        ToggleCheckSelection();
-    //        e.Handled = true;
-    //    }
-    //}
-
-    //private void ToggleCheckSelection()
-    //{
-    //    var selectedItems = Members.SelectedItems.OfType<ExtractInterfaceDialogViewModel.MemberSymbolViewModel>().ToArray();
-    //    var allChecked = selectedItems.All(m => m.IsChecked);
-    //    foreach (var item in selectedItems)
-    //    {
-    //        item.IsChecked = !allChecked;
-    //    }
-    //}
+    private void ToggleCheckSelection()
+    {
+        var selectedItems = Members.SelectedItems?.OfType<ExtractInterfaceDialogViewModel.MemberSymbolViewModel>().ToArray();
+        if (selectedItems == null) return;
+        var allChecked = selectedItems.All(m => m.IsChecked);
+        foreach (var item in selectedItems)
+        {
+            item.IsChecked = !allChecked;
+        }
+    }
 
     public object ViewModel
     {
         get => DataContext ?? throw new InvalidOperationException("DataContext is null");
         set
         {
-            DataContext = value;
             _viewModel = (ExtractInterfaceDialogViewModel)value;
+            Members.ItemsSource = _viewModel.MemberContainers;
+            InterfaceNameTextBox.Text = _viewModel.InterfaceName;
+            GeneratedNameTextBox.Text = _viewModel.GeneratedName;
+            FileNameTextBox.Text = _viewModel.FileName;
+
+            InterfaceNameTextBox.TextChanged += (_, _) =>
+            {
+                if (_viewModel != null)
+                {
+                    _viewModel.InterfaceName = InterfaceNameTextBox.Text ?? string.Empty;
+                    GeneratedNameTextBox.Text = _viewModel.GeneratedName;
+                    FileNameTextBox.Text = _viewModel.FileName;
+                }
+            };
+            FileNameTextBox.TextChanged += (_, _) =>
+            {
+                if (_viewModel != null)
+                {
+                    _viewModel.FileName = FileNameTextBox.Text ?? string.Empty;
+                }
+            };
         }
     }
 
     bool? IRoslynDialog.Show()
     {
-        //this.SetOwnerToActive();
-        //return ShowDialog();
-        return false;
+        return this.ShowDialogSync();
     }
 }
+

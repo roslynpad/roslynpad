@@ -67,8 +67,8 @@ public sealed class RoslynContextActionProvider : IContextActionProvider
             var document = _roslynHost.GetDocument(_documentId);
             if (document != null)
             {
-                operation.Apply(document.Project.Solution.Workspace,
-                    CancellationToken.None);
+                await operation.TryApplyAsync(document.Project.Solution.Workspace,
+                    CancellationToken.None).ConfigureAwait(true);
             }
         }
     }

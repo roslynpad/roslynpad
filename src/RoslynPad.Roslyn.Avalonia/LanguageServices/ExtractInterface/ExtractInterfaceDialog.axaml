@@ -1,3 +1,110 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="RoslynPad.Roslyn.LanguageServices.ExtractInterface.ExtractInterfaceDialog" />
+        xmlns:roslyn="clr-namespace:RoslynPad.Roslyn"
+        x:Class="RoslynPad.Roslyn.LanguageServices.ExtractInterface.ExtractInterfaceDialog"
+        x:Name="dialog"
+        x:CompileBindings="False"
+        Height="380"
+        Width="460"
+        MinHeight="380"
+        MinWidth="460"
+        Title="{Binding #dialog.ExtractInterfaceDialogTitle}"
+        CanResize="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <roslyn:GlyphToImageSourceConverter x:Key="GlyphConverter" />
+    </Window.Resources>
+    <Grid Margin="11,6,11,11">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding #dialog.NewInterfaceName}"
+                       Margin="0,5,0,2" />
+            <TextBox x:Name="InterfaceNameTextBox"
+                     Padding="2"
+                     GotFocus="SelectAllInTextBox" />
+            <TextBlock Text="{Binding #dialog.GeneratedName}"
+                       Margin="0,5,0,2" />
+            <TextBox x:Name="GeneratedNameTextBox"
+                     IsReadOnly="True"
+                     Padding="2"
+                     GotFocus="SelectAllInTextBox" />
+            <TextBlock Text="{Binding #dialog.NewFileName}"
+                       Margin="0,5,0,2" />
+            <TextBox x:Name="FileNameTextBox"
+                     Padding="2"
+                     GotFocus="SelectAllInTextBox" />
+        </StackPanel>
+
+        <HeaderedContentControl Grid.Row="1"
+                                Margin="0,9,0,0"
+                                Header="{Binding #dialog.SelectPublicMembersToFormInterface}">
+            <Border BorderThickness="1" BorderBrush="Gray" Padding="4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ListBox x:Name="Members"
+                             Grid.Column="0"
+                             Margin="4"
+                             SelectionMode="Multiple"
+                             KeyDown="OnListBoxKeyDown"
+                             DoubleTapped="OnListBoxDoubleTapped">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              Focusable="False" />
+                                    <Image Margin="8,0,0,0"
+                                           Width="16" Height="16"
+                                           Source="{Binding Glyph, Converter={StaticResource GlyphConverter}}" />
+                                    <TextBlock Text="{Binding MemberName}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Grid.Column="1">
+                        <Button Content="{Binding #dialog.SelectAll}"
+                                Margin="2,9,9,7"
+                                Click="Select_All_Click"
+                                Padding="9,2,9,2"
+                                MinWidth="73"
+                                MinHeight="21" />
+                        <Button Content="{Binding #dialog.DeselectAll}"
+                                Margin="2,0,9,0"
+                                Padding="9,2,9,2"
+                                Click="Deselect_All_Click"
+                                MinWidth="73"
+                                MinHeight="21" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </HeaderedContentControl>
+
+        <StackPanel Grid.Row="2"
+                    HorizontalAlignment="Right"
+                    Margin="0,11,0,0"
+                    Orientation="Horizontal">
+            <Button Content="{Binding #dialog.OK}"
+                    Padding="9,2,9,2"
+                    Click="OK_Click"
+                    IsDefault="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+            <Button Content="{Binding #dialog.Cancel}"
+                    Margin="7,0,0,0"
+                    Padding="9,2,9,2"
+                    Click="Cancel_Click"
+                    IsCancel="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+        </StackPanel>
+    </Grid>
+</Window>

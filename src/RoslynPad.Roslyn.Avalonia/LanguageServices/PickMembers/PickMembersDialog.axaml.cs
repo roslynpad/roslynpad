@@ -1,7 +1,7 @@
-﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
-
+﻿using System.Windows.Input;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using System.Composition;
 
 namespace RoslynPad.Roslyn.LanguageServices.PickMembers;
@@ -9,142 +9,130 @@ namespace RoslynPad.Roslyn.LanguageServices.PickMembers;
 [Export(typeof(IPickMembersDialog))]
 internal partial class PickMembersDialog : Window, IPickMembersDialog
 {
-    private PickMembersDialogViewModel _viewModel;
+    private PickMembersDialogViewModel? _viewModel;
 
-    /// <summary>
-    /// For test purposes only. The integration tests need to know when the dialog is up and
-    /// ready for automation.
-    /// </summary>
-    //internal static event Action TEST_DialogLoaded;
-
-    // Expose localized strings for binding
     public string PickMembersDialogTitle => "Pick members";
-
     public string SelectAll => "Select All";
     public string DeselectAll => "Deselect All";
     public string OK => "OK";
     public string Cancel => "Cancel";
-    
+
+    public string? DialogTitle { get; private set; }
+
+    public ICommand MoveUpCommand { get; }
+    public ICommand MoveDownCommand { get; }
+
     [ImportingConstructor]
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public PickMembersDialog()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
-        //SetCommandBindings();
+        MoveUpCommand = new SimpleCommand(() => MoveUp_Click(null, null!));
+        MoveDownCommand = new SimpleCommand(() => MoveDown_Click(null, null!));
 
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
 
-        //InitializeComponent();
-
-        //IsVisibleChanged += PickMembers_IsVisibleChanged;
+        Members.SelectionChanged += Members_SelectionChanged;
     }
 
-    //private void PickMembers_IsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs e)
-    //{
-    //    if ((bool)e.NewValue)
-    //    {
-    //        IsVisibleChanged -= PickMembers_IsVisibleChanged;
-    //        TEST_DialogLoaded?.Invoke();
-    //    }
-    //}
+    private void Members_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.SelectedIndex = Members.SelectedIndex >= 0 ? Members.SelectedIndex : null;
+        }
+        UpdateButtonStates();
+    }
 
-    //private void SetCommandBindings()
-    //{
-    //    CommandBindings.Add(new CommandBinding(
-    //        new RoutedCommand(
-    //            "SelectAllClickCommand",
-    //            typeof(PickMembersDialog),
-    //            new InputGestureCollection(new List<InputGesture> { new KeyGesture(Key.S, ModifierKeys.Alt) })),
-    //        Select_All_Click));
+    private void UpdateButtonStates()
+    {
+        if (_viewModel == null) return;
+        UpButton.IsEnabled = _viewModel.CanMoveUp;
+        DownButton.IsEnabled = _viewModel.CanMoveDown;
+    }
 
-    //    CommandBindings.Add(new CommandBinding(
-    //        new RoutedCommand(
-    //            "DeselectAllClickCommand",
-    //            typeof(PickMembersDialog),
-    //            new InputGestureCollection(new List<InputGesture> { new KeyGesture(Key.D, ModifierKeys.Alt) })),
-    //        Deselect_All_Click));
-    //}
+    private void OK_Click(object? sender, RoutedEventArgs e)
+        => Close(true);
 
-    //private void OK_Click(object? sender, RoutedEventArgs e)
-    //    => DialogResult = true;
+    private void Cancel_Click(object? sender, RoutedEventArgs e)
+        => Close(false);
 
-    //private void Cancel_Click(object? sender, RoutedEventArgs e)
-    //    => DialogResult = false;
+    private void Select_All_Click(object? sender, RoutedEventArgs e)
+        => _viewModel?.SelectAll();
 
-    //private void Select_All_Click(object? sender, RoutedEventArgs e)
-    //    => _viewModel.SelectAll();
+    private void Deselect_All_Click(object? sender, RoutedEventArgs e)
+        => _viewModel?.DeselectAll();
 
-    //private void Deselect_All_Click(object? sender, RoutedEventArgs e)
-    //    => _viewModel.DeselectAll();
+    private void MoveUp_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel is not { CanMoveUp: true }) return;
+        int oldSelectedIndex = Members.SelectedIndex;
+        if (oldSelectedIndex >= 0)
+        {
+            _viewModel.MoveUp();
+            RefreshItemsSource();
+            Members.SelectedIndex = oldSelectedIndex - 1;
+        }
+        UpdateButtonStates();
+        Members.Focus();
+    }
 
-    //private void MoveUp_Click(object? sender, EventArgs e)
-    //{
-    //    int oldSelectedIndex = Members.SelectedIndex;
-    //    if (_viewModel.CanMoveUp && oldSelectedIndex >= 0)
-    //    {
-    //        _viewModel.MoveUp();
-    //        Members.Items.Refresh();
-    //        Members.SelectedIndex = oldSelectedIndex - 1;
-    //    }
+    private void MoveDown_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel is not { CanMoveDown: true }) return;
+        int oldSelectedIndex = Members.SelectedIndex;
+        if (oldSelectedIndex >= 0)
+        {
+            _viewModel.MoveDown();
+            RefreshItemsSource();
+            Members.SelectedIndex = oldSelectedIndex + 1;
+        }
+        UpdateButtonStates();
+        Members.Focus();
+    }
 
-    //    SetFocusToSelectedRow();
-    //}
+    private void RefreshItemsSource()
+    {
+        if (_viewModel == null) return;
+        var selectedIndex = Members.SelectedIndex;
+        Members.ItemsSource = null;
+        Members.ItemsSource = _viewModel.MemberContainers;
+        Members.SelectedIndex = selectedIndex;
+    }
 
-    //private void MoveDown_Click(object? sender, EventArgs e)
-    //{
-    //    int oldSelectedIndex = Members.SelectedIndex;
-    //    if (_viewModel.CanMoveDown && oldSelectedIndex >= 0)
-    //    {
-    //        _viewModel.MoveDown();
-    //        Members.Items.Refresh();
-    //        Members.SelectedIndex = oldSelectedIndex + 1;
-    //    }
+    private void OnListBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space && e.KeyModifiers == KeyModifiers.None)
+        {
+            ToggleCheckSelection();
+            e.Handled = true;
+        }
+    }
 
-    //    SetFocusToSelectedRow();
-    //}
+    private void OnListBoxDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        ToggleCheckSelection();
+        e.Handled = true;
+    }
 
-    //private void SetFocusToSelectedRow()
-    //{
-    //    if (Members.SelectedIndex >= 0)
-    //    {
-    //        var row = Members.ItemContainerGenerator.ContainerFromIndex(Members.SelectedIndex) as ListViewItem;
-    //        if (row == null)
-    //        {
-    //            Members.ScrollIntoView(Members.SelectedItem);
-    //            row = Members.ItemContainerGenerator.ContainerFromIndex(Members.SelectedIndex) as ListViewItem;
-    //        }
+    private void ToggleCheckSelection()
+    {
+        var selectedItems = Members.SelectedItems?.OfType<PickMembersDialogViewModel.MemberSymbolViewModel>().ToArray();
+        if (selectedItems == null) return;
+        var allChecked = selectedItems.All(m => m.IsChecked);
+        foreach (var item in selectedItems)
+        {
+            item.IsChecked = !allChecked;
+        }
+    }
 
-    //        row?.Focus();
-    //    }
-    //}
-
-    //private void OnListViewPreviewKeyDown(object? sender, KeyEventArgs e)
-    //{
-    //    if (e.Key == Key.Space && e.KeyboardDevice.Modifiers == ModifierKeys.None)
-    //    {
-    //        ToggleCheckSelection();
-    //        e.Handled = true;
-    //    }
-    //}
-
-    //private void OnListViewDoubleClick(object? sender, MouseButtonEventArgs e)
-    //{
-    //    if (e.ChangedButton == MouseButton.Left)
-    //    {
-    //        ToggleCheckSelection();
-    //        e.Handled = true;
-    //    }
-    //}
-
-    //private void ToggleCheckSelection()
-    //{
-    //    var selectedItems = Members.SelectedItems.OfType<PickMembersDialogViewModel.MemberSymbolViewModel>().ToArray();
-    //    var allChecked = selectedItems.All(m => m.IsChecked);
-    //    foreach (var item in selectedItems)
-    //    {
-    //        item.IsChecked = !allChecked;
-    //    }
-    //}
+    string? IPickMembersDialog.Title
+    {
+        get => DialogTitle;
+        set
+        {
+            DialogTitle = value;
+            Title = value ?? PickMembersDialogTitle;
+        }
+    }
 
     public object ViewModel
     {
@@ -152,12 +140,24 @@ internal partial class PickMembersDialog : Window, IPickMembersDialog
         set
         {
             _viewModel = (PickMembersDialogViewModel)value;
-            DataContext = value;
+            Members.ItemsSource = _viewModel.MemberContainers;
+            OptionsControl.ItemsSource = _viewModel.Options;
+            UpdateButtonStates();
         }
     }
 
     bool? IRoslynDialog.Show()
     {
-        return false;
+        return this.ShowDialogSync();
+    }
+
+    private class SimpleCommand(Action execute) : ICommand
+    {
+#pragma warning disable CS0067
+        public event EventHandler? CanExecuteChanged;
+#pragma warning restore CS0067
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => execute();
     }
 }
+

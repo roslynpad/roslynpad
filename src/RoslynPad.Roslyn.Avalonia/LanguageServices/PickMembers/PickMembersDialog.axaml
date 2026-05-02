@@ -1,3 +1,119 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="RoslynPad.Roslyn.LanguageServices.PickMembers.PickMembersDialog" />
+        x:Class="RoslynPad.Roslyn.LanguageServices.PickMembers.PickMembersDialog"
+        x:Name="dialog"
+        x:CompileBindings="False"
+        Height="380"
+        Width="460"
+        MinHeight="380"
+        MinWidth="460"
+        Title="{Binding #dialog.PickMembersDialogTitle}"
+        CanResize="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Alt+Up" Command="{Binding #dialog.MoveUpCommand}" />
+        <KeyBinding Gesture="Alt+Down" Command="{Binding #dialog.MoveDownCommand}" />
+    </Window.KeyBindings>
+    <Grid Margin="11,6,11,11">
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <HeaderedContentControl Grid.Row="0"
+                                Margin="0,9,0,0"
+                                Header="{Binding #dialog.DialogTitle}">
+            <Border BorderThickness="1" BorderBrush="Gray" Padding="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox x:Name="Members"
+                             Grid.Column="0"
+                             Margin="4"
+                             SelectionMode="Single"
+                             KeyDown="OnListBoxKeyDown"
+                             DoubleTapped="OnListBoxDoubleTapped">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              Focusable="False" />
+                                    <TextBlock Text="{Binding MemberName}"
+                                               VerticalAlignment="Center"
+                                               Margin="4,0,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Column="1">
+                        <Button Name="UpButton"
+                                Margin="0,9,4,0"
+                                Click="MoveUp_Click"
+                                Content="&#x25B2;" />
+                        <Button Name="DownButton"
+                                Margin="0,9,4,0"
+                                Click="MoveDown_Click"
+                                Content="&#x25BC;" />
+                        <Button Content="{Binding #dialog.SelectAll}"
+                                Margin="0,29,4,0"
+                                Click="Select_All_Click"
+                                Padding="9,2,9,2"
+                                MinWidth="73"
+                                MinHeight="21" />
+                        <Button Content="{Binding #dialog.DeselectAll}"
+                                Margin="0,9,4,0"
+                                Padding="9,2,9,2"
+                                Click="Deselect_All_Click"
+                                MinWidth="73"
+                                MinHeight="21" />
+                    </StackPanel>
+
+                    <ItemsControl x:Name="OptionsControl"
+                                  Grid.Row="1"
+                                  Grid.ColumnSpan="2"
+                                  IsTabStop="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsChecked}"
+                                          VerticalAlignment="Center"
+                                          VerticalContentAlignment="Center"
+                                          Margin="8,0,0,5">
+                                    <TextBlock Text="{Binding Title}"
+                                               TextWrapping="Wrap" />
+                                </CheckBox>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+        </HeaderedContentControl>
+
+        <StackPanel Grid.Row="1"
+                    HorizontalAlignment="Right"
+                    Margin="0,11,0,0"
+                    Orientation="Horizontal">
+            <Button Content="{Binding #dialog.OK}"
+                    Padding="9,2,9,2"
+                    Click="OK_Click"
+                    IsDefault="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+            <Button Content="{Binding #dialog.Cancel}"
+                    Margin="7,0,0,0"
+                    Padding="9,2,9,2"
+                    Click="Cancel_Click"
+                    IsCancel="True"
+                    MinWidth="73"
+                    MinHeight="21" />
+        </StackPanel>
+    </Grid>
+</Window>

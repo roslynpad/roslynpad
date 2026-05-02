@@ -11,6 +11,8 @@ using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Internal.Log;
+using System.Diagnostics;
 
 namespace RoslynPad.Roslyn;
 
@@ -60,6 +62,10 @@ public class RoslynHost : IRoslynHost
         ImmutableHashSet<string>? disabledDiagnostics = null,
         ImmutableArray<string>? analyzerConfigFiles = null)
     {
+        #if DEBUG
+        // Logger.SetLogger(new DebugLogger());
+        #endif
+
         references ??= RoslynHostReferences.Empty;
 
         _workspaces = [];
@@ -317,5 +323,16 @@ public class RoslynHost : IRoslynHost
 
             return string.Empty;
         }
+    }
+
+    private class DebugLogger : ILogger
+    {
+        public bool IsEnabled(FunctionId functionId) => true;
+        public void Log(FunctionId functionId, LogMessage logMessage) =>
+            Debug.WriteLine($"[{functionId}] {logMessage.GetMessage()}");
+        public void LogBlockEnd(FunctionId functionId, LogMessage logMessage, int uniquePairId, int delta, CancellationToken cancellationToken) =>
+            Debug.WriteLine($"[{functionId}] End: {logMessage.GetMessage()} (Duration: {delta}ms)");
+        public void LogBlockStart(FunctionId functionId, LogMessage logMessage, int uniquePairId, CancellationToken cancellationToken) =>
+            Debug.WriteLine($"[{functionId}] Start: {logMessage.GetMessage()}");
     }
 }
