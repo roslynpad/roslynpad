@@ -14,6 +14,9 @@ internal partial class ExtractInterfaceDialog : IExtractInterfaceDialog
     public string NewInterfaceName => "New Interface Name";
     public string GeneratedName => "Generated Name";
     public string NewFileName => "New File Name";
+    public string DestinationLabel => "Add to";
+    public string CurrentFileLabel => "Current _file";
+    public string NewFileLabel => "_New file";
     public string SelectPublicMembersToFormInterface => "Select Public Members To Form Interface";
     public string SelectAll => "Select All";
     public string DeselectAll => "Deselect All";
@@ -84,6 +87,16 @@ internal partial class ExtractInterfaceDialog : IExtractInterfaceDialog
     private void Deselect_All_Click(object? sender, RoutedEventArgs e)
     {
         _viewModel.DeselectAll();
+    }
+
+    private void DestinationCurrentFile_Checked(object? sender, RoutedEventArgs e)
+    {
+        _viewModel.Destination = InterfaceDestination.CurrentFile;
+    }
+
+    private void DestinationNewFile_Checked(object? sender, RoutedEventArgs e)
+    {
+        _viewModel.Destination = InterfaceDestination.NewFile;
     }
 
     private void SelectAllInTextBox(object? sender, RoutedEventArgs e)

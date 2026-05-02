@@ -29,6 +29,7 @@
         <Thickness x:Key="selectDeselectButtonPadding">9,2,9,2</Thickness>
         <Thickness x:Key="textboxPadding">2</Thickness>
         <roslyn:GlyphToImageSourceConverter x:Key="GlyphConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Window.Resources>
     <Grid Margin="11,6,11,11">
         <Grid.RowDefinitions>
@@ -55,15 +56,30 @@
                      Background="{DynamicResource {x:Static SystemColors.ControlBrush}}"
                      Padding="{StaticResource ResourceKey=textboxPadding}"
                      GotFocus="SelectAllInTextBox" />
+            <Label x:Uid="DestinationLabel"
+                   Content="{Binding ElementName=dialog, Path=DestinationLabel}"
+                   Padding="{StaticResource ResourceKey=labelPadding}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                <RadioButton x:Name="destinationCurrentFileRadioButton"
+                             Content="{Binding ElementName=dialog, Path=CurrentFileLabel}"
+                             IsChecked="True"
+                             Checked="DestinationCurrentFile_Checked"
+                             Margin="0,0,15,0" />
+                <RadioButton x:Name="destinationNewFileRadioButton"
+                             Content="{Binding ElementName=dialog, Path=NewFileLabel}"
+                             Checked="DestinationNewFile_Checked" />
+            </StackPanel>
             <Label x:Uid="FileNameLabel"
                    Content="{Binding ElementName=dialog, Path=NewFileName}"
                    Padding="{StaticResource ResourceKey=labelPadding}"
-                   Target="{Binding ElementName=fileNameTextBox}" />
+                   Target="{Binding ElementName=fileNameTextBox}"
+                   Visibility="{Binding FileNameEnabled, Converter={StaticResource BoolToVisibilityConverter}}" />
             <TextBox x:Uid="FileNameTextBox"
                      Text="{Binding FileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Padding="{StaticResource ResourceKey=textboxPadding}"
                      Name="fileNameTextBox"
-                     GotFocus="SelectAllInTextBox" />
+                     GotFocus="SelectAllInTextBox"
+                     Visibility="{Binding FileNameEnabled, Converter={StaticResource BoolToVisibilityConverter}}" />
         </StackPanel>
         <GroupBox x:Uid="MemberSelectionGroupBox"
                   Margin="0, 9, 0, 0"

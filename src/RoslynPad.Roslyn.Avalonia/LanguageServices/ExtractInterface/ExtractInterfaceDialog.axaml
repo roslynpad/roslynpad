@@ -34,11 +34,26 @@
                      IsReadOnly="True"
                      Padding="2"
                      GotFocus="SelectAllInTextBox" />
-            <TextBlock Text="{Binding #dialog.NewFileName}"
+            <TextBlock Text="{Binding #dialog.DestinationLabel}"
                        Margin="0,5,0,2" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="DestinationCurrentFileRadioButton"
+                             Content="{Binding #dialog.CurrentFileLabel}"
+                             IsChecked="True"
+                             GroupName="Destination"
+                             Margin="0,0,15,0" />
+                <RadioButton x:Name="DestinationNewFileRadioButton"
+                             Content="{Binding #dialog.NewFileLabel}"
+                             GroupName="Destination" />
+            </StackPanel>
+            <TextBlock x:Name="FileNameLabel"
+                       Text="{Binding #dialog.NewFileName}"
+                       Margin="0,5,0,2"
+                       IsVisible="False" />
             <TextBox x:Name="FileNameTextBox"
                      Padding="2"
-                     GotFocus="SelectAllInTextBox" />
+                     GotFocus="SelectAllInTextBox"
+                     IsVisible="False" />
         </StackPanel>
 
         <HeaderedContentControl Grid.Row="1"

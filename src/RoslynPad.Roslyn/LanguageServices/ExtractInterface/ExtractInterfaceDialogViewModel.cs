@@ -34,7 +34,7 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
         _interfaceName = defaultInterfaceName;
         _conflictingTypeNames = conflictingTypeNames;
         _fileExtension = ".cs";
-        _fileName = $"{defaultInterfaceName}.{_fileExtension}";
+        _fileName = $"{defaultInterfaceName}{_fileExtension}";
         _defaultNamespace = defaultNamespace;
         _generatedNameTypeParameterSuffix = generatedNameTypeParameterSuffix;
         _languageName = languageName;
@@ -124,7 +124,7 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
         $"{(string.IsNullOrEmpty(_defaultNamespace) ? string.Empty : _defaultNamespace + ".")}{_interfaceName.Trim()}{_generatedNameTypeParameterSuffix}"
         ;
 
-    private InterfaceDestination _destination = InterfaceDestination.NewFile;
+    private InterfaceDestination _destination = InterfaceDestination.CurrentFile;
     public InterfaceDestination Destination
     {
         get { return _destination; }

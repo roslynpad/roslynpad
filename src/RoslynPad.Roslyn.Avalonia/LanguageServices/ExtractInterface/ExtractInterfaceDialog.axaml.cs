@@ -14,6 +14,9 @@ internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
     public string NewInterfaceName => "New Interface Name";
     public string GeneratedName => "Generated Name";
     public string NewFileName => "New File Name";
+    public string DestinationLabel => "Add to";
+    public string CurrentFileLabel => "Current file";
+    public string NewFileLabel => "New file";
     public string SelectPublicMembersToFormInterface => "Select Public Members To Form Interface";
     public string SelectAll => "Select All";
     public string DeselectAll => "Deselect All";
@@ -98,6 +101,19 @@ internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
             InterfaceNameTextBox.Text = _viewModel.InterfaceName;
             GeneratedNameTextBox.Text = _viewModel.GeneratedName;
             FileNameTextBox.Text = _viewModel.FileName;
+
+            DestinationCurrentFileRadioButton.IsCheckedChanged += (_, _) =>
+            {
+                if (_viewModel != null)
+                {
+                    _viewModel.Destination = DestinationCurrentFileRadioButton.IsChecked == true
+                        ? InterfaceDestination.CurrentFile
+                        : InterfaceDestination.NewFile;
+                    var showFileName = _viewModel.FileNameEnabled;
+                    FileNameLabel.IsVisible = showFileName;
+                    FileNameTextBox.IsVisible = showFileName;
+                }
+            };
 
             InterfaceNameTextBox.TextChanged += (_, _) =>
             {
