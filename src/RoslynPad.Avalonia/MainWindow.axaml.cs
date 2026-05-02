@@ -57,6 +57,9 @@ partial class MainWindow : Window
         InitializeKeyBindings();
         LoadWindowLayout();
 
+        ResultPane.GetObservable(global::Dock.Model.Avalonia.Core.DockBase.ActiveDockableProperty)
+            .Subscribe(_ => SetShowIL());
+
         if (_viewModel.Settings.WindowFontSize.HasValue)
         {
             FontSize = _viewModel.Settings.WindowFontSize.Value;
@@ -94,6 +97,14 @@ partial class MainWindow : Window
         {
             ViewModel.ActiveContent = content;
         }
+
+        SetShowIL();
+    }
+
+    private void SetShowIL()
+    {
+        if (_viewModel.CurrentOpenDocument is not { } currentDocument) return;
+        currentDocument.ShowIL = ResultPane.ActiveDockable == IL;
     }
 
     private void OnViewModelThemeChanged(object? sender, EventArgs e)

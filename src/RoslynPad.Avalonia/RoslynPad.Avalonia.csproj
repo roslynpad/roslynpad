@@ -29,6 +29,7 @@
     <MauiIcon Include="$(RepoRoot)/deploy/resources/macos/appicon.svg" />
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
     <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
+    <EmbeddedResource Include="..\RoslynPad\Controls\ILAsm-Mode.xshd" LogicalName="RoslynPad.ILAsm-Mode.xshd" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />

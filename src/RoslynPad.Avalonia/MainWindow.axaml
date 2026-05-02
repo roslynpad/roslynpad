@@ -151,6 +151,11 @@
                   <Tool x:Name="Results" Id="Results" Title="Results" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
                       <local:ResultsView x:Name="ResultsView" DataContext="{Binding #This.ViewModel.CurrentOpenDocument}" />
                   </Tool>
+                  <Tool x:Name="IL" Id="IL" Title="IL" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                      <local:ILViewer x:Name="ILViewer" Text="{Binding #This.ViewModel.CurrentOpenDocument.ILText}"
+                                      EditorFontFamily="{Binding #This.ViewModel.Settings.EditorFontFamily}"
+                                      FontSize="{Binding #This.ViewModel.EditorFontSize}" />
+                  </Tool>
               </ToolDock>
 
             </ProportionalDock>

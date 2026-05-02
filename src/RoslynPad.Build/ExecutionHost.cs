@@ -249,32 +249,25 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         {
             _running = true;
 
-            if (UseFileBasedExecution)
+            // Traditional execution: compile first, then run
+            var binPath = IsScript ? BuildPath : Path.Combine(BuildPath, "bin");
+            _assemblyPath = Path.Combine(binPath, $"{Name}.{ExecutableExtension}");
+
+            var success = IsScript
+                ? CompileInProcess(path, optimizationLevel, _assemblyPath, cancellationToken)
+                : await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
+
+            if (!success)
             {
-                await ExecuteFileBasedAsync(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
+                return;
             }
-            else
+
+            if (disassemble)
             {
-                // Traditional execution: compile first, then run
-                var binPath = IsScript ? BuildPath : Path.Combine(BuildPath, "bin");
-                _assemblyPath = Path.Combine(binPath, $"{Name}.{ExecutableExtension}");
-
-                var success = IsScript
-                    ? CompileInProcess(path, optimizationLevel, _assemblyPath, cancellationToken)
-                    : await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
-
-                if (!success)
-                {
-                    return;
-                }
-
-                if (disassemble)
-                {
-                    Disassemble();
-                }
-
-                await ExecuteAssemblyAsync(_assemblyPath, cancellationToken).ConfigureAwait(false);
+                Disassemble();
             }
+
+            await ExecuteAssemblyAsync(_assemblyPath, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -330,7 +323,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             $"\"-flp1:logfile={buildWarningsPath};warningsonly;Encoding=UTF-8\" \"-flp2:logfile={buildErrorsPath};errorsonly;Encoding=UTF-8\" \"{csprojPath}\" ";
         using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
             $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
-        await buildResult.WaitForExitAsync().ConfigureAwait(false);
+        await buildResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         var compilationErrors = await ReadBuildLogAsync(buildWarningsPath, "Warning")
             .Concat(ReadBuildLogAsync(buildErrorsPath, "Error"))
@@ -339,7 +332,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         var success = buildResult.ExitCode == 0;
         if (!success && compilationErrors.Length == 0)
         {
-            compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + buildResult.StandardError }];
+            var output = buildResult.StandardError;
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                output = buildResult.StandardOutput;
+            }
+            compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + output }];
         }
 
         CompilationErrors?.Invoke(compilationErrors);
@@ -348,108 +346,55 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     }
 
     /// <summary>
-    /// Executes code using .NET 10+ file-based apps (dotnet run file.cs).
-    /// This is used when the platform supports file-based apps and the code contains #:package or #:sdk directives.
+    /// Runs <c>dotnet project convert</c> on a minimal file containing the stored file-based
+    /// directives, then patches the resulting csproj with RoslynPad build settings.
     /// </summary>
-    private async Task ExecuteFileBasedAsync(string path, OptimizationLevel? optimizationLevel, CancellationToken cancellationToken)
+    private async Task<XDocument> ConvertFileBasedToCsprojAsync(CancellationToken cancellationToken)
     {
-        // Delete any .csproj files - they prevent dotnet run file.cs from working
-        foreach (var csprojFile in IOUtilities.EnumerateFiles(BuildPath, "*.csproj"))
+        var tempDir = Path.Combine(Path.GetTempPath(), "roslynpad", "convert", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
         {
-            IOUtilities.PerformIO(() => File.Delete(csprojFile));
-        }
-
-        // Transform the code (add .Dump() to last expression, etc.)
-        var targetPath = Path.Combine(BuildPath, "Program.cs");
-        var code = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        var syntaxTree = ParseAndTransformCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
-        
-        // Remove #:framework directives (replace with newlines to preserve line numbers)
-        syntaxTree = RemoveFileBasedFrameworkDirectives(syntaxTree);
-        var finalCode = syntaxTree.ToString();
-        
-        if (!File.Exists(targetPath) || !string.Equals(await File.ReadAllTextAsync(targetPath, cancellationToken).ConfigureAwait(false), finalCode, StringComparison.Ordinal))
-        {
-            await File.WriteAllTextAsync(targetPath, finalCode, cancellationToken).ConfigureAwait(false);
-        }
-
-        var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitFileName);
-        if (!File.Exists(moduleInitFile))
-        {
-            await File.WriteAllTextAsync(moduleInitFile, BuildCode.ModuleInit, cancellationToken).ConfigureAwait(false);
-        }
-
-        // Get framework references from parsed libraries
-        IEnumerable<LibraryRef> frameworkReferences;
-        lock (_libraries)
-        {
-            frameworkReferences = _libraries.Where(r => r.Kind == LibraryRef.RefKind.FrameworkReference).ToList();
-        }
-
-        // Generate Directory.Build.props to include RoslynPad.Runtime reference, implicit usings, framework references, and module init
-        var directoryBuildPropsPath = Path.Combine(BuildPath, "Directory.Build.props");
-        var runtimeAssemblyPath = _runtimeAssemblyLibraryRef.Value;
-        var directoryBuildProps = MSBuildHelper.CreateDirectoryBuildProps(runtimeAssemblyPath, _parameters.Imports, frameworkReferences, [BuildCode.ModuleInitFileName]);
-        await Task.Run(() => directoryBuildProps.Save(directoryBuildPropsPath), cancellationToken).ConfigureAwait(false);
-
-        // Generate global.json to pin SDK version
-        var globalJsonPath = Path.Combine(BuildPath, "global.json");
-        var globalJson = $@"{{ ""sdk"": {{ ""version"": ""{Platform.FrameworkVersion}"" }} }}";
-        await File.WriteAllTextAsync(globalJsonPath, globalJson, cancellationToken).ConfigureAwait(false);
-
-        // Copy nuget.config
-        var nugetConfigPath = Path.Combine(BuildPath, "nuget.config");
-        if (!File.Exists(nugetConfigPath))
-        {
-            File.Copy(_parameters.NuGetConfigPath, nugetConfigPath, overwrite: true);
-        }
-
-        // Build configuration
-        var configuration = optimizationLevel == OptimizationLevel.Release ? "Release" : "Debug";
-
-        // Run using dotnet run - this combines compilation and execution
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
+            var tempFile = Path.Combine(tempDir, "Program.cs");
+            var document = DocumentId is not null ? _roslynHost.GetDocument(DocumentId) : null;
+            var sourceText = document is not null ? await document.GetTextAsync(cancellationToken).ConfigureAwait(false) : null;
+            if (sourceText is null)
             {
-                FileName = DotNetExecutable,
-                Arguments = $"run --configuration {configuration} \"{targetPath}\" -- --pid {Environment.ProcessId}",
-                WorkingDirectory = BuildPath,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
+                return MSBuildHelper.CreateCsproj(Platform.TargetFrameworkMoniker, _libraries, _parameters.Imports);
             }
-        };
+            await File.WriteAllTextAsync(tempFile, sourceText.ToString(), cancellationToken).ConfigureAwait(false);
 
-        using var _ = cancellationToken.Register(() =>
-        {
-            try
-            {
-                _processInputStream = null;
-                process.Kill();
-            }
-            catch (Exception ex)
-            {
-                _logger.ErrorKillingProcess(ex);
-            }
-        });
+            // Use a separate output directory because --output requires a non-existent directory
+            var outputDir = Path.Combine(tempDir, "out");
 
-        _logger.StartingProcess(process.StartInfo.FileName, process.StartInfo.Arguments);
-        if (!process.Start())
-        {
-            _logger.ProcessStartReturnedFalse();
-            return;
+            // Suppress Directory.Build.props/targets from parent directories
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "Directory.Build.props"), "<Project/>", cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "Directory.Build.targets"), "<Project/>", cancellationToken).ConfigureAwait(false);
+
+            using var convertResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, tempDir,
+                $"project convert \"{tempFile}\" --output \"{outputDir}\"", cancellationToken).ConfigureAwait(false);
+            await convertResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+            var csprojPath = Path.Combine(outputDir, "Program.csproj");
+            if (convertResult.ExitCode != 0 || !File.Exists(csprojPath))
+            {
+                var error = convertResult.StandardError ?? convertResult.StandardOutput;
+                throw new InvalidOperationException($"dotnet project convert failed (exit code {convertResult.ExitCode}): {error}");
+            }
+
+            var csproj = XDocument.Load(csprojPath);
+
+            MSBuildHelper.PatchConvertedCsproj(csproj,
+                Platform.TargetFrameworkMoniker,
+                _runtimeAssemblyLibraryRef.Value,
+                _parameters.Imports);
+
+            return csproj;
         }
-
-        _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
-
-        await Task.WhenAll(
-            Task.Run(() => ReadObjectProcessStreamWithBuildOutputAsync(process.StandardOutput), cancellationToken),
-            Task.Run(() => ReadProcessStreamAsync(process.StandardError), cancellationToken)).ConfigureAwait(false);
+        finally
+        {
+            IOUtilities.PerformIO(() => Directory.Delete(tempDir, recursive: true));
+        }
     }
 
     private async IAsyncEnumerable<CompilationErrorResultObject> ReadBuildLogAsync(string path, string severity)
@@ -708,59 +653,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    /// <summary>
-    /// Reads process output that may contain build output before the JSON protocol begins.
-    /// Used for file-based execution where dotnet run outputs build messages before the program starts.
-    /// Reads plain text lines until it sees the ready marker, then switches to JSON protocol.
-    /// </summary>
-    private async Task ReadObjectProcessStreamWithBuildOutputAsync(StreamReader reader)
-    {
-        const string readyMarker = "#roslynpad#";
-        var compilationErrors = new List<CompilationErrorResultObject>();
-
-        // Phase 1: Read build output as plain text until we see the ready marker
-        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
-        {
-            if (line == readyMarker)
-            {
-                // Marker found - switch to JSON protocol
-                break;
-            }
-
-            // Try to parse as a structured diagnostic (warning/error)
-            var match = MsbuildLogRegex().Match(line);
-            if (match.Success)
-            {
-                var code = match.Groups["code"].Value;
-                if (!_parameters.DisabledDiagnostics.Contains(code))
-                {
-                    var error = new CompilationErrorResultObject
-                    {
-                        Severity = match.Groups["severity"].Value == "warning" ? "Warning" : "Error",
-                        ErrorCode = code,
-                        Message = match.Groups["message"].Value,
-                    };
-
-                    if (match.Groups["file"].Value.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-                    {
-                        error.LineNumber = int.Parse(match.Groups["line"].ValueSpan, CultureInfo.InvariantCulture);
-                        error.Column = int.Parse(match.Groups["column"].ValueSpan, CultureInfo.InvariantCulture);
-                    }
-
-                    compilationErrors.Add(error);
-                }
-            }
-        }
-
-        if (compilationErrors.Count > 0)
-        {
-            CompilationErrors?.Invoke(compilationErrors);
-        }
-
-        // Phase 2: Read JSON protocol output (same as ReadObjectProcessStreamAsync)
-        await ReadObjectProcessStreamAsync(reader).ConfigureAwait(false);
-    }
-
     private static SyntaxTree ParseAndTransformCode(string code, string path, CSharpParseOptions parseOptions, CancellationToken cancellationToken)
     {
         var tree = SyntaxFactory.ParseSyntaxTree(code, parseOptions, path, cancellationToken: cancellationToken);
@@ -780,6 +672,19 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
 
         compilationUnit = compilationUnit.RemoveNodes(nodesToRemove, SyntaxRemoveOptions.KeepExteriorTrivia) ?? compilationUnit;
+
+        // Remove file-level directives (#:package, #:sdk, etc.) from leading trivia -
+        // these are resolved by dotnet project convert / msbuild, not the compiler
+        var fileLevelDirectives = tree.FindFileLevelDirectives();
+        if (fileLevelDirectives.Length > 0)
+        {
+            var leadingTrivia = compilationUnit.GetLeadingTrivia();
+            var newTrivia = leadingTrivia.Where(t =>
+                !t.IsKind(SyntaxKind.IgnoredDirectiveTrivia) &&
+                !t.IsKind(SyntaxKind.ShebangDirectiveTrivia));
+            compilationUnit = compilationUnit.WithLeadingTrivia(newTrivia);
+        }
+
         var members = compilationUnit.Members;
 
         // add .Dump() to the last bare expression
@@ -794,33 +699,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         root = compilationUnit.WithMembers(members);
 
         return tree.WithRootAndOptions(root, parseOptions);
-    }
-
-    /// <summary>
-    /// Removes #:framework directive trivia from a syntax tree, replacing them with newlines to preserve line numbers.
-    /// This is needed because dotnet run doesn't recognize #:framework, so we handle it via Directory.Build.props.
-    /// </summary>
-    private static SyntaxTree RemoveFileBasedFrameworkDirectives(SyntaxTree syntaxTree)
-    {
-        var directives = syntaxTree.FindFileLevelDirectives();
-        var frameworkTriviaToRemove = directives
-            .Where(d => d.DirectiveKind == "framework")
-            .Select(d => d.Trivia)
-            .ToHashSet();
-
-        if (frameworkTriviaToRemove.Count == 0)
-        {
-            return syntaxTree;
-        }
-
-        var root = syntaxTree.GetRoot();
-
-        // Replace framework directive trivia with end-of-line trivia to preserve line numbers
-        var newRoot = root.ReplaceTrivia(
-            frameworkTriviaToRemove,
-            (original, _) => SyntaxFactory.EndOfLine("\n"));
-
-        return syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
     }
 
     private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -1150,10 +1028,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         async Task<CsprojBuildResult> BuildCsproj()
         {
-            var csproj = MSBuildHelper.CreateCsproj(
-                Platform.TargetFrameworkMoniker,
-                _libraries,
-                _parameters.Imports);
+            var csproj = UseFileBasedExecution
+                ? await ConvertFileBasedToCsprojAsync(cancellationToken).ConfigureAwait(false)
+                : MSBuildHelper.CreateCsproj(
+                    Platform.TargetFrameworkMoniker,
+                    _libraries,
+                    _parameters.Imports);
 
             string csprojPath;
             string? markerPath;

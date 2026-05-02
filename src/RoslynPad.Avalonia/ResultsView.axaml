@@ -6,12 +6,19 @@
              xmlns:Editor="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
              xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
              xmlns:converters="clr-namespace:RoslynPad.Converters"
-             x:DataType="ui:OpenDocumentViewModel">
+             x:DataType="ui:OpenDocumentViewModel"
+             x:Name="Root">
   <Grid>
-    <TreeView ItemsSource="{Binding Results}">
+    <TreeView x:Name="ResultTree" ItemsSource="{Binding Results}">
+      <TreeView.KeyBindings>
+        <KeyBinding Gesture="Cmd+C" Command="{Binding #Root.CopyValue}" />
+        <KeyBinding Gesture="Ctrl+C" Command="{Binding #Root.CopyValue}" />
+        <KeyBinding Gesture="Cmd+Shift+C" Command="{Binding #Root.CopyAllValues}" />
+        <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding #Root.CopyAllValues}" />
+      </TreeView.KeyBindings>
       <TreeView.Styles>
-        <Style Selector="TreeViewItem" x:DataType="build:ResultObject">
-          <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=OneTime}" />
+        <Style Selector="TreeViewItem">
+          <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=OneTime, FallbackValue=False}" />
         </Style>
       </TreeView.Styles>
       <TreeView.DataTemplates>

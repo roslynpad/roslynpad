@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
@@ -53,6 +54,11 @@ partial class DocumentView : UserControl, IDisposable
 
         viewModel.ReadInput += OnReadInput;
         viewModel.EditorFocus += (o, e) => _editor.Focus();
+        viewModel.DocumentUpdated += (o, e) =>
+        {
+            Dispatcher.UIThread.Post(() => _editor.RefreshHighlighting());
+            Dispatcher.UIThread.Post(async () => await _editor.RefreshFoldings().ConfigureAwait(true));
+        };
 
         viewModel.MainViewModel.EditorFontSizeChanged += size => _editor.FontSize = size;
         viewModel.MainViewModel.ThemeChanged += OnThemeChanged;
