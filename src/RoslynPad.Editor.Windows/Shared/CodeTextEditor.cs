@@ -167,13 +167,47 @@ public partial class CodeTextEditor : TextEditor
 
         RaiseEvent(args);
 
-        if (args.ContentToShow == null)
+        var diagnosticContent = args.ContentToShow;
+
+        // Always request quick info, even if we have diagnostic content
+        args.ContentToShow = null;
+        var asyncRequest = AsyncToolTipRequest?.Invoke(args);
+        if (asyncRequest != null)
         {
-            var asyncRequest = AsyncToolTipRequest?.Invoke(args);
-            if (asyncRequest != null)
+            await asyncRequest.ConfigureAwait(true);
+        }
+
+        var quickInfoContent = args.ContentToShow;
+
+        // Combine diagnostic and quick info if both are present
+        if (diagnosticContent != null && quickInfoContent != null)
+        {
+            args.ContentToShow = new StackPanel
             {
-                await asyncRequest.ConfigureAwait(true);
-            }
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = diagnosticContent as string ?? diagnosticContent.ToString()!,
+                        TextWrapping = TextWrapping.Wrap
+                    },
+                    new Border
+                    {
+                        BorderThickness = new Thickness(0, 1, 0, 0),
+                        BorderBrush = Brushes.Gray,
+                        Margin = new Thickness(0, 4, 0, 4),
+                    },
+                    new ContentPresenter
+                    {
+                        Content = quickInfoContent,
+                        MaxWidth = ToolTipMaxWidth
+                    }
+                }
+            };
+        }
+        else
+        {
+            args.ContentToShow = diagnosticContent ?? quickInfoContent;
         }
 
         if (args.ContentToShow == null)
