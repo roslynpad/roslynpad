@@ -91,7 +91,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
         ClearErrorCommand = commands.Create(_telemetryProvider.ClearLastError);
         ReportProblemCommand = commands.Create(ReportProblem);
-        EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
+        EditUserDocumentPathCommand = commands.CreateAsync(EditUserDocumentPath);
         ToggleOptimizationCommand = commands.Create(() => Settings.OptimizeCompilation = !Settings.OptimizeCompilation);
         ClearRestoreCacheCommand = commands.Create(ClearRestoreCache);
         OpenSettingsCommand = commands.Create(OpenSettings);
@@ -326,13 +326,13 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         return root;
     }
 
-    public void EditUserDocumentPath()
+    public async Task EditUserDocumentPath()
     {
         var dialog = _serviceProvider.GetRequiredService<IFolderBrowserDialog>();
         dialog.ShowEditBox = true;
         dialog.SelectedPath = Settings.EffectiveDocumentPath;
 
-        if (dialog.Show() == true)
+        if (await dialog.ShowAsync().ConfigureAwait(true) == true)
         {
             string documentPath = dialog.SelectedPath;
             if (!DocumentRoot.Path.Equals(documentPath, StringComparison.OrdinalIgnoreCase))
