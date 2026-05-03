@@ -29,6 +29,7 @@ public static class KeyBindingCommands
     public const string ToggleOptimization = "roslynpad.toggleOptimization";
     public const string ResultsCopyValue = "roslynpad.results.copy";
     public const string ResultsCopyValueWithChildren = "roslynpad.results.copyWithChildren";
+    public const string SearchNuGet = "roslynpad.searchNuGet";
     public const string SearchReplaceNext = "roslynpad.search.replaceNext";
     public const string SearchReplaceAll = "roslynpad.search.replaceAll";
 
@@ -59,6 +60,7 @@ public static class KeyBindingCommands
         [ToggleOptimization] = new(ToggleOptimization, "Toggle Optimization", "Ctrl+Shift+O", "Cmd+Shift+O"),
         [ResultsCopyValue] = new(ResultsCopyValue, "Copy Value", "Ctrl+C", "Cmd+C"),
         [ResultsCopyValueWithChildren] = new(ResultsCopyValueWithChildren, "Copy Value with Children", "Ctrl+Shift+C", "Cmd+Shift+C"),
+        [SearchNuGet] = new(SearchNuGet, "Search NuGet", "Ctrl+T", "Cmd+T"),
         [SearchReplaceNext] = new(SearchReplaceNext, "Replace Next", "Alt+R", "Alt+R"),
         [SearchReplaceAll] = new(SearchReplaceAll, "Replace All", "Alt+A", "Alt+A"),
     };

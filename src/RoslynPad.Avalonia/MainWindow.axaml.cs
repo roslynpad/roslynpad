@@ -340,4 +340,14 @@ partial class MainWindow : Window
             doc.ToggleLiveModeCommand.Execute(null);
         }
     }
+
+    private void OnFindClick(object? sender, EventArgs e)
+    {
+        _viewModel.CurrentOpenDocument?.RequestFind();
+    }
+
+    private void OnReplaceClick(object? sender, EventArgs e)
+    {
+        _viewModel.CurrentOpenDocument?.RequestReplace();
+    }
 }

@@ -6,18 +6,19 @@ using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Editor;
 using RoslynPad.Build;
 using RoslynPad.UI;
+using RoslynPad.Utilities;
 using Avalonia.Media;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using DialogHostAvalonia;
-using Avalonia.Markup.Xaml.MarkupExtensions;
-using AvaloniaEdit.Folding;
+using AvaloniaEdit;
 
 namespace RoslynPad;
 
 partial class DocumentView : UserControl, IDisposable
 {
     private readonly RoslynCodeEditor _editor;
+    private readonly TextBox _nuGetSearch;
     private readonly TextBlock _lnTextBlock;
     private readonly TextBlock _colTextBlock;
     private OpenDocumentViewModel? _viewModel;
@@ -27,10 +28,12 @@ partial class DocumentView : UserControl, IDisposable
         InitializeComponent();
 
         _editor = this.FindControl<RoslynCodeEditor>("Editor") ?? throw new InvalidOperationException("Missing Editor");
+        _nuGetSearch = this.FindControl<TextBox>("NuGetSearch") ?? throw new InvalidOperationException("Missing NuGetSearch");
         _lnTextBlock = this.FindControl<TextBlock>("Ln") ?? throw new InvalidOperationException("Missing Ln");
         _colTextBlock = this.FindControl<TextBlock>("Col") ?? throw new InvalidOperationException("Missing Col");
 
         _editor.TextArea.Caret.PositionChanged += CaretOnPositionChanged;
+        _nuGetSearch.KeyDown += NuGetSearch_OnKeyDown;
 
         DataContextChanged += OnDataContextChanged;
     }
@@ -54,6 +57,8 @@ partial class DocumentView : UserControl, IDisposable
 
         viewModel.ReadInput += OnReadInput;
         viewModel.EditorFocus += (o, e) => _editor.Focus();
+        viewModel.FindRequested += (o, e) => ApplicationCommands.Find.Execute(null, _editor.TextArea);
+        viewModel.FindReplaceRequested += (o, e) => ApplicationCommands.Replace.Execute(null, _editor.TextArea);
         viewModel.DocumentUpdated += (o, e) =>
         {
             Dispatcher.UIThread.Post(() => _editor.RefreshHighlighting());
@@ -103,6 +108,23 @@ partial class DocumentView : UserControl, IDisposable
         this.AddKeyBinding(KeyBindingCommands.CommentSelection, viewModel.CommentSelectionCommand);
         this.AddKeyBinding(KeyBindingCommands.UncommentSelection, viewModel.UncommentSelectionCommand);
         this.AddKeyBinding(KeyBindingCommands.RenameSymbol, viewModel.RenameSymbolCommand);
+        this.AddKeyBinding(KeyBindingCommands.SearchNuGet, new DelegateCommand(() => _nuGetSearch.Focus()));
+    }
+
+    private void NuGetSearch_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Down && ViewModel.NuGet.Packages?.Any() == true)
+        {
+            if (!ViewModel.NuGet.IsPackagesMenuOpen)
+            {
+                ViewModel.NuGet.IsPackagesMenuOpen = true;
+            }
+        }
+        else if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            _editor.Focus();
+        }
     }
 
     private async void OnReadInput()

@@ -804,6 +804,20 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         EditorFocus?.Invoke(this, EventArgs.Empty);
     }
 
+    public event EventHandler? FindRequested;
+
+    public void RequestFind()
+    {
+        FindRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    public event EventHandler? FindReplaceRequested;
+
+    public void RequestReplace()
+    {
+        FindReplaceRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>
     /// Formats a package reference using the appropriate syntax for the current platform.
     /// Uses #:package syntax for .NET 10+ SDK when no legacy #r directives exist, or #r "nuget:" otherwise.

@@ -32,6 +32,11 @@
       </NativeMenuItem>
       <NativeMenuItem Header="Edit">
         <NativeMenu>
+          <NativeMenuItem Header="Find" Gesture="Meta+F"
+                          Click="OnFindClick" />
+          <NativeMenuItem Header="Replace" Gesture="Meta+Alt+F"
+                          Click="OnReplaceClick" />
+          <NativeMenuItemSeparator />
           <NativeMenuItem Header="Format Document" Gesture="Meta+D"
                           Click="OnFormatDocumentClick" />
           <NativeMenuItem Header="Comment Selection" Gesture="Meta+K"
