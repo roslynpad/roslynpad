@@ -10,8 +10,15 @@ namespace RoslynPad;
 [Export(typeof(IPlatformsFactory))]
 internal class PlatformsFactory : IPlatformsFactory
 {
+    private readonly IApplicationSettings _appSettings;
     IReadOnlyList<ExecutionPlatform>? _executionPlatforms;
     private (string dotnetExe, string sdkPath) _dotnetPaths;
+
+    [ImportingConstructor]
+    public PlatformsFactory(IApplicationSettings appSettings)
+    {
+        _appSettings = appSettings;
+    }
 
     public IReadOnlyList<ExecutionPlatform> GetExecutionPlatforms() =>
         _executionPlatforms ??= GetNetVersions().Concat(GetNetFrameworkVersions()).ToArray().AsReadOnly();
@@ -61,6 +68,11 @@ internal class PlatformsFactory : IPlatformsFactory
         }
 
         List<string> dotnetPaths = [];
+        if (_appSettings.Values.SdkLocation is { } sdkLocation && !string.IsNullOrEmpty(sdkLocation))
+        {
+            dotnetPaths.Add(sdkLocation);
+        }
+
         if (Environment.GetEnvironmentVariable("DOTNET_ROOT") is var dotnetRoot && !string.IsNullOrEmpty(dotnetRoot))
         {
             dotnetPaths.Add(dotnetRoot);

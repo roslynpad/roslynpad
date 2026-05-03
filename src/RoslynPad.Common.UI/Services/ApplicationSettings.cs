@@ -268,6 +268,12 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref field, value);
         }
 
+        public string? SdkLocation
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
+
         public string DefaultPlatformName
         {
             get;

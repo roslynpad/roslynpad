@@ -79,6 +79,11 @@ public class ExceptionResultObject : ResultObject
     public string? Message { get; set; }
 }
 
+public static class ErrorMessages
+{
+    public const string MissingSdk = "The .NET SDK is required to use RoslynPad. https://aka.ms/dotnet/download";
+}
+
 public class InputReadRequest
 {
 }

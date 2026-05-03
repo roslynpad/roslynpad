@@ -453,7 +453,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         CompilationErrors?.Invoke(
         [
             CompilationErrorResultObject.Create("Error", errorCode: "",
-                message: "The .NET SDK is required to use RoslynPad. https://aka.ms/dotnet/download", line: 0, column: 0)
+                message: ErrorMessages.MissingSdk, line: 0, column: 0)
         ]);
     }
 

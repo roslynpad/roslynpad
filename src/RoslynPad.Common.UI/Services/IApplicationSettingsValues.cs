@@ -53,6 +53,9 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     [Description("Search documents as you type without pressing Enter.")]
     bool SearchWhileTyping { get; set; }
 
+    [Description("Custom path to the .NET SDK root directory (e.g., '/usr/lib64/dotnet'). Leave empty for auto-detection.")]
+    string? SdkLocation { get; set; }
+
     [Description("Default .NET platform for new documents (e.g., 'net8.0').")]
     string DefaultPlatformName { get; set; }
 

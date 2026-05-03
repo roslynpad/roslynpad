@@ -603,8 +603,17 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         _getSelection = getSelection;
         DocumentId = documentId;
 
-        Platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
-                   AvailablePlatforms.FirstOrDefault();
+        var platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
+                       AvailablePlatforms.FirstOrDefault();
+
+        if (platform is null)
+        {
+            AddResult(CompilationErrorResultObject.Create("Error", errorCode: "",
+                message: ErrorMessages.MissingSdk, line: 0, column: 0));
+            return;
+        }
+
+        Platform = platform;
 
         InitializeExecutionHost();
 
