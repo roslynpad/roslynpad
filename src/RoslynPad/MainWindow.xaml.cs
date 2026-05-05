@@ -118,16 +118,11 @@ public partial class MainWindow
     {
         Dispatcher.InvokeAsync(() =>
         {
-            if (Results.IsAutoHidden)
-            {
-                Results.ToggleAutoHide();
-            }
-            else if (Results.IsHidden)
+            if (Results.IsHidden)
             {
                 Results.Show();
             }
 
-            Results.IsSelected = true;
             Results.IsActive = true;
         });
     }
