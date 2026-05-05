@@ -203,7 +203,27 @@ partial class MainWindow : Window
     {
         base.OnApplyTemplate(e);
 
+        _viewModel.ResultsAvailable += OnResultsAvailable;
+
         await _viewModel.Initialize().ConfigureAwait(true);
+    }
+
+    private void OnResultsAvailable()
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (ResultPane.Factory is { } factory)
+            {
+                if (factory.IsDockablePinned(Results))
+                {
+                    factory.PreviewPinnedDockable(Results);
+                }
+                else
+                {
+                    factory.SetActiveDockable(Results);
+                }
+            }
+        });
     }
 
     private void SaveWindowLayout()

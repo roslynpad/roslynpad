@@ -109,7 +109,22 @@ public partial class MainWindow
     {
         Loaded -= OnLoaded;
 
+        _viewModel.ResultsAvailable += OnResultsAvailable;
+
         await _viewModel.Initialize().ConfigureAwait(false);
+    }
+
+    private void OnResultsAvailable()
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (Results.IsHidden)
+            {
+                Results.Show();
+            }
+
+            Results.IsActive = true;
+        });
     }
 
     protected override async void OnClosing(CancelEventArgs e)
