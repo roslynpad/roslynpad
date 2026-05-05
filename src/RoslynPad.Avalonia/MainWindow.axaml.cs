@@ -214,7 +214,14 @@ partial class MainWindow : Window
         {
             if (ResultPane.Factory is { } factory)
             {
-                factory.SetActiveDockable(Results);
+                if (factory.IsDockablePinned(Results))
+                {
+                    factory.PreviewPinnedDockable(Results);
+                }
+                else
+                {
+                    factory.SetActiveDockable(Results);
+                }
             }
         });
     }

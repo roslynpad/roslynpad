@@ -116,7 +116,20 @@ public partial class MainWindow
 
     private void OnResultsAvailable()
     {
-        Dispatcher.InvokeAsync(() => Results.Show());
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (Results.IsAutoHidden)
+            {
+                Results.ToggleAutoHide();
+            }
+            else if (Results.IsHidden)
+            {
+                Results.Show();
+            }
+
+            Results.IsSelected = true;
+            Results.IsActive = true;
+        });
     }
 
     protected override async void OnClosing(CancelEventArgs e)
