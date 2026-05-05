@@ -281,8 +281,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public event Action? ReadInput;
 
-    public event Action? ResultsAvailable;
-
     private void AddResult(IResultObject o)
     {
         lock (_results)
@@ -290,7 +288,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
             _results.Add(o);
         }
 
-        ResultsAvailable?.Invoke();
+        MainViewModel.OnResultsAvailable();
     }
 
     private void AddRestoreResult(RestoreResultObject o)

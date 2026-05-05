@@ -109,34 +109,9 @@ public partial class MainWindow
     {
         Loaded -= OnLoaded;
 
-        _viewModel.PropertyChanged += ViewModelOnPropertyChanged;
+        _viewModel.ResultsAvailable += OnResultsAvailable;
 
         await _viewModel.Initialize().ConfigureAwait(false);
-    }
-
-    private void ViewModelOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(MainViewModel.CurrentOpenDocument))
-        {
-            SubscribeToResultsAvailable();
-        }
-    }
-
-    private OpenDocumentViewModel? _currentSubscribedDocument;
-
-    private void SubscribeToResultsAvailable()
-    {
-        if (_currentSubscribedDocument is not null)
-        {
-            _currentSubscribedDocument.ResultsAvailable -= OnResultsAvailable;
-        }
-
-        _currentSubscribedDocument = _viewModel.CurrentOpenDocument;
-
-        if (_currentSubscribedDocument is not null)
-        {
-            _currentSubscribedDocument.ResultsAvailable += OnResultsAvailable;
-        }
     }
 
     private void OnResultsAvailable()
