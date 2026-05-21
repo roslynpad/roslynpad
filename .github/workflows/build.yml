@@ -31,7 +31,7 @@ jobs:
       run: dotnet workload restore
     - name: Build with dotnet
       env:
-        PublishTrimmed: ${{ matrix.os == 'macos-26' && 'false' || '' }}
+        LinkMode: ${{ matrix.os == 'macos-26' && 'None' || '' }}
       run: dotnet build -bl -c release -m:1
     - uses: actions/upload-artifact@v4
       if: always()
