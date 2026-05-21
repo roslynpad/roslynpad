@@ -889,6 +889,10 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public event EventHandler<EventArgs>? ThemeChanged;
 
+    public event Action? ResultsAvailable;
+
+    internal void OnResultsAvailable() => ResultsAvailable?.Invoke();
+
     private void ClearSearch()
     {
         SearchText = null;

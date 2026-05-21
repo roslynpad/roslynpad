@@ -19,19 +19,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '8.0.x'
     - name: Setup .NET (current)
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
     - name: Restore workloads
       if: matrix.os == 'macos-26'
       run: dotnet workload restore
     - name: Build with dotnet
+      env:
+        Registrar: ${{ matrix.os == 'macos-26' && 'dynamic' || '' }}
       run: dotnet build -bl -c release -m:1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: always()
       with:
         name: logs-${{ matrix.os }}
