@@ -3,7 +3,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 Remove-Item -Recurse $PSScriptRoot\..\src\*.nupkg
 
-dotnet pack $PSScriptRoot\..\RoslynPad.sln -c Release -p:EnableWindowsTargeting=true -p:ContinuousIntegrationBuild=true
+dotnet pack $PSScriptRoot\..\RoslynPad.slnx -c Release -p:EnableWindowsTargeting=true -p:ContinuousIntegrationBuild=true
 
 $apiKey = Read-Host -Prompt "Enter nuget.org API key"
 Get-ChildItem -Recurse $PSScriptRoot\..\src\*.nupkg | `

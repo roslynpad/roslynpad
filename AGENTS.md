@@ -41,10 +41,10 @@ Platform code follows this pattern:
 dotnet build src/RoslynPad.Avalonia
 
 # Build full solution (Windows required for WPF projects)
-dotnet build RoslynPad.sln
+dotnet build RoslynPad.slnx
 
 # CI build with binary log
-dotnet build -bl -c Release -m:1 RoslynPad.sln
+dotnet build -bl -c Release -m:1 RoslynPad.slnx
 ```
 
 Requires **.NET 10 SDK** (see `global.json`). Also install .NET 8 SDK for LTS library targets.
