@@ -116,15 +116,7 @@ public partial class MainWindow
 
     private void OnResultsAvailable()
     {
-        Dispatcher.InvokeAsync(() =>
-        {
-            if (Results.IsHidden)
-            {
-                Results.Show();
-            }
-
-            Results.IsActive = true;
-        });
+        DockingManager.ActiveContent = ResultsView;
     }
 
     protected override async void OnClosing(CancelEventArgs e)

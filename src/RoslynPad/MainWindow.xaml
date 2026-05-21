@@ -131,9 +131,8 @@
                                 <dock:LayoutDocumentPane />
                                 <dock:LayoutAnchorablePane Name="ResultsPane"
                                                            DockHeight="250">
-                                    <dock:LayoutAnchorable x:Name="Results"
-                                                           CanClose="False"
-                                                           CanHide="False"
+                                    <dock:LayoutAnchorable CanClose="False"
+                                                           CanHide="True"
                                                            CanAutoHide="True"
                                                            Title="Results">
                                         <DockPanel x:Name="ResultsView">
@@ -142,8 +141,7 @@
                                             </AdornerDecorator>
                                         </DockPanel>
                                     </dock:LayoutAnchorable>
-                                    <dock:LayoutAnchorable x:Name="IL"
-                                                           CanHide="False"
+                                    <dock:LayoutAnchorable CanHide="False"
                                                            CanClose="False"
                                                            CanAutoHide="True"
                                                            Title="IL">
