@@ -18,6 +18,12 @@
     <TargetFramework>$(DefaultTargetFramework)-macos</TargetFramework>
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(IsMacBuild)' == 'true' And '$(Configuration)' == 'Release'">
+    <EnableCodeSigning>true</EnableCodeSigning>
+    <CodesignKey>Developer ID Application</CodesignKey>
+    <UseHardenedRuntime>true</UseHardenedRuntime>
+    <UseSecureTimestamp>true</UseSecureTimestamp>
+  </PropertyGroup>
   <!-- hack to force resizetizer to work outside of MAUI -->
   <PropertyGroup Condition=" '$(IsMacBuild)' == 'true' ">
     <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>

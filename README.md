@@ -14,14 +14,6 @@ A cross-platform C# editor based on Roslyn and AvalonEdit
 | Microsoft Store | <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="50" alt="Microsoft Store badge logo" /></a> |
 | winget | `winget install --id RoslynPad.RoslynPad` |
 
-### Running on macOS
-
-1. Open the .dmg file and drag RoslynPad to the Applications directory.
-1. On the first run:
-   * **macOS Sonoma** or earlier - Right click the app on Finder and select **Open**. You will be prompted that the app is not signed by a known developer - click **Open**.
-   * **macOS Sequoia** you must go to **Settings > Privacy & Security** to approve non-notarized apps after the first run attempt.
-   * For more information see [Open a Mac app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616).
-
 ## Packages
 
 See [Packages](docs/packages/README.md) for more information.

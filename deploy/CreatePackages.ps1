@@ -1,5 +1,12 @@
 [CmdletBinding()]
 param (
+  # Developer Team ID. When omitted, the script auto-detects the single Developer ID
+  # Application certificate in the keychain and fails if more than one is present.
+  [string] $SigningIdentity,
+
+  # Name of the notarytool keychain profile created via
+  # `xcrun notarytool store-credentials`. When omitted, notarization is skipped.
+  [string] $NotaryProfile = 'notarization'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,9 +40,45 @@ function Get-PackageRoot {
   return (Resolve-Path (Join-Path $PSScriptRoot '..' 'src' $project $path)).Path
 }
 
+function Notarize-MacOSDmg($DmgPath, $Identity, $Profile) {
+  codesign --force --timestamp --sign $Identity $DmgPath
+
+  Write-Host "Submitting $DmgPath to Apple notary service..."
+  $submission = xcrun notarytool submit $DmgPath --keychain-profile $Profile --wait --output-format json | ConvertFrom-Json
+  if ($submission.status -ne 'Accepted') {
+    Write-Host "Notarization status: $($submission.status). Fetching log..."
+    xcrun notarytool log $submission.id --keychain-profile $Profile
+    throw "Notarization failed for $DmgPath (id: $($submission.id))"
+  }
+
+  Write-Host "Stapling notarization ticket..."
+  xcrun stapler staple $DmgPath
+  xcrun stapler validate $DmgPath
+}
+
+function Get-MacOSSigningIdentity {
+  $matches = security find-identity -v -p codesigning |
+    Select-String -Pattern '"Developer ID Application:[^"]*\(([A-Z0-9]{10,})\)"' -AllMatches |
+    ForEach-Object { $_.Matches.Groups[1].Value }
+
+  if ($matches.Count -eq 0) {
+    throw 'No "Developer ID Application" certificate found in the keychain. Create one in Xcode: Settings > Accounts > Manage Certificates > + > Developer ID Application.'
+  }
+  if ($matches.Count -gt 1) {
+    throw "Multiple developer certificates found: $($matches -join ', '). Pass -SigningIdentity to choose one."
+  }
+
+  return $matches[0]
+}
+
 function Build-MacOSPackage($PackageName, $RootPath) {
   if (!(Get-Command appdmg -ErrorAction Ignore)) {
     throw 'Missing appdmg. Install using "npm install -g appdmg"'
+  }
+
+  if (-not $SigningIdentity) {
+    $script:SigningIdentity = Get-MacOSSigningIdentity
+    Write-Host "Using signing identity: $SigningIdentity"
   }
 
   $dmgSpecPath = Join-Path $RootPath 'dmgspec.json'
@@ -45,6 +88,10 @@ function Build-MacOSPackage($PackageName, $RootPath) {
   Remove-Item $dmgPath -ErrorAction Ignore
   Write-Host "Creating package $dmgPath..."
   appdmg $dmgSpecPath $dmgPath
+
+  if ($SigningIdentity -and $NotaryProfile) {
+    Notarize-MacOSDmg -DmgPath $dmgPath -Identity $SigningIdentity -Profile $NotaryProfile
+  }
 }
 
 function Build-MacOSLinuxPackage($PackageName, $RootPath, [switch] $IsMacOSPackage) {
@@ -117,8 +164,8 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
 if ($IsMacOS) {
   Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
   Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
-  Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
-  Build-Package -PackageName 'linux-arm64' -RuntimeIdentifier 'linux-arm64'
+  # Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
+  # Build-Package -PackageName 'linux-arm64' -RuntimeIdentifier 'linux-arm64'
 }
 elseif ($IsWindows) {
   Build-Package -PackageName 'windows-x64' -RuntimeIdentifier 'win-x64'
