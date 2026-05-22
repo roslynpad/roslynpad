@@ -9,6 +9,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using RoslynPad.Editor;
@@ -27,7 +28,6 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         AvaloniaXamlLoader.Load(this);
-        this.AttachDevTools();
 
         _documents = new ObservableCollection<DocumentViewModel>();
         var items = this.Get<ItemsControl>("Items");
@@ -57,7 +57,7 @@ public partial class MainWindow : Window
         if (!(sender is RoslynCodeEditor editor && editor.DataContext is DocumentViewModel viewModel)) return;
 
         editor.Loaded -= OnItemLoaded;
-        editor.Focus();
+        editor.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
 
         var workingDirectory = Directory.GetCurrentDirectory();
 
@@ -75,13 +75,14 @@ public partial class MainWindow : Window
             workingDirectory, string.Empty, SourceCodeKind.Script).ConfigureAwait(true);
 
         viewModel.Initialize(documentId);
+        editor.TextArea.Focus();
     }
 
-    private async void OnEditorKeyDown(object sender, KeyEventArgs e)
+    private async void OnEditorKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
-            if (!(sender is RoslynCodeEditor editor && editor.DataContext is DocumentViewModel viewModel)) return;
+            if (sender is not RoslynCodeEditor editor || editor.DataContext is not DocumentViewModel viewModel) return;
 
             if (editor.IsCompletionWindowOpen)
             {

@@ -30,7 +30,8 @@ $appManifest.Package.Identity.Version = (Get-RoslynPadVersion $PatchVersion) + '
 $appManifest.Save($appManifestPath)
 
 if ($PackageName -like '*-arm64') {
-    $appManifestPath = Join-Path (New-TemporaryDirectory) 'AppxManifest.xml'
+    $tempDir = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName()))
+    $appManifestPath = Join-Path $tempDir 'AppxManifest.xml'
     $appManifest.Package.Identity.ProcessorArchitecture = 'arm64'
     $appManifest.Save($appManifestPath)
 }

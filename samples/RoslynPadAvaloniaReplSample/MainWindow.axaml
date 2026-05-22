@@ -15,7 +15,7 @@
                 <DataTemplate DataType="roslynPadReplSample:DocumentViewModel">
                     <StackPanel>
                         <editor:RoslynCodeEditor Loaded="OnItemLoaded"
-                                                  KeyDown="OnEditorKeyDown"
+                                                  Background="White"
                                                   FontFamily="Consolas"
                                                   Margin="5"
                                                   ShowLineNumbers="False"
