@@ -139,11 +139,6 @@
             <ProportionalDock x:Name="MainPane" Id="MainPane" Orientation="Vertical">
 
               <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane">
-                <DocumentDock.DocumentTemplate>
-                  <DocumentTemplate x:CompileBindings="false">
-                    <local:DocumentView DataContext="{Binding DataContext}" />
-                  </DocumentTemplate>
-                </DocumentDock.DocumentTemplate>
                 <Document x:Name="NewDoc" Id="NewDoc" Title="Home" x:DataType="Document" CanClose="False" CanFloat="False">
                   <local:NewDocumentView DataContext="{Binding #This.DataContext}" />
                 </Document>

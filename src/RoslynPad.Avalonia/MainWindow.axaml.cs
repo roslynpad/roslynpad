@@ -154,6 +154,7 @@ partial class MainWindow : Window
         if (e.Dockable is Document document && document.DataContext is IDocumentContent content)
         {
             await _viewModel.CloseTab(content).ConfigureAwait(true);
+            (document.Content as IDisposable)?.Dispose();
         }
     }
 
@@ -182,7 +183,7 @@ partial class MainWindow : Window
                     ? (object)new SettingsView { DataContext = item }
                     : item is SecretsViewModel
                     ? new SecretsView { DataContext = item }
-                    : DocumentsPane.DocumentTemplate?.Content;
+                    : new DocumentView { DataContext = item };
 
                 var document = new Document
                 {
