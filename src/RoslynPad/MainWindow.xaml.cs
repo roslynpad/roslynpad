@@ -116,6 +116,12 @@ public partial class MainWindow
 
     private void OnResultsAvailable()
     {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(OnResultsAvailable));
+            return;
+        }
+
         DockingManager.ActiveContent = ResultsView;
     }
 
