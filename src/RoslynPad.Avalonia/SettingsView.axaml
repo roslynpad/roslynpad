@@ -77,34 +77,9 @@
                                                 Content="{Binding}"
                                                 HorizontalAlignment="Right"
                                                 Margin="10,0,0,0">
-                                    <ContentControl.DataTemplates>
-                                        <DataTemplate DataType="{x:Type ui:SettingItem}">
-                                            <Panel>
-                                                <CheckBox IsChecked="{Binding BoolValue}"
-                                                          IsVisible="{Binding IsBoolean}"
-                                                          VerticalAlignment="Center" />
-                                                <TextBox Text="{Binding StringValue}"
-                                                         IsVisible="{Binding IsString}"
-                                                         VerticalAlignment="Center"
-                                                         MinWidth="200" />
-                                                <TextBox Text="{Binding NumericValue}"
-                                                         IsVisible="{Binding IsNumeric}"
-                                                         VerticalAlignment="Center"
-                                                         MinWidth="100" />
-                                                <ComboBox ItemsSource="{Binding EnumValues}"
-                                                          SelectedItem="{Binding Value}"
-                                                          IsVisible="{Binding IsEnum}"
-                                                          VerticalAlignment="Center"
-                                                          MinWidth="150" />
-                                                <TextBox Text="{Binding StringArrayValue}"
-                                                         IsVisible="{Binding IsStringArray}"
-                                                         AcceptsReturn="True"
-                                                         TextWrapping="Wrap"
-                                                         MinWidth="200"
-                                                         MinHeight="60" />
-                                            </Panel>
-                                        </DataTemplate>
-                                    </ContentControl.DataTemplates>
+                                    <ContentControl.ContentTemplate>
+                                        <local:SettingEditorTemplate />
+                                    </ContentControl.ContentTemplate>
                                 </ContentControl>
 
                                 <!-- Description -->

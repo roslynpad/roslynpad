@@ -1,7 +1,9 @@
 ﻿using System.Composition;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NuGet.Versioning;
 using RoslynPad.Themes;
 
 namespace RoslynPad.UI;
@@ -99,6 +101,7 @@ internal class ApplicationSettings : IApplicationSettings
         {
             var json = File.ReadAllText(path);
             _values = JsonSerializer.Deserialize<SerializableValues>(json, s_serializerOptions) ?? new SerializableValues();
+            _values.LoadMissingDefaults();
             InitializeValues();
         }
         catch (Exception e)
@@ -132,7 +135,6 @@ internal class ApplicationSettings : IApplicationSettings
 
         public void LoadDefaultSettings()
         {
-            SendErrors = true;
             FormatDocumentOnComment = true;
             EditorFontSize = DefaultFontSize;
             OutputFontSize = DefaultFontSize;
@@ -141,7 +143,60 @@ internal class ApplicationSettings : IApplicationSettings
             DefaultUsings = GetDefaultUsings();
         }
 
-        private static string[] GetDefaultUsings() => [
+        public void LoadMissingDefaults()
+        {
+            if (EditorFontSize <= 0)
+            {
+                EditorFontSize = DefaultFontSize;
+            }
+
+            if (OutputFontSize <= 0)
+            {
+                OutputFontSize = DefaultFontSize;
+            }
+
+            if (LiveModeDelayMs <= 0)
+            {
+                LiveModeDelayMs = LiveModeDelayMsDefault;
+            }
+
+            if (string.IsNullOrWhiteSpace(EditorFontFamily))
+            {
+                EditorFontFamily = GetDefaultPlatformFontFamily();
+            }
+
+            if (DefaultUsings is null || DefaultUsings.Length == 0)
+            {
+                DefaultUsings = GetDefaultUsings();
+            }
+        }
+
+        private bool SetProperty(ref string? field, string? value, [CallerMemberName] string? propertyName = null) =>
+            base.SetProperty(ref field, string.IsNullOrWhiteSpace(value) ? null : value.Trim(), propertyName);
+
+        private static string? NormalizeDefaultPlatformName(string? value)
+        {
+            value = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            if (value is null)
+            {
+                return null;
+            }
+
+            if (NuGetVersion.TryParse(value, out var version))
+            {
+                return version.ToNormalizedString();
+            }
+
+            var lastSpaceIndex = value.LastIndexOf(' ');
+            if (lastSpaceIndex >= 0 && NuGetVersion.TryParse(value[(lastSpaceIndex + 1)..], out version))
+            {
+                return version.ToNormalizedString();
+            }
+
+            return value;
+        }
+
+        internal static string[] GetDefaultUsings() => [
             "System",
             "System.Threading",
             "System.Threading.Tasks",
@@ -177,18 +232,6 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref field, value);
         }
 
-        public bool SendErrors
-        {
-            get;
-            set => SetProperty(ref field, value);
-        }
-
-        public bool EnableBraceCompletion
-        {
-            get;
-            set => SetProperty(ref field, value);
-        } = true;
-
         public string? LatestVersion
         {
             get;
@@ -217,19 +260,21 @@ internal class ApplicationSettings : IApplicationSettings
         public double EditorFontSize
         {
             get;
-            set => SetProperty(ref field, value);
+            set => SetProperty(ref field, Math.Clamp(value, 8, 72));
         } = DefaultFontSize;
+
+        private string _editorFontFamily = GetDefaultPlatformFontFamily();
 
         public string EditorFontFamily
         {
-            get;
-            set => SetProperty(ref field, value);
-        } = GetDefaultPlatformFontFamily();
+            get => _editorFontFamily;
+            set => base.SetProperty(ref _editorFontFamily, string.IsNullOrWhiteSpace(value) ? GetDefaultPlatformFontFamily() : value.Trim());
+        }
 
         public double OutputFontSize
         {
             get;
-            set => SetProperty(ref field, value);
+            set => SetProperty(ref field, Math.Clamp(value, 8, 72));
         } = DefaultFontSize;
 
         public string? DocumentPath
@@ -259,7 +304,7 @@ internal class ApplicationSettings : IApplicationSettings
         public int LiveModeDelayMs
         {
             get;
-            set => SetProperty(ref field, value);
+            set => SetProperty(ref field, Math.Max(0, value));
         } = LiveModeDelayMsDefault;
 
         public bool SearchWhileTyping
@@ -274,16 +319,16 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref field, value);
         }
 
-        public string DefaultPlatformName
+        public string? DefaultPlatformName
         {
             get;
-            set => SetProperty(ref field, value);
-        } = string.Empty;
+            set => SetProperty(ref field, NormalizeDefaultPlatformName(value));
+        }
 
         public double? WindowFontSize
         {
             get;
-            set => SetProperty(ref field, value);
+            set => SetProperty(ref field, value is > 0 ? value : null);
         }
 
         public bool FormatDocumentOnComment
@@ -314,7 +359,7 @@ internal class ApplicationSettings : IApplicationSettings
         {
             get;
             set => SetProperty(ref field, value);
-        }
+        } = GetDefaultUsings();
 
         [JsonIgnore]
         public string EffectiveDocumentPath

@@ -46,7 +46,7 @@
 
         <DataTemplate x:Key="StringArrayTemplate"
                       DataType="{x:Type ui:SettingItem}">
-            <TextBox Text="{Binding StringArrayValue, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding StringArrayValue, UpdateSourceTrigger=LostFocus}"
                      Background="{DynamicResource {x:Static rp:ThemeDictionary.InputBackground}}"
                      Foreground="{DynamicResource {x:Static rp:ThemeDictionary.InputForeground}}"
                      AcceptsReturn="True"

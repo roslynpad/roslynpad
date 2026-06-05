@@ -55,8 +55,8 @@ internal class PlatformsFactory : IPlatformsFactory
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
         {
-            var targetFrameworkName = GetNetFrameworkName();
-            yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, null, Architecture.X64, isDotNet: false);
+            var (version, targetFrameworkName) = GetNetFrameworkInfo();
+            yield return new ExecutionPlatform(".NET Framework x64", targetFrameworkName, version, Architecture.X64, isDotNet: false);
         }
     }
 
@@ -111,11 +111,11 @@ internal class PlatformsFactory : IPlatformsFactory
 
     private static string GetDotnetExe() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dotnet.exe" : "dotnet";
 
-    private static string GetNetFrameworkName()
+    private static (NuGetVersion? Version, string TargetFrameworkName) GetNetFrameworkInfo()
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            return string.Empty;
+            return (null, string.Empty);
         }
 
         const string subkey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
@@ -129,18 +129,18 @@ internal class PlatformsFactory : IPlatformsFactory
             }
         }
 
-        return string.Empty;
+        return (null, string.Empty);
     }
 
-    private static string GetNetFrameworkTargetName(int releaseKey) => releaseKey switch
+    private static (NuGetVersion Version, string TargetFrameworkName) GetNetFrameworkTargetName(int releaseKey) => releaseKey switch
     {
-        >= 528040 => "net48",
-        >= 461808 => "net472",
-        >= 461308 => "net471",
-        >= 460798 => "net47",
-        >= 394802 => "net462",
-        >= 394254 => "net461",
-        >= 393295 => "net46",
+        >= 528040 => (new NuGetVersion(4, 8, 0), "net48"),
+        >= 461808 => (new NuGetVersion(4, 7, 2), "net472"),
+        >= 461308 => (new NuGetVersion(4, 7, 1), "net471"),
+        >= 460798 => (new NuGetVersion(4, 7, 0), "net47"),
+        >= 394802 => (new NuGetVersion(4, 6, 2), "net462"),
+        >= 394254 => (new NuGetVersion(4, 6, 1), "net461"),
+        >= 393295 => (new NuGetVersion(4, 6, 0), "net46"),
         _ => throw new ArgumentOutOfRangeException(nameof(releaseKey))
     };
 }

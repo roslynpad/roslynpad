@@ -112,10 +112,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public void InitializeTheme()
     {
-        UseSystemTheme = Settings.CustomThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
+        var customThemePath = Settings.CustomThemePath;
+        if (customThemePath is not null && !File.Exists(customThemePath))
+        {
+            _errorReporter.ReportError(new FileNotFoundException("The configured custom theme file was not found.", customThemePath));
+            customThemePath = null;
+        }
 
-        var theme = Settings.CustomThemePath is null ? GetBuiltinThemePath(Settings.BuiltInTheme) : (path: Settings.CustomThemePath, type: Settings.CustomThemeType.GetValueOrDefault());
-        LoadTheme(theme.path, theme.type);
+        UseSystemTheme = customThemePath is null && Settings.BuiltInTheme == BuiltInTheme.System;
+
+        var theme = customThemePath is null ? GetBuiltinThemePath(Settings.BuiltInTheme) : (path: customThemePath, type: Settings.CustomThemeType.GetValueOrDefault());
+        if (!LoadTheme(theme.path, theme.type) && customThemePath is not null)
+        {
+            var fallbackTheme = GetBuiltinThemePath(Settings.BuiltInTheme);
+            LoadTheme(fallbackTheme.path, fallbackTheme.type);
+        }
 
         if (UseSystemTheme)
         {
@@ -155,15 +166,24 @@ public abstract class MainViewModel : NotificationObject, IDisposable
             ? Path.Combine(AppContext.BaseDirectory, "..", "Resources", "Themes", path)
             : Path.Combine(AppContext.BaseDirectory, "Themes", path);
 
-        void LoadTheme(string? themeFile, ThemeType type)
+        bool LoadTheme(string? themeFile, ThemeType type)
         {
             if (themeFile is null)
             {
-                return;
+                return true;
             }
 
-            ThemeType = type;
-            Theme = _themeManager.ReadThemeAsync(themeFile, type).GetAwaiter().GetResult();
+            try
+            {
+                ThemeType = type;
+                Theme = _themeManager.ReadThemeAsync(themeFile, type).GetAwaiter().GetResult();
+                return true;
+            }
+            catch (Exception e)
+            {
+                _errorReporter.ReportError(e);
+                return false;
+            }
         }
     }
 

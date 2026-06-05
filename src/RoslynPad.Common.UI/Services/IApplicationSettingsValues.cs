@@ -8,12 +8,6 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     [Browsable(false)]
     IList<KeyBinding>? KeyBindings { get; set; }
 
-    [Description("Send error reports to help improve RoslynPad. Only internal errors are sent, not your code.")]
-    bool SendErrors { get; set; }
-
-    [Description("Automatically insert closing braces, brackets, and parentheses.")]
-    bool EnableBraceCompletion { get; set; }
-
     [Browsable(false)]
     string? LatestVersion { get; set; }
 
@@ -56,8 +50,8 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     [Description("Custom path to the .NET SDK root directory (e.g., '/usr/lib64/dotnet'). Leave empty for auto-detection.")]
     string? SdkLocation { get; set; }
 
-    [Description("Default .NET platform for new documents (e.g., 'net8.0').")]
-    string DefaultPlatformName { get; set; }
+    [Description("Default .NET SDK SDK version (e.g., '10.0.300').")]
+    string? DefaultPlatformName { get; set; }
 
     [Description("Font size for the application window (optional).")]
     double? WindowFontSize { get; set; }

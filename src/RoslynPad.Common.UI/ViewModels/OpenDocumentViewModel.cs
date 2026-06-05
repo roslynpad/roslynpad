@@ -200,9 +200,12 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     {
         if (Platform is not null)
         {
-            MainViewModel.Settings.DefaultPlatformName = Platform.ToString();
+            MainViewModel.Settings.DefaultPlatformName = GetDefaultPlatformName(Platform);
         }
     }
+
+    private static string? GetDefaultPlatformName(ExecutionPlatform platform) =>
+        platform.FrameworkVersion?.ToNormalizedString();
 
     private void InitializePlatforms()
     {
@@ -601,7 +604,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         _getSelection = getSelection;
         DocumentId = documentId;
 
-        var platform = AvailablePlatforms.FirstOrDefault(p => p.ToString() == MainViewModel.Settings.DefaultPlatformName) ??
+        var platform = AvailablePlatforms.FirstOrDefault(p => IsDefaultPlatform(p, MainViewModel.Settings.DefaultPlatformName)) ??
                        AvailablePlatforms.FirstOrDefault();
 
         if (platform is null)
@@ -620,6 +623,27 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         UpdatePackages();
 
         TerminateCommand?.Execute();
+    }
+
+    private static bool IsDefaultPlatform(ExecutionPlatform platform, string? defaultPlatformName)
+    {
+        if (string.IsNullOrWhiteSpace(defaultPlatformName))
+        {
+            return false;
+        }
+
+        defaultPlatformName = defaultPlatformName.Trim();
+        if (string.Equals(platform.ToString().Trim(), defaultPlatformName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!NuGetVersion.TryParse(defaultPlatformName, out var version))
+        {
+            return false;
+        }
+
+        return platform.FrameworkVersion == version;
     }
 
     public DocumentId DocumentId
