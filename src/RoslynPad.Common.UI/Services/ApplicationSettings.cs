@@ -144,7 +144,8 @@ internal class ApplicationSettings : IApplicationSettings
 
         public void LoadMissingDefaults()
         {
-            if (DefaultUsings is not { Length: > 0 } || DefaultUsings.All(string.IsNullOrWhiteSpace))
+            var defaultUsings = DefaultUsings;
+            if (defaultUsings is null || defaultUsings.Length == 0 || defaultUsings.All(string.IsNullOrWhiteSpace))
             {
                 DefaultUsings = GetDefaultUsings();
             }
