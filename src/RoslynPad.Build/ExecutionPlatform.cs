@@ -6,7 +6,7 @@ namespace RoslynPad.Build;
 public class ExecutionPlatform
 {
     internal string Name { get; }
-    internal string TargetFrameworkMoniker { get; }
+    public string TargetFrameworkMoniker { get; }
     internal NuGetVersion? FrameworkVersion { get; }
     internal Architecture Architecture { get; }
     internal bool IsDotNet { get; }
