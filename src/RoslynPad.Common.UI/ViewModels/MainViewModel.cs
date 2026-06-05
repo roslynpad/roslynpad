@@ -371,11 +371,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     public OpenDocumentViewModel? CurrentOpenDocument
     {
         get => _currentOpenDocument;
-        set
-        {
-            if (value == null) return; // prevent binding from clearing the value
-            SetProperty(ref _currentOpenDocument, value);
-        }
+        private set => SetProperty(ref _currentOpenDocument, value);
     }
 
     public IDocumentContent? ActiveContent
@@ -391,13 +387,6 @@ public abstract class MainViewModel : NotificationObject, IDisposable
                 }
             }
         }
-    }
-
-    private void ClearCurrentOpenDocument()
-    {
-        if (_currentOpenDocument == null) return;
-        _currentOpenDocument = null;
-        OnPropertyChanged(nameof(CurrentOpenDocument));
     }
 
     public IDelegateCommand<SourceCodeKind> NewDocumentCommand { get; }
@@ -458,7 +447,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
             OpenDocuments.Add(openDocument);
         }
 
-        CurrentOpenDocument = openDocument;
+        ActiveContent = openDocument;
     }
 
     public async Task OpenFile()
@@ -493,7 +482,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         var openDocument = GetOpenDocumentViewModel();
         openDocument.SourceCodeKind = kind;
         OpenDocuments.Add(openDocument);
-        CurrentOpenDocument = openDocument;
+        ActiveContent = openDocument;
     }
 
     public async Task CloseDocument(OpenDocumentViewModel? document)
@@ -544,7 +533,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         await CloseTab(_activeContent).ConfigureAwait(false);
         if (!OpenDocuments.OfType<OpenDocumentViewModel>().Any())
         {
-            ClearCurrentOpenDocument();
+            CurrentOpenDocument = null;
         }
     }
 
