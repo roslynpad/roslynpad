@@ -14,12 +14,8 @@ public partial class DocumentViewModel : NotificationObject
 
     public static ImmutableArray<string> RelevantFileExtensions { get; } = [".cs", ".csx"];
 
-    private bool _isExpanded;
     private bool? _isAutoSaveOnly;
-    private bool _isSearchMatch;
     private string? _path;
-    private string? _name;
-    private string? _orderByName;
 
     private DocumentViewModel(string rootPath, bool isFolder)
     {
@@ -28,7 +24,7 @@ public partial class DocumentViewModel : NotificationObject
 
         if (!isFolder)
         {
-            var nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(Name);
+            var nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(Name) ?? string.Empty;
             IsAutoSave = nameWithoutExtension.EndsWith(AutoSaveSuffix, StringComparison.OrdinalIgnoreCase);
             if (IsAutoSave)
             {
@@ -42,7 +38,7 @@ public partial class DocumentViewModel : NotificationObject
     public void ChangePath(string newPath)
     {
         Path = newPath;
-        _orderByName = null;
+        OrderByName = null;
     }
 
     public string Path
@@ -138,14 +134,14 @@ public partial class DocumentViewModel : NotificationObject
 
     public bool IsExpanded
     {
-        get => _isExpanded;
-        set => SetProperty(ref _isExpanded, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public string Name
     {
-        get => _name.NotNull();
-        private set => SetProperty(ref _name, value);
+        get => field.NotNull();
+        private set => SetProperty(ref field, value);
     }
 
     public bool IsAutoSave { get; }
@@ -174,8 +170,8 @@ public partial class DocumentViewModel : NotificationObject
 
     public bool IsSearchMatch
     {
-        get => _isSearchMatch;
-        internal set => SetProperty(ref _isSearchMatch, value);
+        get;
+        internal set => SetProperty(ref field, value);
     }
 
     private DocumentCollection ReadChildren()
@@ -197,8 +193,10 @@ public partial class DocumentViewModel : NotificationObject
         return new DocumentCollection(directories.Concat(files.OrderBy(file => file.OrderByName)));
     }
 
-    private string OrderByName =>
-        _orderByName ??= NumberRegex().Replace(Name, m => m.Value.PadLeft(100, '0'));
+    [AllowNull]
+    private string OrderByName { get =>
+        field ??= NumberRegex().Replace(Name, m => m.Value.PadLeft(100, '0')); set;
+    }
 
     internal void AddChild(DocumentViewModel documentViewModel)
     {

@@ -66,7 +66,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private readonly string _restoreCachePath;
     private readonly object _ctsLock;
     private CancellationTokenSource? _executeCts;
-    private Task? _restoreTask;
     private CancellationTokenSource? _restoreCts;
     private ExecutionPlatform? _platform;
     private string? _restorePath;
@@ -874,7 +873,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    private Task RestoreTask => _restoreTask ?? Task.CompletedTask;
+    private Task RestoreTask { get => field ?? Task.CompletedTask; set; }
 
     public DocumentId? DocumentId { get; set; }
 
@@ -891,7 +890,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         RestoreStarted?.Invoke();
 
         var lockDisposer = await _lock.DisposableWaitAsync(cancellationToken).ConfigureAwait(false);
-        _restoreTask = DoRestoreAsync(RestoreTask, cancellationToken);
+        RestoreTask = DoRestoreAsync(RestoreTask, cancellationToken);
 
         async Task DoRestoreAsync(Task previousTask, CancellationToken cancellationToken)
         {

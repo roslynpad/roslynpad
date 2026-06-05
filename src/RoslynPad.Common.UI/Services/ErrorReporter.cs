@@ -7,8 +7,6 @@ namespace RoslynPad.UI;
 [method: ImportingConstructor]
 public class ErrorReporter(IAppDispatcher appDispatcher) : IErrorReporter
 {
-    private Exception? _lastError;
-
     public void Initialize(string version, IApplicationSettings settings)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
@@ -44,10 +42,10 @@ public class ErrorReporter(IAppDispatcher appDispatcher) : IErrorReporter
 
     public Exception? LastError
     {
-        get => _lastError;
+        get;
         private set
         {
-            _lastError = value;
+            field = value;
             LastErrorChanged?.Invoke();
         }
     }

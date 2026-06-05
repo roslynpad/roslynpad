@@ -21,6 +21,5 @@ internal class TreeListView : TreeView
         element.SetValue(TreeListViewItem.ShowSeparatorPropertyKey, ShowSeparator);
     }
 
-    private GridViewColumnCollection? _columns;
-    public GridViewColumnCollection Columns => _columns ??= [];
+    public GridViewColumnCollection Columns => field ??= [];
 }

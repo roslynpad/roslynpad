@@ -6,18 +6,16 @@ public partial class CodeTextEditor
 {
     protected override Type StyleKeyOverride => typeof(TextEditor);
 
-    private SearchPanel? _searchReplacePanel;
-
     partial void Initialize()
     {
         PointerHover += OnMouseHover;
         PointerExited += OnPointerExited;
         KeyDownEvent.AddClassHandler<CodeTextEditor>(OnPreviewKeyDown, RoutingStrategies.Tunnel);
 
-        _searchReplacePanel = SearchPanel.Install(this);
+        SearchReplacePanel = SearchPanel.Install(this);
     }
 
-    public SearchPanel SearchReplacePanel => _searchReplacePanel!;
+    public SearchPanel SearchReplacePanel { get => field!; private set; }
 
     private void OnPointerExited(object? sender, PointerEventArgs e)
     {

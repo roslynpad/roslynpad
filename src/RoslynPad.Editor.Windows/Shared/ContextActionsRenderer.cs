@@ -37,7 +37,6 @@ public sealed class ContextActionsRenderer
 
     private CancellationTokenSource? _cancellationTokenSource;
     private readonly ObservableCollection<object> _actions;
-    private ImageSource? _iconImage;
 
     public ContextActionsRenderer(CodeTextEditor editor, TextMarkerService textMarkerService)
     {
@@ -65,11 +64,11 @@ public sealed class ContextActionsRenderer
 
     public ImageSource? IconImage
     {
-        get => _iconImage;
+        get;
         set
         {
             _bulbMargin.MarkerImage = value;
-            _iconImage = value;
+            field = value;
         }
     }
 

@@ -8,12 +8,7 @@ public sealed class NuGetDocumentViewModel : NotificationObject
 {
     private readonly NuGetViewModel _nuGetViewModel;
     private readonly IErrorReporter _errorReporter;
-
-    private string? _searchTerm;
-    private bool _isSearching;
     private CancellationTokenSource? _searchCts;
-    private bool _isPackagesMenuOpen;
-    private bool _prerelease;
     private IReadOnlyList<PackageData> _packages;
 
     public IReadOnlyList<PackageData> Packages
@@ -53,16 +48,16 @@ public sealed class NuGetDocumentViewModel : NotificationObject
 
     public bool IsSearching
     {
-        get => _isSearching;
-        private set => SetProperty(ref _isSearching, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public string? SearchTerm
     {
-        get => _searchTerm;
+        get;
         set
         {
-            if (SetProperty(ref _searchTerm, value))
+            if (SetProperty(ref field, value))
             {
                 PerformSearch();
             }
@@ -71,18 +66,18 @@ public sealed class NuGetDocumentViewModel : NotificationObject
 
     public bool IsPackagesMenuOpen
     {
-        get => _isPackagesMenuOpen;
-        set => SetProperty(ref _isPackagesMenuOpen, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public bool ExactMatch { get; set; }
 
     public bool Prerelease
     {
-        get => _prerelease;
+        get;
         set
         {
-            if (SetProperty(ref _prerelease, value))
+            if (SetProperty(ref field, value))
             {
                 PerformSearch();
             }

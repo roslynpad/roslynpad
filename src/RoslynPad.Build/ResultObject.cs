@@ -121,11 +121,9 @@ public class CompilationErrorResultObject : IResultObject, IResultWithLineNumber
 
 public class RestoreResultObject(string message, string severity, string? value = null) : IResultObject
 {
-    private readonly string? _value = value;
-
     public string Message { get; set; } = message;
     public string Severity { get; set; } = severity;
-    public string Value => _value ?? Message;
+    public string Value { get => field ?? Message; } = value;
 
     public void WriteTo(StringBuilder builder) => builder.Append(Value);
 }

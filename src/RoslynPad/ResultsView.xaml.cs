@@ -9,7 +9,6 @@ namespace RoslynPad;
 public partial class ResultsView : UserControl
 {
     private IResultObject? _contextMenuResultObject;
-    private OpenDocumentViewModel? _viewModel;
 
     public ResultsView()
     {
@@ -17,11 +16,11 @@ public partial class ResultsView : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
-    public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
+    public OpenDocumentViewModel ViewModel { get => field.NotNull(); private set; }
 
     private void OnDataContextChanged(object? sender, DependencyPropertyChangedEventArgs args)
     {
-        _viewModel = (OpenDocumentViewModel)args.NewValue;
+        ViewModel = (OpenDocumentViewModel)args.NewValue;
     }
 
     private void CopyCommand(object? sender, ExecutedRoutedEventArgs e)

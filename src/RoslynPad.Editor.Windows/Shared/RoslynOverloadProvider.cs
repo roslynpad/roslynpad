@@ -10,9 +10,6 @@ internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProv
 
     private int _selectedIndex;
     private SignatureHelpItem? _item;
-    private object? _currentHeader;
-    private object? _currentContent;
-    private string? _currentIndexText;
 
     public RoslynOverloadProvider(SignatureHelpItems signatureHelp)
     {
@@ -99,19 +96,19 @@ internal sealed class RoslynOverloadProvider : NotificationObject, IOverloadProv
 
     public string? CurrentIndexText
     {
-        get => _currentIndexText;
-        private set => SetProperty(ref _currentIndexText, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public object? CurrentHeader
     {
-        get => _currentHeader;
-        private set => SetProperty(ref _currentHeader, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public object? CurrentContent
     {
-        get => _currentContent;
-        private set => SetProperty(ref _currentContent, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 }

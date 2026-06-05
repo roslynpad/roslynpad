@@ -21,7 +21,6 @@ partial class DocumentView : UserControl, IDisposable
     private readonly TextBox _nuGetSearch;
     private readonly TextBlock _lnTextBlock;
     private readonly TextBlock _colTextBlock;
-    private OpenDocumentViewModel? _viewModel;
 
     public DocumentView()
     {
@@ -38,7 +37,7 @@ partial class DocumentView : UserControl, IDisposable
         DataContextChanged += OnDataContextChanged;
     }
 
-    public OpenDocumentViewModel ViewModel => _viewModel.NotNull();
+    public OpenDocumentViewModel ViewModel { get => field.NotNull(); private set; }
 
     private void CaretOnPositionChanged(object? sender, EventArgs e)
     {
@@ -49,7 +48,7 @@ partial class DocumentView : UserControl, IDisposable
     private async void OnDataContextChanged(object? sender, EventArgs args)
     {
         if (DataContext is not OpenDocumentViewModel viewModel) return;
-        _viewModel = viewModel;
+        ViewModel = viewModel;
 
         InitializeKeyBindings(viewModel);
 

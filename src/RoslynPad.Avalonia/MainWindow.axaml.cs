@@ -23,13 +23,11 @@ namespace RoslynPad;
 partial class MainWindow : Window
 {
     public const string DialogHostIdentifier = "Main";
-
-    private readonly MainViewModel _viewModel;
     private ThemeDictionary? _themeDictionary;
     private bool _isClosing;
     private bool _isClosed;
 
-    public MainViewModel ViewModel => _viewModel;
+    public MainViewModel ViewModel { get; }
 
     public MainWindow()
     {
@@ -46,12 +44,12 @@ partial class MainWindow : Window
             .WithAssembly(Assembly.GetEntryAssembly());
         var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
-        _viewModel = locator.GetRequiredService<MainViewModel>();
-        _viewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
-        _viewModel.ThemeChanged += OnViewModelThemeChanged;
-        _viewModel.InitializeTheme();
+        ViewModel = locator.GetRequiredService<MainViewModel>();
+        ViewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
+        ViewModel.ThemeChanged += OnViewModelThemeChanged;
+        ViewModel.InitializeTheme();
 
-        DataContext = _viewModel;
+        DataContext = ViewModel;
 
         InitializeComponent();
         InitializeKeyBindings();
@@ -60,19 +58,19 @@ partial class MainWindow : Window
         ResultPane.GetObservable(global::Dock.Model.Avalonia.Core.DockBase.ActiveDockableProperty)
             .Subscribe(_ => SetShowIL());
 
-        if (_viewModel.Settings.WindowFontSize.HasValue)
+        if (ViewModel.Settings.WindowFontSize.HasValue)
         {
-            FontSize = _viewModel.Settings.WindowFontSize.Value;
+            FontSize = ViewModel.Settings.WindowFontSize.Value;
         }
     }
 
     private void InitializeKeyBindings()
     {
-        this.AddKeyBinding(KeyBindingCommands.NewDocument, _viewModel.NewDocumentCommand, SourceCodeKind.Regular);
-        this.AddKeyBinding(KeyBindingCommands.NewScript, _viewModel.NewDocumentCommand, SourceCodeKind.Script);
-        this.AddKeyBinding(KeyBindingCommands.OpenFile, _viewModel.OpenFileCommand);
-        this.AddKeyBinding(KeyBindingCommands.CloseCurrentFile, _viewModel.CloseCurrentDocumentCommand);
-        this.AddKeyBinding(KeyBindingCommands.ToggleOptimization, _viewModel.ToggleOptimizationCommand);
+        this.AddKeyBinding(KeyBindingCommands.NewDocument, ViewModel.NewDocumentCommand, SourceCodeKind.Regular);
+        this.AddKeyBinding(KeyBindingCommands.NewScript, ViewModel.NewDocumentCommand, SourceCodeKind.Script);
+        this.AddKeyBinding(KeyBindingCommands.OpenFile, ViewModel.OpenFileCommand);
+        this.AddKeyBinding(KeyBindingCommands.CloseCurrentFile, ViewModel.CloseCurrentDocumentCommand);
+        this.AddKeyBinding(KeyBindingCommands.ToggleOptimization, ViewModel.ToggleOptimizationCommand);
     }
 
     private void OnErrorButtonClick(object sender, RoutedEventArgs e)
@@ -84,7 +82,7 @@ partial class MainWindow : Window
             Height = 400,
             Content = new TextBox
             {
-                Text = _viewModel.LastError?.ToString(),
+                Text = ViewModel.LastError?.ToString(),
                 IsReadOnly = true,
                 AcceptsReturn = true
             }
@@ -103,7 +101,7 @@ partial class MainWindow : Window
 
     private void SetShowIL()
     {
-        if (_viewModel.CurrentOpenDocument is not { } currentDocument) return;
+        if (ViewModel.CurrentOpenDocument is not { } currentDocument) return;
         currentDocument.ShowIL = ResultPane.ActiveDockable == IL;
     }
 
@@ -129,10 +127,10 @@ partial class MainWindow : Window
             app.Resources.MergedDictionaries.Remove(_themeDictionary);
         }
 
-        _themeDictionary = new ThemeDictionary(_viewModel.Theme);
+        _themeDictionary = new ThemeDictionary(ViewModel.Theme);
         app.Resources.MergedDictionaries.Add(_themeDictionary);
 
-        UpdateTaggedTextResources(app, _viewModel.Theme);
+        UpdateTaggedTextResources(app, ViewModel.Theme);
     }
 
     private static void UpdateTaggedTextResources(Application app, Theme theme)
@@ -153,7 +151,7 @@ partial class MainWindow : Window
     {
         if (e.Dockable is Document document && document.DataContext is IDocumentContent content)
         {
-            await _viewModel.CloseTab(content).ConfigureAwait(true);
+            await ViewModel.CloseTab(content).ConfigureAwait(true);
             (document.Content as IDisposable)?.Dispose();
         }
     }
@@ -204,9 +202,9 @@ partial class MainWindow : Window
     {
         base.OnApplyTemplate(e);
 
-        _viewModel.ResultsAvailable += OnResultsAvailable;
+        ViewModel.ResultsAvailable += OnResultsAvailable;
 
-        await _viewModel.Initialize().ConfigureAwait(true);
+        await ViewModel.Initialize().ConfigureAwait(true);
     }
 
     private void OnResultsAvailable()
@@ -232,13 +230,13 @@ partial class MainWindow : Window
         var position = Position;
         var size = ClientSize;
         var bounds = new Rect(position.X, position.Y, size.Width, size.Height);
-        _viewModel.Settings.WindowBounds = FormattableString.Invariant($"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
-        _viewModel.Settings.WindowState = WindowState.ToString();
+        ViewModel.Settings.WindowBounds = FormattableString.Invariant($"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
+        ViewModel.Settings.WindowState = WindowState.ToString();
     }
 
     private void LoadWindowLayout()
     {
-        var boundsString = _viewModel.Settings.WindowBounds;
+        var boundsString = ViewModel.Settings.WindowBounds;
 
         if (!string.IsNullOrEmpty(boundsString))
         {
@@ -251,7 +249,7 @@ partial class MainWindow : Window
             }
         }
 
-        if (Enum.TryParse(_viewModel.Settings.WindowState, out WindowState state) &&
+        if (Enum.TryParse(ViewModel.Settings.WindowState, out WindowState state) &&
             state != WindowState.Minimized)
         {
             WindowState = state;
@@ -272,7 +270,7 @@ partial class MainWindow : Window
 
             try
             {
-                await Task.Run(_viewModel.OnExit).ConfigureAwait(true);
+                await Task.Run(ViewModel.OnExit).ConfigureAwait(true);
             }
             catch
             {
@@ -290,17 +288,17 @@ partial class MainWindow : Window
 
     private void OnNewDocumentClick(object? sender, EventArgs e)
     {
-        _viewModel.NewDocumentCommand.Execute(SourceCodeKind.Regular);
+        ViewModel.NewDocumentCommand.Execute(SourceCodeKind.Regular);
     }
 
     private void OnNewScriptClick(object? sender, EventArgs e)
     {
-        _viewModel.NewDocumentCommand.Execute(SourceCodeKind.Script);
+        ViewModel.NewDocumentCommand.Execute(SourceCodeKind.Script);
     }
 
     private void OnSaveClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.SaveCommand.Execute(null);
         }
@@ -308,7 +306,7 @@ partial class MainWindow : Window
 
     private void OnFormatDocumentClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.FormatDocumentCommand.Execute(null);
         }
@@ -316,7 +314,7 @@ partial class MainWindow : Window
 
     private void OnCommentSelectionClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.CommentSelectionCommand.Execute(null);
         }
@@ -324,7 +322,7 @@ partial class MainWindow : Window
 
     private void OnUncommentSelectionClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.UncommentSelectionCommand.Execute(null);
         }
@@ -332,7 +330,7 @@ partial class MainWindow : Window
 
     private void OnRenameSymbolClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.RenameSymbolCommand.Execute(null);
         }
@@ -340,7 +338,7 @@ partial class MainWindow : Window
 
     private void OnRunClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.RunCommand.Execute(null);
         }
@@ -348,7 +346,7 @@ partial class MainWindow : Window
 
     private void OnTerminateClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.TerminateCommand.Execute(null);
         }
@@ -356,7 +354,7 @@ partial class MainWindow : Window
 
     private void OnToggleLiveModeClick(object? sender, EventArgs e)
     {
-        if (_viewModel.CurrentOpenDocument is { } doc)
+        if (ViewModel.CurrentOpenDocument is { } doc)
         {
             doc.ToggleLiveModeCommand.Execute(null);
         }
@@ -364,11 +362,11 @@ partial class MainWindow : Window
 
     private void OnFindClick(object? sender, EventArgs e)
     {
-        _viewModel.CurrentOpenDocument?.RequestFind();
+        ViewModel.CurrentOpenDocument?.RequestFind();
     }
 
     private void OnReplaceClick(object? sender, EventArgs e)
     {
-        _viewModel.CurrentOpenDocument?.RequestReplace();
+        ViewModel.CurrentOpenDocument?.RequestReplace();
     }
 }

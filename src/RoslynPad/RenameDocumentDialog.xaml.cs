@@ -10,8 +10,6 @@ namespace RoslynPad;
 internal partial class RenameDocumentDialog : INotifyPropertyChanged, IRenameDocumentDialog
 {
     private static readonly char[] s_invalidFileChars = Path.GetInvalidFileNameChars();
-
-    private string? _documentName;
     private InlineModalDialog? _dialog;
 
     public RenameDocumentDialog()
@@ -34,10 +32,10 @@ internal partial class RenameDocumentDialog : INotifyPropertyChanged, IRenameDoc
 
     public string? DocumentName
     {
-        get => _documentName;
+        get;
         set
         {
-            SetProperty(ref _documentName, value);
+            SetProperty(ref field, value);
             SetRenameButtonStatus();
         }
     }

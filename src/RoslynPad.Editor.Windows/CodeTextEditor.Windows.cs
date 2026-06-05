@@ -2,8 +2,6 @@
 
 partial class CodeTextEditor
 {
-    private SearchReplacePanel? _searchReplacePanel;
-
     static CodeTextEditor()
     {
         DefaultStyleKeyProperty.OverrideMetadata(typeof(CodeTextEditor), new FrameworkPropertyMetadata(typeof(CodeTextEditor)));
@@ -16,10 +14,10 @@ partial class CodeTextEditor
         PreviewKeyDown += OnPreviewKeyDown;
 
         ToolTipService.SetInitialShowDelay(this, 0);
-        _searchReplacePanel = SearchReplacePanel.Install(this);
+        SearchReplacePanel = SearchReplacePanel.Install(this);
     }
 
-    public SearchReplacePanel SearchReplacePanel => _searchReplacePanel!;
+    public SearchReplacePanel SearchReplacePanel { get => field!; private set; }
 
     partial void InitializeToolTip()
     {

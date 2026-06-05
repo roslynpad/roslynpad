@@ -10,8 +10,6 @@ namespace RoslynPad;
 public partial class RenameSymbolDialog : INotifyPropertyChanged, IRenameSymbolDialog
 {
     private static readonly Regex _identifierRegex = IdentifierRegex();
-
-    private string? _symbolName;
     private InlineModalDialog? _dialog;
 
     public RenameSymbolDialog()
@@ -35,10 +33,10 @@ public partial class RenameSymbolDialog : INotifyPropertyChanged, IRenameSymbolD
 
     public string? SymbolName
     {
-        get => _symbolName;
+        get;
         set
         {
-            _symbolName = value;
+            field = value;
             OnPropertyChanged();
             RenameButton.IsEnabled = value != null && _identifierRegex.IsMatch(value);
         }

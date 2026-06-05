@@ -97,8 +97,8 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
 
     internal void Remove()
     {
-        if (_selectedIndex == null) return;
-        AllParameters[_selectedIndex.Value].IsRemoved = true;
+        if (SelectedIndex == null) return;
+        AllParameters[SelectedIndex.Value].IsRemoved = true;
         OnPropertyChanged(nameof(AllParameters));
         OnPropertyChanged(nameof(SignatureDisplay));
         OnPropertyChanged(nameof(IsOkButtonEnabled));
@@ -108,8 +108,8 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
 
     internal void Restore()
     {
-        if (_selectedIndex == null) return;
-        AllParameters[_selectedIndex.Value].IsRemoved = false;
+        if (SelectedIndex == null) return;
+        AllParameters[SelectedIndex.Value].IsRemoved = false;
         OnPropertyChanged(nameof(AllParameters));
         OnPropertyChanged(nameof(SignatureDisplay));
         OnPropertyChanged(nameof(IsOkButtonEnabled));
@@ -309,20 +309,19 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
         }
     }
 
-    private int? _selectedIndex;
     public int? SelectedIndex
     {
-        get => _selectedIndex;
+        get;
 
         set
         {
             var newSelectedIndex = value == -1 ? null : value;
-            if (newSelectedIndex == _selectedIndex)
+            if (newSelectedIndex == field)
             {
                 return;
             }
 
-            _selectedIndex = newSelectedIndex;
+            field = newSelectedIndex;
 
             OnPropertyChanged(nameof(CanMoveUp));
             OnPropertyChanged(nameof(CanMoveDown));

@@ -263,13 +263,11 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref field, Math.Clamp(value, 8, 72));
         } = DefaultFontSize;
 
-        private string _editorFontFamily = GetDefaultPlatformFontFamily();
-
         public string EditorFontFamily
         {
-            get => _editorFontFamily;
-            set => base.SetProperty(ref _editorFontFamily, string.IsNullOrWhiteSpace(value) ? GetDefaultPlatformFontFamily() : value.Trim());
-        }
+            get;
+            set => base.SetProperty(ref field, string.IsNullOrWhiteSpace(value) ? GetDefaultPlatformFontFamily() : value.Trim());
+        } = GetDefaultPlatformFontFamily();
 
         public double OutputFontSize
         {

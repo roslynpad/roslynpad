@@ -30,57 +30,49 @@ public sealed class TextMarker : TextSegment
         _service.Redraw(this);
     }
 
-    private Color? _backgroundColor;
-
     public Color? BackgroundColor
     {
-        get => _backgroundColor; set
+        get; set
         {
-            if (!EqualityComparer<Color?>.Default.Equals(_backgroundColor, value))
+            if (!EqualityComparer<Color?>.Default.Equals(field, value))
             {
-                _backgroundColor = value;
+                field = value;
                 Redraw();
             }
         }
     }
-
-    private Color? _foregroundColor;
 
     public Color? ForegroundColor
     {
-        get => _foregroundColor; set
+        get; set
         {
-            if (!EqualityComparer<Color?>.Default.Equals(_foregroundColor, value))
+            if (!EqualityComparer<Color?>.Default.Equals(field, value))
             {
-                _foregroundColor = value;
+                field = value;
                 Redraw();
             }
         }
     }
-
-    private FontWeight? _fontWeight;
 
     public FontWeight? FontWeight
     {
-        get => _fontWeight; set
+        get; set
         {
-            if (_fontWeight != value)
+            if (field != value)
             {
-                _fontWeight = value;
+                field = value;
                 Redraw();
             }
         }
     }
 
-    private FontStyle? _fontStyle;
-
     public FontStyle? FontStyle
     {
-        get => _fontStyle; set
+        get; set
         {
-            if (_fontStyle != value)
+            if (field != value)
             {
-                _fontStyle = value;
+                field = value;
                 Redraw();
             }
         }
@@ -90,15 +82,13 @@ public sealed class TextMarker : TextSegment
 
     public int Priority { get; set; }
 
-    private Color _markerColor;
-
     public Color MarkerColor
     {
-        get => _markerColor; set
+        get; set
         {
-            if (!EqualityComparer<Color>.Default.Equals(_markerColor, value))
+            if (!EqualityComparer<Color>.Default.Equals(field, value))
             {
-                _markerColor = value;
+                field = value;
                 Redraw();
             }
         }

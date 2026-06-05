@@ -9,16 +9,9 @@ namespace RoslynPad;
 [Export(typeof(ISaveDocumentDialog))]
 internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyPropertyChanged
 {
-    private string? _documentName;
-    private bool _showDoNotSave;
-    private InlineModalDialog _dialog;
-    private bool _allowNameEdit;
-    private string _filePath;
-    private SaveResult _result;
+    private InlineModalDialog? _dialog;
 
-#pragma warning disable CS8618 // Non-nullable field is uninitialized.
     public SaveDocumentDialog()
-#pragma warning restore CS8618 // Non-nullable field is uninitialized.
     {
         DataContext = this;
         InitializeComponent();
@@ -60,10 +53,10 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
 
     public string? DocumentName
     {
-        get => _documentName;
+        get;
         set
         {
-            SetProperty(ref _documentName, value);
+            SetProperty(ref field, value);
             SetSaveButtonStatus();
         }
     }
@@ -75,25 +68,25 @@ internal partial class SaveDocumentDialog : ISaveDocumentDialog, INotifyProperty
 
     public SaveResult Result
     {
-        get => _result; private set => SetProperty(ref _result, value);
+        get; private set => SetProperty(ref field, value);
     }
 
     public bool AllowNameEdit
     {
-        get => _allowNameEdit;
-        set => SetProperty(ref _allowNameEdit, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public bool ShowDoNotSave
     {
-        get => _showDoNotSave;
-        set => SetProperty(ref _showDoNotSave, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
-    public string FilePath
+    public string? FilePath
     {
-        get => _filePath;
-        private set => SetProperty(ref _filePath, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public Func<string, string>? FilePathFactory { get; set; }

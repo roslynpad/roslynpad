@@ -36,20 +36,19 @@ internal class PickMembersDialogViewModel : NotificationObject
         }
     }
 
-    private int? _selectedIndex;
     public int? SelectedIndex
     {
-        get => _selectedIndex;
+        get;
 
         set
         {
             var newSelectedIndex = value == -1 ? null : value;
-            if (newSelectedIndex == _selectedIndex)
+            if (newSelectedIndex == field)
             {
                 return;
             }
 
-            _selectedIndex = newSelectedIndex;
+            field = newSelectedIndex;
 
             OnPropertyChanged(nameof(CanMoveUp));
             OnPropertyChanged(nameof(MoveUpAutomationText));
@@ -152,12 +151,12 @@ internal class PickMembersDialogViewModel : NotificationObject
             memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeOptionalBrackets,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
-        private bool _isChecked = true;
+
         public bool IsChecked
         {
-            get => _isChecked;
-            set { SetProperty(ref _isChecked, value); }
-        }
+            get;
+            set { SetProperty(ref field, value); }
+        } = true;
 
         public string MemberName => MemberSymbol.ToDisplayString(s_memberDisplayFormat);
 
@@ -179,15 +178,14 @@ internal class PickMembersDialogViewModel : NotificationObject
             IsChecked = option.Value;
         }
 
-        private bool _isChecked;
         public bool IsChecked
         {
-            get => _isChecked;
+            get;
 
             set
             {
                 Option.Value = value;
-                SetProperty(ref _isChecked, value);
+                SetProperty(ref field, value);
             }
         }
 

@@ -37,25 +37,16 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     private ExecutionHost? _executionHost;
     private ExecutionHostParameters? _executionHostParameters;
     private CancellationTokenSource? _runCts;
-    private bool _isRunning;
-    private bool _isDirty;
-    private ExecutionPlatform? _platform;
     private bool _isSaving;
     private IDisposable? _viewDisposable;
     private Action<ExceptionResultObject?>? _onError;
     private Func<TextSpan>? _getSelection;
-    private string? _ilText;
     private bool _isInitialized;
-    private bool _isLiveMode;
     private Timer? _liveModeTimer;
-    private DocumentViewModel? _document;
-    private bool _isRestoring;
     private IReadOnlyList<ExecutionPlatform>? _availablePlatforms;
     private DocumentId? _documentId;
     private bool _restoreSuccessful;
-    private double? _reportedProgress;
     private SourceCodeKind? _sourceCodeKind;
-    private string? _selectedText;
 
     public string Id { get; }
     public string BuildPath { get; }
@@ -66,8 +57,8 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public string? SelectedText
     {
-        get => _selectedText;
-        set => SetProperty(ref _selectedText, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public IEnumerable<IResultObject> Results => _results;
@@ -77,10 +68,10 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public bool IsLiveMode
     {
-        get => _isLiveMode;
+        get;
         private set
         {
-            if (!SetProperty(ref _isLiveMode, value)) return;
+            if (!SetProperty(ref field, value)) return;
             RunCommand.RaiseCanExecuteChanged();
 
             if (value)
@@ -117,14 +108,14 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public DocumentViewModel? Document
     {
-        get => _document;
-        private set => SetProperty(ref _document, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public string ILText
     {
-        get => _ilText ?? string.Empty;
-        private set => SetProperty(ref _ilText, value);
+        get => field ?? string.Empty;
+        private set => SetProperty(ref field, value);
     }
 
     [ImportingConstructor]
@@ -262,8 +253,8 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public bool IsRestoring
     {
-        get => _isRestoring;
-        private set => SetProperty(ref _isRestoring, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public bool RestoreSuccessful
@@ -439,12 +430,12 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public ExecutionPlatform? Platform
     {
-        get => _platform;
+        get;
         set
         {
             if (value == null) throw new InvalidOperationException();
 
-            if (SetProperty(ref _platform, value))
+            if (SetProperty(ref field, value))
             {
                 if (_executionHost is not null)
                 {
@@ -669,10 +660,10 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public bool IsRunning
     {
-        get => _isRunning;
+        get;
         private set
         {
-            if (SetProperty(ref _isRunning, value))
+            if (SetProperty(ref field, value))
             {
                 _dispatcher.InvokeAsync(RunCommand.RaiseCanExecuteChanged);
             }
@@ -807,18 +798,18 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     public bool IsDirty
     {
-        get => _isDirty;
-        private set => SetProperty(ref _isDirty, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public double? ReportedProgress
     {
-        get => _reportedProgress;
+        get;
         private set
         {
-            if (_reportedProgress != value)
+            if (field != value)
             {
-                SetProperty(ref _reportedProgress, value);
+                SetProperty(ref field, value);
                 OnPropertyChanged(nameof(HasReportedProgress));
             }
         }

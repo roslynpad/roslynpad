@@ -26,18 +26,9 @@ public abstract class MainViewModel : NotificationObject, IDisposable
     private readonly DocumentFileWatcher _documentFileWatcher;
     private readonly string _editorConfigPath;
     private readonly VsCodeThemeReader _themeManager;
-
-    private OpenDocumentViewModel? _currentOpenDocument;
-    private IDocumentContent? _activeContent;
-    private bool _hasUpdate;
     private double _editorFontSize;
-    private string? _searchText;
-    private bool _isWithinSearchResults;
-    private bool _isInitialized;
     private DocumentViewModel _documentRoot;
     private DocumentWatcher? _documentWatcher;
-    private RoslynHost? _roslynHost;
-    private Theme? _theme;
     private bool? _isSystemDarkTheme;
 
     public IApplicationSettingsValues Settings { get; }
@@ -50,16 +41,16 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public RoslynHost RoslynHost
     {
-        get => _roslynHost.NotNull();
-        private set => _roslynHost = value;
+        get => field.NotNull();
+        private set;
     }
 
     public bool IsInitialized
     {
-        get => _isInitialized;
+        get;
         private set
         {
-            SetProperty(ref _isInitialized, value);
+            SetProperty(ref field, value);
             OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
     }
@@ -303,7 +294,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public bool HasUpdate
     {
-        get => _hasUpdate; private set => SetProperty(ref _hasUpdate, value);
+        get; private set => SetProperty(ref field, value);
     }
 
     private bool HasCachedUpdate()
@@ -370,16 +361,16 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public OpenDocumentViewModel? CurrentOpenDocument
     {
-        get => _currentOpenDocument;
-        private set => SetProperty(ref _currentOpenDocument, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public IDocumentContent? ActiveContent
     {
-        get => _activeContent;
+        get;
         set
         {
-            if (SetProperty(ref _activeContent, value))
+            if (SetProperty(ref field, value))
             {
                 if (value is OpenDocumentViewModel openDoc)
                 {
@@ -529,8 +520,8 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     private async Task CloseCurrentDocument()
     {
-        if (_activeContent == null) return;
-        await CloseTab(_activeContent).ConfigureAwait(false);
+        if (ActiveContent == null) return;
+        await CloseTab(ActiveContent).ConfigureAwait(false);
         if (!OpenDocuments.OfType<OpenDocumentViewModel>().Any())
         {
             CurrentOpenDocument = null;
@@ -702,10 +693,10 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public string? SearchText
     {
-        get => _searchText;
+        get;
         set
         {
-            if (SetProperty(ref _searchText, value) && Settings.SearchWhileTyping)
+            if (SetProperty(ref field, value) && Settings.SearchWhileTyping)
             {
                 SearchCommand.Execute();
             }
@@ -715,10 +706,10 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public bool IsWithinSearchResults
     {
-        get => _isWithinSearchResults;
+        get;
         private set
         {
-            SetProperty(ref _isWithinSearchResults, value);
+            SetProperty(ref field, value);
             OnPropertyChanged(nameof(CanClearSearch));
         }
     }
@@ -888,10 +879,10 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
     public Theme Theme
     {
-        get => _theme.NotNull();
+        get => field.NotNull();
         private set
         {
-            _theme = value;
+            field = value;
             ThemeChanged?.Invoke(this, EventArgs.Empty);
         }
     }

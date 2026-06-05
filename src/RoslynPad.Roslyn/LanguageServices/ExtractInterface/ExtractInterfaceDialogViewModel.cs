@@ -124,19 +124,18 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
         $"{(string.IsNullOrEmpty(_defaultNamespace) ? string.Empty : _defaultNamespace + ".")}{_interfaceName.Trim()}{_generatedNameTypeParameterSuffix}"
         ;
 
-    private InterfaceDestination _destination = InterfaceDestination.CurrentFile;
     public InterfaceDestination Destination
     {
-        get { return _destination; }
+        get;
         set
         {
-            if (SetProperty(ref _destination, value))
+            if (SetProperty(ref field, value))
             {
                 OnPropertyChanged(nameof(FileNameEnabled));
                 OnPropertyChanged(nameof(IsCurrentFileDestination));
             }
         }
-    }
+    } = InterfaceDestination.CurrentFile;
 
     public bool IsCurrentFileDestination
     {
@@ -162,12 +161,12 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
             memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeOptionalBrackets,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
-        private bool _isChecked = true;
+
         public bool IsChecked
         {
-            get => _isChecked;
-            set => SetProperty(ref _isChecked, value);
-        }
+            get;
+            set => SetProperty(ref field, value);
+        } = true;
 
         public string MemberName => MemberSymbol.ToDisplayString(s_memberDisplayFormat);
 

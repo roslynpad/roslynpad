@@ -41,8 +41,6 @@ internal class MetadataUtil
 
     public record TypeInfo(string Namespace, string Name)
     {
-        private string? _fullName;
-
-        public string FullName => _fullName ??= $"{Namespace}.{Name}";
+        public string FullName => field ??= $"{Namespace}.{Name}";
     }
 }
