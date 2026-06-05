@@ -99,6 +99,7 @@ internal class ApplicationSettings : IApplicationSettings
         {
             var json = File.ReadAllText(path);
             _values = JsonSerializer.Deserialize<SerializableValues>(json, s_serializerOptions) ?? new SerializableValues();
+            _values.LoadMissingDefaults();
             InitializeValues();
         }
         catch (Exception e)
@@ -139,6 +140,14 @@ internal class ApplicationSettings : IApplicationSettings
             LiveModeDelayMs = LiveModeDelayMsDefault;
             EditorFontFamily = GetDefaultPlatformFontFamily();
             DefaultUsings = GetDefaultUsings();
+        }
+
+        public void LoadMissingDefaults()
+        {
+            if (DefaultUsings is not { Length: > 0 } || DefaultUsings.All(string.IsNullOrWhiteSpace))
+            {
+                DefaultUsings = GetDefaultUsings();
+            }
         }
 
         private static string[] GetDefaultUsings() => [
