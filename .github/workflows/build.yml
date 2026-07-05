@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        submodules: true
     - name: Setup .NET 8
       uses: actions/setup-dotnet@v5
       with:
