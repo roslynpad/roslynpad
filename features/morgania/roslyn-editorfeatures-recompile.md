@@ -54,8 +54,11 @@ Prefer the least invasive fix, in this order:
   cannot be fixed from the outside: the IgnoresAccessChecksTo publicizer makes `internal virtual`
   package members `public` in reference assemblies, so upstream `internal override`s fail with
   CS0507 and the modifier must be widened to `public`. The `GeneratePatchedCompile` target
-  generates a patched copy into the intermediate directory and swaps the `Compile` item; the patch
-  task **fails the build if the expected text is missing**, so upgrades can't silently drift.
+  generates a patched copy into the intermediate directory and adds the copy to the `Compile` list;
+  the original is excluded via a **static `<Compile Remove="@(PatchedCompile)" />`** (outside the
+  target) so that the remove is evaluated during static item evaluation and reliably matches the
+  glob-expanded items on all platforms (including Windows CI). The patch task **fails the build if
+  the expected text is missing**, so upgrades can't silently drift.
 - **`RestoreHelper`** — packages that exist only on the Azure DevOps feeds (not nuget.org), e.g.
   `Microsoft.CodeAnalysis.LanguageServer.Protocol` and `Microsoft.CodeAnalysis.Remote.Workspaces`,
   are restored there at `$(RoslynPrivateVersion)` and injected as raw `Reference` items via the
