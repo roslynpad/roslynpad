@@ -190,6 +190,8 @@
     files fail with CS0507 and must be widened to public. A patched copy is generated into the
     intermediate directory and compiled instead of the original. The patch task fails the build if
     the expected text is not found (e.g. after a Roslyn upgrade). File names must be unique.
+    NOTE: The Compile Remove must be in a static ItemGroup (not inside a Target) so that MSBuild
+    correctly matches the glob-expanded items on all platforms, including Windows CI.
   -->
   <ItemGroup>
     <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/RenameTracking/RenameTrackingTaggerProvider.RenameTrackingCodeAction.cs"
@@ -201,6 +203,12 @@
     <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/Suggestions/RefineUsingCopilot/RefineUsingCopilotCodeAction.cs"
                     Find="internal override async Task&lt;bool&gt; TryApplyAsync"
                     ReplaceWith="public override async Task&lt;bool&gt; TryApplyAsync" />
+  </ItemGroup>
+
+  <!-- Remove the originals from Compile statically (outside any Target) so the Remove reliably
+       matches the glob-expanded items. The patched copies are added by GeneratePatchedCompile. -->
+  <ItemGroup>
+    <Compile Remove="@(PatchedCompile)" />
   </ItemGroup>
 
   <UsingTask TaskName="PatchCompileFiles" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildBinPath)/Microsoft.Build.Tasks.Core.dll">
@@ -236,7 +244,6 @@
   <Target Name="GeneratePatchedCompile" BeforeTargets="CoreCompile" Condition="'@(PatchedCompile)' != ''">
     <PatchCompileFiles Files="@(PatchedCompile)" OutputDirectory="$(IntermediateOutputPath)PatchedCompile" />
     <ItemGroup>
-      <Compile Remove="@(PatchedCompile)" />
       <Compile Include="@(PatchedCompile->'$(IntermediateOutputPath)PatchedCompile/%(Filename)%(Extension)')" />
     </ItemGroup>
   </Target>
