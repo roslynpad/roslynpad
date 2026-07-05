@@ -25,7 +25,7 @@ public sealed class SecretManager : ISecretManager, IDisposable
     /// <summary>
     /// Gets the default <see cref="SecretManager"/> instance using app name "roslynpad".
     /// </summary>
-    public static SecretManager Default => field ??= new SecretManager("roslynpad");
+    public static SecretManager Default { get; } = new("roslynpad");
 
     /// <summary>
     /// Creates a new <see cref="SecretManager"/> with the specified app name.

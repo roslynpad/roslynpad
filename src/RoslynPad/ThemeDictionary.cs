@@ -1,6 +1,4 @@
-﻿#pragma warning disable CA1010 // Generic interface should also be implemented
-
-using RoslynPad.Themes;
+﻿using RoslynPad.Themes;
 
 namespace RoslynPad;
 
@@ -13,11 +11,6 @@ public class ThemeDictionary : ThemeDictionaryBase
     public ThemeDictionary(Theme theme) : base(theme)
     {
         Initialize(theme);
-        SetThemeColorForSystemKeys(Foreground, SystemColors.WindowTextBrushKey, SystemColors.WindowTextColorKey);
-        SetThemeColorForSystemKeys(PanelBackground, SystemColors.WindowBrushKey, SystemColors.WindowColorKey);
-        SetThemeColorForSystemKeys(FocusBorder, SystemColors.ActiveBorderBrushKey, SystemColors.ActiveBorderColorKey);
-        SetThemeColorForSystemKeys(PanelBackground, SystemColors.ControlBrushKey, SystemColors.ControlColorKey);
-        SetThemeColorForSystemKeys(TabBarBorder, SystemColors.ControlDarkBrushKey, SystemColors.ControlDarkColorKey);
     }
 
     public const string TabBarBackground = "editorGroupHeader.tabsBackground";
@@ -28,6 +21,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string ScrollBarShadow = "scrollbar.shadow";
     public const string EditorBackground = "editor.background";
     public const string EditorForeground = "editor.foreground";
+    public const string EditorSelectionBackground = "editor.selectionBackground";
     public const string Foreground = "foreground";
     public const string PanelBackground = "panel.background";
     public const string StatusBarBackground = "statusBar.background";
@@ -38,7 +32,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string ListActiveSelectionBackground = "list.activeSelectionBackground";
     public const string ListActiveSelectionForeground = "list.activeSelectionForeground";
     public const string ListInactiveSelectionBackground = "list.inactiveSelectionBackground";
-    public const string TabActiveBackground ="tab.activeBackground";
+    public const string TabActiveBackground = "tab.activeBackground";
     public const string TabInactiveBackground = "tab.inactiveBackground";
     public const string TabActiveForeground = "tab.activeForeground";
     public const string TabInactiveForeground = "tab.inactiveForeground";
@@ -50,9 +44,8 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string TabBorder = "tab.border";
     public const string InputBorder = "input.border";
     public const string TitleBarActiveBackground = "titleBar.activeBackground";
-    public const string InputBackground = "input.background";
-    public const string InputForeground = "input.foreground";
     public const string FoldingControlForeground = "editorGutter.foldingControlForeground";
+
     private void Initialize(Theme theme)
     {
         if (theme.Colors is null)

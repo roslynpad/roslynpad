@@ -1,4 +1,27 @@
 <Project>
+  <!--
+    IgnoresAccessChecksToGenerator emits both the [assembly: IgnoresAccessChecksTo(...)] attributes
+    and the (internal) attribute class definition into every consuming project. Projects that also
+    receive InternalsVisibleTo from another consuming project would see two definitions (CS0436).
+    Opting in via IgnoresAccessChecksToOmitAttributeDefinition compiles only the assembly-level
+    attributes (still required by the runtime) and uses the attribute class defined by a referenced
+    assembly through InternalsVisibleTo. The Substring call fails the build if the generated file's
+    shape ever changes.
+  -->
+  <Target Name="OmitIgnoresAccessChecksToAttributeDefinition"
+          AfterTargets="IgnoresAccessChecksToGenerator"
+          Condition=" '$(IgnoresAccessChecksToOmitAttributeDefinition)' == 'true' And Exists('$(_IACTG_CodeFilePath)') ">
+    <PropertyGroup>
+      <_IACTG_FullText>$([System.IO.File]::ReadAllText('$(_IACTG_CodeFilePath)'))</_IACTG_FullText>
+      <_IACTG_AttributesOnlyText>$(_IACTG_FullText.Substring(0, $(_IACTG_FullText.IndexOf('namespace System.Runtime.CompilerServices'))))</_IACTG_AttributesOnlyText>
+      <_IACTG_AttributesOnlyFilePath>$(_IACTG_IntermediatePath)/IgnoresAccessChecksTo.AttributesOnly.cs</_IACTG_AttributesOnlyFilePath>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_IACTG_AttributesOnlyFilePath)" Lines="$(_IACTG_AttributesOnlyText)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Remove="$(_IACTG_CodeFilePath)" />
+      <Compile Include="$(_IACTG_AttributesOnlyFilePath)" />
+    </ItemGroup>
+  </Target>
   <ItemGroup Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
     <ProjectReference Include="$(RepoRoot)src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=$(EarliestSupportedTargetFramework)" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier" />
     <ProjectReference Include="$(RepoRoot)src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=netstandard2.0" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier" />

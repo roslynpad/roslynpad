@@ -24,13 +24,9 @@ function Get-PackageRoot {
     $RuntimeIdentifier
   )
 
-  $project = 'RoslynPad.Avalonia'
+  $project = 'RoslynPad'
   $targetFramework = Get-TargetFramework
-  if ($RuntimeIdentifier -like 'win-*') {
-    $project = 'RoslynPad'
-    $path = Join-Path 'bin' 'Release' "$targetFramework-windows" $RuntimeIdentifier 'publish'
-  }
-  elseif ($RuntimeIdentifier -like 'osx-*') {
+  if ($RuntimeIdentifier -like 'osx-*') {
     $path = Join-Path 'bin' 'Release' "$targetFramework-macos" $RuntimeIdentifier
   }
   else {
@@ -145,7 +141,7 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
   Write-Host "Building $PackageName..."
 
   $isWindowsPackage = $RuntimeIdentifier -like 'win-*'
-  $buildPath = Join-Path '..' 'src' ($isWindowsPackage ? 'RoslynPad' : 'RoslynPad.Avalonia')
+  $buildPath = Join-Path '..' 'src' 'RoslynPad'
   dotnet publish $buildPath -r $RuntimeIdentifier -p:ContinuousIntegrationBuild=true ($RuntimeIdentifier -like 'osx-*' ? '-p:SignMacBundle=true' : $null)
 
   $rootPath = Get-PackageRoot -RuntimeIdentifier $RuntimeIdentifier

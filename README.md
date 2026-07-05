@@ -2,7 +2,7 @@
 
 ![RoslynPad](src/RoslynPad/Resources/RoslynPad.png)
 
-A cross-platform C# editor based on Roslyn and AvalonEdit
+A cross-platform C# editor powered by Roslyn and the Morgania editor - an Avalonia editor based on the [vs-editor-api](https://github.com/microsoft/vs-editor-api) repo.
 
 ## Installing
 

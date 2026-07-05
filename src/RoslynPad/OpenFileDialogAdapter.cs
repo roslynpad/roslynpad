@@ -1,4 +1,6 @@
-using Microsoft.Win32;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using RoslynPad.UI;
 
 namespace RoslynPad;
@@ -6,43 +8,39 @@ namespace RoslynPad;
 [Export(typeof(IOpenFileDialog))]
 internal class OpenFileDialogAdapter : IOpenFileDialog
 {
-    private readonly OpenFileDialog _dialog;
+    public bool AllowMultiple { get; set; }
 
-    public OpenFileDialogAdapter()
-    {
-        _dialog = new OpenFileDialog();
-    }
+    public FileDialogFilter? Filter { get; set; }
 
-    public bool AllowMultiple
-    {
-        get => _dialog.Multiselect;
-        set => _dialog.Multiselect = value;
-    }
+    public string InitialDirectory { get; set; } = string.Empty;
 
-    public FileDialogFilter Filter
-    {
-        set => _dialog.Filter = value is null ? string.Empty : $"{value.Header}|{string.Join(";", value.Extensions.Select(e => "*." + e))}";
-    }
+    public string FileName { get; set; } = string.Empty;
 
-    public string InitialDirectory
+    public async Task<string[]?> ShowAsync()
     {
-        get => _dialog.InitialDirectory;
-        set => _dialog.InitialDirectory = value;
-    }
+        var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Windows.FirstOrDefault(w => w.IsActive);
 
-    public string FileName
-    {
-        get => _dialog.FileName;
-        set => _dialog.FileName = value;
-    }
-
-    public Task<string[]?> ShowAsync()
-    {
-        if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
+        if (window == null)
         {
-            return Task.FromResult<string[]?>(_dialog.FileNames);
+            return null;
         }
 
-        return Task.FromResult<string[]?>(null);
+        var options = new FilePickerOpenOptions
+        {
+            AllowMultiple = AllowMultiple,
+            SuggestedStartLocation = await window.StorageProvider.TryGetFolderFromPathAsync(InitialDirectory).ConfigureAwait(false),
+        };
+
+        if (Filter != null)
+        {
+            options.FileTypeFilter =
+            [
+                new FilePickerFileType(Filter.Header) { Patterns = Filter.Extensions }
+            ];
+        }
+
+        var files = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
+
+        return files.Select(file => file.Path.ToString()).ToArray();
     }
 }

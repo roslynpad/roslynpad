@@ -1,0 +1,12 @@
+<Project Sdk="MSTest.Sdk">
+  <ItemGroup>
+    <PackageReference Include="System.Composition" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The full editor composition, including the IntelliSense presenter layer. -->
+    <ProjectReference Include="..\..\src\Morgania.Editor\Morgania.Editor.csproj" />
+  </ItemGroup>
+</Project>

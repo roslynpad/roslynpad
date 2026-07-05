@@ -1,13 +1,14 @@
 ﻿using RoslynPad.UI;
+using Avalonia.Threading;
 
 namespace RoslynPad;
 
 [Export(typeof(IAppDispatcher))]
-public class AppDispatcher : DispatcherObject, IAppDispatcher
+public class AppDispatcher : IAppDispatcher
 {
     public AppDispatcher()
     {
-        Application.Current.DispatcherUnhandledException += (_, args) =>
+        Dispatcher.UIThread.UnhandledException += (_, args) =>
         {
             if (UnhandledException is { } handler)
             {
@@ -26,24 +27,21 @@ public class AppDispatcher : DispatcherObject, IAppDispatcher
     public Task InvokeTaskAsync(Action action, AppDispatcherPriority priority = AppDispatcherPriority.Normal,
         CancellationToken cancellationToken = new CancellationToken())
     {
-        return InternalInvoke(action, priority, cancellationToken).Task;
+        return InternalInvoke(action, priority, cancellationToken);
     }
 
     public event Action<Exception>? UnhandledException;
 
-    private DispatcherOperation InternalInvoke(Action action, AppDispatcherPriority priority, CancellationToken cancellationToken)
+    private Task InternalInvoke(Action action, AppDispatcherPriority priority, CancellationToken cancellationToken)
     {
-        return Dispatcher.InvokeAsync(action, ConvertPriority(priority), cancellationToken);
+        return Dispatcher.UIThread.InvokeAsync(action, ConvertPriority(priority), cancellationToken).GetTask();
     }
 
-    private DispatcherPriority ConvertPriority(AppDispatcherPriority priority)
+    private DispatcherPriority ConvertPriority(AppDispatcherPriority priority) => priority switch
     {
-        return priority switch
-        {
-            AppDispatcherPriority.Normal => DispatcherPriority.Normal,
-            AppDispatcherPriority.High => DispatcherPriority.Send,
-            AppDispatcherPriority.Low => DispatcherPriority.Background,
-            _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null),
-        };
-    }
+        AppDispatcherPriority.Normal => DispatcherPriority.Normal,
+        AppDispatcherPriority.High => DispatcherPriority.Send,
+        AppDispatcherPriority.Low => DispatcherPriority.Background,
+        _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null),
+    };
 }

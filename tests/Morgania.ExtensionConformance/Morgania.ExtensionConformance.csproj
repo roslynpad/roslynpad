@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Nullable>disable</Nullable>
+    <AnalysisMode>None</AnalysisMode>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="System.Composition.AttributedModel" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Morgania.Editor.Abstractions\Morgania.Editor.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

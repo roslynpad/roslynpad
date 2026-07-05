@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Morgania.Demo.EditorFeatures</RootNamespace>
+    <AnalysisMode>None</AnalysisMode>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);VSTHRD002;VSTHRD110</NoWarn>
+    <IsPackable>false</IsPackable>
+    <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>
+  </PropertyGroup>
+
+  <!-- Microsoft.CodeAnalysis.Remote.Workspaces (VisualStudioMefHostServices) and
+       Microsoft.CodeAnalysis.LanguageServer.Protocol are only on the Azure DevOps feeds;
+       RestoreHelper restores them and hands back raw Reference items. -->
+  <ItemGroup>
+    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
+  </ItemGroup>
+
+  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
+    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
+      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
+    </MSBuild>
+    <ItemGroup>
+      <Reference Include="@(LibReference)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" />
+    <PackageReference Include="System.Composition" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Morgania.CodeAnalysis.Editor/Morgania.CodeAnalysis.Editor.csproj" />
+  </ItemGroup>
+
+  <!-- Workspaces internals are used for the ITextBuffer <-> SourceTextContainer bridge helpers;
+       the smoke test drives Roslyn's internal completion/snippets machinery. -->
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
+  </ItemGroup>
+
+</Project>

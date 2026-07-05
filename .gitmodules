@@ -1,0 +1,3 @@
+[submodule "vendor/roslyn"]
+	path = vendor/roslyn
+	url = https://github.com/dotnet/roslyn

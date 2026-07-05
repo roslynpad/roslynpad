@@ -1,0 +1,9 @@
+<Project Sdk="MSTest.Sdk">
+  <ItemGroup>
+    <PackageReference Include="System.Composition" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The full editor composition: implementation plus (transitively) the abstractions. -->
+    <ProjectReference Include="..\..\src\Morgania.Editor\Morgania.Editor.csproj" />
+  </ItemGroup>
+</Project>

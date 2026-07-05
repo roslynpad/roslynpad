@@ -1,5 +1,5 @@
-﻿#pragma warning disable CA1010 // Generic interface should also be implemented
-
+﻿using Avalonia.Controls;
+using Avalonia.Media;
 using RoslynPad.Themes;
 
 namespace RoslynPad;
@@ -17,7 +17,7 @@ public abstract class ThemeDictionaryBase : ResourceDictionary
         this[GetColorKey(name)] = brush.Color;
     }
 
-    protected void SetThemeColorForSystemKeys(string name, ResourceKey brushKey, ResourceKey colorKey)
+    protected void SetThemeColorForSystemKeys(string name, object brushKey, object colorKey)
     {
         this[brushKey] = this[name];
         this[colorKey] = this[GetColorKey(name)];
@@ -30,12 +30,7 @@ public abstract class ThemeDictionaryBase : ResourceDictionary
         return theme.TryGetColor(id) is { } color ? CreateBrush(ParseColor(color)) : null;
     }
 
-    private static SolidColorBrush CreateBrush(Color color)
-    {
-        var brush = new SolidColorBrush(color);
-        brush.Freeze();
-        return brush;
-    }
+    private static SolidColorBrush CreateBrush(Color color) => new(color);
 
-    private static Color ParseColor(string color) => (Color)ColorConverter.ConvertFromString(color);
+    private static Color ParseColor(string color) => Color.Parse(color);
 }

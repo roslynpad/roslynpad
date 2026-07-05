@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The editor contract surface: every vendored vs-editor-api "Def" project merged into a
+    single abstractions assembly. Sources stay in place under vendor/ (upstream diffability);
+    extensions compile against this assembly only (see Morgania.ExtensionConformance).
+  -->
+  <PropertyGroup>
+    <AssemblyName>Morgania.Editor.Abstractions</AssemblyName>
+    <RootNamespace>Microsoft.VisualStudio</RootNamespace>
+    <Description>The Morgania editor's contract surface, based on the vs-editor-api repo: the Text, Language, and Core "Def" assemblies merged into a single cross-platform assembly. Editor extensions compile against this package only.</Description>
+    <IsPackable>true</IsPackable>
+    <!-- Vendored-code relaxations, carried over from the retired
+         vendor/vs-editor-api/Directory.Build.props: the code predates repo conventions.
+         Warnings-as-errors stays on, with upstream's own NoWarn baseline. -->
+    <Nullable>disable</Nullable>
+    <!-- The embedded Strings resources are the neutral (English) set (CA1824). -->
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AnalysisMode>None</AnalysisMode>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);1573;1591;1572;1570;0618;0649;0436;0672;3021;SYSLIB0001;SYSLIB0051;VSTHRD001;VSTHRD002;VSTHRD003;VSTHRD010;VSTHRD012;VSTHRD100;VSTHRD103;VSTHRD105;VSTHRD106;VSTHRD108;VSTHRD110;VSTHRD200</NoWarn>
+    <VendorEditorRoot>..\..\vendor\vs-editor-api\src\Editor\</VendorEditorRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Replaces the per-assembly InternalsVisibleTo grants the Def assemblies gave the
+         Impl assemblies (see the excluded AssemblyInfo files). -->
+    <InternalsVisibleTo Include="Morgania.Editor" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="StreamJsonRpc" />
+    <PackageReference Include="System.ComponentModel.Composition" />
+    <PackageReference Include="System.Composition.AttributedModel" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(VendorEditorRoot)Core\Def\**\*.cs" LinkBase="Core" />
+    <Compile Include="$(VendorEditorRoot)Language\Def\**\*.cs" LinkBase="Language" />
+    <Compile Include="$(VendorEditorRoot)Text\Def\**\*.cs" LinkBase="Text" />
+    <!-- Per-assembly attribute files: their InternalsVisibleTo lists are superseded by the
+         single grant above. -->
+    <Compile Remove="$(VendorEditorRoot)**\*AssemblyInfo.cs" />
+    <!-- Leftovers from the retired per-assembly projects in stale checkouts. -->
+    <Compile Remove="$(VendorEditorRoot)**\obj\**;$(VendorEditorRoot)**\bin\**" />
+    <!-- LogicalName pins the manifest name the checked-in Strings.Designer.cs looks up;
+         the default here would derive from this project's RootNamespace and break it. -->
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Def\TextData\Strings.resx" Link="vendor\resources\TextData.Strings.resx" LogicalName="Morgania.Text.Strings.resources" />
+  </ItemGroup>
+</Project>

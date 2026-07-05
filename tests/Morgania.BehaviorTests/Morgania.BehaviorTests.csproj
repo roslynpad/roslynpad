@@ -1,0 +1,16 @@
+<Project Sdk="MSTest.Sdk">
+  <ItemGroup>
+    <PackageReference Include="System.Composition" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The headless harness is shared with the geometry tests. -->
+    <Compile Include="..\Morgania.GeometryTests\HeadlessEditor.cs" Link="HeadlessEditor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Morgania.Editor\Morgania.Editor.csproj" />
+    <!-- The contract-only extension for the M5 recompile-conformance test. -->
+    <ProjectReference Include="..\Morgania.ExtensionConformance\Morgania.ExtensionConformance.csproj" />
+  </ItemGroup>
+</Project>

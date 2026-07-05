@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Morgania.CodeAnalysis.Editor</RootNamespace>
+    <Description>The Roslyn-powered C# editor for Avalonia: VS-MEF composition plus the editor-host services (classification, squiggles, light bulb, key bridge, glyphs, refactoring dialogs) for the Morgania editor.</Description>
+    <IsPackable>true</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Morgania.CodeAnalysis.EditorFeatures defines the attribute and grants us internals. -->
+    <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
+  </ItemGroup>
+  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
+    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
+      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
+    </MSBuild>
+    <ItemGroup>
+      <Reference Include="@(LibReference)" />
+      <Content Include="@(LibReference)" PackagePath="lib/$(TargetFramework)" Pack="true" />
+    </ItemGroup>
+  </Target>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" />
+    <PackageReference Include="System.Composition" />
+    <!-- Deliberately newer than $(MessagePackVersion) (what the private Remote.Workspaces binaries
+         bind to): 3.1.6 has known vulnerabilities (NU1902/NU1903). See
+         Morgania.CodeAnalysis.EditorFeatures.csproj for the full story. -->
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Morgania.CodeAnalysis.EditorFeatures/Morgania.CodeAnalysis.EditorFeatures.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.EditorFeatures" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
+    <!-- VisualStudioMefHostServices (the VS-MEF HostServices adapter) is internal. -->
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
+  </ItemGroup>
+</Project>

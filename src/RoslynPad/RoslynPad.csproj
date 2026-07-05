@@ -1,59 +1,104 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(DefaultTargetFramework)-windows</TargetFramework>
-    <RuntimeIdentifier Condition=" '$(IsMacOs)' == 'true' or '$(IsLinux)' == 'true' ">win-x64</RuntimeIdentifier>
-    <UseWPF>true</UseWPF>
-    <OutputType>WinExe</OutputType>
-    <ApplicationIcon>Resources\RoslynPad.ico</ApplicationIcon>
-    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-    <NoWarn>1701;1702</NoWarn>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <OutputType Condition=" '$(IsMacOS)' == 'true' ">Exe</OutputType>
+    <OutputType Condition=" '$(IsMacOS)' != 'true' ">WinExe</OutputType>
+    <AssemblyName>RoslynPad</AssemblyName>
+    <RootNamespace>RoslynPad</RootNamespace>
+    <ApplicationId>net.roslynpad</ApplicationId>
+    <ApplicationTitle>RoslynPad</ApplicationTitle>
+    <ApplicationIcon>Resources/RoslynPad.ico</ApplicationIcon>
     <Version>$(RoslynPadVersion)</Version>
     <CopyRoslynPadRuntimeAssemblies>true</CopyRoslynPadRuntimeAssemblies>
-    <SelfContained>true</SelfContained>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SelfContained>false</SelfContained>
+    <CreatePackage>false</CreatePackage>
+    <LinkMode>None</LinkMode>
+    <TrimMode>partial</TrimMode>
+    <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsMacBuild)' == 'true'">
+    <TargetFramework>$(DefaultTargetFramework)-macos</TargetFramework>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsMacBuild)' == 'true' and '$(SignMacBundle)' == 'true'">
+    <EnableCodeSigning>true</EnableCodeSigning>
+    <CodesignKey>Developer ID Application</CodesignKey>
+    <UseHardenedRuntime>true</UseHardenedRuntime>
+    <UseSecureTimestamp>true</UseSecureTimestamp>
+  </PropertyGroup>
+  <!-- hack to force resizetizer to work outside of MAUI -->
+  <PropertyGroup Condition=" '$(IsMacBuild)' == 'true' ">
+    <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>
+    <ResizetizerIncludeSelfProject>true</ResizetizerIncludeSelfProject>
+    <OptimizePNGs>true</OptimizePNGs>
+    <_XSAppIconAssets>Assets.xcassets/appicon.appiconset</_XSAppIconAssets>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="**\*.xshd" />
-    <EmbeddedResource Include="**\*.xshd" />
+    <MauiIcon Include="$(RepoRoot)/deploy/resources/macos/appicon.svg" />
+    <AvaloniaResource Include="Resources\RoslynPad.ico" />
+    <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
+    <EmbeddedResource Include="Editor\Resources\*.json" LogicalName="RoslynPad.Editor.Resources.%(Filename)%(Extension)" />
   </ItemGroup>
+  <!-- Microsoft.CodeAnalysis.Remote.Workspaces (VisualStudioMefHostServices) and
+       Microsoft.CodeAnalysis.LanguageServer.Protocol are only on the Azure DevOps feeds;
+       RestoreHelper restores them and hands back raw Reference items. -->
   <ItemGroup>
-    <ProjectReference Include="..\RoslynPad.Common.UI\RoslynPad.Common.UI.csproj" />
-    <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj" />
+    <ProjectReference Include="..\RestoreHelper\RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
   </ItemGroup>
+  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
+    <MSBuild Projects="..\RestoreHelper\RestoreHelper.csproj" Targets="GetLibReferences">
+      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
+    </MSBuild>
+    <ItemGroup>
+      <Reference Include="@(LibReference)" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
-    <PackageReference Include="AvalonLibrary" />
-    <PackageReference Include="Dirkster.AvalonDock" />
-    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" />
-    <PackageReference Include="Mono.Cecil" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="DialogHost.Avalonia" />
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Model.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="Microsoft.Maui.Resizetizer" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" />
+    <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="NuGet.Commands" />
+    <PackageReference Include="NuGet.Versioning" />
+    <PackageReference Include="System.Composition" />
+    <PackageReference Include="System.Reactive.Core" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Bug in SDK? -->
-    <Using Include="System" />
-    <Using Include="System.Globalization" />
-    <Using Include="System.Reflection" />
-    <Using Include="System.ComponentModel" />
-    <Using Include="System.Composition" />
-    <Using Include="System.Collections.Generic" />
-    <Using Include="System.Collections.Immutable" />
-    <Using Include="System.Runtime.CompilerServices" />
-    <Using Include="System.IO" />
-    <Using Include="System.Text" />
-    <Using Include="System.Text.RegularExpressions" />
-    <Using Include="System.Linq" />
-    <Using Include="System.Net.Http" />
-    <Using Include="System.Threading" />
-    <Using Include="System.Threading.Tasks" />
-    <Using Include="System.Windows" />
-    <Using Include="System.Windows.Data" />
-    <Using Include="System.Windows.Documents" />
-    <Using Include="System.Windows.Media" />
-    <Using Include="System.Windows.Media.Animation" />
-    <Using Include="System.Windows.Input" />
-    <Using Include="System.Windows.Controls" />
-    <Using Include="System.Windows.Threading" />
+    <ProjectReference Include="..\RoslynPad.Runtime\RoslynPad.Runtime.csproj"
+      SetTargetFramework="TargetFramework=$(EarliestSupportedTargetFramework)"
+      GlobalPropertiesToRemove="RuntimeIdentifier" />
+    <ProjectReference Include="..\RoslynPad.Runtime.Secrets\RoslynPad.Runtime.Secrets.csproj" />
+    <ProjectReference Include="..\RoslynPad.Themes\RoslynPad.Themes.csproj" />
+    <ProjectReference Include="..\Morgania.CodeAnalysis.Editor\Morgania.CodeAnalysis.Editor.csproj" />
+  </ItemGroup>
+  <!-- Roslyn internals used by the host layer (Roslyn/) and the editor integration:
+       parse/compilation internals, Roslyn.Utilities, VisualStudioMefHostServices, … -->
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="ResultsView.axaml.cs">
+      <DependentUpon>ResultsView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\RoslynPad.Themes\Themes\*.json"
+      Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The editor implementation: every vendored vs-editor-api "Impl" and "Util" project plus
+    the Morgania-authored view and IntelliSense presenter layers, merged into one assembly.
+    Vendored sources stay in place under vendor/ (upstream diffability) and are compiled here.
+  -->
+  <PropertyGroup>
+    <AssemblyName>Morgania.Editor</AssemblyName>
+    <RootNamespace>Microsoft.VisualStudio</RootNamespace>
+    <Description>The Morgania code editor for Avalonia, based on the vs-editor-api repo: text model, projection, classification, tagging, IntelliSense, and multi-caret, with an Avalonia rendering, input, and popup layer.</Description>
+    <IsPackable>true</IsPackable>
+    <!-- The vendored majority predates repo conventions: nullable is off at project level
+         (with upstream's NoWarn baseline, carried from the retired vendor
+         Directory.Build.props); Morgania-authored files opt back in with #nullable enable.
+         Analyzers stay on - vendor/vs-editor-api/.editorconfig silences them for vendored
+         files only. -->
+    <Nullable>disable</Nullable>
+    <!-- The embedded Strings resources are the neutral (English) set (CA1824). -->
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <NoWarn>$(NoWarn);1573;1591;1572;1570;0618;0649;0436;0672;3021;SYSLIB0001;SYSLIB0051;VSTHRD001;VSTHRD002;VSTHRD003;VSTHRD010;VSTHRD012;VSTHRD100;VSTHRD103;VSTHRD105;VSTHRD106;VSTHRD108;VSTHRD110;VSTHRD200</NoWarn>
+    <VendorEditorRoot>..\..\vendor\vs-editor-api\src\Editor\</VendorEditorRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Morgania.IntellisenseTests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" />
+    <PackageReference Include="Microsoft.VisualStudio.Validation" />
+    <PackageReference Include="System.Composition.AttributedModel" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Morgania.Editor.Abstractions\Morgania.Editor.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(VendorEditorRoot)Core\Impl\**\*.cs" LinkBase="vendor\Core" />
+    <Compile Include="$(VendorEditorRoot)Language\Impl\**\*.cs" LinkBase="vendor\Language\Impl" />
+    <Compile Include="$(VendorEditorRoot)Language\Util\**\*.cs" LinkBase="vendor\Language\Util" />
+    <Compile Include="$(VendorEditorRoot)Text\Impl\**\*.cs" LinkBase="vendor\Text\Impl" />
+    <Compile Include="$(VendorEditorRoot)Text\Util\**\*.cs" LinkBase="vendor\Text\Util" />
+    <!-- Per-assembly attribute files: stale InternalsVisibleTo lists between assemblies
+         that are now this one. -->
+    <Compile Remove="$(VendorEditorRoot)**\*AssemblyInfo.cs" />
+    <!-- Upstream exclusion carried over from the retired TextUIUtil.csproj. -->
+    <Compile Remove="$(VendorEditorRoot)Text\Util\TextUIUtil\WpfHelper.cs" />
+    <!-- Leftovers from the retired per-assembly projects in stale checkouts. -->
+    <Compile Remove="$(VendorEditorRoot)**\obj\**;$(VendorEditorRoot)**\bin\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- LogicalName pins the manifest names the checked-in Strings.Designer.cs files look
+         up; the defaults here would derive from this project's RootNamespace and break
+         them. (MultiCaretImpl's designer already disagreed with its old project's
+         RootNamespace - MultiSelection vs MultiCaret - so its lookup only works now.) -->
+    <EmbeddedResource Include="$(VendorEditorRoot)Core\Impl\ContentType\Strings.resx" Link="vendor\resources\Impl.ContentType.Strings.resx" LogicalName="Morgania.CoreUtilityImplementation.ContentType.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Language\Impl\Language\Strings.resx" Link="vendor\resources\Impl.Language.Strings.resx" LogicalName="Morgania.Language.Intellisense.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\BraceCompletion\Strings.resx" Link="vendor\resources\Impl.BraceCompletion.Strings.resx" LogicalName="Morgania.Text.BraceCompletion.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\ClassificationType\Strings.resx" Link="vendor\resources\Impl.ClassificationType.Strings.resx" LogicalName="Morgania.Logic.Text.Classification.LookUp.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\Commanding\CommandingStrings.resx" Link="vendor\resources\Impl.Commanding.CommandingStrings.resx" LogicalName="Morgania.UI.Text.Commanding.Implementation.CommandingStrings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\EditorOperations\Strings.resx" Link="vendor\resources\Impl.EditorOperations.Strings.resx" LogicalName="Morgania.UI.Text.EditorOperations.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\EditorPrimitives\Strings.resx" Link="vendor\resources\Impl.EditorPrimitives.Strings.resx" LogicalName="Morgania.UI.Text.EditorPrimitives.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\TextBufferUndoManager\Strings.resx" Link="vendor\resources\Impl.TextBufferUndoManager.Strings.resx" LogicalName="Morgania.Logic.Text.BufferUndoManager.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\TextModel\Strings.resx" Link="vendor\resources\Impl.TextModel.Strings.resx" LogicalName="Morgania.Text.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Impl\XPlat\MultiCaretImpl\Strings.resx" Link="vendor\resources\XPlat.MultiCaretImpl.Strings.resx" LogicalName="Morgania.Text.MultiSelection.Implementation.Strings.resources" />
+    <EmbeddedResource Include="$(VendorEditorRoot)Text\Util\TextUIUtil\Strings.resx" Link="vendor\resources\Util.TextUIUtil.Strings.resx" LogicalName="Morgania.Text.UI.Utilities.Strings.resources" />
+  </ItemGroup>
+</Project>

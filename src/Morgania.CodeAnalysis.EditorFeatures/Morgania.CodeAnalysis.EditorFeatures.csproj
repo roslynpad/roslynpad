@@ -1,0 +1,248 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Microsoft.CodeAnalysis.EditorFeatures</RootNamespace>
+    <Description>Roslyn's EditorFeatures layer for the Morgania editor: completion, quick info, signature help, inline rename, brace matching, tagging, and editor commanding for C#.</Description>
+    <IsPackable>true</IsPackable>
+    <AnalysisMode>None</AnalysisMode>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DefineConstants>$(DefineConstants);EDITOR_FEATURES</DefineConstants>
+    <!-- Vendored Roslyn sources compiled against NuGet/VS-SDK reference assemblies whose
+         nullability annotations drift from the in-tree build; CS0649/RS1034 are upstream
+         code patterns. Not ours to fix. -->
+    <NoWarn>$(NoWarn);CS0649;CS8600;CS8601;CS8602;CS8604;CS8622;CS8769;CA1822;RS1034;VSTHRD002;VSTHRD003;VSTHRD102;VSTHRD103;VSTHRD110;RS1024</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
+  </ItemGroup>
+
+  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
+    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
+      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
+    </MSBuild>
+    <ItemGroup>
+      <Reference Include="@(LibReference)" />
+      <Content Include="@(LibReference)" PackagePath="lib/$(TargetFramework)" Pack="true" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="System.ComponentModel.Composition" />
+    <!-- Deliberately newer than $(MessagePackVersion) (what the private Remote.Workspaces binaries
+         bind to): 3.1.6 has known vulnerabilities (NU1903). The version mismatch would surface as
+         MSB3243, but the RestoreHelper references are marked ExternallyResolved so RAR does not
+         walk their dependencies. -->
+    <PackageReference Include="MessagePack" />
+    <ProjectReference Include="../Morgania.Editor/Morgania.Editor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The demo host implements Roslyn-internal host interfaces (IStreamingFindUsagesPresenter, …) -->
+    <InternalsVisibleTo Include="Morgania.Demo.EditorFeatures" />
+    <InternalsVisibleTo Include="RoslynPad" />
+    <!-- The ChangeSignature dialog renders its signature preview via the recompiled
+         WpfClassificationExtensions.ToTextBlock + ClassificationTypeMap. -->
+    <InternalsVisibleTo Include="Morgania.CodeAnalysis.Editor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../vendor/roslyn/src/EditorFeatures/Text/**/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/EditorFeatures/Core/**/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/EditorFeatures/CSharp/**/*.cs" />
+    <EmbeddedResource Include="../../vendor/roslyn/src/EditorFeatures/Text/TextEditorResources.resx"
+      LogicalName="Microsoft.CodeAnalysis.Text.TextEditorResources.resources"
+      StronglyTypedFileName="$(IntermediateOutputPath)TextEditorResources.Designer.cs"
+      StronglyTypedLanguage="CSharp"
+      StronglyTypedNamespace="Microsoft.CodeAnalysis.Text"
+      StronglyTypedClassName="TextEditorResources" />
+    <EmbeddedResource Include="../../vendor/roslyn/src/EditorFeatures/Core/EditorFeaturesResources.resx"
+      LogicalName="Microsoft.CodeAnalysis.EditorFeaturesResources.resources"
+      StronglyTypedFileName="$(IntermediateOutputPath)EditorFeaturesResources.Designer.cs"
+      StronglyTypedLanguage="CSharp"
+      StronglyTypedNamespace="Microsoft.CodeAnalysis"
+      StronglyTypedClassName="EditorFeaturesResources" />
+    <EmbeddedResource Include="../../vendor/roslyn/src/EditorFeatures/Core/EditorFeaturesWpfResources.resx"
+      LogicalName="Microsoft.CodeAnalysis.EditorFeaturesWpfResources.resources"
+      StronglyTypedFileName="$(IntermediateOutputPath)EditorFeaturesWpfResources.Designer.cs"
+      StronglyTypedLanguage="CSharp"
+      StronglyTypedNamespace="Microsoft.CodeAnalysis"
+      StronglyTypedClassName="EditorFeaturesWpfResources" />
+    <EmbeddedResource Include="../../vendor/roslyn/src/EditorFeatures/CSharp/CSharpEditorResources.resx"
+      LogicalName="Microsoft.CodeAnalysis.Editor.CSharp.CSharpEditorResources.resources"
+      StronglyTypedFileName="$(IntermediateOutputPath)CSharpEditorResources.Designer.cs"
+      StronglyTypedLanguage="CSharp"
+      StronglyTypedNamespace="Microsoft.CodeAnalysis.Editor.CSharp"
+      StronglyTypedClassName="CSharpEditorResources" />
+  </ItemGroup>
+
+  <!-- Forwards ContentTypeNames to the (formerly separate) Text assembly; both trees are
+       compiled into this assembly, so the forwarder would be a CS0729 self-reference. -->
+  <ItemGroup>
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/TypeForwarders.cs" />
+  </ItemGroup>
+
+  <!-- WPF-dependent (System.Windows.*) - should be restored & compiled on Avalonia -->
+  <ItemGroup>
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/BraceMatching/BraceMatchingTypeFormatDefinitions.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Classification/ClassificationTypeFormatDefinitions.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ConflictTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/ActiveStatementTagFormatDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/EditAndContinueErrorTypeFormatDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsFormatDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsKeyProcessorProvider.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTag.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameConflictTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameFieldBackgroundAndBorderTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameFixupTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/Taggers/ClassificationFormatDefinitions.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameFlyout.xaml.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameFlyoutViewModel.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameUserInputTextBox.xaml.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/InlineRenameAdornmentManager.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/InlineRenameAdornmentProvider.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/IRenameUserInput.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/RenameUserInputPresenter.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/SmartRename/SmartRenameStatusControl.xaml.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/SmartRename/SmartRenameUserInputComboBox.xaml.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/IWpfThemeService.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Notification/EditorNotificationServiceFactory.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Preview/DifferenceViewerPreview.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Preview/PreviewFactoryService.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/PreviewWarningTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/ContentControlService.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/DisposableToolTip.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/IContentControlService.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/LazyToolTip.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsView.xaml.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewFactory.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewStateVisibilityConverter.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/ProjectionBufferContent.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/DefinitionHighlightTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/WrittenReferenceHighlightTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/RenameTracking/RenameTrackingTagDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/StringCopyPaste/WpfStringCopyPasteService.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Structure/StructureTaggerProvider.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Utilities/BrushToColorConverter.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ViewHostingControl.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Workspaces/WpfTextBufferVisibilityTracker.cs" />
+  </ItemGroup>
+
+  <!--
+    Removed features
+  -->
+  <ItemGroup>
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Interactive/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/CSharp/Interactive/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Copilot/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ExternalAccess/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/LanguageServer/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SpeculativeEdits/**/*.cs" />
+  </ItemGroup>
+
+  <!--
+    VS-only integrations that cannot work outside Visual Studio:
+    - SpeculativeEdits, DocumentationComments Copilot files, SmartRename: Copilot proposals/suggestions APIs (closed-source VS internals)
+    - RoslynSpellCheckFixerProvider: VS spell-checker API (Microsoft.VisualStudio.Text.SpellChecker)
+    - LanguageServerSnippetExpanderAdapter: VS LSP client (Microsoft.VisualStudio.LanguageServer.Client)
+    - DifferenceViewerPreview.NavigationalCommandTarget: IOleCommandTarget (VS COM command routing)
+  -->
+  <ItemGroup>
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SpellCheck/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/DocumentationComments/CopilotGenerateDocumentationCommentManager.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/DocumentationComments/CopilotGenerateDocumentationCommentProvider.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/DocumentationComments/DocumentationCommentSuggestion.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/SmartRename/**/*.cs" />
+    <!-- InlineDiagnostics UI requires VS-shell-only WPF pieces (Hyperlink navigation, CrispImage, ImageThemingUtilities);
+         the AbstractDiagnosticsTaggerProvider files in the same folder are the UI-free pull-diagnostics
+         tagging base (used by the demo host's squiggle tagger) and stay compiled -->
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineDiagnostics/InlineDiagnostics*.cs" />
+    <!-- InlineHints adornment layer builds WPF tooltip/mouse UI; the data-tag layer is still compiled -->
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTagger.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTaggerProvider.cs" />
+    <!-- VS shell IServiceProvider helpers (ServiceUnavailableException); unused by the compiled sources -->
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Utilities/RoslynServiceExtensions.cs" />
+    <!-- Bridges workspace events to the legacy solution crawler for ExternalAccess.UnitTesting (excluded);
+         also drifts from the 5.3.0 package surface (OnWorkspaceChangedAsync/ProcessRoslynSourceGeneratedFiles) -->
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SolutionEvents/HostLegacySolutionEventsWorkspaceEventListener.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/AsyncCompletion/LanguageServerSnippetExpanderAdapter.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Preview/DifferenceViewerPreview.NavigationalCommandTarget.cs" />
+  </ItemGroup>
+
+  <!--
+    Build-time source patches: vendor files whose only incompatibility is the accessibility of
+    overrides. The IgnoresAccessChecksTo publicizer makes internal/private-protected virtual
+    members of CodeAction(Operation) public in the reference assemblies, so the overrides in these
+    files fail with CS0507 and must be widened to public. A patched copy is generated into the
+    intermediate directory and compiled instead of the original. The patch task fails the build if
+    the expected text is not found (e.g. after a Roslyn upgrade). File names must be unique.
+  -->
+  <ItemGroup>
+    <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/RenameTracking/RenameTrackingTaggerProvider.RenameTrackingCodeAction.cs"
+                    Find="internal override async Task&lt;bool&gt; TryApplyAsync"
+                    ReplaceWith="public override async Task&lt;bool&gt; TryApplyAsync" />
+    <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/Suggestions/PreviewChanges/PreviewChangesCodeAction.cs"
+                    Find="private protected override async Task&lt;ImmutableArray&lt;CodeActionOperation&gt;&gt; GetOperationsCoreAsync"
+                    ReplaceWith="public override async Task&lt;ImmutableArray&lt;CodeActionOperation&gt;&gt; GetOperationsCoreAsync" />
+    <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/Suggestions/RefineUsingCopilot/RefineUsingCopilotCodeAction.cs"
+                    Find="internal override async Task&lt;bool&gt; TryApplyAsync"
+                    ReplaceWith="public override async Task&lt;bool&gt; TryApplyAsync" />
+  </ItemGroup>
+
+  <UsingTask TaskName="PatchCompileFiles" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildBinPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputDirectory ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(OutputDirectory);
+        foreach (var file in Files)
+        {
+            var find = file.GetMetadata("Find");
+            var replaceWith = file.GetMetadata("ReplaceWith");
+            var text = File.ReadAllText(file.ItemSpec);
+            if (!text.Contains(find))
+            {
+                Log.LogError("PatchedCompile pattern not found in '{0}': {1}", file.ItemSpec, find);
+                continue;
+            }
+            text = "// Auto-generated from " + file.ItemSpec + " (see PatchedCompile in the project file). Do not edit.\n" + text.Replace(find, replaceWith);
+            var destination = Path.Combine(OutputDirectory, Path.GetFileName(file.ItemSpec));
+            if (!File.Exists(destination) || File.ReadAllText(destination) != text)
+            {
+                File.WriteAllText(destination, text);
+            }
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GeneratePatchedCompile" BeforeTargets="CoreCompile" Condition="'@(PatchedCompile)' != ''">
+    <PatchCompileFiles Files="@(PatchedCompile)" OutputDirectory="$(IntermediateOutputPath)PatchedCompile" />
+    <ItemGroup>
+      <Compile Remove="@(PatchedCompile)" />
+      <Compile Include="@(PatchedCompile->'$(IntermediateOutputPath)PatchedCompile/%(Filename)%(Extension)')" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <Using Include="Roslyn.Utilities" />
+  </ItemGroup>
+
+</Project>

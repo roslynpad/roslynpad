@@ -4,7 +4,7 @@
   <Properties>
     <DisplayName>RoslynPad</DisplayName>
     <PublisherDisplayName>Eli Arbel</PublisherDisplayName>
-    <Description>A cross-platform C# script editor &amp; runner based on Roslyn and AvalonEdit</Description>
+    <Description>A cross-platform C# script editor &amp; runner based on Roslyn</Description>
     <Logo>Assets\storelogo.png</Logo>
   </Properties>
   <Resources>
@@ -18,7 +18,7 @@
   </Capabilities>
   <Applications>
     <Application Id="RoslynPad" Executable="RoslynPad.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements BackgroundColor="transparent" DisplayName="RoslynPad" Square150x150Logo="Assets\logo.png" Square44x44Logo="Assets\square44x44logo.png" Description="A cross-platform C# script editor &amp; runner based on Roslyn and AvalonEdit" />
+      <uap:VisualElements BackgroundColor="transparent" DisplayName="RoslynPad" Square150x150Logo="Assets\logo.png" Square44x44Logo="Assets\square44x44logo.png" Description="A cross-platform C# script editor &amp; runner based on Roslyn" />
     </Application>
   </Applications>
 </Package>
