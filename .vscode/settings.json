@@ -1,3 +1,4 @@
 {
-    "dotnet.defaultSolution": "RoslynPad.slnx"
+    "dotnet.defaultSolution": "RoslynPad.slnx",
+    "omnisharp.projectFilesExcludePattern": "/vendor/roslyn/**,**/node_modules/**,**/.git/**"
 }

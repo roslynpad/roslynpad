@@ -27,6 +27,6 @@
     <Project Path="tests/Morgania.GeometryTests/Morgania.GeometryTests.csproj" />
     <Project Path="tests/Morgania.IntellisenseTests/Morgania.IntellisenseTests.csproj" />
   </Folder>
-  <Project Path="src/RoslynPad/RoslynPad.csproj" />
+  <Project Path="src/RoslynPad/RoslynPad.csproj" DefaultStartup="true" />
   <Project Path="src/RoslynPad.Themes/RoslynPad.Themes.csproj" />
 </Solution>

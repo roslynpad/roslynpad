@@ -4,6 +4,8 @@
 
 A cross-platform C# editor powered by Roslyn and the Morgania editor - an Avalonia editor based on the [vs-editor-api](https://github.com/microsoft/vs-editor-api) repo.
 
+## Try out the new [Morgania-based preview](https://github.com/roslynpad/roslynpad/releases/tag/22-preview1)
+
 ## Installing
 
 **You must also install a supported [.NET SDK](https://aka.ms/dotnet) to allow RoslynPad to compile programs.**

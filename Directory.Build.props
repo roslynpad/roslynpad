@@ -8,6 +8,7 @@
     <IsMacOS>$([System.OperatingSystem]::IsMacOS())</IsMacOS>
     <IsLinux>$([System.OperatingSystem]::IsLinux())</IsLinux>
     <IsMacBuild Condition=" '$(IsMacOS)' == 'true' and ( '$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.Contains('osx')) ) ">true</IsMacBuild>
+    <IsWindowsBuild Condition=" $(RuntimeIdentifier.Contains('win')) ">true</IsWindowsBuild>
     <Features>strict</Features>
     <Deterministic>True</Deterministic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>

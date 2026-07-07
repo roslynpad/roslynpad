@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType Condition=" '$(IsMacOS)' == 'true' ">Exe</OutputType>
-    <OutputType Condition=" '$(IsMacOS)' != 'true' ">WinExe</OutputType>
+    <OutputType Condition=" '$(IsWindowsBuild)' == 'true' ">WinExe</OutputType>
+    <OutputType Condition=" '$(IsWindowsBuild)' != 'true' ">Exe</OutputType>
     <AssemblyName>RoslynPad</AssemblyName>
     <RootNamespace>RoslynPad</RootNamespace>
     <ApplicationId>net.roslynpad</ApplicationId>

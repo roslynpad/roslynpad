@@ -134,7 +134,9 @@ function Build-WindowsPackages($PackageName, $RootPath) {
   $wingetManifest = $wingetManifest -replace 'InstallerSha256:.*', "InstallerSha256: $hash"
   Set-Content -Path $wingetManifestPath -Value $wingetManifest
 
-  ./CreateAppxPackage.ps1 -PackageName $PackageName -RootPath $RootPath
+  if ($IsWindows) {
+    ./CreateAppxPackage.ps1 -PackageName $PackageName -RootPath $RootPath
+  }
 }
 
 function Build-Package($PackageName, $RuntimeIdentifier) {
@@ -157,13 +159,9 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
   }
 }
 
-if ($IsMacOS) {
-  Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
-  Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
-  Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
-  Build-Package -PackageName 'linux-arm64' -RuntimeIdentifier 'linux-arm64'
-}
-elseif ($IsWindows) {
-  Build-Package -PackageName 'windows-x64' -RuntimeIdentifier 'win-x64'
-  Build-Package -PackageName 'windows-arm64' -RuntimeIdentifier 'win-arm64'
-}
+Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
+Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
+Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
+Build-Package -PackageName 'linux-arm64' -RuntimeIdentifier 'linux-arm64'
+Build-Package -PackageName 'windows-x64' -RuntimeIdentifier 'win-x64'
+Build-Package -PackageName 'windows-arm64' -RuntimeIdentifier 'win-arm64'
