@@ -9,7 +9,8 @@ needs beyond the editor platform itself:
 
 - **`EditorComposition`** — builds the single VS-MEF graph shared by Roslyn and the editor
   (Roslyn Workspaces/Features, the Morgania editor, the Morgania Roslyn EditorFeatures, and this
-  assembly's services).
+  assembly's services). Returns the `CompositionConfiguration`, so hosts can inspect
+  composition diagnostics before creating the export provider.
 - **Editor-host services**, composed automatically: classification format definitions,
   diagnostics squiggles, the suggested-actions light bulb, key bridging, smart indentation,
   snippet expansion, and image-catalog glyphs.
@@ -26,7 +27,10 @@ The package does not include a Roslyn workspace implementation — hosts bring t
 // On the UI thread, before the graph composes:
 HostServiceExports.InitializeMainThread();
 
-var exportProvider = EditorComposition.CreateExportProvider();
+var configuration = EditorComposition.CreateConfiguration();
+// Optional: inspect configuration.CompositionErrors / Catalog.DiscoveredParts.DiscoveryErrors.
+// Rejected parts are expected (EditorFeatures parts with VS-only imports), so don't ThrowOnErrors().
+var exportProvider = configuration.CreateExportProviderFactory().CreateExportProvider();
 
 // Create a buffer, open a Roslyn document over it in your workspace:
 var contentType = exportProvider.GetExportedValue<IContentTypeRegistryService>().GetContentType("CSharp");

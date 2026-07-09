@@ -13,7 +13,8 @@ namespace Morgania.CodeAnalysis.Editor;
 /// (System.Composition), while the recompiled EditorFeatures assemblies export their
 /// editor-facing parts with v1 attributes (System.ComponentModel.Composition) — exactly
 /// like in Visual Studio itself. Parts with imports that cannot be satisfied outside VS
-/// are rejected from the graph and logged instead of failing the whole composition.
+/// are rejected from the graph instead of failing the whole composition; the returned
+/// <see cref="CompositionConfiguration"/> reports them.
 /// </summary>
 public static class EditorComposition
 {
@@ -21,7 +22,7 @@ public static class EditorComposition
     /// The assemblies every composition includes: the Roslyn Workspaces/Features layers, the
     /// Morgania editor, the recompiled Roslyn EditorFeatures, and this assembly's editor-host
     /// services — a complete editor graph out of the box. Host applications add their own
-    /// parts through <see cref="CreateExportProvider(IEnumerable{Assembly}?)"/>.
+    /// parts through <see cref="CreateConfiguration(IEnumerable{Assembly}?)"/>.
     /// </summary>
     public static ImmutableArray<Assembly> DefaultAssemblies { get; } =
         [
@@ -38,7 +39,18 @@ public static class EditorComposition
             typeof(EditorComposition).Assembly,
         ];
 
-    public static ExportProvider CreateExportProvider(IEnumerable<Assembly>? additionalAssemblies = null)
+    /// <summary>
+    /// Discovers parts in <see cref="DefaultAssemblies"/> (plus
+    /// <paramref name="additionalAssemblies"/>) and composes them. Call
+    /// <see cref="CompositionConfiguration.CreateExportProviderFactory"/> on the result to
+    /// obtain an <see cref="ExportProvider"/>. Diagnostics are the caller's decision:
+    /// <see cref="CompositionConfiguration.CompositionErrors"/> lists rejected parts and
+    /// <c>Catalog.DiscoveredParts.DiscoveryErrors</c> lists discovery failures. Note that a
+    /// working graph still reports rejections — EditorFeatures parts with VS-only imports
+    /// are rejected by design — so treat them as advisory rather than calling
+    /// <see cref="CompositionConfiguration.ThrowOnErrors"/>.
+    /// </summary>
+    public static CompositionConfiguration CreateConfiguration(IEnumerable<Assembly>? additionalAssemblies = null)
     {
         var assemblies = DefaultAssemblies;
 
@@ -53,44 +65,6 @@ public static class EditorComposition
 
         var parts = Task.Run(() => discovery.CreatePartsAsync(assemblies)).GetAwaiter().GetResult();
         var catalog = ComposableCatalog.Create(Resolver.DefaultInstance).AddParts(parts);
-        var configuration = CompositionConfiguration.Create(catalog);
-
-        LogCompositionDiagnostics(parts, configuration);
-
-        return configuration.CreateExportProviderFactory().CreateExportProvider();
-    }
-
-    private static void LogCompositionDiagnostics(DiscoveredParts parts, CompositionConfiguration configuration)
-    {
-        var log = new StringWriter();
-
-        foreach (var error in parts.DiscoveryErrors)
-        {
-            log.WriteLine($"[discovery] {error}");
-        }
-
-        // The first level of the stack holds the root-cause errors; the rest are cascades.
-        if (!configuration.CompositionErrors.IsEmpty)
-        {
-            foreach (var diagnostic in configuration.CompositionErrors.Peek())
-            {
-                log.WriteLine($"[rejected] {diagnostic.Message}");
-            }
-        }
-
-        var text = log.ToString();
-        if (text.Length > 0)
-        {
-            try
-            {
-                File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "composition.log"), text);
-            }
-            catch (IOException)
-            {
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
+        return CompositionConfiguration.Create(catalog);
     }
 }

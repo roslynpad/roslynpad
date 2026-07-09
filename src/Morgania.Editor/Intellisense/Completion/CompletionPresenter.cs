@@ -451,7 +451,7 @@ internal sealed class CompletionPresenter : ICompletionPresenter
         catch (Exception ex)
         {
             // A failing description never takes the list down; the pane just stays hidden.
-            Console.Error.WriteLine($"completion description failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"completion description failed: {ex}");
             Dispatcher.UIThread.Post(() => SetDescription(null));
         }
     }

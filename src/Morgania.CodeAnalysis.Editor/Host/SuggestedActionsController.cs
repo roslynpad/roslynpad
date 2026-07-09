@@ -394,7 +394,7 @@ public sealed class SuggestedActionsController
         }
         catch (Exception ex)
         {
-            await Console.Error.WriteLineAsync($"light bulb update failed: {ex}").ConfigureAwait(true);
+            System.Diagnostics.Debug.WriteLine($"light bulb update failed: {ex}");
         }
 
         static int Rank(string category) => category switch

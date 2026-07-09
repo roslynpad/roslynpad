@@ -43,7 +43,9 @@ public class RoslynHost : IRoslynHost
 
         _workspaces = [];
 
-        ExportProvider = EditorComposition.CreateExportProvider(additionalAssemblies);
+        ExportProvider = EditorComposition.CreateConfiguration(additionalAssemblies)
+            .CreateExportProviderFactory()
+            .CreateExportProvider();
 
         HostServices = VisualStudioMefHostServices.Create(ExportProvider);
 

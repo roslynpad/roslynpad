@@ -39,7 +39,9 @@ public sealed class App : Application
         // The package's EditorComposition builds the complete editor graph: the Morgania
         // editor, the recompiled Roslyn EditorFeatures, Roslyn Workspaces/Features, and the
         // editor-host services (classification formats, squiggles, light bulb, key bridge, …).
-        var exportProvider = EditorComposition.CreateExportProvider();
+        var exportProvider = EditorComposition.CreateConfiguration()
+            .CreateExportProviderFactory()
+            .CreateExportProvider();
 
         var contentTypes = exportProvider.GetExportedValue<IContentTypeRegistryService>();
         var bufferFactory = exportProvider.GetExportedValue<ITextBufferFactoryService>();
