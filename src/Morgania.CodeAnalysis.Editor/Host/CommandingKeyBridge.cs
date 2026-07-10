@@ -1,7 +1,10 @@
 using System.Composition;
+using Avalonia;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Editor.Commanding;
 using Microsoft.VisualStudio.Text.Editor.Commanding.Commands;
@@ -18,169 +21,208 @@ namespace Morgania.CodeAnalysis.Editor;
 /// IEditorOperations, bypassing commanding, so the host provides the bridge. Handlers are
 /// added as tunneling handlers to run before the view's own key handling; anything the
 /// command chain does not consume falls through to the view's keymap.
+///
+/// Chords are platform-idiomatic: <see cref="PlatformHotkeyConfiguration"/> supplies the
+/// OS command modifier (Cmd on macOS, Ctrl elsewhere) and the word-action modifier (Option
+/// on macOS, Ctrl elsewhere), so Ctrl and Cmd are distinct keys rather than synonyms. The
+/// headless platform reports Ctrl on every OS, which keeps scripted runs portable.
 /// </summary>
 [Export(typeof(IWpfTextViewCreationListener))]
 [ContentType("Roslyn Languages")]
 [TextViewRole(PredefinedTextViewRoles.Interactive)]
-internal sealed class CommandingKeyBridge : IWpfTextViewCreationListener
+[method: ImportingConstructor]
+internal sealed class CommandingKeyBridge(
+    IEditorCommandHandlerServiceFactory commandServiceFactory,
+    IEditorOperationsFactoryService operationsFactory,
+    ISignatureHelpBroker signatureHelpBroker,
+    SuggestedActionsControllerFactory suggestedActionsFactory) : IWpfTextViewCreationListener
 {
-    private readonly IEditorCommandHandlerServiceFactory _commandServiceFactory;
-    private readonly IEditorOperationsFactoryService _operationsFactory;
-    private readonly ISignatureHelpBroker _signatureHelpBroker;
-    private readonly SuggestedActionsControllerFactory _suggestedActionsFactory;
-
-    [ImportingConstructor]
-    public CommandingKeyBridge(
-        IEditorCommandHandlerServiceFactory commandServiceFactory,
-        IEditorOperationsFactoryService operationsFactory,
-        ISignatureHelpBroker signatureHelpBroker,
-        SuggestedActionsControllerFactory suggestedActionsFactory)
-    {
-        _commandServiceFactory = commandServiceFactory;
-        _operationsFactory = operationsFactory;
-        _signatureHelpBroker = signatureHelpBroker;
-        _suggestedActionsFactory = suggestedActionsFactory;
-    }
-
     public void TextViewCreated(IWpfTextView textView)
     {
-        var commanding = _commandServiceFactory.GetService(textView);
-        var operations = _operationsFactory.GetEditorOperations(textView);
-        var suggestedActions = _suggestedActionsFactory.GetOrCreate(textView);
+        var hotkeys = Application.Current?.PlatformSettings?.HotkeyConfiguration
+            ?? throw new InvalidOperationException("The Avalonia platform is not initialized.");
+
+        var bindings = new ViewBindings(
+            textView,
+            commandServiceFactory.GetService(textView),
+            operationsFactory.GetEditorOperations(textView),
+            signatureHelpBroker,
+            suggestedActionsFactory.GetOrCreate(textView),
+            hotkeys);
 
         textView.VisualElement.AddHandler(
             InputElement.KeyDownEvent,
-            (_, e) => OnKeyDown(textView, commanding, operations, _signatureHelpBroker, suggestedActions, e),
+            (_, e) => bindings.OnKeyDown(e),
             RoutingStrategies.Tunnel);
         textView.VisualElement.AddHandler(
             InputElement.TextInputEvent,
-            (_, e) => OnTextInput(textView, commanding, operations, suggestedActions, e),
+            (_, e) => bindings.OnTextInput(e),
             RoutingStrategies.Tunnel);
     }
 
-    private static void OnTextInput(IWpfTextView view, IEditorCommandHandlerService commanding, IEditorOperations operations, SuggestedActionsController suggestedActions, TextInputEventArgs e)
+    /// <summary>The key chords for one text view, closed over its commanding chain.</summary>
+    private sealed class ViewBindings(
+        IWpfTextView view,
+        IEditorCommandHandlerService commanding,
+        IEditorOperations operations,
+        ISignatureHelpBroker signatureHelpBroker,
+        SuggestedActionsController suggestedActions,
+        PlatformHotkeyConfiguration hotkeys)
     {
-        if (view.IsClosed || string.IsNullOrEmpty(e.Text))
-        {
-            return;
-        }
+        private readonly KeyModifiers _commandModifiers = hotkeys.CommandModifiers;
+        private readonly KeyModifiers _wordModifiers = hotkeys.WholeWordTextActionModifiers;
 
-        // Typing edits the code the actions were computed for; the VS light bulb dismisses too.
-        if (suggestedActions.IsOpen)
+        public void OnKeyDown(KeyEventArgs e)
         {
-            suggestedActions.Dismiss();
-        }
-
-        foreach (var typedChar in e.Text)
-        {
-            if (char.IsControl(typedChar))
+            if (view.IsClosed)
             {
-                continue;
+                return;
             }
 
-            // The innermost "handler" performs the actual insertion, like the editor-operations
-            // command target does in VS; Roslyn and editor handlers wrap around it.
-            commanding.Execute(
-                (v, b) => new TypeCharCommandArgs(v, b, typedChar),
-                () => operations.InsertText(typedChar.ToString()));
+            // The suggested-actions context menu takes focus while open and handles its own
+            // navigation keys (arrows, Enter, Escape, submenu expansion) natively.
+
+            bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+            var chord = e.KeyModifiers & ~KeyModifiers.Shift;
+
+            // Completion is Ctrl+Space on every platform: on macOS the command modifier
+            // belongs to Spotlight, and Mac editors use Ctrl+Space as well.
+            if ((e.Key, chord, shift) is (Key.Space, KeyModifiers.Control, false))
+            {
+                e.Handled = TryRun(static (v, b) => new InvokeCompletionListCommandArgs(v, b));
+                return;
+            }
+
+            // Word deletes take the platform word-action modifier (Option on macOS,
+            // Ctrl elsewhere); other word-modified keys fall through to the keymap.
+            if (chord == _wordModifiers && !shift && e.Key is Key.Back or Key.Delete)
+            {
+                e.Handled = e.Key == Key.Back
+                    ? Run(static (v, b) => new WordDeleteToStartCommandArgs(v, b), () => operations.DeleteWordToLeft())
+                    : Run(static (v, b) => new WordDeleteToEndCommandArgs(v, b), () => operations.DeleteWordToRight());
+                return;
+            }
+
+            // Any other chord outside the platform command modifier (bare Alt on Windows,
+            // bare Ctrl on macOS, combinations, …) is not ours; leave it to the keymap.
+            bool meta = chord == _commandModifiers;
+            if (chord != KeyModifiers.None && !meta)
+            {
+                return;
+            }
+
+            bool? handled = (e.Key, meta, shift) switch
+            {
+                // Keys where the bridge supplies the default editing behavior as the innermost
+                // handler, like the editor-operations command target does in VS: always consumed.
+                (Key.Enter, meta: false, shift: false) => Run(static (v, b) => new ReturnKeyCommandArgs(v, b), () => operations.InsertNewLine()),
+                (Key.Tab, meta: false, shift: false) => Run(static (v, b) => new TabKeyCommandArgs(v, b), () => operations.Indent()),
+                (Key.Tab, meta: false, shift: true) => Run(static (v, b) => new BackTabKeyCommandArgs(v, b), () => operations.Unindent()),
+                (Key.Back, meta: false, shift: _) => Run(static (v, b) => new BackspaceKeyCommandArgs(v, b), () => operations.Backspace()),
+                (Key.Delete, meta: false, shift: false) => Run(static (v, b) => new DeleteKeyCommandArgs(v, b), () => operations.Delete()),
+                (Key.V, meta: true, shift: false) => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
+                (Key.Insert, meta: false, shift: true) => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
+                (Key.X, meta: true, shift: false) => Run(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()),
+                (Key.C, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
+                (Key.Insert, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
+
+                // Commands with no default behavior: consumed only if a handler took them,
+                // otherwise they fall through to the view's keymap.
+                (Key.Space, meta: true, shift: true) => TryRun(static (v, b) => new InvokeSignatureHelpCommandArgs(v, b)),
+                (Key.Escape, meta: false, shift: false) => TryRun(static (v, b) => new EscapeKeyCommandArgs(v, b)),
+                // Arrows go to the command chain first (completion claims them while its session is
+                // open); an active signature help session gets them next, cycling overloads the way
+                // the VS shell routes arrows to the intellisense session stack. Otherwise they fall
+                // through to the keymap and move the caret.
+                (Key.Up, meta: false, shift: false) => TryRun(static (v, b) => new UpKeyCommandArgs(v, b)) || TryCycleSignatureHelp(previous: true),
+                (Key.Up, meta: false, shift: true) => TryRun(static (v, b) => new UpKeyCommandArgs(v, b)),
+                (Key.Down, meta: false, shift: false) => TryRun(static (v, b) => new DownKeyCommandArgs(v, b)) || TryCycleSignatureHelp(previous: false),
+                (Key.Down, meta: false, shift: true) => TryRun(static (v, b) => new DownKeyCommandArgs(v, b)),
+                (Key.PageUp, meta: false, shift: _) => TryRun(static (v, b) => new PageUpKeyCommandArgs(v, b)),
+                (Key.PageDown, meta: false, shift: _) => TryRun(static (v, b) => new PageDownKeyCommandArgs(v, b)),
+                (Key.Z, meta: true, shift: false) => TryRun(static (v, b) => new UndoCommandArgs(v, b)),
+                (Key.Z, meta: true, shift: true) or (Key.Y, meta: true, shift: false) => TryRun(static (v, b) => new RedoCommandArgs(v, b)),
+                // The `/` key surfaces as either OemQuestion or Oem2 depending on layout.
+                (Key.OemQuestion or Key.Oem2, meta: true, shift: false) => TryRun(static (v, b) => new ToggleLineCommentCommandArgs(v, b)),
+                (Key.D, meta: true, shift: true) => TryRun(static (v, b) => new FormatDocumentCommandArgs(v, b)),
+                (Key.OemCloseBrackets, meta: true, shift: false) => TryRun(static (v, b) => new GotoBraceCommandArgs(v, b)),
+                (Key.OemCloseBrackets, meta: true, shift: true) => TryRun(static (v, b) => new GotoBraceExtCommandArgs(v, b)),
+                (Key.OemPeriod, meta: true, shift: false) => suggestedActions.Show(),
+
+                _ => null,
+            };
+
+            if (handled == true)
+            {
+                e.Handled = true;
+            }
         }
 
-        e.Handled = true;
-    }
-
-    private static void OnKeyDown(IWpfTextView view, IEditorCommandHandlerService commanding, IEditorOperations operations, ISignatureHelpBroker signatureHelpBroker, SuggestedActionsController suggestedActions, KeyEventArgs e)
-    {
-        if (view.IsClosed)
+        public void OnTextInput(TextInputEventArgs e)
         {
-            return;
-        }
+            if (view.IsClosed || string.IsNullOrEmpty(e.Text))
+            {
+                return;
+            }
 
-        // The suggested-actions context menu takes focus while open and handles its own
-        // navigation keys (arrows, Enter, Escape, submenu expansion) natively.
+            // Typing edits the code the actions were computed for; the VS light bulb dismisses too.
+            if (suggestedActions.IsOpen)
+            {
+                suggestedActions.Dismiss();
+            }
 
-        bool command = e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
-        bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-        bool plain = e.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift;
+            foreach (var typedChar in e.Text)
+            {
+                if (char.IsControl(typedChar))
+                {
+                    continue;
+                }
 
-        // Commands where the bridge supplies the default editing behavior as the innermost
-        // handler: always consumed.
-        bool? handled = (e.Key, command, shift) switch
-        {
-            (Key.Enter, false, false) => Execute(commanding, (v, b) => new ReturnKeyCommandArgs(v, b), () => operations.InsertNewLine()),
-            (Key.Tab, false, false) => Execute(commanding, (v, b) => new TabKeyCommandArgs(v, b), () => operations.Indent()),
-            (Key.Tab, false, true) => Execute(commanding, (v, b) => new BackTabKeyCommandArgs(v, b), () => operations.Unindent()),
-            (Key.Back, false, _) => Execute(commanding, (v, b) => new BackspaceKeyCommandArgs(v, b), () => operations.Backspace()),
-            (Key.Delete, false, false) => Execute(commanding, (v, b) => new DeleteKeyCommandArgs(v, b), () => operations.Delete()),
-            (Key.V, true, false) => Execute(commanding, (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
-            (Key.X, true, false) => Execute(commanding, (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()),
-            (Key.C, true, false) => Execute(commanding, (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
+                // The innermost "handler" performs the actual insertion, like the editor-operations
+                // command target does in VS; Roslyn and editor handlers wrap around it.
+                commanding.Execute(
+                    (v, b) => new TypeCharCommandArgs(v, b, typedChar),
+                    () => operations.InsertText(typedChar.ToString()));
+            }
 
-            // Commands with no default behavior: consumed only if a handler took them,
-            // otherwise they fall through to the view's keymap.
-            (Key.Space, true, false) => TryExecute(commanding, (v, b) => new InvokeCompletionListCommandArgs(v, b)),
-            (Key.Space, true, true) => TryExecute(commanding, (v, b) => new InvokeSignatureHelpCommandArgs(v, b)),
-            (Key.Escape, false, false) => TryExecute(commanding, (v, b) => new EscapeKeyCommandArgs(v, b)),
-            // Arrows go to the command chain first (completion claims them while its session is
-            // open); an active signature help session gets them next, cycling overloads the way
-            // the VS shell routes arrows to the intellisense session stack. Otherwise they fall
-            // through to the keymap and move the caret.
-            (Key.Up, _, _) when plain => TryExecute(commanding, (v, b) => new UpKeyCommandArgs(v, b))
-                || (!shift && TryCycleSignatureHelp(signatureHelpBroker, view, previous: true)),
-            (Key.Down, _, _) when plain => TryExecute(commanding, (v, b) => new DownKeyCommandArgs(v, b))
-                || (!shift && TryCycleSignatureHelp(signatureHelpBroker, view, previous: false)),
-            (Key.PageUp, _, _) when plain => TryExecute(commanding, (v, b) => new PageUpKeyCommandArgs(v, b)),
-            (Key.PageDown, _, _) when plain => TryExecute(commanding, (v, b) => new PageDownKeyCommandArgs(v, b)),
-            (Key.Z, true, false) => TryExecute(commanding, (v, b) => new UndoCommandArgs(v, b)),
-            (Key.Z, true, true) or (Key.Y, true, false) => TryExecute(commanding, (v, b) => new RedoCommandArgs(v, b)),
-            (Key.OemQuestion, true, false) or (Key.Oem2, true, false) => TryExecute(commanding, (v, b) => new ToggleLineCommentCommandArgs(v, b)),
-            (Key.D, true, true) => TryExecute(commanding, (v, b) => new FormatDocumentCommandArgs(v, b)),
-            (Key.OemCloseBrackets, true, false) => TryExecute(commanding, (v, b) => new GotoBraceCommandArgs(v, b)),
-            (Key.OemCloseBrackets, true, true) => TryExecute(commanding, (v, b) => new GotoBraceExtCommandArgs(v, b)),
-            (Key.OemPeriod, true, false) => suggestedActions.Show(),
-
-            _ => null,
-        };
-
-        if (handled == true)
-        {
             e.Handled = true;
         }
-    }
 
-    private static bool Execute<T>(IEditorCommandHandlerService commanding, Func<ITextView, Microsoft.VisualStudio.Text.ITextBuffer, T> argsFactory, Action defaultAction)
-        where T : EditorCommandArgs
-    {
-        commanding.Execute(argsFactory, defaultAction);
-        return true;
-    }
-
-    private static bool TryExecute<T>(IEditorCommandHandlerService commanding, Func<ITextView, Microsoft.VisualStudio.Text.ITextBuffer, T> argsFactory)
-        where T : EditorCommandArgs
-    {
-        bool fellThrough = false;
-        commanding.Execute(argsFactory, () => fellThrough = true);
-        return !fellThrough;
-    }
-
-    private static bool TryCycleSignatureHelp(ISignatureHelpBroker broker, IWpfTextView view, bool previous)
-    {
-        if (!broker.IsSignatureHelpActive(view))
+        private bool Run<T>(Func<ITextView, ITextBuffer, T> argsFactory, Action defaultAction)
+            where T : EditorCommandArgs
         {
-            return false;
+            commanding.Execute(argsFactory, defaultAction);
+            return true;
         }
 
-        // With a single overload there is nothing to cycle; let the arrow move the caret
-        // (Roslyn dismisses the session when the caret leaves the argument list).
-        var session = broker.GetSessions(view)[0];
-        var signatures = session.Signatures;
-        if (signatures.Count < 2)
+        private bool TryRun<T>(Func<ITextView, ITextBuffer, T> argsFactory)
+            where T : EditorCommandArgs
         {
-            return false;
+            bool fellThrough = false;
+            commanding.Execute(argsFactory, () => fellThrough = true);
+            return !fellThrough;
         }
 
-        var index = signatures.IndexOf(session.SelectedSignature);
-        var offset = previous ? signatures.Count - 1 : 1;
-        session.SelectedSignature = signatures[(index + offset) % signatures.Count];
-        return true;
+        private bool TryCycleSignatureHelp(bool previous)
+        {
+            if (!signatureHelpBroker.IsSignatureHelpActive(view))
+            {
+                return false;
+            }
+
+            // With a single overload there is nothing to cycle; let the arrow move the caret
+            // (Roslyn dismisses the session when the caret leaves the argument list).
+            var session = signatureHelpBroker.GetSessions(view)[0];
+            var signatures = session.Signatures;
+            if (signatures.Count < 2)
+            {
+                return false;
+            }
+
+            var index = signatures.IndexOf(session.SelectedSignature);
+            var offset = previous ? signatures.Count - 1 : 1;
+            session.SelectedSignature = signatures[(index + offset) % signatures.Count];
+            return true;
+        }
     }
 }

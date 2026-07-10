@@ -1214,9 +1214,16 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     // dispatch mechanism when command handlers are wired.
     private bool HandleKey(Key key, KeyModifiers modifiers)
     {
+        // Modifier roles come from the platform (macOS: Cmd for commands, Option for word
+        // actions; elsewhere Ctrl for both); the fallback covers views without a platform.
+        var hotkeys = Application.Current?.PlatformSettings?.HotkeyConfiguration;
         bool extend = modifiers.HasFlag(KeyModifiers.Shift);
-        bool word = modifiers.HasFlag(KeyModifiers.Control) || modifiers.HasFlag(KeyModifiers.Alt);
-        bool command = modifiers.HasFlag(KeyModifiers.Control) || modifiers.HasFlag(KeyModifiers.Meta);
+        bool word = hotkeys is null
+            ? modifiers.HasFlag(KeyModifiers.Control) || modifiers.HasFlag(KeyModifiers.Alt)
+            : modifiers.HasFlag(hotkeys.WholeWordTextActionModifiers);
+        bool command = hotkeys is null
+            ? modifiers.HasFlag(KeyModifiers.Control) || modifiers.HasFlag(KeyModifiers.Meta)
+            : modifiers.HasFlag(hotkeys.CommandModifiers);
         var operations = EditorOperations;
 
         // Read-only views swallow editing keystrokes; navigation, selection and copy
