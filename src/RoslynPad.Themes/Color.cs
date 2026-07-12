@@ -9,12 +9,14 @@ internal readonly struct Color
     public Color(HSLA hsla) => _hsla = hsla;
     public Color(RGBA rgba) => _hsla = FromRGBA(rgba);
 
+    // CSS/VS Code hex conventions: #RGB, #RGBA, #RRGGBB, #RRGGBBAA (alpha last;
+    // single digits expand by repetition, e.g. #ddd == #dddddd).
     public static Color FromHex(string color) => color.Length switch
     {
-        4 => new Color(new RGBA(ParseHex(color, new(1, 2)), ParseHex(color, new(2, 3)), ParseHex(color, new(3, 4)), 1.0)),
-        5 => new Color(new RGBA(ParseHex(color, new(2, 3)), ParseHex(color, new(3, 4)), ParseHex(color, new(4, 5)), ParseHex(color, new(1, 2)) / 255.0)),
+        4 => new Color(new RGBA(ParseHex(color, new(1, 2)) * 17, ParseHex(color, new(2, 3)) * 17, ParseHex(color, new(3, 4)) * 17, 1.0)),
+        5 => new Color(new RGBA(ParseHex(color, new(1, 2)) * 17, ParseHex(color, new(2, 3)) * 17, ParseHex(color, new(3, 4)) * 17, ParseHex(color, new(4, 5)) * 17 / 255.0)),
         7 => new Color(new RGBA(ParseHex(color, new(1, 3)), ParseHex(color, new(3, 5)), ParseHex(color, new(5, 7)), 1.0)),
-        9 => new Color(new RGBA(ParseHex(color, new(3, 5)), ParseHex(color, new(5, 7)), ParseHex(color, new(7, 9)), ParseHex(color, new(1, 3)) / 255.0)),
+        9 => new Color(new RGBA(ParseHex(color, new(1, 3)), ParseHex(color, new(3, 5)), ParseHex(color, new(5, 7)), ParseHex(color, new(7, 9)) / 255.0)),
         _ => throw new ArgumentOutOfRangeException(nameof(color))
     };
 
@@ -130,7 +132,7 @@ internal readonly struct Color
 
     public readonly record struct RGBA(int R, int G, int B, double A)
     {
-        public override string ToString() => A == 1 ? $"#{R:x2}{G:x2}{B:x2}" : $"#{(int)(A * 255):x2}{R:x2}{G:x2}{B:x2}";
+        public override string ToString() => A == 1 ? $"#{R:x2}{G:x2}{B:x2}" : $"#{R:x2}{G:x2}{B:x2}{(int)Math.Round(A * 255):x2}";
     }
 
     public readonly record struct HSLA(double H, double S, double L, double A);

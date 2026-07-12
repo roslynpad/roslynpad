@@ -11,7 +11,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Utilities;
 using Microsoft.VisualStudio.Utilities;
 
 /// <summary>

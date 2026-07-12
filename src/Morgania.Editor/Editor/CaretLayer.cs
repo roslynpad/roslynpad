@@ -6,10 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
-
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
-using Microsoft.VisualStudio.Text.Formatting;
 
 /// <summary>
 /// Renders a blinking caret at the insertion point of every selection of the broker

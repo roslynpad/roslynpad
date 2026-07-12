@@ -88,7 +88,7 @@ partial class ILViewer : UserControl
     {
         if (_textView is { } textView && viewModel.Theme.TryGetColor("editor.background") is { } background)
         {
-            textView.Background = new SolidColorBrush(Color.Parse(background));
+            textView.Background = new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(background));
         }
     }
 }

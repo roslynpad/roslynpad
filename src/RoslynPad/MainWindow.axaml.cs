@@ -8,14 +8,13 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using Dock.Model;
 using Dock.Model.Avalonia.Controls;
+using Dock.Model.Core;
 using Dock.Model.Core.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RoslynPad.Editor;
-using Morgania.CodeAnalysis.Editor.Classification;
 using RoslynPad.Themes;
-using Avalonia.Media;
 using RoslynPad.UI;
 using SourceCodeKind = Microsoft.CodeAnalysis.SourceCodeKind;
 
@@ -24,6 +23,7 @@ namespace RoslynPad;
 partial class MainWindow : Window
 {
     public const string DialogHostIdentifier = "Main";
+    private readonly DockState _dockState = new();
     private ThemeDictionary? _themeDictionary;
     private bool _isClosing;
     private bool _isClosed;
@@ -54,6 +54,7 @@ partial class MainWindow : Window
         InitializeComponent();
         InitializeKeyBindings();
         LoadWindowLayout();
+        LoadDockLayout();
 
         ResultPane.GetObservable(global::Dock.Model.Avalonia.Core.DockBase.ActiveDockableProperty)
             .Subscribe(_ => SetShowIL());
@@ -210,6 +211,93 @@ partial class MainWindow : Window
         });
     }
 
+    private void SaveDockLayout()
+    {
+        if (Dock.Layout is not RootDock layout)
+        {
+            return;
+        }
+
+        try
+        {
+            ViewModel.Settings.DockLayout = DockLayoutSerializer.Serialize(layout);
+        }
+        catch
+        {
+            // never block shutdown on layout serialization
+        }
+    }
+
+    private void LoadDockLayout()
+    {
+        if (ViewModel.Settings.DockLayout is not { Length: > 0 } layoutJson ||
+            Dock.Factory is not { } factory ||
+            Dock.Layout is not { } defaultLayout)
+        {
+            return;
+        }
+
+        RootDock? layout;
+        try
+        {
+            layout = DockLayoutSerializer.Deserialize(layoutJson);
+        }
+        catch
+        {
+            return;
+        }
+
+        // The code-behind relies on these panes; if any is missing (e.g. corrupted or
+        // incompatible layout), keep the default XAML layout.
+        if (layout is null ||
+            FindDockable(factory, layout, "DocumentsPane") is not DocumentDock documentsPane ||
+            FindDockable(factory, layout, "ResultPane") is not ToolDock resultPane ||
+            FindDockable(factory, layout, "Results") is not Tool results ||
+            FindDockable(factory, layout, "IL") is not Tool il)
+        {
+            return;
+        }
+
+        // Documents from the previous session are reopened by the view model,
+        // so drop their stale dockables from the saved layout.
+        if (documentsPane.VisibleDockables is { } documentDockables)
+        {
+            for (var i = documentDockables.Count - 1; i >= 0; i--)
+            {
+                if (documentDockables[i] is Document { Id: not "NewDoc" } staleDocument)
+                {
+                    documentDockables.Remove(staleDocument);
+                }
+            }
+
+            documentsPane.ActiveDockable = documentDockables.FirstOrDefault();
+            documentsPane.FocusedDockable = documentsPane.ActiveDockable;
+        }
+
+        if (layout.FocusedDockable is Document)
+        {
+            layout.FocusedDockable = null;
+        }
+
+        // Capture the tool/document contents created in XAML by Id, swap in the
+        // restored layout, then re-attach the contents to it.
+        _dockState.Save(defaultLayout);
+        Dock.Layout = layout;
+        _dockState.Restore(layout);
+
+        DocumentsPane = documentsPane;
+        ResultPane = resultPane;
+        Results = results;
+        IL = il;
+    }
+
+    private static IDockable? FindDockable(IFactory factory, RootDock layout, string id) =>
+        factory.FindDockable(layout, d => d.Id == id)
+        ?? layout.LeftPinnedDockables?.FirstOrDefault(d => d.Id == id)
+        ?? layout.RightPinnedDockables?.FirstOrDefault(d => d.Id == id)
+        ?? layout.TopPinnedDockables?.FirstOrDefault(d => d.Id == id)
+        ?? layout.BottomPinnedDockables?.FirstOrDefault(d => d.Id == id);
+
     private void SaveWindowLayout()
     {
         var position = Position;
@@ -248,6 +336,7 @@ partial class MainWindow : Window
         if (!_isClosing)
         {
             SaveWindowLayout();
+            SaveDockLayout();
 
             _isClosing = true;
             IsEnabled = false;

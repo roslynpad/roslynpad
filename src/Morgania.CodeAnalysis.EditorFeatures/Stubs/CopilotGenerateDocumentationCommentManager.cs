@@ -3,9 +3,7 @@
 // The real implementation no-ops when the suggestion service is unavailable, so a no-op stub is
 // behaviorally identical and lets AbstractDocumentationCommentCommandHandler compile unmodified.
 
-using System;
 using System.ComponentModel.Composition;
-using System.Threading;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;

@@ -3,9 +3,6 @@
 // using directives (empty namespaces) or provide minimal internal stand-ins for VS shell
 // data types that only flow through Roslyn-internal interfaces.
 
-using System;
-using System.Collections.Generic;
-
 // Referenced by unused using directives in upstream Roslyn source.
 namespace EnvDTE
 {

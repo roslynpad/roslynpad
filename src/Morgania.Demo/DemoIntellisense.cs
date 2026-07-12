@@ -7,8 +7,6 @@ using System.Text.RegularExpressions;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-
-using Microsoft.VisualStudio.Core.Imaging;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;

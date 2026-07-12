@@ -1,7 +1,6 @@
 using System.Composition;
 
 using Microsoft.VisualStudio.GeometryTests;
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Utilities;

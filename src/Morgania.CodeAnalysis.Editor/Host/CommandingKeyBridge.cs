@@ -147,6 +147,11 @@ internal sealed class CommandingKeyBridge(
                 (Key.D, meta: true, shift: true) => TryRun(static (v, b) => new FormatDocumentCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: false) => TryRun(static (v, b) => new GotoBraceCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: true) => TryRun(static (v, b) => new GotoBraceExtCommandArgs(v, b)),
+                // Suggested actions: command+; everywhere, because on macOS Cmd+. never
+                // reaches the app — AppKit hardwires it as the cancel key equivalent
+                // (NSResponder binds it to cancelOperation: alongside Escape) and consumes
+                // it in the key-equivalent phase. Ctrl+. still works on Windows/Linux.
+                (Key.OemSemicolon, meta: true, shift: false) => suggestedActions.Show(),
                 (Key.OemPeriod, meta: true, shift: false) => suggestedActions.Show(),
 
                 _ => null,

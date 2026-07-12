@@ -12,7 +12,6 @@ using Microsoft.VisualStudio.Language.Intellisense.Implementation;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.Utilities;
 
 namespace Microsoft.VisualStudio.IntellisenseTests;

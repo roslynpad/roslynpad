@@ -1,8 +1,5 @@
 using System.Composition;
-using Avalonia.Controls;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Adornments;
-using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 
 namespace Microsoft.VisualStudio.CompositionTests;

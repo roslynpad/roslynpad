@@ -12,7 +12,6 @@ using Avalonia.Threading;
 using Microsoft.VisualStudio.GeometryTests;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 
 namespace Microsoft.VisualStudio.BehaviorTests;
 

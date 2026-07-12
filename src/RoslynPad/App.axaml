@@ -19,6 +19,53 @@
       <Setter Property="FontSize" Value="16" />
     </Style>
 
+    <!-- Flat icon buttons used in toolbars; hover/active colors follow the VS Code theme -->
+    <Style Selector="Button.tool, ToggleButton.tool">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Width" Value="26" />
+      <Setter Property="Height" Value="26" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.tool Image, ToggleButton.tool Image">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+    </Style>
+    <Style Selector="Button.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ToolbarHoverBackground}}" />
+    </Style>
+    <Style Selector="Button.tool:pressed /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.tool:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ToolbarActiveBackground}}" />
+    </Style>
+    <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.InputOptionActiveBackground}}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource {x:Static rp:ThemeDictionary.InputOptionActiveBorder}}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ToggleButton.tool:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.InputOptionActiveBackground}}" />
+    </Style>
+    <Style Selector="Button.tool:disabled, ToggleButton.tool:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="Button.tool:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.tool:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Vertical separator between toolbar button groups -->
+    <Style Selector="Separator.toolbar">
+      <Setter Property="Width" Value="1" />
+      <Setter Property="Height" Value="16" />
+      <Setter Property="Margin" Value="5 0" />
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelBorder}}" />
+    </Style>
+
     <Style Selector="DataValidationErrors">
       <Setter Property="Template">
         <ControlTemplate>

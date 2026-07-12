@@ -45,6 +45,15 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string InputBorder = "input.border";
     public const string TitleBarActiveBackground = "titleBar.activeBackground";
     public const string FoldingControlForeground = "editorGutter.foldingControlForeground";
+    public const string PanelBorder = "panel.border";
+    public const string ToolbarHoverBackground = "toolbar.hoverBackground";
+    public const string ToolbarActiveBackground = "toolbar.activeBackground";
+    public const string InputOptionActiveBackground = "inputOption.activeBackground";
+    public const string InputOptionActiveBorder = "inputOption.activeBorder";
+    public const string SideBarBackground = "sideBar.background";
+    public const string ListHoverBackground = "list.hoverBackground";
+    public const string DescriptionForeground = "descriptionForeground";
+    public const string StatusBarItemHoverBackground = "statusBarItem.hoverBackground";
 
     private void Initialize(Theme theme)
     {

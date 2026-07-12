@@ -1,8 +1,6 @@
 #nullable enable
 
-using System;
 using System.Composition;
-using System.Threading;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;

@@ -8,10 +8,8 @@
 
 global using Border = Avalonia.Controls.Border;
 global using Brush = Avalonia.Media.Brush;
-global using Brushes = Avalonia.Media.Brushes;
 global using Canvas = Avalonia.Controls.Canvas;
 global using Color = Avalonia.Media.Color;
-global using Colors = Avalonia.Media.Colors;
 global using DependencyObject = Avalonia.AvaloniaObject;
 global using DispatcherPriority = Avalonia.Threading.DispatcherPriority;
 global using FontStyles = Avalonia.Media.FontStyle;
@@ -19,8 +17,6 @@ global using FontWeights = Avalonia.Media.FontWeight;
 global using Geometry = Avalonia.Media.Geometry;
 global using Inline = Avalonia.Controls.Documents.Inline;
 global using Line = Avalonia.Controls.Shapes.Line;
-global using LineBreak = Avalonia.Controls.Documents.LineBreak;
-global using Pen = Avalonia.Media.Pen;
 global using Run = Avalonia.Controls.Documents.Run;
 global using SolidColorBrush = Avalonia.Media.SolidColorBrush;
 global using TextBlock = Avalonia.Controls.TextBlock;

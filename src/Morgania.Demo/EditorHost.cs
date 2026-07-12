@@ -7,7 +7,6 @@ using System.Reflection;
 using Microsoft.VisualStudio.Threading;
 
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Editor;
 
 /// <summary>

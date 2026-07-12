@@ -6,9 +6,11 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Avalonia;
+using Avalonia.Styling;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using NuGet.Packaging;
+using System.Composition;
 using RoslynPad.Build;
 using RoslynPad.Roslyn;
 using RoslynPad.Themes;
@@ -16,7 +18,8 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
 
-public abstract class MainViewModel : NotificationObject, IDisposable
+[Export(typeof(MainViewModel)), Shared]
+public class MainViewModel : NotificationObject, IDisposable
 {
     private static readonly Version s_currentVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version();
 
@@ -55,6 +58,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
+    [method: ImportingConstructor]
     public MainViewModel(IServiceProvider serviceProvider, IErrorReporter errorReporter, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
     {
         _serviceProvider = serviceProvider;
@@ -178,7 +182,19 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         }
     }
 
-    protected abstract void ListenToSystemThemeChanges(Action onChange);
+    private static void ListenToSystemThemeChanges(Action onChange)
+    {
+        if (Application.Current is { } app)
+        {
+            app.ActualThemeVariantChanged += (_, _) =>
+            {
+                if (app.RequestedThemeVariant is null)
+                {
+                    onChange();
+                }
+            };
+        }
+    }
 
     public async Task Initialize()
     {
@@ -266,7 +282,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
         return d;
     }
 
-    protected abstract bool IsSystemDarkTheme();
+    private static bool IsSystemDarkTheme() => Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
 
     public string WindowTitle
     {
@@ -753,14 +769,9 @@ public abstract class MainViewModel : NotificationObject, IDisposable
 
         foreach (var document in GetAllDocumentsForSearch(DocumentRoot))
         {
-            if (SearchDocumentName(document))
-            {
-                document.IsSearchMatch = true;
-            }
-            else
-            {
-                await SearchInFile(document, regex).ConfigureAwait(false);
-            }
+            // assign on the UI thread - the document tree binds to IsSearchMatch
+            document.IsSearchMatch = SearchDocumentName(document) ||
+                await SearchInFile(document, regex).ConfigureAwait(true);
         }
 
         bool SearchDocumentName(DocumentViewModel document)
@@ -786,7 +797,7 @@ public abstract class MainViewModel : NotificationObject, IDisposable
             }
         }
 
-        async Task SearchInFile(DocumentViewModel document, Regex? regex)
+        async Task<bool> SearchInFile(DocumentViewModel document, Regex? regex)
         {
             // a regex can span many lines so we need to load the entire file;
             // otherwise, search line-by-line
@@ -796,23 +807,21 @@ public abstract class MainViewModel : NotificationObject, IDisposable
                 var documentText = await IOUtilities.ReadAllTextAsync(document.Path).ConfigureAwait(false);
                 try
                 {
-                    document.IsSearchMatch = regex.IsMatch(documentText);
+                    return regex.IsMatch(documentText);
                 }
                 catch (RegexMatchTimeoutException)
                 {
-                    document.IsSearchMatch = false;
+                    return false;
                 }
             }
-            else
+
+            // need IAsyncEnumerable here, but for now just push it to the thread-pool
+            return await Task.Run(() =>
             {
-                // need IAsyncEnumerable here, but for now just push it to the thread-pool
-                await Task.Run(() =>
-                {
-                    var lines = IOUtilities.ReadLines(document.Path);
-                    document.IsSearchMatch = lines.Any(line =>
-                        line.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-                }).ConfigureAwait(false);
-            }
+                var lines = IOUtilities.ReadLines(document.Path);
+                return lines.Any(line =>
+                    line.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            }).ConfigureAwait(false);
         }
     }
 

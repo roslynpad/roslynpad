@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NuGet.Packaging;
 using NuGet.Versioning;
 using RoslynPad.Build;
 using RoslynPad.Roslyn.Rename;
@@ -111,6 +110,18 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         get;
         private set => SetProperty(ref field, value);
     }
+
+    public int CurrentLine
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = 1;
+
+    public int CurrentColumn
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = 1;
 
     public string ILText
     {

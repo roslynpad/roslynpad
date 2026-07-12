@@ -9,51 +9,60 @@
              x:Name="Root">
   <UserControl.Resources>
     <converters:LevelToIndentConverter x:Key="LevelToIndentConverter" />
+    <x:Double x:Key="TreeViewItemMinHeight">24</x:Double>
   </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="TextBlock.columnHeader">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource {x:Static local:ThemeDictionary.DescriptionForeground}}" />
+      <Setter Property="Margin" Value="8 3" />
+    </Style>
+  </UserControl.Styles>
   <DockPanel Grid.IsSharedSizeScope="True">
     <!-- Column Headers -->
     <ScrollViewer DockPanel.Dock="Top"
                   x:Name="HeaderScroll"
                   HorizontalScrollBarVisibility="Hidden"
                   VerticalScrollBarVisibility="Disabled">
-      <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="150" SharedSizeGroup="ResultNameGroup" />
-          <ColumnDefinition Width="5" />
-          <ColumnDefinition Width="450" SharedSizeGroup="ResultValueGroup" />
-          <ColumnDefinition Width="5" />
-          <ColumnDefinition Width="Auto" SharedSizeGroup="ResultTypeGroup" />
-          <ColumnDefinition Width="5" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <TextBlock Text="Name"
-                   Margin="20,0"
-                   HorizontalAlignment="Center"
-                   Grid.Column="0" />
-        <GridSplitter Grid.Column="1"
-                      ResizeDirection="Columns"
-                      Background="Transparent"
-                      BorderBrush="DarkGray"
-                      BorderThickness="1,0,0,0" />
-        <TextBlock Text="Value"
-                   Margin="20,0"
-                   HorizontalAlignment="Center"
-                   Grid.Column="2" />
-        <GridSplitter Grid.Column="3"
-                      ResizeDirection="Columns"
-                      Background="Transparent"
-                      BorderBrush="DarkGray"
-                      BorderThickness="1,0,0,0" />
-        <TextBlock Text="Type"
-                   Margin="20,0"
-                   HorizontalAlignment="Center"
-                   Grid.Column="4" />
-        <GridSplitter Grid.Column="5"
-                      ResizeDirection="Columns"
-                      Background="Transparent"
-                      BorderBrush="DarkGray"
-                      BorderThickness="1,0,0,0" />
-      </Grid>
+      <Border BorderThickness="0 0 0 1"
+              BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150" SharedSizeGroup="ResultNameGroup" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="450" SharedSizeGroup="ResultValueGroup" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="Auto" SharedSizeGroup="ResultTypeGroup" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Name"
+                     Classes="columnHeader"
+                     Grid.Column="0" />
+          <GridSplitter Grid.Column="1"
+                        ResizeDirection="Columns"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}"
+                        BorderThickness="1,0,0,0" />
+          <TextBlock Text="Value"
+                     Classes="columnHeader"
+                     Grid.Column="2" />
+          <GridSplitter Grid.Column="3"
+                        ResizeDirection="Columns"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}"
+                        BorderThickness="1,0,0,0" />
+          <TextBlock Text="Type"
+                     Classes="columnHeader"
+                     Grid.Column="4" />
+          <GridSplitter Grid.Column="5"
+                        ResizeDirection="Columns"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}"
+                        BorderThickness="1,0,0,0" />
+        </Grid>
+      </Border>
     </ScrollViewer>
 
     <TreeView x:Name="ResultTree"
@@ -79,7 +88,7 @@
       <TreeView.Styles>
         <Style Selector="TreeViewItem">
           <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=OneTime, FallbackValue=False}" />
-          <Setter Property="Padding" Value="0" />
+          <Setter Property="Padding" Value="4 0" />
           <Setter Property="Template">
             <ControlTemplate TargetType="TreeViewItem">
               <StackPanel>
@@ -116,9 +125,9 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
             </Grid.ColumnDefinitions>
             <DockPanel Grid.Column="0"
@@ -136,10 +145,13 @@
             </DockPanel>
             <TextBlock Grid.Column="2"
                        Text="{Binding Value}"
+                       Margin="8 0 0 0"
                        TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center" />
             <TextBlock Grid.Column="4"
                        Text="{Binding Type}"
+                       Margin="8 0 0 0"
+                       Foreground="{DynamicResource {x:Static local:ThemeDictionary.DescriptionForeground}}"
                        TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center" />
           </Grid>
@@ -149,22 +161,23 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
             </Grid.ColumnDefinitions>
             <DockPanel Grid.Column="0" VerticalAlignment="Center">
               <Image Source="{Binding Severity, Converter={x:Static local:ResultsView.SeverityToIconConverter}}"
-                     Width="12" Height="12" Margin="4,0,5,0" />
+                     Width="12" Height="12" Margin="0,0,5,0" />
               <TextBlock Text="{Binding Severity}" TextTrimming="CharacterEllipsis" Margin="0,0,5,0" />
               <TextBlock Text="{Binding ErrorCode}" TextTrimming="CharacterEllipsis" />
             </DockPanel>
             <TextBlock Grid.Column="2"
                        Text="{Binding Message}"
+                       Margin="8 0 0 0"
                        TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center" />
-            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="8 0 0 0">
               <TextBlock Text="{Binding LineNumber}" />
               <TextBlock Text=", " />
               <TextBlock Text="{Binding Column}" />
@@ -176,18 +189,19 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition SharedSizeGroup="ResultNameGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultValueGroup" />
-              <ColumnDefinition Width="1" />
+              <ColumnDefinition Width="5" />
               <ColumnDefinition SharedSizeGroup="ResultTypeGroup" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
               <Image Source="{Binding Severity, Converter={x:Static local:ResultsView.SeverityToIconConverter}}"
-                     Width="12" Height="12" Margin="4,0,5,0" />
+                     Width="12" Height="12" Margin="0,0,5,0" />
               <TextBlock Text="Restore Error" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <TextBlock Grid.Column="2"
                        Text="{Binding Message}"
+                       Margin="8 0 0 0"
                        TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center" />
           </Grid>

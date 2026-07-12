@@ -111,7 +111,7 @@ public sealed class SuggestedActionsController
     /// </summary>
     public string? LightBulbCategory => _bulbCategory;
 
-    /// <summary>Fire-and-forget entry point for the keyboard bridge (Ctrl/Cmd+.).</summary>
+    /// <summary>Fire-and-forget entry point for the keyboard bridge (Cmd+;, Ctrl+.).</summary>
     public bool Show()
     {
         _ = ShowAsync(CancellationToken.None);
@@ -419,6 +419,11 @@ public sealed class SuggestedActionsController
                 ("Screwdriver", "Suggested action to improve your code."),
         };
 
+        // Advertise the platform's chord: Cmd+. never reaches macOS apps (AppKit's cancel
+        // key equivalent), so there the bridge binds Cmd+; instead.
+        var shortcut = Application.Current?.PlatformSettings?.HotkeyConfiguration.CommandModifiers == Avalonia.Input.KeyModifiers.Meta
+            ? "⌘;" : "Ctrl+.";
+
         HideLightBulb();
         var bulb = new Border
         {
@@ -433,7 +438,7 @@ public sealed class SuggestedActionsController
                 Source = Morgania.CodeAnalysis.Editor.ImageCatalog.GetImage(imageName),
             },
         };
-        ToolTip.SetTip(bulb, toolTip);
+        ToolTip.SetTip(bulb, $"{toolTip} ({shortcut})");
         bulb.PointerPressed += (_, e) =>
         {
             e.Handled = true;

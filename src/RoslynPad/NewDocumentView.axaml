@@ -1,41 +1,80 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RoslynPad.NewDocumentView"
+             xmlns:ui="using:RoslynPad.UI"
              xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
              xmlns:roslyn="clr-namespace:Microsoft.CodeAnalysis;assembly=Microsoft.CodeAnalysis"
-             x:DataType="local:MainViewModelAvalonia">
-  <UniformGrid HorizontalAlignment="Center"
-               VerticalAlignment="Center">
+             x:DataType="ui:MainViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.card">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="28 20" />
+      <Setter Property="Width" Value="180" />
+    </Style>
+    <Style Selector="Button.card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource {x:Static local:ThemeDictionary.ListHoverBackground}}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource {x:Static local:ThemeDictionary.FocusBorder}}" />
+    </Style>
+    <Style Selector="Button.card TextBlock.cardTitle">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.card TextBlock.cardShortcut">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="{DynamicResource {x:Static local:ThemeDictionary.DescriptionForeground}}" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Spacing="8">
 
-    <Button Padding="5"
-            Margin="20 0 0 0"
-            Background="Transparent"
-            Command="{Binding NewDocumentCommand}"
-            CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
-      <StackPanel>
-        <Image Source="{StaticResource CsFile}"
-               Width="64"
-               Height="64" />
-        <TextBlock Text="{OnPlatform New&#xA;(Ctrl+N), macOS=New&#xA;(⌘ N)}"
-                       TextAlignment="Center"
-                       HorizontalAlignment="Center" />
-      </StackPanel>
-    </Button>
+    <TextBlock Text="RoslynPad"
+               FontSize="32"
+               FontWeight="Light"
+               HorizontalAlignment="Center" />
+    <TextBlock Text="A cross-platform C# editor and playground"
+               FontSize="14"
+               Foreground="{DynamicResource {x:Static local:ThemeDictionary.DescriptionForeground}}"
+               HorizontalAlignment="Center"
+               Margin="0 0 0 24" />
 
-    <Button Padding="5"
-            Margin="20 0 0 0"
-            Background="Transparent"
-            Command="{Binding NewDocumentCommand}"
-            CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
-      <StackPanel>
-        <Image Source="{StaticResource CsFile}"
-               Width="64"
-               Height="64" />
-        <TextBlock Text="{OnPlatform New Script&#xA;(Ctrl+Shift+N), macOS=New Script&#xA;(⌘ ⇧ N)}"
-                   TextAlignment="Center"
-                   HorizontalAlignment="Center" />
-      </StackPanel>
-    </Button>
+    <StackPanel Orientation="Horizontal"
+                Spacing="16"
+                HorizontalAlignment="Center">
 
-  </UniformGrid>
+      <Button Classes="card"
+              Command="{Binding NewDocumentCommand}"
+              CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}">
+        <StackPanel Spacing="10">
+          <Image Source="{StaticResource CsFile}"
+                 Width="48"
+                 Height="48" />
+          <TextBlock Classes="cardTitle"
+                     Text="New Document" />
+          <TextBlock Classes="cardShortcut"
+                     Text="{OnPlatform Ctrl+N, macOS=⌘N}" />
+        </StackPanel>
+      </Button>
+
+      <Button Classes="card"
+              Command="{Binding NewDocumentCommand}"
+              CommandParameter="{x:Static roslyn:SourceCodeKind.Script}">
+        <StackPanel Spacing="10">
+          <Image Source="{StaticResource Rocket}"
+                 Width="48"
+                 Height="48" />
+          <TextBlock Classes="cardTitle"
+                     Text="New Script" />
+          <TextBlock Classes="cardShortcut"
+                     Text="{OnPlatform Ctrl+Shift+N, macOS=⌘⇧N}" />
+        </StackPanel>
+      </Button>
+
+    </StackPanel>
+  </StackPanel>
 </UserControl>

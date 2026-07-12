@@ -7,7 +7,6 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Input.TextInput;
 using Avalonia.Media;
 using Avalonia.Threading;
 

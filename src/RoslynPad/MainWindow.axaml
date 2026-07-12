@@ -7,7 +7,7 @@
         xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
         MinWidth="500"
         MinHeight="300"
-        x:DataType="local:MainViewModelAvalonia"
+        x:DataType="ui:MainViewModel"
         Title="{Binding WindowTitle, Mode=OneTime}"
         Icon="avares://RoslynPad/Resources/RoslynPad.ico"
         Name="This">
@@ -63,30 +63,62 @@
   <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
     <DockPanel>
 
-      <Button Padding="3"
-                Margin="1"
-                Background="#eebbbb"
-                DockPanel.Dock="Bottom"
-                Click="OnErrorButtonClick"
-                VerticalAlignment="Stretch"
-                IsVisible="{Binding HasError}">
+      <Button Name="ErrorBar"
+              DockPanel.Dock="Bottom"
+              Padding="10 4"
+              CornerRadius="0"
+              BorderThickness="0"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Left"
+              Background="{DynamicResource {x:Static local:ThemeDictionary.StatusBarItemErrorBackground}}"
+              Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarItemErrorForeground}}"
+              Click="OnErrorButtonClick"
+              ToolTip.Tip="Show error details"
+              IsVisible="{Binding HasError}">
+        <Button.Styles>
+          <Style Selector="Button#ErrorBar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static local:ThemeDictionary.StatusBarItemErrorBackground}}" />
+            <Setter Property="Foreground"
+                    Value="{DynamicResource {x:Static local:ThemeDictionary.StatusBarItemErrorForeground}}" />
+          </Style>
+          <Style Selector="Button#ErrorBar:pointerover">
+            <Setter Property="Opacity" Value="0.9" />
+          </Style>
+        </Button.Styles>
+        <StackPanel Orientation="Horizontal"
+                    Spacing="6">
+          <Image Source="{StaticResource ExceptionMarker}"
+                 Width="14"
+                 Height="14" />
           <TextBlock VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis"
                      Text="{Binding LastError.Message}" />
+        </StackPanel>
       </Button>
 
       <Border DockPanel.Dock="Bottom"
-              Padding="4 2"
-              Background="{DynamicResource {x:Static local:ThemeDictionary.StatusBarBackground}}">
+              Padding="10 2"
+              Background="{DynamicResource {x:Static local:ThemeDictionary.StatusBarBackground}}"
+              BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.PanelBorder}}"
+              BorderThickness="0 1 0 0">
         <DockPanel LastChildFill="False">
+
+          <TextBlock DockPanel.Dock="Left"
+                     VerticalAlignment="Center"
+                     FontSize="12"
+                     Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}"
+                     IsVisible="{Binding CurrentOpenDocument, Converter={x:Static ObjectConverters.IsNotNull}}"><Run Text="Ln " /><Run Text="{Binding CurrentOpenDocument.CurrentLine, Mode=OneWay, FallbackValue=1}" /><Run Text=", Col " /><Run Text="{Binding CurrentOpenDocument.CurrentColumn, Mode=OneWay, FallbackValue=1}" /></TextBlock>
+
           <StackPanel DockPanel.Dock="Right"
                       Orientation="Horizontal"
+                      Spacing="8"
                       VerticalAlignment="Center"
                       TextBlock.Foreground="{DynamicResource {x:Static local:ThemeDictionary.StatusBarForeground}}">
 
-            <ToggleButton Margin="10 0 0 0"
-                          BorderThickness="0"
-                          Background="Transparent"
-                          Padding="2"
+            <ToggleButton Classes="tool"
+                          Width="22"
+                          Height="22"
                           IsChecked="{Binding Settings.OptimizeCompilation}"
                           ToolTip.Tip="{OnPlatform Optimization (Ctrl+Shift+O), macOS=Optimization (⌘ ⇧ O)}">
               <Image Source="{StaticResource Time}"
@@ -94,24 +126,34 @@
                      Height="14" />
             </ToggleButton>
 
-            <Image Margin="10 0 0 0"
-                   Source="{StaticResource FontSize}"
-                   Height="14"
-                   Width="14" />
-            <Slider Width="100"
-                    ToolTip.Tip="Font Size"
-                    Margin="5 0 0 0"
-                    Minimum="{x:Static ui:MainViewModel.MinimumFontSize}"
-                    Maximum="{x:Static ui:MainViewModel.MaximumFontSize}"
-                    SmallChange="1"
-                    LargeChange="10"
-                    IsSnapToTickEnabled="True"
-                    TickFrequency="1"
-                    Value="{Binding EditorFontSize}" />
-            <TextBlock Text="{Binding EditorFontSize}"
-                       Margin="5 0 0 0"
-                       VerticalAlignment="Center"
-                       FontSize="12" />
+            <StackPanel Orientation="Horizontal"
+                        Spacing="6"
+                        VerticalAlignment="Center">
+              <Image Source="{StaticResource FontSize}"
+                     Height="14"
+                     Width="14"
+                     VerticalAlignment="Center" />
+              <Slider Width="110"
+                      ToolTip.Tip="Editor Font Size"
+                      VerticalAlignment="Center"
+                      Minimum="{x:Static ui:MainViewModel.MinimumFontSize}"
+                      Maximum="{x:Static ui:MainViewModel.MaximumFontSize}"
+                      SmallChange="1"
+                      LargeChange="10"
+                      IsSnapToTickEnabled="True"
+                      TickFrequency="1"
+                      Value="{Binding EditorFontSize}">
+                <Slider.Resources>
+                  <x:Double x:Key="SliderHorizontalHeight">22</x:Double>
+                  <x:Double x:Key="SliderHorizontalThumbWidth">14</x:Double>
+                  <x:Double x:Key="SliderHorizontalThumbHeight">14</x:Double>
+                </Slider.Resources>
+              </Slider>
+              <TextBlock Text="{Binding EditorFontSize}"
+                         MinWidth="16"
+                         VerticalAlignment="Center"
+                         FontSize="12" />
+            </StackPanel>
 
           </StackPanel>
         </DockPanel>

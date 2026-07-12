@@ -6,8 +6,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-using Microsoft.VisualStudio.Text;
-
 /// <summary>
 /// Renders every selection of the multi-selection broker as filled rectangles under the
 /// text layer. Geometry comes from the formatted lines' normalized bounds, so bidi

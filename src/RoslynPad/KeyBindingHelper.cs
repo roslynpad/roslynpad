@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Avalonia.Input;
 using RoslynPad.UI;
 using AvaloniaKeyBinding = Avalonia.Input.KeyBinding;

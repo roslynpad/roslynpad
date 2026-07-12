@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -19,8 +18,6 @@ namespace RoslynPad;
 partial class DocumentView : UserControl, IDisposable
 {
     private readonly TextBox _nuGetSearch;
-    private readonly TextBlock _lnTextBlock;
-    private readonly TextBlock _colTextBlock;
     private readonly ContentControl _editorHost;
 
     private IWpfTextView? _textView;
@@ -35,8 +32,6 @@ partial class DocumentView : UserControl, IDisposable
 
         _editorHost = this.FindControl<ContentControl>("EditorHost") ?? throw new InvalidOperationException("Missing EditorHost");
         _nuGetSearch = this.FindControl<TextBox>("NuGetSearch") ?? throw new InvalidOperationException("Missing NuGetSearch");
-        _lnTextBlock = this.FindControl<TextBlock>("Ln") ?? throw new InvalidOperationException("Missing Ln");
-        _colTextBlock = this.FindControl<TextBlock>("Col") ?? throw new InvalidOperationException("Missing Col");
 
         _nuGetSearch.KeyDown += NuGetSearch_OnKeyDown;
 
@@ -49,8 +44,8 @@ partial class DocumentView : UserControl, IDisposable
     {
         var position = e.NewPosition.BufferPosition;
         var line = position.GetContainingLine();
-        _lnTextBlock.Text = (line.LineNumber + 1).ToString(CultureInfo.InvariantCulture);
-        _colTextBlock.Text = (position.Position - line.Start.Position + 1).ToString(CultureInfo.InvariantCulture);
+        ViewModel.CurrentLine = line.LineNumber + 1;
+        ViewModel.CurrentColumn = position.Position - line.Start.Position + 1;
     }
 
     private async void OnDataContextChanged(object? sender, EventArgs args)
