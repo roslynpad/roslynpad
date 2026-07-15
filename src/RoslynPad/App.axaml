@@ -67,6 +67,26 @@
       <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelBorder}}" />
     </Style>
 
+    <!-- Map tree item selection/hover onto the VS Code list.* theme colors instead of the Fluent accent.
+         :focus-within reproduces VS Code's active (tree focused) vs. inactive (editor focused) selection. -->
+    <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot:pointerover">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ListHoverBackground}}" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ListInactiveSelectionBackground}}" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot:pointerover">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ListInactiveSelectionBackground}}" />
+    </Style>
+    <Style Selector="TreeView:focus-within TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+      <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ListActiveSelectionBackground}}" />
+    </Style>
+    <Style Selector="TreeView:focus-within TreeViewItem:selected /template/ Border#PART_LayoutRoot > ContentPresenter#PART_HeaderPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.ListActiveSelectionForeground}}" />
+    </Style>
+
     <Style Selector="DataValidationErrors">
       <Setter Property="Template">
         <ControlTemplate>
