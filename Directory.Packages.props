@@ -4,11 +4,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetExtensionsVersion>10.0.9</DotNetExtensionsVersion>
+    <DotNetExtensionsVersion>10.0.10</DotNetExtensionsVersion>
     <RoslynVersion>5.6.0</RoslynVersion>
     <!-- https://dev.azure.com/dnceng/public/_artifacts/feed/dotnet-tools/NuGet/Microsoft.CodeAnalysis.LanguageServer.Protocol/ -->
     <RoslynPrivateVersion>5.6.0-2.26263.10</RoslynPrivateVersion>
-    <AvaloniaVersion>12.0.5</AvaloniaVersion>
+    <AvaloniaVersion>12.1.0</AvaloniaVersion>
     <NuGetVersion>7.6.0</NuGetVersion>
     <MessagePackVersion>2.5.302</MessagePackVersion>
     <DockAvaloniaVersion>12.0.0.2</DockAvaloniaVersion>
@@ -23,7 +23,7 @@
     <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="$(DockAvaloniaVersion)" />
-    <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.8.0" />
+    <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="1.0.0" />
     <PackageVersion Include="MessagePack" Version="$(MessagePackVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
@@ -35,8 +35,8 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.84.2" />
-    <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.70" />
+    <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.86.0" />
+    <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.80" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="17.13.41" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="18.7.23" />
@@ -46,7 +46,7 @@
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="NuGet.Commands" Version="$(NuGetVersion)" />
     <PackageVersion Include="NuGet.Versioning" Version="$(NuGetVersion)" />
-    <PackageVersion Include="StreamJsonRpc" Version="2.25.28" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.25.29" />
     <PackageVersion Include="System.ComponentModel.Composition" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="System.Composition" Version="$(DotNetExtensionsVersion)" />
