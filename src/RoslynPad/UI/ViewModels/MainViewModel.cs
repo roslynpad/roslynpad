@@ -29,6 +29,7 @@ public class MainViewModel : NotificationObject, IDisposable
     private readonly DocumentFileWatcher _documentFileWatcher;
     private readonly string _editorConfigPath;
     private readonly VsCodeThemeReader _themeManager;
+    private readonly HomeViewModel _home = new();
     private double _editorFontSize;
     private DocumentViewModel _documentRoot;
     private DocumentWatcher? _documentWatcher;
@@ -424,7 +425,7 @@ public class MainViewModel : NotificationObject, IDisposable
         }
 
         var settings = new SettingsViewModel(Settings);
-        OpenDocuments.Add(settings);
+        AddOpenDocument(settings);
         ActiveContent = settings;
     }
 
@@ -439,7 +440,7 @@ public class MainViewModel : NotificationObject, IDisposable
         }
 
         var secrets = new SecretsViewModel(_commands, _serviceProvider.GetRequiredService<IClipboardService>());
-        OpenDocuments.Add(secrets);
+        AddOpenDocument(secrets);
         ActiveContent = secrets;
     }
 
@@ -451,7 +452,7 @@ public class MainViewModel : NotificationObject, IDisposable
         if (openDocument == null)
         {
             openDocument = GetOpenDocumentViewModel(document);
-            OpenDocuments.Add(openDocument);
+            AddOpenDocument(openDocument);
         }
 
         ActiveContent = openDocument;
@@ -488,8 +489,28 @@ public class MainViewModel : NotificationObject, IDisposable
     {
         var openDocument = GetOpenDocumentViewModel();
         openDocument.SourceCodeKind = kind;
-        OpenDocuments.Add(openDocument);
+        AddOpenDocument(openDocument);
         ActiveContent = openDocument;
+    }
+
+    // The Home tab exists only as the empty state, so it is removed whenever a real
+    // document is opened and restored once the last one closes.
+    private void AddOpenDocument(IDocumentContent content)
+    {
+        OpenDocuments.Remove(_home);
+        OpenDocuments.Add(content);
+    }
+
+    private void RemoveOpenDocument(IDocumentContent content)
+    {
+        OpenDocuments.Remove(content);
+
+        if (!OpenDocuments.Any(d => d is not HomeViewModel))
+        {
+            OpenDocuments.Add(_home);
+            CurrentOpenDocument = null;
+            ActiveContent = _home;
+        }
     }
 
     public async Task CloseDocument(OpenDocumentViewModel? document)
@@ -510,7 +531,7 @@ public class MainViewModel : NotificationObject, IDisposable
             RoslynHost?.CloseDocument(document.DocumentId);
         }
 
-        OpenDocuments.Remove(document);
+        RemoveOpenDocument(document);
         document.Close();
     }
 
@@ -530,7 +551,7 @@ public class MainViewModel : NotificationObject, IDisposable
         }
         else
         {
-            OpenDocuments.Remove(content);
+            RemoveOpenDocument(content);
         }
     }
 
@@ -574,7 +595,7 @@ public class MainViewModel : NotificationObject, IDisposable
 
     public IDelegateCommand ClearErrorCommand { get; }
 
-    public bool HasNoOpenDocuments => IsInitialized && OpenDocuments.Count == 0;
+    public bool HasNoOpenDocuments => IsInitialized && !OpenDocuments.Any(d => d is not HomeViewModel);
 
     public IDelegateCommand ReportProblemCommand { get; }
 

@@ -179,11 +179,7 @@
 
             <ProportionalDock x:Name="MainPane" Id="MainPane" Orientation="Vertical">
 
-              <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane">
-                <Document x:Name="NewDoc" Id="NewDoc" Title="Home" x:DataType="Document" CanClose="False" CanFloat="False">
-                  <local:NewDocumentView DataContext="{Binding #This.DataContext}" />
-                </Document>
-              </DocumentDock>
+              <DocumentDock x:Name="DocumentsPane" Id="DocumentsPane" IsCollapsable="False" />
 
                <ProportionalDockSplitter x:Name="ResultSplitter" Id="ResultSplitter" />
 

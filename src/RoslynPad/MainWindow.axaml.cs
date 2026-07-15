@@ -162,18 +162,21 @@ partial class MainWindow : Window
         {
             foreach (var item in e.NewItems.OfType<IDocumentContent>())
             {
-                var content = item is SettingsViewModel
-                    ? (object)new SettingsView { DataContext = item }
-                    : item is SecretsViewModel
-                    ? new SecretsView { DataContext = item }
-                    : new DocumentView { DataContext = item };
+                var content = item switch
+                {
+                    HomeViewModel => new NewDocumentView { DataContext = ViewModel },
+                    SettingsViewModel => new SettingsView { DataContext = item },
+                    SecretsViewModel => new SecretsView { DataContext = item },
+                    _ => (object)new DocumentView { DataContext = item },
+                };
 
                 var document = new Document
                 {
                     Id = item.Id,
                     Title = item.Title,
                     DataContext = item,
-                    Content = content
+                    Content = content,
+                    CanClose = item is not HomeViewModel,
                 };
 
                 factory.AddDockable(DocumentsPane, document);
@@ -258,13 +261,17 @@ partial class MainWindow : Window
             return;
         }
 
+        // The document pane must never collapse when empty, otherwise the Home tab the
+        // view model adds once the last document closes would have nowhere to dock.
+        documentsPane.IsCollapsable = false;
+
         // Documents from the previous session are reopened by the view model,
         // so drop their stale dockables from the saved layout.
         if (documentsPane.VisibleDockables is { } documentDockables)
         {
             for (var i = documentDockables.Count - 1; i >= 0; i--)
             {
-                if (documentDockables[i] is Document { Id: not "NewDoc" } staleDocument)
+                if (documentDockables[i] is Document staleDocument)
                 {
                     documentDockables.Remove(staleDocument);
                 }
