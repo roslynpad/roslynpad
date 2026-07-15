@@ -61,7 +61,7 @@
     </NativeMenu>
   </NativeMenu.Menu>
   <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
-    <DockPanel>
+    <DockPanel Background="{DynamicResource DockSurfaceWorkbenchBrush}">
 
       <Button Name="ErrorBar"
               DockPanel.Dock="Bottom"
@@ -159,7 +159,7 @@
         </DockPanel>
       </Border>
 
-      <DockControl x:Name="Dock" InitializeLayout="True" InitializeFactory="True">
+      <DockControl x:Name="Dock" Margin="8,4,8,8" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>
           <Factory ActiveDockableChanged="OnActiveDockableChanged"
                    DockableClosed="OnDockableClosedAsync" />

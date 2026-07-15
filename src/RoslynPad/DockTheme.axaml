@@ -1,0 +1,185 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad">
+
+  <!-- VS Code-style rounded dock: panes are rounded cards separated by invisible splitter
+       gaps over the workbench background, and document tabs are rounded chips.
+       Brushes come from the VS Code theme via ThemeDictionary.MapDockResources. -->
+
+  <Styles.Resources>
+    <CornerRadius x:Key="DockDocumentTabItemCornerRadius">4</CornerRadius>
+    <Thickness x:Key="DockDocumentTabItemMargin">0,4,4,4</Thickness>
+    <Thickness x:Key="DockDocumentTabItemPadding">6,0,4,0</Thickness>
+    <CornerRadius x:Key="DockDocumentTabCreateButtonCornerRadius">4</CornerRadius>
+    <x:Double x:Key="DockDocumentTabStripLeadingSpacerWidth">4</x:Double>
+    <Thickness x:Key="DockToolTabItemPadding">8,3</Thickness>
+    <Thickness x:Key="DockToolTabItemSelectedPadding">8,3</Thickness>
+  </Styles.Resources>
+
+  <!-- Invisible splitters form the gaps between cards -->
+  <Style Selector="ProportionalStackPanelSplitter">
+    <Setter Property="Thickness" Value="8" />
+  </Style>
+
+  <!-- Document area: one rounded frame surrounds both the tab strip and the content
+       (Dock's stock template only frames the content, so the template is replaced);
+       the 2px padding keeps square-cornered content off the rounded corners -->
+  <Style Selector="DocumentControl">
+    <Setter Property="Template">
+      <ControlTemplate x:CompileBindings="False">
+        <Border Background="{DynamicResource DockSurfaceEditorBrush}"
+                BorderBrush="{DynamicResource DockDocumentContentBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="2">
+          <DockPanel x:Name="PART_DockPanel"
+                     DockProperties.IsDropArea="True"
+                     DockProperties.IsDockTarget="True"
+                     Background="Transparent"
+                     ZIndex="1">
+            <DocumentTabStrip x:Name="PART_TabStrip"
+                              DockPanel.Dock="Top"
+                              ItemsSource="{Binding VisibleDockables}"
+                              SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
+                              CanCreateItem="{Binding CanCreateDocument}"
+                              IconTemplate="{TemplateBinding IconTemplate}"
+                              HeaderTemplate="{TemplateBinding HeaderTemplate}"
+                              ModifiedTemplate="{TemplateBinding ModifiedTemplate}"
+                              CloseTemplate="{TemplateBinding CloseTemplate}"
+                              CloseButtonTheme="{TemplateBinding CloseButtonTheme}"
+                              IsActive="{TemplateBinding IsActive}"
+                              DockProperties.IsDropArea="True"
+                              DockProperties.DockAdornerHost="{Binding #PART_DockPanel}">
+              <DocumentTabStrip.Styles>
+                <Style Selector="DocumentTabStripItem">
+                  <Setter Property="IsActive" Value="{Binding $parent[DocumentTabStrip].IsActive}" />
+                </Style>
+              </DocumentTabStrip.Styles>
+            </DocumentTabStrip>
+            <Border x:Name="PART_Border">
+              <Grid>
+                <DockableControl DataContext="{Binding ActiveDockable}"
+                                 TrackingMode="Visible"
+                                 IsVisible="{Binding $parent[DocumentControl].HasVisibleDockables}">
+                  <DeferredContentControl x:Name="PART_ContentPresenter"
+                                          Content="{Binding}"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch">
+                    <DeferredContentControl.ContentTemplate>
+                      <ControlRecyclingDataTemplate Parent="{Binding #PART_ContentPresenter}" />
+                    </DeferredContentControl.ContentTemplate>
+                  </DeferredContentControl>
+                </DockableControl>
+                <ContentControl x:Name="PART_EmptyContentHost"
+                                Content="{Binding EmptyContent}"
+                                ContentTemplate="{Binding $parent[DocumentControl].EmptyContentTemplate}"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                IsVisible="{Binding !$parent[DocumentControl].HasVisibleDockables}" />
+              </Grid>
+            </Border>
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="DocumentControl /template/ Border#PART_Border">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- Document tabs: floating pills matching VS Code Insiders' new look — the
+       DockTabPill* brushes are the foreground color-mix ladder from its
+       .style-override tab rules; no borders, shadows, or indicator lines.
+       All states are restated here because a plain app-level setter outranks the
+       control theme's pseudo-class styles. -->
+  <Style Selector="DocumentTabStripItem">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource DockTabPillForegroundBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="DocumentTabStripItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillHoverBrush}" />
+  </Style>
+  <Style Selector="DocumentTabStripItem:selected">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillSelectedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.Foreground}}" />
+  </Style>
+  <Style Selector="DocumentTabStripItem /template/ StackPanel#PART_HeaderHost">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="DocumentControl">
+    <Setter Property="IconTemplate">
+      <DataTemplate x:CompileBindings="False">
+        <Image Width="16"
+               Height="16"
+               Margin="4,0,2,0"
+               VerticalAlignment="Center"
+               Source="{Binding DataContext, Converter={x:Static rp:DocumentIconConverter.Instance}}"
+               IsVisible="{Binding DataContext, Converter={x:Static rp:DocumentIconConverter.HasIcon}}" />
+      </DataTemplate>
+    </Setter>
+  </Style>
+
+  <!-- Tool panes: header with rounded top corners, content with rounded bottom corners -->
+  <Style Selector="ToolChromeControl">
+    <Setter Property="BorderThickness" Value="1,0,1,1" />
+    <Setter Property="Padding" Value="2" />
+  </Style>
+  <Style Selector="ToolChromeControl /template/ DeferredContentPresenter#PART_ContentPresenter">
+    <Setter Property="CornerRadius" Value="0,0,6,6" />
+  </Style>
+  <Style Selector="ToolChromeControl /template/ Border#PART_Border">
+    <Setter Property="Background" Value="{DynamicResource DockSurfaceSidebarBrush}" />
+    <Setter Property="CornerRadius" Value="6,6,0,0" />
+  </Style>
+  <Style Selector="ToolChromeControl:active /template/ Border#PART_Border">
+    <Setter Property="Background" Value="{DynamicResource DockSurfaceHeaderActiveBrush}" />
+  </Style>
+  <Style Selector="ToolChromeControl /template/ Grid#PART_Grip">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ToolChromeControl:active /template/ Grid#PART_Grip">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ToolChromeControl /template/ TextBlock#PART_Title">
+    <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelTitleActiveForeground}}" />
+  </Style>
+
+  <!-- Tool pane content fills the card; no inner side borders -->
+  <Style Selector="ToolControl /template/ Border#PART_Border">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- Bottom tool tabs (Results / IL): the same pill ladder as document tabs.
+       Padding is pinned identically for every state so selection cannot change
+       the chip geometry (the control theme uses a distinct selected padding). -->
+  <Style Selector="ToolTabStripItem">
+    <Setter Property="Margin" Value="6,4,0,4" />
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource DockTabPillBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelTitleInactiveForeground}}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="ToolTabStripItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillHoverBrush}" />
+  </Style>
+  <Style Selector="ToolTabStripItem /template/ Border">
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+  <Style Selector="ToolTabStripItem /template/ DockableControl">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ToolTabStripItem:selected">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillSelectedBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="Margin" Value="6,4,0,4" />
+    <Setter Property="Foreground" Value="{DynamicResource {x:Static rp:ThemeDictionary.PanelTitleActiveForeground}}" />
+  </Style>
+  <Style Selector="ToolTabStripItem:selected:pointerover">
+    <Setter Property="Background" Value="{DynamicResource DockTabPillSelectedBrush}" />
+  </Style>
+
+</Styles>

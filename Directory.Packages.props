@@ -11,7 +11,6 @@
     <AvaloniaVersion>12.0.5</AvaloniaVersion>
     <NuGetVersion>7.6.0</NuGetVersion>
     <MessagePackVersion>2.5.302</MessagePackVersion>
-    <AvalonDockVersion>4.74.1</AvalonDockVersion>
     <DockAvaloniaVersion>12.0.0.2</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -20,10 +19,7 @@
     <PackageVersion Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="AvalonLibrary" Version="4.0.1" />
     <PackageVersion Include="DialogHost.Avalonia" Version="0.12.2" />
-    <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="$(AvalonDockVersion)" />
-    <PackageVersion Include="Dirkster.AvalonDock" Version="$(AvalonDockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="$(DockAvaloniaVersion)" />

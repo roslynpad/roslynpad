@@ -148,8 +148,8 @@ public class MainViewModel : NotificationObject, IDisposable
 
             (string file, ThemeType type) theme = builtInTheme switch
             {
-                BuiltInTheme.Light => ("light_modern.json", ThemeType.Light),
-                BuiltInTheme.Dark => ("dark_modern.json", ThemeType.Dark),
+                BuiltInTheme.Light => ("2026-light.json", ThemeType.Light),
+                BuiltInTheme.Dark => ("2026-dark.json", ThemeType.Dark),
                 _ => throw new ArgumentOutOfRangeException(nameof(builtInTheme)),
             };
 

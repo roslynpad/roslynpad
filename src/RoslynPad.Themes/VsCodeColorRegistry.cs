@@ -170,6 +170,9 @@ internal class VsCodeColorRegistry : IColorRegistry
 
         var tabActiveModifiedBorder = RegisterColor("tab.activeModifiedBorder", new ColorDefaults(Dark: "#3399CC", Light: "#33AAEE"));
         var editorGroupDropBackground = RegisterColor("editorGroup.dropBackground", new ColorDefaults(Dark: Color.FromHex("#53595D").Transparent(0.5), Light: Color.FromHex("#2677CB").Transparent(0.18)));
+        RegisterColor("editorGroup.border", new ColorDefaults(Dark: "#444444", Light: "#E7E7E7"));
+        RegisterColor("editorGroupHeader.tabsBackground", new ColorDefaults(Dark: "#252526", Light: "#F3F3F3"));
+        RegisterColor("sash.hoverBorder", focusBorder);
 
         var tabInactiveModifiedBorder = RegisterColor("tab.inactiveModifiedBorder", new ColorDefaults(Dark: Transparent(tabActiveModifiedBorder, 0.5), Light: Transparent(tabActiveModifiedBorder, 0.5)));
         RegisterColor("tab.unfocusedActiveModifiedBorder", new ColorDefaults(Dark: Transparent(tabActiveModifiedBorder, 0.5), Light: Transparent(tabActiveModifiedBorder, 0.7)));

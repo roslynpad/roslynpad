@@ -201,15 +201,17 @@ public sealed partial class ThemeClassificationFormats
             scopes[scope.Key] = scope.Value;
         }
 
-        var classificationsMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // Multiple classifications can share a token name (e.g. identifier and local name are both
+        // "variable"), so map each classification independently; the custom map wins on conflicts.
+        var tokensMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var classification in SemanticTokensSchema.ClassificationTypeNameToTokenName.Concat(SemanticTokensSchema.ClassificationTypeNameToCustomTokenName))
         {
-            classificationsMap[classification.Value] = classification.Key;
+            tokensMap[classification.Key] = classification.Value;
         }
 
-        return scopes.Select(d => (name: d.Key, found: classificationsMap.TryGetValue(d.Key, out var classification), classification: classification!, scopes: d.Value))
-            .Where(d => d.found)
-            .Select(d => (d.classification, d.scopes))
+        return tokensMap
+            .Where(t => scopes.ContainsKey(t.Value))
+            .Select(t => (classification: t.Key, scopes: scopes[t.Value]))
             .ToImmutableArray();
     }
 

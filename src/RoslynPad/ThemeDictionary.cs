@@ -1,4 +1,5 @@
-﻿using RoslynPad.Themes;
+﻿using Avalonia.Media;
+using RoslynPad.Themes;
 
 namespace RoslynPad;
 
@@ -33,6 +34,7 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string ListActiveSelectionForeground = "list.activeSelectionForeground";
     public const string ListInactiveSelectionBackground = "list.inactiveSelectionBackground";
     public const string TabActiveBackground = "tab.activeBackground";
+    public const string TabUnfocusedActiveBackground = "tab.unfocusedActiveBackground";
     public const string TabInactiveBackground = "tab.inactiveBackground";
     public const string TabActiveForeground = "tab.activeForeground";
     public const string TabInactiveForeground = "tab.inactiveForeground";
@@ -54,6 +56,12 @@ public class ThemeDictionary : ThemeDictionaryBase
     public const string ListHoverBackground = "list.hoverBackground";
     public const string DescriptionForeground = "descriptionForeground";
     public const string StatusBarItemHoverBackground = "statusBarItem.hoverBackground";
+    public const string EditorGroupBorder = "editorGroup.border";
+    public const string EditorGroupDropBackground = "editorGroup.dropBackground";
+    public const string SashHoverBorder = "sash.hoverBorder";
+    public const string IconForeground = "icon.foreground";
+    public const string PanelTitleActiveForeground = "panelTitle.activeForeground";
+    public const string PanelTitleInactiveForeground = "panelTitle.inactiveForeground";
 
     private void Initialize(Theme theme)
     {
@@ -67,6 +75,83 @@ public class ThemeDictionary : ThemeDictionaryBase
             if (theme.TryGetColor(id) is { } color)
             {
                 SetThemeColor(id, color);
+            }
+        }
+
+        MapDockResources(theme.Type);
+    }
+
+    /// <summary>
+    /// Maps VS Code theme colors onto the semantic brush keys consumed by Dock's control themes,
+    /// overriding the DockFluentTheme accent defaults.
+    /// </summary>
+    private void MapDockResources(ThemeType type)
+    {
+        // VS Code sashes are invisible until interacted with; tab strips are part of
+        // the framed cards, so they stay transparent too
+        this["DockSplitterIdleBrush"] = Brushes.Transparent;
+        this["DockTabBackgroundBrush"] = Brushes.Transparent;
+        this["DockDocumentTabStripBackgroundBrush"] = Brushes.Transparent;
+
+        MapDockBrush("DockSurfaceWorkbenchBrush", TabBarBackground, SideBarBackground);
+        MapDockBrush("DockSurfaceSidebarBrush", SideBarBackground);
+        MapDockBrush("DockSurfaceEditorBrush", EditorBackground);
+        MapDockBrush("DockSurfacePanelBrush", PanelBackground, EditorBackground);
+        MapDockBrush("DockSurfaceHeaderBrush", TabUnfocusedActiveBackground, TabActiveBackground);
+        MapDockBrush("DockSurfaceHeaderActiveBrush", ListInactiveSelectionBackground);
+
+        MapDockBrush("DockBorderSubtleBrush", EditorGroupBorder, PanelBorder);
+        MapDockBrush("DockBorderStrongBrush", EditorGroupBorder, PanelBorder);
+        MapDockBrush("DockSeparatorBrush", TabBarBorder, EditorGroupBorder);
+        MapDockBrush("DockDocumentContentBorderBrush", EditorGroupBorder, PanelBorder);
+
+        MapDockBrush("DockSplitterHoverBrush", SashHoverBorder, FocusBorder);
+        MapDockBrush("DockSplitterDragBrush", SashHoverBorder, FocusBorder);
+        MapDockBrush("DockApplicationAccentBrushIndicator", SashHoverBorder, FocusBorder);
+
+        MapDockBrush("DockTabHoverBackgroundBrush", ToolbarHoverBackground);
+        MapDockBrush("DockTabActiveBackgroundBrush", TabActiveBackground);
+        MapDockBrush("DockTabActiveIndicatorBrush", TabActiveBorderTop, FocusBorder);
+        MapDockBrush("DockTabForegroundBrush", TabInactiveForeground);
+        MapDockBrush("DockTabSelectedForegroundBrush", TabActiveForeground);
+        MapDockBrush("DockTabActiveForegroundBrush", TabActiveForeground);
+        MapDockBrush("DockDocumentTabSelectedForegroundBrush", TabActiveForeground);
+        MapDockBrush("DockDocumentTabPointerOverForegroundBrush", TabHoverForeground, TabActiveForeground);
+        MapDockBrush("DockDocumentTabCloseSelectedForegroundBrush", TabActiveForeground);
+        MapDockBrush("DockDocumentTabClosePointerOverForegroundBrush", TabActiveForeground);
+        MapDockBrush("DockTabCloseHoverBackgroundBrush", ToolbarHoverBackground);
+
+        MapDockBrush("DockTargetIndicatorBrush", EditorGroupDropBackground, ListActiveSelectionBackground);
+
+        MapDockBrush("DockChromeButtonForegroundBrush", IconForeground, Foreground);
+        MapDockBrush("DockChromeButtonHoverBackgroundBrush", ToolbarHoverBackground);
+        MapDockBrush("DockChromeButtonPressedBackgroundBrush", ToolbarActiveBackground, ToolbarHoverBackground);
+        MapDockBrush("DockChromeButtonDangerHoverBrush", ToolbarHoverBackground);
+
+        if (TryGetValue(Foreground + "Color", out var foregroundValue) && foregroundValue is Color foreground)
+        {
+            var isLight = type == ThemeType.Light;
+            this["DockTabPillBrush"] = new SolidColorBrush(foreground, isLight ? 0.04 : 0.05);
+            this["DockTabPillHoverBrush"] = new SolidColorBrush(foreground, isLight ? 0.06 : 0.08);
+            this["DockTabPillSelectedBrush"] = new SolidColorBrush(foreground, isLight ? 0.10 : 0.18);
+            this["DockTabPillForegroundBrush"] = new SolidColorBrush(foreground, 0.5);
+        }
+
+        MapDockBrush("DockThemeForegroundBrush", Foreground);
+        MapDockBrush("DockThemeBackgroundBrush", SideBarBackground);
+        MapDockBrush("DockThemeBorderLowBrush", EditorGroupBorder, PanelBorder);
+        MapDockBrush("DockThemeControlBackgroundBrush", EditorBackground);
+        MapDockBrush("DockThemeAccentBrush", FocusBorder);
+    }
+
+    private void MapDockBrush(string dockKey, params string[] colorIds)
+    {
+        foreach (var id in colorIds)
+        {
+            if (TryGetValue(id, out var brush))
+            {
+                this[dockKey] = brush;
+                return;
             }
         }
     }
