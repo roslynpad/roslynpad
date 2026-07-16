@@ -189,7 +189,7 @@ public class MainViewModel : NotificationObject, IDisposable
         {
             app.ActualThemeVariantChanged += (_, _) =>
             {
-                if (app.RequestedThemeVariant is null)
+                if (app.RequestedThemeVariant is null || app.RequestedThemeVariant == ThemeVariant.Default)
                 {
                     onChange();
                 }
