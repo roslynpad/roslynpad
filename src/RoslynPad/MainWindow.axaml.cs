@@ -46,6 +46,13 @@ partial class MainWindow : Window
 
         ViewModel = locator.GetRequiredService<MainViewModel>();
         ViewModel.OpenDocuments.CollectionChanged += OpenDocuments_CollectionChanged;
+        ViewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(MainViewModel.ActiveContent))
+            {
+                ActivateDockableForActiveContent();
+            }
+        };
         ViewModel.ThemeChanged += OnViewModelThemeChanged;
         ViewModel.InitializeTheme();
 
@@ -98,6 +105,18 @@ partial class MainWindow : Window
         }
 
         SetShowIL();
+    }
+
+    private void ActivateDockableForActiveContent()
+    {
+        if (ViewModel.ActiveContent is { } content &&
+            DocumentsPane.Factory is { } factory &&
+            factory.FindDockable(DocumentsPane, d => d.Id == content.Id) is { } dockable &&
+            DocumentsPane.ActiveDockable != dockable)
+        {
+            factory.SetActiveDockable(dockable);
+            factory.SetFocusedDockable(DocumentsPane, dockable);
+        }
     }
 
     private void SetShowIL()
