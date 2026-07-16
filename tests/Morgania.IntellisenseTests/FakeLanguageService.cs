@@ -111,9 +111,16 @@ internal sealed class FakeQuickInfoSource(ITextBuffer buffer) : IAsyncQuickInfoS
         }
 
         var applicableToSpan = point.Snapshot.CreateTrackingSpan(wordSpan, SpanTrackingMode.EdgeInclusive);
+        string word = wordSpan.GetText();
         var content = new ContainerElement(
             ContainerElementStyle.Stacked,
-            new ClassifiedTextElement(new ClassifiedTextRun("text", $"Info about {wordSpan.GetText()}")),
+            // Shaped like Roslyn's main description line: an icon and a signature long
+            // enough that it must wrap inside the tip.
+            new ContainerElement(
+                ContainerElementStyle.Wrapped,
+                new ImageElement(default),
+                new ClassifiedTextElement(new ClassifiedTextRun("text", $"(extension) IEnumerable<{word}> IEnumerable<{word}>.Select<{word}, TResult>(Func<{word}, TResult> selector) (+ 1 overload)"))),
+            new ClassifiedTextElement(new ClassifiedTextRun("text", $"Info about {word}")),
             new ClassifiedTextElement(new ClassifiedTextRun("text", "From the fake language service.")));
         return Task.FromResult<QuickInfoItem?>(new QuickInfoItem(applicableToSpan, content));
     }

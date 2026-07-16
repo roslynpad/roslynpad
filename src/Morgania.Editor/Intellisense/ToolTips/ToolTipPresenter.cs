@@ -48,6 +48,8 @@ public sealed class ToolTipPresenterFactory : IToolTipPresenterFactory
 /// </summary>
 internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
 {
+    private const double MaxTipWidth = 600.0;
+
     private readonly ITextView _view;
     private readonly ToolTipParameters _parameters;
     private readonly IViewElementFactoryService _viewElementFactory;
@@ -72,7 +74,7 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
             BorderThickness = new Thickness(1.0),
             CornerRadius = new CornerRadius(3.0),
             Padding = new Thickness(8.0, 5.0),
-            MaxWidth = 600.0,
+            MaxWidth = MaxTipWidth,
         };
         _container.SetValue(TextElement.ForegroundProperty, brushes.Foreground);
     }
@@ -91,6 +93,7 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
         }
 
         _applicableToSpan = applicableToSpan;
+        _container.MaxWidth = _view.ViewportWidth > 0.0 ? Math.Min(MaxTipWidth, _view.ViewportWidth) : MaxTipWidth;
         _panel.Children.Clear();
         foreach (var item in content)
         {

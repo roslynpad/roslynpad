@@ -128,10 +128,41 @@ public sealed class ContainerElementViewElementFactory : IViewElementFactory
             throw new ArgumentException($"Unsupported conversion from {model?.GetType().FullName}.", nameof(model));
         }
 
-        Panel panel = (container.Style & ContainerElementStyle.Stacked) != 0
-            ? new StackPanel { Orientation = Orientation.Vertical }
-            : new StackPanel { Orientation = Orientation.Horizontal };
         double padding = (container.Style & ContainerElementStyle.VerticalPadding) != 0 ? 3.0 : 0.0;
+        if ((container.Style & ContainerElementStyle.Stacked) == 0)
+        {
+            // Wrapped is inline flow, not a horizontal panel: a panel can never break
+            // inside a child, so long classified text would run past the popup edge
+            // instead of wrapping mid-text beside the icon.
+            var text = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0.0, padding) };
+            foreach (var element in container.Elements)
+            {
+                if (element is null || _service.Value.CreateViewElement<Control>(textView, element) is not { } child)
+                {
+                    continue;
+                }
+
+                if (child is TextBlock { Inlines.Count: > 0 } block)
+                {
+                    var runs = block.Inlines!.ToArray();
+                    block.Inlines!.Clear();
+                    text.Inlines!.AddRange(runs);
+                }
+                else if (child is TextBlock { Text.Length: > 0 } plain)
+                {
+                    text.Inlines!.Add(new Run(plain.Text));
+                }
+                else
+                {
+                    text.Inlines!.Add(new InlineUIContainer(child) { BaselineAlignment = BaselineAlignment.Center });
+                }
+            }
+
+            return text as TView
+                ?? throw new ArgumentException($"Unsupported conversion to {typeof(TView).FullName}.", nameof(model));
+        }
+
+        var panel = new StackPanel { Orientation = Orientation.Vertical };
         foreach (var element in container.Elements)
         {
             if (element is not null && _service.Value.CreateViewElement<Control>(textView, element) is { } child)

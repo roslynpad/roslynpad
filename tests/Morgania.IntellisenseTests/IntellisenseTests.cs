@@ -349,6 +349,51 @@ public sealed class IntellisenseTests
     }
 
     [TestMethod]
+    public async Task QuickInfoWrapsInsideTheTipAndRespectsTheViewportWidth()
+    {
+        await IntellisenseTestHost.RunAsync(() =>
+        {
+            var (view, window) = IntellisenseTestHost.CreateHostedView("Morgania rocks\n", width: 320.0);
+            try
+            {
+                var broker = IntellisenseTestHost.Container.GetExport<IAsyncQuickInfoBroker>();
+                var triggerPoint = view.TextSnapshot.CreateTrackingPoint(2, PointTrackingMode.Negative);
+                var triggerTask = broker.TriggerQuickInfoAsync(view, triggerPoint, QuickInfoSessionOptions.None);
+                PumpUntil(() => triggerTask.IsCompleted, "quick info trigger completes");
+                var session = triggerTask.GetAwaiter().GetResult();
+                Assert.IsNotNull(session);
+                PumpUntil(() => session.State == QuickInfoSessionState.Visible, "quick info becomes visible");
+
+                var overlay = OverlayLayer.GetOverlayLayer(view.VisualElement)!;
+                Border Tip() => overlay.GetVisualDescendants().OfType<Border>().FirstOrDefault(static b => b.Child is StackPanel)!;
+                PumpUntil(() => Tip() is { Bounds.Width: > 0.0 }, "the tip attaches and lays out");
+
+                var tip = Tip();
+                Assert.IsTrue(
+                    tip.Bounds.Width <= view.ViewportWidth,
+                    $"tip width {tip.Bounds.Width} exceeds the viewport width {view.ViewportWidth}");
+
+                var signature = tip.GetVisualDescendants().OfType<TextBlock>()
+                    .Single(static t => BlockText(t).StartsWith("(extension)", StringComparison.Ordinal));
+                Assert.IsTrue(
+                    signature.Bounds.Width <= tip.Bounds.Width,
+                    $"signature width {signature.Bounds.Width} paints past the tip frame {tip.Bounds.Width}");
+                Assert.IsTrue(
+                    signature.Bounds.Height > signature.FontSize * 2.0,
+                    $"the long signature should wrap to multiple lines (height {signature.Bounds.Height})");
+
+                var dismissTask = session.DismissAsync();
+                PumpUntil(() => dismissTask.IsCompleted, "dismissal completes");
+                dismissTask.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                window.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task SignatureHelpSelectsTheBestMatchPresentsAndTracksTheCaret()
     {
         await IntellisenseTestHost.RunAsync(() =>
