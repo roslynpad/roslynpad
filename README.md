@@ -6,6 +6,8 @@ A cross-platform C# editor powered by Roslyn and the Morgania editor - an Avalon
 
 ## Try out the new [Morgania-based preview](https://github.com/roslynpad/roslynpad/releases/tag/22-preview2)
 
+![RoslynPad](docs/screenshots/roslynpad.png)
+
 ## Installing
 
 **You must also install a supported [.NET SDK](https://aka.ms/dotnet) to allow RoslynPad to compile programs.**
@@ -31,16 +33,32 @@ To build the source code, use one of the following:
 
 ### Completion
 
-![Completion](docs/Completion.png)
+![Completion](docs/screenshots/completion.png)
 
 ### Signature Help
 
-![Signature Help](docs/SignatureHelp.png)
+![Signature Help](docs/screenshots/signature-help.png)
+
+### Quick Info
+
+![Quick Info](docs/screenshots/quick-info.png)
 
 ### Diagnostics
 
-![Diagnostics](docs/Diagnostics.png)
+![Diagnostics](docs/screenshots/diagnostics.png)
 
 ### Code Fixes
 
-![Code Fixes](docs/CodeFixes.png)
+![Code Fixes](docs/screenshots/actions.png)
+
+### NuGet Packages
+
+![NuGet Packages](docs/screenshots/nuget.png)
+
+### Document Management
+
+![Document Management](docs/screenshots/documents.png)
+
+### Dump Results
+
+![Dump Results](docs/screenshots/dump.png)
