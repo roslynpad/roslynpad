@@ -122,7 +122,10 @@ internal sealed class CompletionPresenter : ICompletionPresenter
             MaxWidth = 480.0,
         };
         ApplyBrushes();
+        _view.LostAggregateFocus += OnViewLostAggregateFocus;
     }
+
+    private void OnViewLostAggregateFocus(object? sender, EventArgs e) => _session?.Dismiss();
 
     private void ApplyBrushes()
     {
@@ -199,7 +202,11 @@ internal sealed class CompletionPresenter : ICompletionPresenter
         _isOpen = false;
     }
 
-    public void Dispose() => Close();
+    public void Dispose()
+    {
+        _view.LostAggregateFocus -= OnViewLostAggregateFocus;
+        Close();
+    }
 
     private void OnAgentChanged(object? sender, SpaceReservationAgentChangedEventArgs e)
     {

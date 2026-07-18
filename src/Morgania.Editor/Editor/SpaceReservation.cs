@@ -217,6 +217,9 @@ internal sealed class SpaceReservationManager : ISpaceReservationManager
         agent.Hide();
         (agent as PopupAgent)?.OnRemoved();
         AgentChanged?.Invoke(this, new SpaceReservationAgentChangedEventArgs(oldAgent: agent, newAgent: null!));
+        // Removing a focused popup (its content leaves the tree) can end the view's
+        // aggregate focus without any event reaching the unsubscribed agent handlers.
+        _view.CheckAggregateFocus();
         return true;
     }
 
@@ -244,9 +247,17 @@ internal sealed class SpaceReservationManager : ISpaceReservationManager
         }
     }
 
-    private void OnAgentGotFocus(object? sender, EventArgs e) => GotAggregateFocus?.Invoke(this, EventArgs.Empty);
+    private void OnAgentGotFocus(object? sender, EventArgs e)
+    {
+        GotAggregateFocus?.Invoke(this, EventArgs.Empty);
+        _view.CheckAggregateFocus();
+    }
 
-    private void OnAgentLostFocus(object? sender, EventArgs e) => LostAggregateFocus?.Invoke(this, EventArgs.Empty);
+    private void OnAgentLostFocus(object? sender, EventArgs e)
+    {
+        LostAggregateFocus?.Invoke(this, EventArgs.Empty);
+        _view.CheckAggregateFocus();
+    }
 }
 
 /// <summary>

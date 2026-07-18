@@ -131,6 +131,7 @@ internal sealed class SignatureHelpSession : ISignatureHelpSession
         SignatureHelpBroker.GetSessionList(_view).Add(this);
         _view.TextBuffer.Changed += OnBufferChanged;
         _view.Closed += OnViewClosed;
+        _view.LostAggregateFocus += OnViewLostAggregateFocus;
         if (_trackCaret)
         {
             _view.Caret.PositionChanged += OnCaretPositionChanged;
@@ -163,6 +164,7 @@ internal sealed class SignatureHelpSession : ISignatureHelpSession
         {
             _view.TextBuffer.Changed -= OnBufferChanged;
             _view.Closed -= OnViewClosed;
+            _view.LostAggregateFocus -= OnViewLostAggregateFocus;
             if (_trackCaret)
             {
                 _view.Caret.PositionChanged -= OnCaretPositionChanged;
@@ -305,6 +307,8 @@ internal sealed class SignatureHelpSession : ISignatureHelpSession
     private void OnBufferChanged(object? sender, TextContentChangedEventArgs e) => Recalculate();
 
     private void OnViewClosed(object? sender, EventArgs e) => Dismiss();
+
+    private void OnViewLostAggregateFocus(object? sender, EventArgs e) => Dismiss();
 
     private void OnCaretPositionChanged(object? sender, CaretPositionChangedEventArgs e)
     {

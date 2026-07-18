@@ -112,9 +112,11 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
 
             _view.TextBuffer.Changed += OnBufferChanged;
             _view.Closed += OnViewClosed;
+            _view.LostAggregateFocus += OnViewLostAggregateFocus;
             if (_parameters.TrackMouse && _view is IWpfTextView wpfView)
             {
                 wpfView.VisualElement.PointerMoved += OnViewPointerMoved;
+                wpfView.VisualElement.PointerExited += OnViewPointerExited;
             }
         }
         else
@@ -133,9 +135,11 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
         _dismissed = true;
         _view.TextBuffer.Changed -= OnBufferChanged;
         _view.Closed -= OnViewClosed;
+        _view.LostAggregateFocus -= OnViewLostAggregateFocus;
         if (_view is IWpfTextView wpfView)
         {
             wpfView.VisualElement.PointerMoved -= OnViewPointerMoved;
+            wpfView.VisualElement.PointerExited -= OnViewPointerExited;
         }
 
         if (_manager is { } manager)
@@ -174,6 +178,8 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
 
     private void OnViewClosed(object? sender, EventArgs e) => Dismiss();
 
+    private void OnViewLostAggregateFocus(object? sender, EventArgs e) => Dismiss();
+
     private void OnViewPointerMoved(object? sender, PointerEventArgs e)
     {
         if (_dismissed || _applicableToSpan is null || _parameters.KeepOpen || _container.IsPointerOver)
@@ -202,12 +208,27 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
         // The pointer left the applicable span and isn't over the tip: schedule the check
         // once more after this input settles (moving from the text into the tip crosses
         // ground that belongs to neither), then dismiss.
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (!_dismissed && !_container.IsPointerOver && !_parameters.KeepOpen)
-            {
-                Dismiss();
-            }
-        }, DispatcherPriority.Input);
+        DismissOncePointerSettlesOutsideTip();
     }
+
+    /// <summary>
+    /// A fast exit can leave the view without a single move inside it, so tracking tips
+    /// also dismiss when the pointer exits the view — which includes moving onto the tip
+    /// itself (the popup covers the view from the overlay layer), hence the settled check.
+    /// </summary>
+    private void OnViewPointerExited(object? sender, PointerEventArgs e)
+    {
+        if (!_dismissed && !_parameters.KeepOpen)
+        {
+            DismissOncePointerSettlesOutsideTip();
+        }
+    }
+
+    private void DismissOncePointerSettlesOutsideTip() => Dispatcher.UIThread.Post(() =>
+    {
+        if (!_dismissed && !_container.IsPointerOver && !_parameters.KeepOpen)
+        {
+            Dismiss();
+        }
+    }, DispatcherPriority.Input);
 }

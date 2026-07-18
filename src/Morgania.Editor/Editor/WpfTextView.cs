@@ -75,6 +75,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     private double _anchorDistance;
     private bool _inLayout;
     private bool _isClosed;
+    private bool _hasAggregateFocus;
     private bool _layoutQueued;
     private ITrackingSpan? _provisionalTextHighlight;
     private readonly SpaceReservationStack _spaceReservationStack;
@@ -153,26 +154,36 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             }
         };
 
-        GotFocus += (_, _) =>
-        {
-            if (_multiSelectionBroker is { ActivationTracksFocus: true } broker)
-            {
-                broker.AreSelectionsActive = true;
-            }
+        GotFocus += (_, _) => CheckAggregateFocus();
+        LostFocus += (_, _) => CheckAggregateFocus();
+        // A detached view (its document tab switched away) can no longer position its
+        // popups; the refresh finds no overlay layer and drops the agents, and the
+        // intellisense sessions observe the removal through AgentChanged and dismiss.
+        DetachedFromVisualTree += (_, _) => QueueSpaceReservationStackRefresh();
+    }
 
-            _caretLayer.OnViewUpdated();
-            GotAggregateFocus?.Invoke(this, EventArgs.Empty);
-        };
-        LostFocus += (_, _) =>
+    /// <summary>
+    /// Raises <see cref="GotAggregateFocus"/>/<see cref="LostAggregateFocus"/> only on true
+    /// aggregate transitions: focus moving between the view and one of its popups is not a
+    /// loss. Safe to check synchronously from focus events — Avalonia updates
+    /// IsKeyboardFocusWithin for both old and new focus chains before raising them.
+    /// </summary>
+    internal void CheckAggregateFocus()
+    {
+        bool hasAggregateFocus = HasAggregateFocus;
+        if (_hasAggregateFocus == hasAggregateFocus)
         {
-            if (_multiSelectionBroker is { ActivationTracksFocus: true } broker)
-            {
-                broker.AreSelectionsActive = false;
-            }
+            return;
+        }
 
-            _caretLayer.OnViewUpdated();
-            LostAggregateFocus?.Invoke(this, EventArgs.Empty);
-        };
+        _hasAggregateFocus = hasAggregateFocus;
+        if (_multiSelectionBroker is { ActivationTracksFocus: true } broker)
+        {
+            broker.AreSelectionsActive = hasAggregateFocus;
+        }
+
+        _caretLayer.OnViewUpdated();
+        (hasAggregateFocus ? GotAggregateFocus : LostAggregateFocus)?.Invoke(this, EventArgs.Empty);
     }
 
     #region Events
@@ -330,7 +341,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
 
     public bool IsMouseOverViewOrAdornments => IsPointerOver || _spaceReservationStack.IsMouseOver;
 
-    public bool HasAggregateFocus => IsFocused || _spaceReservationStack.HasAggregateFocus;
+    public bool HasAggregateFocus => IsKeyboardFocusWithin || _spaceReservationStack.HasAggregateFocus;
 
     public ITrackingSpan? ProvisionalTextHighlight
     {
