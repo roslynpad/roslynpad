@@ -190,6 +190,7 @@ partial class DocumentView : UserControl, IDisposable
         {
             theme.ApplyPopup(editorFormatMap);
             theme.ApplyBraceMatching(editorFormatMap);
+            theme.ApplyReferenceHighlighting(editorFormatMap);
             theme.ApplyCaret(editorFormatMap);
             theme.ApplyFindReplace(editorFormatMap);
         }

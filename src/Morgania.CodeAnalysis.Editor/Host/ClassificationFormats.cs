@@ -194,4 +194,43 @@ public sealed class BraceMatchingMarkerFormat : MarkerFormatDefinition
     }
 }
 
+// The markers drawn on a symbol's definition and references when the caret is on one of them
+// (rendered by TextMarkerAdornmentManager, produced by Roslyn's
+// ReferenceHighlightingViewTaggerProvider). Roslyn's definition/written-reference formats are
+// WPF-based and excluded from the recompile, and the read-reference format belongs to the
+// closed-source editor, so the host exports all three; the theme feeds live colors over these
+// fallbacks (ThemeClassificationFormats.ApplyReferenceHighlighting).
+[Export(typeof(EditorFormatDefinition))]
+[Name(Microsoft.CodeAnalysis.Editor.ReferenceHighlighting.ReferenceHighlightTag.TagId)]
+public sealed class ReferenceHighlightMarkerFormat : MarkerFormatDefinition
+{
+    public ReferenceHighlightMarkerFormat()
+    {
+        DisplayName = "Highlighted Reference";
+        Fill = new SolidColorBrush(Color.FromArgb(0x30, 0x88, 0x88, 0x88));
+    }
+}
+
+[Export(typeof(EditorFormatDefinition))]
+[Name(Microsoft.CodeAnalysis.Editor.ReferenceHighlighting.DefinitionHighlightTag.TagId)]
+public sealed class DefinitionHighlightMarkerFormat : MarkerFormatDefinition
+{
+    public DefinitionHighlightMarkerFormat()
+    {
+        DisplayName = "Highlighted Definition";
+        Fill = new SolidColorBrush(Color.FromArgb(0x30, 0x88, 0x88, 0x88));
+    }
+}
+
+[Export(typeof(EditorFormatDefinition))]
+[Name(Microsoft.CodeAnalysis.Editor.ReferenceHighlighting.WrittenReferenceHighlightTag.TagId)]
+public sealed class WrittenReferenceHighlightMarkerFormat : MarkerFormatDefinition
+{
+    public WrittenReferenceHighlightMarkerFormat()
+    {
+        DisplayName = "Highlighted Written Reference";
+        Fill = new SolidColorBrush(Color.FromArgb(0x48, 0x88, 0x88, 0x88));
+    }
+}
+
 #pragma warning restore CA1812

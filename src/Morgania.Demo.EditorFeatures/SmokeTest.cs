@@ -41,6 +41,7 @@ internal static class SmokeTest
             await VerifyQuickFixAsync(exportProvider, view, buffer).ConfigureAwait(true);
             VerifyMultiCaret(exportProvider, view, buffer);
             await VerifyBraceMatchingAsync(exportProvider, view, buffer).ConfigureAwait(true);
+            await VerifyReferenceHighlightingAsync(exportProvider, view, buffer).ConfigureAwait(true);
             Console.WriteLine("SMOKE PASSED");
             exitCode = 0;
         }
@@ -605,6 +606,59 @@ internal static class SmokeTest
         }
 
         Console.WriteLine("brace matching OK: both braces tagged and drawn; Ctrl+] jumped past the close brace");
+    }
+
+    /// <summary>
+    /// Puts the caret on the for-loop variable and waits for Roslyn's
+    /// ReferenceHighlightingViewTaggerProvider to tag its definition and every use
+    /// (NavigableHighlightTag text markers) and for TextMarkerAdornmentManager to draw them.
+    /// </summary>
+    private static async Task VerifyReferenceHighlightingAsync(ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer)
+    {
+        var text = buffer.CurrentSnapshot.GetText();
+        var loopVariable = text.IndexOf("var i", text.IndexOf("for (", StringComparison.Ordinal), StringComparison.Ordinal) + "var ".Length;
+        view.Caret.MoveTo(new SnapshotPoint(buffer.CurrentSnapshot, loopVariable));
+
+        var aggregatorFactory = exportProvider.GetExportedValue<IViewTagAggregatorFactoryService>();
+        using var aggregator = aggregatorFactory.CreateTagAggregator<ITextMarkerTag>(view);
+
+        List<(string Type, SnapshotSpan Span)> highlights = [];
+        for (var i = 0; i < 60 && highlights.Count < 4; i++)
+        {
+            await Task.Delay(500).ConfigureAwait(true);
+            var snapshot = buffer.CurrentSnapshot;
+            highlights = aggregator
+                .GetTags(new SnapshotSpan(snapshot, 0, snapshot.Length))
+                .Where(tag => tag.Tag.Type.StartsWith("MarkerFormatDefinition/Highlighted", StringComparison.Ordinal))
+                .SelectMany(tag => tag.Span.GetSpans(snapshot).Select(span => (tag.Tag.Type, span)))
+                .OrderBy(highlight => highlight.span.Start.Position)
+                .ToList();
+        }
+
+        // for (var i = 0; i < Repeat; i++) … {i + 1}: a definition, two reads, and a write.
+        if (highlights.Count != 4
+            || highlights.Any(highlight => highlight.Span.GetText() != "i")
+            || highlights[0].Type != "MarkerFormatDefinition/HighlightedDefinition"
+            || !highlights.Any(highlight => highlight.Type == "MarkerFormatDefinition/HighlightedWrittenReference")
+            || !highlights.Any(highlight => highlight.Type == "MarkerFormatDefinition/HighlightedReference"))
+        {
+            throw new TimeoutException(
+                $"expected definition+read+written highlights on 'i', got {highlights.Count}: {string.Join(", ", highlights.Select(highlight => $"'{highlight.Span.GetText()}'@{highlight.Span.Start.Position} ({highlight.Type})"))}");
+        }
+
+        var markerLayer = view.GetAdornmentLayer(PredefinedAdornmentLayers.TextMarker);
+        for (var i = 0; i < 20 && markerLayer.Elements.Count < 4; i++)
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+        }
+
+        if (markerLayer.Elements.Count < 4)
+        {
+            throw new InvalidOperationException(
+                $"expected the reference highlight markers on the TextMarker layer, found {markerLayer.Elements.Count} adornments");
+        }
+
+        Console.WriteLine("reference highlighting OK: definition, reads, and write tagged and drawn");
     }
 
     private static void RaiseKey(IWpfTextView view, Avalonia.Input.Key key, Avalonia.Input.KeyModifiers modifiers = Avalonia.Input.KeyModifiers.None)
