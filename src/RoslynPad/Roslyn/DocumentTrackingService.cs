@@ -8,17 +8,17 @@ namespace RoslynPad.Roslyn;
 [ExportWorkspaceServiceFactory(typeof(IDocumentTrackingService), ServiceLayer.Host)]
 internal sealed class DocumentTrackingServiceFactory : IWorkspaceServiceFactory
 {
+    // Also serves non-RoslynPad workspaces (e.g. the metadata-as-source workspace), so it
+    // relies on the open-document tracking every workspace maintains via OnDocumentOpened.
     private class DocumentTrackingService(Workspace workspace) : IDocumentTrackingService
     {
-        private readonly RoslynWorkspace _workspace = (RoslynWorkspace)workspace;
-
         public bool SupportsDocumentTracking => true;
 
-        public DocumentId GetActiveDocument() => _workspace.OpenDocumentId ?? throw new InvalidOperationException("No active document");
+        public DocumentId GetActiveDocument() => TryGetActiveDocument() ?? throw new InvalidOperationException("No active document");
 
-        public DocumentId? TryGetActiveDocument() => _workspace.OpenDocumentId;
+        public DocumentId? TryGetActiveDocument() => workspace.GetOpenDocumentIds().FirstOrDefault();
 
-        public ImmutableArray<DocumentId> GetVisibleDocuments() => _workspace.OpenDocumentId != null ? [_workspace.OpenDocumentId] : [];
+        public ImmutableArray<DocumentId> GetVisibleDocuments() => [.. workspace.GetOpenDocumentIds()];
 
         public event EventHandler<DocumentId?>? ActiveDocumentChanged = delegate { };
 

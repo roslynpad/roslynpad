@@ -27,6 +27,7 @@ public class DocumentIconConverter : IValueConverter
         SecretsViewModel => "Secrets",
         OpenDocumentViewModel { SourceCodeKind: SourceCodeKind.Script } => "Rocket",
         OpenDocumentViewModel => "CsFile",
+        MetadataDocumentViewModel => "CsFile",
         _ => null,
     };
 }

@@ -881,6 +881,10 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         _runCts?.Dispose();
     }
 
+    internal event Action<TextSpan>? NavigationRequested;
+
+    internal void RequestNavigation(TextSpan span) => NavigationRequested?.Invoke(span);
+
     public event Action<(int line, int column)>? EditorChangeLocation;
 
     public void TryJumpToLine(IResultWithLineNumber result)

@@ -56,6 +56,7 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="DialogHost.Avalonia" />
+    <PackageReference Include="ICSharpCode.Decompiler" />
     <PackageReference Include="Dock.Avalonia" />
     <PackageReference Include="Dock.Model.Avalonia" />
     <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
@@ -91,6 +92,7 @@
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
+    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="ResultsView.axaml.cs">

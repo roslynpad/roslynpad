@@ -186,6 +186,7 @@ partial class MainWindow : Window
                     HomeViewModel => new NewDocumentView { DataContext = ViewModel },
                     SettingsViewModel => new SettingsView { DataContext = item },
                     SecretsViewModel => new SecretsView { DataContext = item },
+                    MetadataDocumentViewModel => new MetadataDocumentView { DataContext = item },
                     _ => (object)new DocumentView { DataContext = item },
                 };
 

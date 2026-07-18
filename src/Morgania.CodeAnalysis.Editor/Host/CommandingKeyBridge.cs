@@ -85,17 +85,21 @@ internal sealed class CommandingKeyBridge(
             bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
             var chord = e.KeyModifiers & ~KeyModifiers.Shift;
 
+            // In a read-only view editing chords are suppressed here and blocked again by
+            // the keymap; navigation, copy, and go-to commands stay live.
+            bool readOnly = view.Options.GetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId);
+
             // Completion is Ctrl+Space on every platform: on macOS the command modifier
             // belongs to Spotlight, and Mac editors use Ctrl+Space as well.
             if ((e.Key, chord, shift) is (Key.Space, KeyModifiers.Control, false))
             {
-                e.Handled = TryRun(static (v, b) => new InvokeCompletionListCommandArgs(v, b));
+                e.Handled = !readOnly && TryRun(static (v, b) => new InvokeCompletionListCommandArgs(v, b));
                 return;
             }
 
             // Word deletes take the platform word-action modifier (Option on macOS,
             // Ctrl elsewhere); other word-modified keys fall through to the keymap.
-            if (chord == _wordModifiers && !shift && e.Key is Key.Back or Key.Delete)
+            if (chord == _wordModifiers && !shift && !readOnly && e.Key is Key.Back or Key.Delete)
             {
                 e.Handled = e.Key == Key.Back
                     ? Run(static (v, b) => new WordDeleteToStartCommandArgs(v, b), () => operations.DeleteWordToLeft())
@@ -115,20 +119,20 @@ internal sealed class CommandingKeyBridge(
             {
                 // Keys where the bridge supplies the default editing behavior as the innermost
                 // handler, like the editor-operations command target does in VS: always consumed.
-                (Key.Enter, meta: false, shift: false) => Run(static (v, b) => new ReturnKeyCommandArgs(v, b), () => operations.InsertNewLine()),
-                (Key.Tab, meta: false, shift: false) => Run(static (v, b) => new TabKeyCommandArgs(v, b), () => operations.Indent()),
-                (Key.Tab, meta: false, shift: true) => Run(static (v, b) => new BackTabKeyCommandArgs(v, b), () => operations.Unindent()),
-                (Key.Back, meta: false, shift: _) => Run(static (v, b) => new BackspaceKeyCommandArgs(v, b), () => operations.Backspace()),
-                (Key.Delete, meta: false, shift: false) => Run(static (v, b) => new DeleteKeyCommandArgs(v, b), () => operations.Delete()),
-                (Key.V, meta: true, shift: false) => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
-                (Key.Insert, meta: false, shift: true) => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
-                (Key.X, meta: true, shift: false) => Run(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()),
+                (Key.Enter, meta: false, shift: false) when !readOnly => Run(static (v, b) => new ReturnKeyCommandArgs(v, b), () => operations.InsertNewLine()),
+                (Key.Tab, meta: false, shift: false) when !readOnly => Run(static (v, b) => new TabKeyCommandArgs(v, b), () => operations.Indent()),
+                (Key.Tab, meta: false, shift: true) when !readOnly => Run(static (v, b) => new BackTabKeyCommandArgs(v, b), () => operations.Unindent()),
+                (Key.Back, meta: false, shift: _) when !readOnly => Run(static (v, b) => new BackspaceKeyCommandArgs(v, b), () => operations.Backspace()),
+                (Key.Delete, meta: false, shift: false) when !readOnly => Run(static (v, b) => new DeleteKeyCommandArgs(v, b), () => operations.Delete()),
+                (Key.V, meta: true, shift: false) when !readOnly => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
+                (Key.Insert, meta: false, shift: true) when !readOnly => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
+                (Key.X, meta: true, shift: false) when !readOnly => Run(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()),
                 (Key.C, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
                 (Key.Insert, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
 
                 // Commands with no default behavior: consumed only if a handler took them,
                 // otherwise they fall through to the view's keymap.
-                (Key.Space, meta: true, shift: true) => TryRun(static (v, b) => new InvokeSignatureHelpCommandArgs(v, b)),
+                (Key.Space, meta: true, shift: true) when !readOnly => TryRun(static (v, b) => new InvokeSignatureHelpCommandArgs(v, b)),
                 (Key.Escape, meta: false, shift: false) => TryRun(static (v, b) => new EscapeKeyCommandArgs(v, b)),
                 // Arrows go to the command chain first (completion claims them while its session is
                 // open); an active signature help session gets them next, cycling overloads the way
@@ -140,19 +144,21 @@ internal sealed class CommandingKeyBridge(
                 (Key.Down, meta: false, shift: true) => TryRun(static (v, b) => new DownKeyCommandArgs(v, b)),
                 (Key.PageUp, meta: false, shift: _) => TryRun(static (v, b) => new PageUpKeyCommandArgs(v, b)),
                 (Key.PageDown, meta: false, shift: _) => TryRun(static (v, b) => new PageDownKeyCommandArgs(v, b)),
-                (Key.Z, meta: true, shift: false) => TryRun(static (v, b) => new UndoCommandArgs(v, b)),
-                (Key.Z, meta: true, shift: true) or (Key.Y, meta: true, shift: false) => TryRun(static (v, b) => new RedoCommandArgs(v, b)),
+                (Key.Z, meta: true, shift: false) when !readOnly => TryRun(static (v, b) => new UndoCommandArgs(v, b)),
+                (Key.Z, meta: true, shift: true) or (Key.Y, meta: true, shift: false) when !readOnly => TryRun(static (v, b) => new RedoCommandArgs(v, b)),
                 // The `/` key surfaces as either OemQuestion or Oem2 depending on layout.
-                (Key.OemQuestion or Key.Oem2, meta: true, shift: false) => TryRun(static (v, b) => new ToggleLineCommentCommandArgs(v, b)),
-                (Key.D, meta: true, shift: true) => TryRun(static (v, b) => new FormatDocumentCommandArgs(v, b)),
+                (Key.OemQuestion or Key.Oem2, meta: true, shift: false) when !readOnly => TryRun(static (v, b) => new ToggleLineCommentCommandArgs(v, b)),
+                (Key.D, meta: true, shift: true) when !readOnly => TryRun(static (v, b) => new FormatDocumentCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: false) => TryRun(static (v, b) => new GotoBraceCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: true) => TryRun(static (v, b) => new GotoBraceExtCommandArgs(v, b)),
+                (Key.F12, meta: false, shift: false) => TryRun(static (v, b) => new GoToDefinitionCommandArgs(v, b)),
+                (Key.F12, meta: true, shift: false) => TryRun(static (v, b) => new Microsoft.CodeAnalysis.Editor.Commanding.Commands.GoToImplementationCommandArgs(v, b)),
                 // Suggested actions: command+; everywhere, because on macOS Cmd+. never
                 // reaches the app — AppKit hardwires it as the cancel key equivalent
                 // (NSResponder binds it to cancelOperation: alongside Escape) and consumes
                 // it in the key-equivalent phase. Ctrl+. still works on Windows/Linux.
-                (Key.OemSemicolon, meta: true, shift: false) => suggestedActions.Show(),
-                (Key.OemPeriod, meta: true, shift: false) => suggestedActions.Show(),
+                (Key.OemSemicolon, meta: true, shift: false) when !readOnly => suggestedActions.Show(),
+                (Key.OemPeriod, meta: true, shift: false) when !readOnly => suggestedActions.Show(),
 
                 _ => null,
             };
@@ -165,7 +171,8 @@ internal sealed class CommandingKeyBridge(
 
         public void OnTextInput(TextInputEventArgs e)
         {
-            if (view.IsClosed || string.IsNullOrEmpty(e.Text))
+            if (view.IsClosed || string.IsNullOrEmpty(e.Text) ||
+                view.Options.GetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId))
             {
                 return;
             }

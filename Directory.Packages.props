@@ -23,6 +23,7 @@
     <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="Dock.Model.Avalonia" Version="$(DockAvaloniaVersion)" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="9.1.0.7988" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="1.0.0" />
     <PackageVersion Include="MessagePack" Version="$(MessagePackVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />

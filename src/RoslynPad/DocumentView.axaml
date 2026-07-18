@@ -159,7 +159,7 @@
       </StackPanel>
     </Border>
 
-    <ContentControl Name="EditorHost"
-                    Grid.Row="1" />
+    <local:CodeEditorView Name="Editor"
+                          Grid.Row="1" />
   </Grid>
 </UserControl>

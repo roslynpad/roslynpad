@@ -4,8 +4,6 @@ using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeDefinitionWindow;
 using Microsoft.CodeAnalysis.Editor;
-using Microsoft.CodeAnalysis.Editor.Host;
-using Microsoft.CodeAnalysis.FindUsages;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -15,21 +13,6 @@ namespace Morgania.CodeAnalysis.Editor;
 // Host services Roslyn EditorFeatures imports that Visual Studio normally provides. Without
 // them VS-MEF rejects the importing parts — including the completion and quick info sources —
 // so even features the demo does not surface need at least a no-op implementation.
-
-/// <summary>No-op find-usages presenter; unblocks completion/quick info/go-to services.</summary>
-[Shared]
-[Export(typeof(IStreamingFindUsagesPresenter))]
-internal sealed class NoOpStreamingFindUsagesPresenter : IStreamingFindUsagesPresenter
-{
-    public (FindUsagesContext context, CancellationToken cancellationToken) StartSearch(string title, StreamingFindUsagesPresenterOptions options) =>
-        (new NoOpFindUsagesContext(), CancellationToken.None);
-
-    public void ClearAll()
-    {
-    }
-
-    private sealed class NoOpFindUsagesContext : FindUsagesContext;
-}
 
 /// <summary>Maps formatting queries to the buffer's editor options; unblocks EditorOptionsService.</summary>
 [Shared]

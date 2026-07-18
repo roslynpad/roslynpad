@@ -11,15 +11,18 @@ using Avalonia.Styling;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using System.Composition;
+using Microsoft.CodeAnalysis.MetadataAsSource;
+using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Roslyn;
+using RoslynPad.Roslyn.Navigation;
 using RoslynPad.Themes;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
 
 [Export(typeof(MainViewModel)), Shared]
-public class MainViewModel : NotificationObject, IDisposable
+public class MainViewModel : NotificationObject, IDisposable, INavigationHost
 {
     private static readonly Version s_currentVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version();
 
@@ -222,6 +225,8 @@ public class MainViewModel : NotificationObject, IDisposable
             disabledDiagnostics: ["CS1701", "CS1702", "CS7011", "CS8097"],
             analyzerConfigFiles: [_editorConfigPath]))
             .ConfigureAwait(true);
+
+        RoslynHost.GetService<NavigationBridge>().Host = this;
 
         OpenDocumentFromCommandLine();
         await OpenAutoSavedDocuments().ConfigureAwait(true);
@@ -541,6 +546,50 @@ public class MainViewModel : NotificationObject, IDisposable
         {
             await document.AutoSaveAsync().ConfigureAwait(false);
         }
+    }
+
+    Task<bool> INavigationHost.NavigateToDocumentAsync(DocumentId documentId, TextSpan span, CancellationToken cancellationToken)
+    {
+        var content = OpenDocuments.FirstOrDefault(content => content switch
+        {
+            OpenDocumentViewModel open => open.HasDocumentId && open.DocumentId == documentId,
+            MetadataDocumentViewModel metadata => metadata.DocumentId == documentId,
+            _ => false,
+        });
+
+        if (content is null)
+        {
+            return Task.FromResult(false);
+        }
+
+        ActiveContent = content;
+        switch (content)
+        {
+            case OpenDocumentViewModel open:
+                open.RequestNavigation(span);
+                break;
+            case MetadataDocumentViewModel metadata:
+                metadata.RequestNavigation(span);
+                break;
+        }
+
+        return Task.FromResult(true);
+    }
+
+    async Task<bool> INavigationHost.OpenMetadataAsSourceAsync(MetadataAsSourceFile file, CancellationToken cancellationToken)
+    {
+        var document = OpenDocuments.OfType<MetadataDocumentViewModel>()
+            .FirstOrDefault(d => string.Equals(d.FilePath, file.FilePath, StringComparison.OrdinalIgnoreCase));
+        if (document is null)
+        {
+            document = new MetadataDocumentViewModel(file, this);
+            AddOpenDocument(document);
+        }
+
+        ActiveContent = document;
+        await document.ViewReady.ConfigureAwait(true);
+        document.RequestNavigation(file.IdentifierLocation.SourceSpan);
+        return true;
     }
 
     public async Task CloseTab(IDocumentContent content)

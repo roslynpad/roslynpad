@@ -18,19 +18,16 @@ namespace RoslynPad;
 partial class DocumentView : UserControl, IDisposable
 {
     private readonly TextBox _nuGetSearch;
-    private readonly ContentControl _editorHost;
+    private readonly CodeEditorView _editor;
 
     private IWpfTextView? _textView;
     private ITextBuffer? _buffer;
-    private IClassificationFormatMap? _formatMap;
-    private IClassificationTypeRegistryService? _classificationRegistry;
-    private IEditorFormatMap? _editorFormatMap;
 
     public DocumentView()
     {
         InitializeComponent();
 
-        _editorHost = this.FindControl<ContentControl>("EditorHost") ?? throw new InvalidOperationException("Missing EditorHost");
+        _editor = this.FindControl<CodeEditorView>("Editor") ?? throw new InvalidOperationException("Missing Editor");
         _nuGetSearch = this.FindControl<TextBox>("NuGetSearch") ?? throw new InvalidOperationException("Missing NuGetSearch");
 
         _nuGetSearch.KeyDown += NuGetSearch_OnKeyDown;
@@ -59,21 +56,17 @@ partial class DocumentView : UserControl, IDisposable
 
         viewModel.ReadInput += OnReadInput;
         viewModel.EditorFocus += (o, e) => FocusEditor();
+        viewModel.NavigationRequested += span => _editor.NavigateToSpan(span);
         viewModel.FindRequested += (o, e) => FindReplace?.Show(showReplace: false);
         viewModel.FindReplaceRequested += (o, e) => FindReplace?.Show(showReplace: true);
-        viewModel.MainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
-        viewModel.MainViewModel.ThemeChanged += OnThemeChanged;
 
         var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 
         var roslynHost = viewModel.MainViewModel.RoslynHost;
-        var exportProvider = roslynHost.ExportProvider;
 
         Morgania.CodeAnalysis.Editor.DiagnosticsSquiggles.DisabledDiagnostics = roslynHost.DisabledDiagnostics;
 
-        var contentType = exportProvider.GetExportedValue<IContentTypeRegistryService>().GetContentType("CSharp")
-            ?? throw new InvalidOperationException("The CSharp content type is not registered");
-        var buffer = exportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer(documentText, contentType);
+        var buffer = _editor.CreateBuffer(viewModel.MainViewModel, documentText);
         _buffer = buffer;
 
         var documentId = roslynHost.AddDocument(new RoslynPad.Roslyn.DocumentCreationArgs(
@@ -83,21 +76,8 @@ partial class DocumentView : UserControl, IDisposable
             OnTextUpdated,
             viewModel.Document?.Name));
 
-        var editorFactory = exportProvider.GetExportedValue<ITextEditorFactoryService>();
-        var textView = editorFactory.CreateTextView(buffer);
+        var textView = _editor.CreateView(isReadOnly: false);
         _textView = textView;
-        textView.Options.SetOptionValue(DefaultTextViewHostOptions.LineNumberMarginId, true);
-        textView.Options.SetOptionValue(DefaultTextViewOptions.BraceCompletionEnabledOptionId, true);
-
-        _formatMap = exportProvider.GetExportedValue<IClassificationFormatMapService>().GetClassificationFormatMap(textView);
-        _classificationRegistry = exportProvider.GetExportedValue<IClassificationTypeRegistryService>();
-        _editorFormatMap = exportProvider.GetExportedValue<IEditorFormatMapService>().GetEditorFormatMap(textView);
-
-        ApplyFontSettings(viewModel.MainViewModel.Settings.EditorFontFamily, viewModel.MainViewModel.EditorFontSize);
-        ApplyTheme();
-
-        var viewHost = editorFactory.CreateTextViewHost(textView, setFocus: true);
-        _editorHost.Content = viewHost.HostControl;
 
         textView.Caret.PositionChanged += CaretOnPositionChanged;
         buffer.Changed += (o, e) => viewModel.OnTextChanged();
@@ -140,72 +120,9 @@ partial class DocumentView : UserControl, IDisposable
         return new TextSpan(span.Start.Position, span.Length);
     }
 
-    private void FocusEditor() => _textView?.VisualElement.Focus();
+    private void FocusEditor() => _editor.FocusEditor();
 
     private FindReplacePanel? FindReplace => _textView is { } textView ? FindReplacePanel.Get(textView) : null;
-
-    private void ApplyFontSettings(string fontFamilies, double fontSize)
-    {
-        if (_formatMap is not { } formatMap)
-        {
-            return;
-        }
-
-        var properties = formatMap.DefaultTextProperties.SetFontRenderingEmSize(fontSize);
-
-        foreach (var font in fontFamilies.Split(','))
-        {
-            try
-            {
-                properties = properties.SetTypeface(new Typeface(FontFamily.Parse(font.Trim())));
-                break;
-            }
-            catch
-            {
-            }
-        }
-
-        formatMap.DefaultTextProperties = properties;
-    }
-
-    private void OnEditorFontSizeChanged(double fontSize)
-    {
-        if (_formatMap is { } formatMap)
-        {
-            formatMap.DefaultTextProperties = formatMap.DefaultTextProperties.SetFontRenderingEmSize(fontSize);
-        }
-    }
-
-    private void ApplyTheme()
-    {
-        if (_formatMap is not { } formatMap || _classificationRegistry is not { } registry || _textView is not { } textView)
-        {
-            return;
-        }
-
-        var theme = new ThemeClassificationFormats(ViewModel.MainViewModel.Theme);
-        theme.Apply(formatMap, registry);
-
-        if (_editorFormatMap is { } editorFormatMap)
-        {
-            theme.ApplyPopup(editorFormatMap);
-            theme.ApplyBraceMatching(editorFormatMap);
-            theme.ApplyReferenceHighlighting(editorFormatMap);
-            theme.ApplyCaret(editorFormatMap);
-            theme.ApplyFindReplace(editorFormatMap);
-        }
-
-        // Glyph drawings (completion icons, quick info symbols, the light bulb) adapt their
-        // colors to the theme's editor background.
-        Morgania.CodeAnalysis.Editor.ImageCatalog.ThemeBackground = theme.Background;
-
-        if (theme.Background is { } background)
-        {
-            textView.Background = new SolidColorBrush(background);
-        }
-    }
-
-    private void OnThemeChanged(object? sender, EventArgs e) => ApplyTheme();
 
     private void InitializeKeyBindings(OpenDocumentViewModel viewModel)
     {
@@ -290,8 +207,9 @@ partial class DocumentView : UserControl, IDisposable
         if (_textView is { } textView)
         {
             textView.Caret.PositionChanged -= CaretOnPositionChanged;
-            textView.Close();
             _textView = null;
         }
+
+        _editor.Dispose();
     }
 }

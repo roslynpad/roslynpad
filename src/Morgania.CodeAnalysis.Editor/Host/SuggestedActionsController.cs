@@ -120,7 +120,7 @@ public sealed class SuggestedActionsController
 
     public async Task<bool> ShowAsync(CancellationToken cancellationToken)
     {
-        if (_isComputing || _view.IsClosed)
+        if (_isComputing || _view.IsClosed || IsReadOnly)
         {
             return false;
         }
@@ -342,6 +342,9 @@ public sealed class SuggestedActionsController
         return source.GetSuggestedActions(categories, range, cancellationToken) ?? [];
     }
 
+    // Suggested actions edit the buffer, so a read-only view gets no light bulb or menu.
+    private bool IsReadOnly => _view.Options.GetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId);
+
     private void ScheduleLightBulbUpdate()
     {
         HideLightBulb();
@@ -354,9 +357,11 @@ public sealed class SuggestedActionsController
     {
         try
         {
-            // Debounce caret movement/typing (Roslyn adds its own 100ms on top).
+            // Debounce caret movement/typing (Roslyn adds its own 100ms on top). The
+            // read-only check sits after the delay so it sees options set right after
+            // view creation.
             await Task.Delay(200, cancellationToken).ConfigureAwait(true);
-            if (_view.IsClosed)
+            if (_view.IsClosed || IsReadOnly)
             {
                 return;
             }

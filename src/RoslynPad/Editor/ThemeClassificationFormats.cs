@@ -141,6 +141,23 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's progress bar color to the background-work indicator (the indeterminate
+    /// bar shown at the top of the view during async operations like go-to-definition into
+    /// decompiled or Source Link sources).
+    /// </summary>
+    public void ApplyBackgroundWorkIndicator(IEditorFormatMap formatMap)
+    {
+        if (_theme.TryGetColor("progressBar.background") is { } color)
+        {
+            var properties = new Avalonia.Controls.ResourceDictionary
+            {
+                [BackgroundWorkIndicatorFormatNames.Foreground] = new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(color)),
+            };
+            formatMap.SetProperties(BackgroundWorkIndicatorFormatNames.Name, properties);
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's cursor color to the caret layer through the editor format map.
     /// The bundled themes don't define <c>editorCursor.foreground</c>, so the fallback mirrors
     /// VS Code's coded defaults: black on light themes, a light gray on dark ones (the
