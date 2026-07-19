@@ -71,6 +71,9 @@ internal class VsCodeColorRegistry : IColorRegistry
         RegisterColor("editorHint.foreground", new ColorDefaults(Dark: Transparent("#eeeeee", 0.7), Light: "#6c6c6c"));
         var editorBackground = RegisterColor("editor.background", new ColorDefaults(Light: "#ffffff", Dark: "#1E1E1E"));
         RegisterColor("editor.foreground", new ColorDefaults(Light: "#333333", Dark: "#BBBBBB"));
+        var editorWhitespaceForeground = RegisterColor("editorWhitespace.foreground", new ColorDefaults(Dark: "#e3e4e229", Light: "#33333333"));
+        var editorIndentGuideBackground = RegisterColor("editorIndentGuide.background", editorWhitespaceForeground);
+        RegisterColor("editorIndentGuide.background1", editorIndentGuideBackground);
 
         var editorWidgetBackground = RegisterColor("editorWidget.background", new ColorDefaults(Dark: "#252526", Light: "#F3F3F3"));
         var editorWidgetForeground = RegisterColor("editorWidget.foreground", new ColorDefaults(Dark: foreground, Light: foreground));

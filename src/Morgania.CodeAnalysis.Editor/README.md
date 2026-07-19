@@ -12,8 +12,8 @@ needs beyond the editor platform itself:
   assembly's services). Returns the `CompositionConfiguration`, so hosts can inspect
   composition diagnostics before creating the export provider.
 - **Editor-host services**, composed automatically: classification format definitions,
-  diagnostics squiggles, the suggested-actions light bulb, key bridging, smart indentation,
-  snippet expansion, and image-catalog glyphs.
+  diagnostics squiggles, block structure guide lines, the suggested-actions light bulb,
+  key bridging, smart indentation, snippet expansion, and image-catalog glyphs.
 - **Refactoring dialogs**: Change Signature, Extract Interface, Pick Members.
 - **UI helpers**: `Glyph.ToImageSource()` (Roslyn glyphs → Avalonia `DrawingImage`),
   `TaggedText.ToTextBlock()` rich-text rendering, `ImageCatalog` for known image ids.

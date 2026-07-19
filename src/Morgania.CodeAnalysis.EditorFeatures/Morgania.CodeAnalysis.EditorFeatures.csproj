@@ -11,7 +11,7 @@
     <!-- Vendored Roslyn sources compiled against NuGet/VS-SDK reference assemblies whose
          nullability annotations drift from the in-tree build; CS0649/RS1034 are upstream
          code patterns. Not ours to fix. -->
-    <NoWarn>$(NoWarn);CS0649;CS8600;CS8601;CS8602;CS8604;CS8622;CS8769;CA1822;RS1034;VSTHRD002;VSTHRD003;VSTHRD102;VSTHRD103;VSTHRD110;RS1024</NoWarn>
+    <NoWarn>$(NoWarn);CS0649;CS8600;CS8601;CS8602;CS8605;CS8604;CS8622;CS8769;CA1822;RS1034;VSTHRD002;VSTHRD003;VSTHRD102;VSTHRD103;VSTHRD110;RS1024</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

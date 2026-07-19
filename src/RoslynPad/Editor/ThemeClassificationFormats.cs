@@ -158,6 +158,25 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's indent-guide color to the block structure guide lines through the
+    /// editor format map. <c>editorIndentGuide.background1</c> resolves through the color
+    /// registry to <c>editorIndentGuide.background</c> / <c>editorWhitespace.foreground</c>
+    /// for themes that use the older keys.
+    /// </summary>
+    public void ApplyBlockStructure(IEditorFormatMap formatMap)
+    {
+        if (_theme.TryGetColor("editorIndentGuide.background1") is { } color)
+        {
+            var properties = new Avalonia.Controls.ResourceDictionary
+            {
+                [Morgania.CodeAnalysis.Editor.BlockStructureFormatNames.Foreground] =
+                    new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(color)),
+            };
+            formatMap.SetProperties(Morgania.CodeAnalysis.Editor.BlockStructureFormatNames.Name, properties);
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's cursor color to the caret layer through the editor format map.
     /// The bundled themes don't define <c>editorCursor.foreground</c>, so the fallback mirrors
     /// VS Code's coded defaults: black on light themes, a light gray on dark ones (the

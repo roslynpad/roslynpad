@@ -44,6 +44,7 @@ internal static class SmokeTest
             await VerifyBraceMatchingAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyReferenceHighlightingAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyStringIndentationAsync(exportProvider, view, buffer).ConfigureAwait(true);
+            await VerifyBlockStructureAsync(exportProvider, view, buffer).ConfigureAwait(true);
             Console.WriteLine("SMOKE PASSED");
             exitCode = 0;
         }
@@ -835,6 +836,90 @@ internal static class SmokeTest
             }
 
             Console.WriteLine($"string indentation OK ({label}): guide at x={renderedX:F1} spanning y={renderedTop:F1}-{renderedBottom:F1}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Waits for Roslyn's structure tagger to produce structural block tags (class, methods,
+    /// for-loop) and for BlockStructureAdornmentManager to draw the vertical guide lines.
+    /// Verifies every drawn guide is anchored at some structural block header's first
+    /// character, and that guides exist at several distinct indent levels.
+    /// </summary>
+    private static async Task VerifyBlockStructureAsync(ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer)
+    {
+        var aggregatorFactory = exportProvider.GetExportedValue<IViewTagAggregatorFactoryService>();
+        using var aggregator = aggregatorFactory.CreateTagAggregator<IStructureTag>(view);
+        var layer = view.GetAdornmentLayer(PredefinedAdornmentLayers.BlockStructure);
+
+        Exception? failure = null;
+        for (var i = 0; i < 120; i++)
+        {
+            await Task.Delay(500).ConfigureAwait(true);
+            failure = CheckGuides();
+            if (failure is null)
+            {
+                return;
+            }
+        }
+
+        throw failure;
+
+        Exception? CheckGuides()
+        {
+            var snapshot = view.TextSnapshot;
+            var structuralTags = aggregator
+                .GetTags(new SnapshotSpan(snapshot, 0, snapshot.Length))
+                .Select(tag => tag.Tag)
+                .Where(tag => tag.Type != Microsoft.VisualStudio.Text.Adornments.PredefinedStructureTagTypes.Nonstructural
+                    && tag.HeaderSpan is not null)
+                .ToList();
+            if (structuralTags.Count < 3)
+            {
+                return new TimeoutException($"expected structural tags for class/methods/loop, got {structuralTags.Count}");
+            }
+
+            if (layer.IsEmpty)
+            {
+                return new TimeoutException("structural tags present but no block structure guide was drawn");
+            }
+
+            var expectedAnchors = structuralTags
+                .Select(tag =>
+                {
+                    var header = new SnapshotSpan(tag.Snapshot, tag.HeaderSpan!.Value).TranslateTo(snapshot, SpanTrackingMode.EdgeExclusive);
+                    var line = view.GetTextViewLineContainingBufferPosition(header.Start);
+                    return Math.Floor(line.GetCharacterBounds(header.Start).Left) - view.ViewportLeft;
+                })
+                .Distinct()
+                .ToList();
+
+            List<double> renderedXs = [];
+            foreach (var element in layer.Elements)
+            {
+                if (element.Adornment is not Avalonia.Controls.Shapes.Line guide)
+                {
+                    return new InvalidOperationException($"expected only Line adornments on the layer, got {element.Adornment}");
+                }
+
+                var x = Avalonia.Controls.Canvas.GetLeft(guide) + guide.StartPoint.X;
+                if (!expectedAnchors.Any(expected => Math.Abs(expected - x) <= 1.0))
+                {
+                    return new InvalidOperationException(
+                        $"guide at x={x:F1} does not match any block header anchor ({string.Join(", ", expectedAnchors.Select(a => a.ToString("F1")))})");
+                }
+
+                renderedXs.Add(x);
+            }
+
+            var distinctLevels = renderedXs.Distinct().Count();
+            if (distinctLevels < 3)
+            {
+                return new TimeoutException($"expected guides at 3+ indent levels (class/method/loop), got {distinctLevels}");
+            }
+
+            Console.WriteLine(
+                $"block structure OK: {layer.Elements.Count} guide segments at {distinctLevels} indent levels from {structuralTags.Count} structural tags");
             return null;
         }
     }
