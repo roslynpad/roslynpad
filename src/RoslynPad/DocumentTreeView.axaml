@@ -20,14 +20,14 @@
         <Button Classes="tool"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
                 CommandParameter="{x:Static roslyn:SourceCodeKind.Regular}"
-                ToolTip.Tip="{OnPlatform New Document (Ctrl+N), macOS=New Document (⌘ N)}">
+                ToolTip.Tip="{OnPlatform New File-Based App (Ctrl+N), macOS=New File-Based App (⌘ N)}">
           <Image Source="{StaticResource CsFile}" />
         </Button>
         <Button Classes="tool"
                 Command="{Binding NewDocumentCommand, Mode=OneTime}"
                 CommandParameter="{x:Static roslyn:SourceCodeKind.Script}"
-                ToolTip.Tip="{OnPlatform New Script Document (Ctrl+Shift+N), macOS=New Script Document (⌘ ⇧ N)}">
-          <Image Source="{StaticResource Rocket}" />
+                ToolTip.Tip="{OnPlatform New Script (Ctrl+Shift+N), macOS=New Script (⌘ ⇧ N)}">
+          <Image Source="{StaticResource Script}" />
         </Button>
         <Button Classes="tool"
                 Command="{Binding OpenFileCommand, Mode=OneTime}"

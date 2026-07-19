@@ -173,7 +173,11 @@ partial class MainWindow : Window
             {
                 if (factory.FindDockable(DocumentsPane, d => d.Id == item.Id) is { } dockable)
                 {
+                    // RemoveDockable doesn't raise DockableClosed, so programmatic closes
+                    // (Cmd+W, close-all) must dispose the view here; UI closes go through
+                    // CloseDockable, which removes the dockable before this handler runs.
                     factory.RemoveDockable(dockable, collapse: false);
+                    ((dockable as Document)?.Content as IDisposable)?.Dispose();
                 }
             }
         }

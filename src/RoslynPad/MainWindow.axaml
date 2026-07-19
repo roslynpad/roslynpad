@@ -15,9 +15,9 @@
     <NativeMenu>
       <NativeMenuItem Header="File">
         <NativeMenu>
-          <NativeMenuItem Header="New Document" Gesture="Meta+N"
+          <NativeMenuItem Header="New File-Based App" Gesture="Meta+N"
                           Click="OnNewDocumentClick" />
-          <NativeMenuItem Header="New Script" Gesture="Meta+Shift+N"
+          <NativeMenuItem Header="New Script (Legacy)" Gesture="Meta+Shift+N"
                           Click="OnNewScriptClick" />
           <NativeMenuItemSeparator />
           <NativeMenuItem Header="Open..." Gesture="Meta+O"

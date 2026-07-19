@@ -63,7 +63,7 @@ public static class KeyBindingCommands
         [CloseCurrentFile] = new(CloseCurrentFile, "Close File", "Ctrl+W", "Cmd+W"),
         [RunScript] = new(RunScript, "Run Script", "F5", "F5"),
         [TerminateRunningScript] = new(TerminateRunningScript, "Terminate Script", "Shift+F5", "Shift+F5"),
-        [NewDocument] = new(NewDocument, "New Document", "Ctrl+N", "Cmd+N"),
+        [NewDocument] = new(NewDocument, "New File-Based App", "Ctrl+N", "Cmd+N"),
         [NewScript] = new(NewScript, "New Script", "Ctrl+Shift+N", "Cmd+Shift+N"),
         [ToggleOptimization] = new(ToggleOptimization, "Toggle Optimization", "Ctrl+Shift+O", "Cmd+Shift+O"),
         [ResultsCopyValue] = new(ResultsCopyValue, "Copy Value", "Ctrl+C", "Cmd+C"),
