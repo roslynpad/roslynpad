@@ -4,7 +4,6 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>Morgania.Demo.EditorFeatures</RootNamespace>
     <AnalysisMode>None</AnalysisMode>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);VSTHRD002;VSTHRD110</NoWarn>
     <IsPackable>false</IsPackable>
     <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>

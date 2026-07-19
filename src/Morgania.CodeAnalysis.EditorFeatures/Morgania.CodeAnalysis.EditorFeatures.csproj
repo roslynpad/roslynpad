@@ -6,7 +6,6 @@
     <IsPackable>true</IsPackable>
     <AnalysisMode>None</AnalysisMode>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DefineConstants>$(DefineConstants);EDITOR_FEATURES</DefineConstants>
     <!-- Vendored Roslyn sources compiled against NuGet/VS-SDK reference assemblies whose
          nullability annotations drift from the in-tree build; CS0649/RS1034 are upstream

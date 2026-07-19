@@ -792,7 +792,10 @@ internal static class SmokeTest
                 }
             }
 
-            throw failure;
+            if (failure is not null)
+            {
+                throw failure;
+            }
         }
 
         // Recomputes the manager's geometry (x just left of the closing delimiter's quote,
@@ -863,7 +866,10 @@ internal static class SmokeTest
             }
         }
 
-        throw failure;
+        if (failure is not null)
+        {
+            throw failure;
+        }
 
         Exception? CheckGuides()
         {

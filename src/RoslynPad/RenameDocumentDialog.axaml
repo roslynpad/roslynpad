@@ -3,10 +3,7 @@
              xmlns:local="clr-namespace:RoslynPad;assembly=RoslynPad"
              x:Class="RoslynPad.RenameDocumentDialog"
              x:DataType="local:RenameDocumentDialog"
-             MinWidth="300"
-             BorderThickness="1"
-             BorderBrush="Gray"
-             Background="{DynamicResource ThemeBackgroundColor}">
+             MinWidth="300">
     <StackPanel Margin="10">
         <TextBlock Text="Rename Document"
                    Classes="Title" />

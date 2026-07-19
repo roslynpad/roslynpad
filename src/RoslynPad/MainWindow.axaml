@@ -60,7 +60,13 @@
       </NativeMenuItem>
     </NativeMenu>
   </NativeMenu.Menu>
-  <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True">
+  <dialogHost:DialogHost x:Name="DiaglogHost" Identifier="Main" CloseOnClickAway="True" DisableOpeningAnimation="True"
+                         OverlayBackground="Transparent"
+                         Background="{DynamicResource {x:Static local:ThemeDictionary.EditorBackground}}"
+                         dialogHost:DialogHostStyle.CornerRadius="10"
+                         dialogHost:DialogHostStyle.BorderThickness="1"
+                         dialogHost:DialogHostStyle.BorderBrush="{DynamicResource {x:Static local:ThemeDictionary.EditorGroupBorder}}"
+                         dialogHost:DialogHostStyle.BoxShadow="0 20 60 #66000000">
     <DockPanel Background="{DynamicResource DockSurfaceWorkbenchBrush}">
 
       <Button Name="ErrorBar"

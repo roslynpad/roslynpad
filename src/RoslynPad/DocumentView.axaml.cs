@@ -166,7 +166,6 @@ partial class DocumentView : UserControl, IDisposable
         {
             Header = "Console Input",
             Content = textBox,
-            Background = Brushes.White,
         };
 
         textBox.Loaded += (o, e) => textBox.Focus();
