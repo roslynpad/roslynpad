@@ -72,6 +72,11 @@
                 ToolTip.Tip="Open Build Folder">
           <Image Source="{StaticResource PackageFolder}" />
         </Button>
+        <ToggleButton Classes="tool"
+                      IsChecked="{Binding MainViewModel.EnableInlineDiagnostics}"
+                      ToolTip.Tip="Inline Diagnostics">
+          <Image Source="{StaticResource InlineDiagnostics}" />
+        </ToggleButton>
         <Separator Classes="toolbar" />
         <Menu Background="Transparent"
               Name="RootMenu"

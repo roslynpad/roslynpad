@@ -18,6 +18,12 @@ namespace Morgania.CodeAnalysis.Editor;
 /// </summary>
 public static class EditorComposition
 {
+    static EditorComposition() =>
+        // The recompiled sources create CrispImage controls directly; resolution goes
+        // through this assembly's image catalog.
+        Microsoft.VisualStudio.Imaging.CrispImage.ImageResolver =
+            static moniker => ImageCatalog.GetImage(moniker.Guid, moniker.Id);
+
     /// <summary>
     /// The assemblies every composition includes: the Roslyn Workspaces/Features layers, the
     /// Morgania editor, the recompiled Roslyn EditorFeatures, and this assembly's editor-host

@@ -149,6 +149,7 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/CSharp/Interactive/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Copilot/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/**/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/EditAndContinueErrorTypeDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ExternalAccess/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/LanguageServer/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SpeculativeEdits/**/*.cs" />
@@ -167,10 +168,6 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/DocumentationComments/CopilotGenerateDocumentationCommentProvider.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/DocumentationComments/DocumentationCommentSuggestion.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/SmartRename/**/*.cs" />
-    <!-- InlineDiagnostics UI requires VS-shell-only WPF pieces (Hyperlink navigation, CrispImage, ImageThemingUtilities);
-         the AbstractDiagnosticsTaggerProvider files in the same folder are the UI-free pull-diagnostics
-         tagging base (used by the demo host's squiggle tagger) and stay compiled -->
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineDiagnostics/InlineDiagnostics*.cs" />
     <!-- InlineHints adornment layer builds WPF tooltip/mouse UI; the data-tag layer is still compiled -->
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTagger.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTaggerProvider.cs" />

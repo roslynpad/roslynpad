@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using NuGet.Versioning;
 using RoslynPad.Themes;
@@ -338,6 +339,12 @@ internal class ApplicationSettings : IApplicationSettings
             get;
             set => SetProperty(ref field, value);
         } = true;
+
+        public JsonObject? Roslyn
+        {
+            get;
+            set => SetProperty(ref field, value);
+        }
 
         public string? CustomThemePath
         {

@@ -233,4 +233,26 @@ public sealed class WrittenReferenceHighlightMarkerFormat : MarkerFormatDefiniti
     }
 }
 
+[Export(typeof(EditorFormatDefinition))]
+[ClassificationType(ClassificationTypeNames = "url")]
+[Name("Morgania/Url")]
+[Order(After = Priority.Default)]
+public sealed class UrlFormat : ClassificationFormatDefinition
+{
+    public UrlFormat() => ForegroundColor = Color.FromRgb(0x37, 0x94, 0xFF);
+}
+
+// The standard VS Fonts-and-Colors entry recompiled Roslyn code reads for the editor
+// background (e.g. inline diagnostics); the host overlays the theme's actual color.
+[Export(typeof(EditorFormatDefinition))]
+[Name("TextView Background")]
+public sealed class TextViewBackgroundFormat : EditorFormatDefinition
+{
+    public TextViewBackgroundFormat()
+    {
+        DisplayName = "TextView Background";
+        BackgroundColor = Color.FromRgb(0x1E, 0x1E, 0x1E);
+    }
+}
+
 #pragma warning restore CA1812

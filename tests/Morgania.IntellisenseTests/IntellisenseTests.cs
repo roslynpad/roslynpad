@@ -1,7 +1,10 @@
 using System.Collections.Immutable;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -385,6 +388,49 @@ public sealed class IntellisenseTests
                 var dismissTask = session.DismissAsync();
                 PumpUntil(() => dismissTask.IsCompleted, "dismissal completes");
                 dismissTask.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                window.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task ClassifiedNavigationRunsRenderAsBaselineAlignedLinksAndNavigateOnClick()
+    {
+        await IntellisenseTestHost.RunAsync(() =>
+        {
+            var (view, window) = IntellisenseTestHost.CreateHostedView("Morgania rocks\n");
+            try
+            {
+                int navigated = 0;
+                var element = new ClassifiedTextElement(
+                    new ClassifiedTextRun("keyword", "class "),
+                    new ClassifiedTextRun("type", "Morgania", () => navigated++),
+                    new ClassifiedTextRun("text", " rocks"));
+                var factory = IntellisenseTestHost.Container.GetExport<IViewElementFactoryService>();
+                var control = factory.CreateViewElement<Control>(view, element)!;
+
+                var popup = new Window { Width = 400, Height = 100, Content = control };
+                popup.Show();
+                try
+                {
+                    var link = control.GetVisualDescendants().OfType<Text.Adornments.Implementation.NavigationTextBlock>().Single();
+                    PumpUntil(() => link.Bounds.Width > 0, "the embedded link is laid out");
+                    Assert.AreEqual("Morgania", link.Text);
+                    Assert.IsNotNull(link.TextDecorations, "navigation runs render underlined");
+                    Assert.IsTrue(TextBlock.GetBaselineOffset(link) > 0, "the link reports its text baseline for run-exact alignment");
+
+                    var origin = link.TranslatePoint(new Avalonia.Point(link.Bounds.Width / 2, link.Bounds.Height / 2), popup)!.Value;
+                    popup.MouseDown(origin, MouseButton.Left);
+                    popup.MouseUp(origin, MouseButton.Left);
+                    Assert.AreEqual(1, navigated, "clicking the embedded link invokes its navigation action");
+                }
+                finally
+                {
+                    popup.Close();
+                }
             }
             finally
             {

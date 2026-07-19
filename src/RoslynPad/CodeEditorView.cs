@@ -146,9 +146,11 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
 
         var theme = new ThemeClassificationFormats(mainViewModel.Theme);
         theme.Apply(formatMap, registry);
+        theme.ApplyInlineDiagnostics(formatMap, registry);
 
         if (_editorFormatMap is { } editorFormatMap)
         {
+            theme.ApplyTextViewBackground(editorFormatMap);
             theme.ApplyPopup(editorFormatMap);
             theme.ApplyBraceMatching(editorFormatMap);
             theme.ApplyReferenceHighlighting(editorFormatMap);

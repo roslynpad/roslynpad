@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Nodes;
 using RoslynPad.Themes;
 
 namespace RoslynPad.UI;
@@ -7,6 +8,10 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
 {
     [Browsable(false)]
     IList<KeyBinding>? KeyBindings { get; set; }
+
+    /// <summary>Roslyn global options persisted by <c>SettingsOptionPersister</c>, keyed by option config name.</summary>
+    [Browsable(false)]
+    JsonObject? Roslyn { get; set; }
 
     [Browsable(false)]
     string? LatestVersion { get; set; }

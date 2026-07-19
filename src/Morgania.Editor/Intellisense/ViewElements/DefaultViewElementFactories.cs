@@ -13,6 +13,7 @@ using Avalonia.Media;
 
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Utilities;
 
 /// <summary>
@@ -58,43 +59,33 @@ public sealed class ClassifiedTextElementViewElementFactory : IViewElementFactor
         var block = new TextBlock { TextWrapping = TextWrapping.Wrap };
         foreach (var run in element.Runs)
         {
-            var inline = new Run(run.Text);
             var properties = _typeRegistry.GetClassificationType(run.ClassificationTypeName) is { } type
                 ? formatMap.GetTextProperties(type)
                 : formatMap.DefaultTextProperties;
-            if (!properties.ForegroundBrushEmpty)
-            {
-                inline.Foreground = properties.ForegroundBrush;
-            }
 
-            if (run.Style.HasFlag(ClassifiedTextRunStyle.UseClassificationFont))
+            // Avalonia inlines are not input elements, so navigation runs are embedded as
+            // clickable controls; plain runs stay real inlines so text wraps inside them.
+            if (run.NavigationAction is { } action)
             {
-                if (!properties.TypefaceEmpty)
+                var link = new NavigationTextBlock
                 {
-                    inline.FontFamily = properties.Typeface.FontFamily;
-                    inline.FontStyle = properties.Typeface.Style;
-                    inline.FontWeight = properties.Typeface.Weight;
+                    Text = run.Text,
+                    NavigationAction = action,
+                    TextDecorations = TextDecorations.Underline,
+                };
+                ApplyRunFormat(link, run, properties);
+                if (run.Tooltip is { } tooltip)
+                {
+                    ToolTip.SetTip(link, tooltip);
                 }
 
-                if (!properties.FontRenderingEmSizeEmpty)
-                {
-                    inline.FontSize = properties.FontRenderingEmSize;
-                }
+                block.Inlines!.Add(new InlineUIContainer(link));
+                continue;
             }
 
-            if (run.Style.HasFlag(ClassifiedTextRunStyle.Bold))
-            {
-                inline.FontWeight = FontWeight.Bold;
-            }
-
-            if (run.Style.HasFlag(ClassifiedTextRunStyle.Italic))
-            {
-                inline.FontStyle = FontStyle.Italic;
-            }
-
-            // Navigation runs render in link style; invoking the action needs run-level
-            // hit testing, which Avalonia inlines don't expose — a documented divergence.
-            if (run.Style.HasFlag(ClassifiedTextRunStyle.Underline) || run.NavigationAction is not null)
+            var inline = new Run(run.Text);
+            ApplyRunFormat(inline, run, properties);
+            if (run.Style.HasFlag(ClassifiedTextRunStyle.Underline))
             {
                 inline.TextDecorations = TextDecorations.Underline;
             }
@@ -104,6 +95,41 @@ public sealed class ClassifiedTextElementViewElementFactory : IViewElementFactor
 
         return block as TView
             ?? throw new ArgumentException($"Unsupported conversion to {typeof(TView).FullName}.", nameof(model));
+    }
+
+    // TextBlock's font/foreground properties are AddOwner'd from TextElement, so one
+    // helper formats both Run inlines and embedded link controls.
+    private static void ApplyRunFormat(AvaloniaObject target, ClassifiedTextRun run, TextFormattingRunProperties properties)
+    {
+        if (!properties.ForegroundBrushEmpty)
+        {
+            target.SetValue(TextElement.ForegroundProperty, properties.ForegroundBrush);
+        }
+
+        if (run.Style.HasFlag(ClassifiedTextRunStyle.UseClassificationFont))
+        {
+            if (!properties.TypefaceEmpty)
+            {
+                target.SetValue(TextElement.FontFamilyProperty, properties.Typeface.FontFamily);
+                target.SetValue(TextElement.FontStyleProperty, properties.Typeface.Style);
+                target.SetValue(TextElement.FontWeightProperty, properties.Typeface.Weight);
+            }
+
+            if (!properties.FontRenderingEmSizeEmpty)
+            {
+                target.SetValue(TextElement.FontSizeProperty, properties.FontRenderingEmSize);
+            }
+        }
+
+        if (run.Style.HasFlag(ClassifiedTextRunStyle.Bold))
+        {
+            target.SetValue(TextElement.FontWeightProperty, FontWeight.Bold);
+        }
+
+        if (run.Style.HasFlag(ClassifiedTextRunStyle.Italic))
+        {
+            target.SetValue(TextElement.FontStyleProperty, FontStyle.Italic);
+        }
     }
 }
 

@@ -13,13 +13,14 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynPad.Roslyn;
 
-public class RoslynHost : IRoslynHost
+public class RoslynHost : IRoslynHost, IDisposable
 {
     internal static readonly ImmutableArray<string> PreprocessorSymbols =
         ["TRACE", "DEBUG"];
 
     private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
     private readonly IDocumentationProviderService _documentationProviderService;
+    private readonly ImmutableArray<FileSystemWatcher> _analyzerConfigWatchers;
 
     /// <summary>
     /// The single VS-MEF graph shared by Roslyn and the editor, built by
@@ -58,7 +59,89 @@ public class RoslynHost : IRoslynHost
 
         DisabledDiagnostics = disabledDiagnostics ?? [];
         AnalyzerConfigFiles = analyzerConfigFiles ?? [];
+
+        _analyzerConfigWatchers = CreateAnalyzerConfigWatchers();
     }
+
+    public void Dispose()
+    {
+        foreach (var watcher in _analyzerConfigWatchers)
+        {
+            watcher.Dispose();
+        }
+    }
+
+    private ImmutableArray<FileSystemWatcher> CreateAnalyzerConfigWatchers()
+    {
+        return [.. AnalyzerConfigFiles
+            .Select(Path.GetDirectoryName)
+            .OfType<string>()
+            .Distinct()
+            .Where(Directory.Exists)
+            .Select(CreateWatcher)];
+
+        FileSystemWatcher CreateWatcher(string directory)
+        {
+            var watcher = new FileSystemWatcher(directory);
+            watcher.Changed += OnAnalyzerConfigFileEvent;
+            watcher.Created += OnAnalyzerConfigFileEvent;
+            watcher.Deleted += OnAnalyzerConfigFileEvent;
+            watcher.Renamed += OnAnalyzerConfigFileEvent;
+            watcher.EnableRaisingEvents = true;
+            return watcher;
+        }
+    }
+
+    private void OnAnalyzerConfigFileEvent(object sender, FileSystemEventArgs e)
+    {
+        if (AnalyzerConfigFiles.Any(file =>
+            string.Equals(file, e.FullPath, StringComparison.OrdinalIgnoreCase) ||
+            (e is RenamedEventArgs renamed && string.Equals(file, renamed.OldFullPath, StringComparison.OrdinalIgnoreCase))))
+        {
+            RefreshAnalyzerConfigDocuments();
+        }
+    }
+
+    /// <summary>
+    /// Re-reads the analyzer config files into all live workspaces (the same text-loader push
+    /// VS/LSP hosts do), so editorconfig options take effect on open documents.
+    /// </summary>
+    private void RefreshAnalyzerConfigDocuments()
+    {
+        foreach (var workspace in _workspaces.Values.Distinct())
+        {
+            foreach (var project in workspace.CurrentSolution.Projects)
+            {
+                foreach (var file in AnalyzerConfigFiles)
+                {
+                    var document = project.AnalyzerConfigDocuments.FirstOrDefault(d =>
+                        string.Equals(d.FilePath, file, StringComparison.OrdinalIgnoreCase));
+
+                    if (document is not null)
+                    {
+                        if (File.Exists(file))
+                        {
+                            workspace.OnAnalyzerConfigDocumentTextLoaderChanged(document.Id, new FileTextLoader(file, defaultEncoding: null));
+                        }
+                        else
+                        {
+                            workspace.OnAnalyzerConfigDocumentRemoved(document.Id);
+                        }
+                    }
+                    else if (File.Exists(file))
+                    {
+                        workspace.OnAnalyzerConfigDocumentAdded(CreateAnalyzerConfigDocumentInfo(file, project.Id));
+                    }
+                }
+            }
+        }
+    }
+
+    private static DocumentInfo CreateAnalyzerConfigDocumentInfo(string file, ProjectId projectId) => DocumentInfo.Create(
+        DocumentId.CreateNewId(projectId, debugName: file),
+        name: file,
+        loader: new FileTextLoader(file, defaultEncoding: null),
+        filePath: file);
 
     public Func<string, DocumentationProvider> DocumentationProviderFactory => _documentationProviderService.GetDocumentationProvider;
 
@@ -242,11 +325,7 @@ public class RoslynHost : IRoslynHost
             compilationOptions = compilationOptions.WithScriptClassName(name);
         }
 
-        var analyzerConfigDocuments = AnalyzerConfigFiles.Where(File.Exists).Select(file => DocumentInfo.Create(
-            DocumentId.CreateNewId(id, debugName: file),
-            name: file,
-            loader: new FileTextLoader(file, defaultEncoding: null),
-            filePath: file));
+        var analyzerConfigDocuments = AnalyzerConfigFiles.Where(File.Exists).Select(file => CreateAnalyzerConfigDocumentInfo(file, id));
 
         solution = solution.AddProject(ProjectInfo.Create(
             id,

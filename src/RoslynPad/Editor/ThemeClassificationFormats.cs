@@ -203,6 +203,56 @@ public sealed partial class ThemeClassificationFormats
             "editor.wordHighlightStrongBackground", "editor.wordHighlightStrongBorder");
     }
 
+    /// <summary>
+    /// Feeds the theme's severity colors to the inline diagnostics adornments through the
+    /// classification types Roslyn's InlineDiagnosticsTag reads: the foreground colors the
+    /// message text, the background draws the pill border.
+    /// </summary>
+    public void ApplyInlineDiagnostics(IClassificationFormatMap formatMap, IClassificationTypeRegistryService registry)
+    {
+        Set("inline diagnostics - syntax error", "editorError.foreground", withBackground: true);
+        Set("inline diagnostics - compiler warning", "editorWarning.foreground", withBackground: true);
+        Set("inline diagnostics - Edit and Continue", "editorError.foreground", withBackground: true);
+        // The diagnostic-id hyperlink renders in the "url" classification.
+        Set("url", "textLink.foreground", withBackground: false);
+
+        void Set(string classification, string colorId, bool withBackground)
+        {
+            if (_theme.TryGetColor(colorId) is not { } themeColor ||
+                registry.GetClassificationType(classification) is not { } type)
+            {
+                return;
+            }
+
+            var color = ThemeDictionaryBase.ParseThemeColor(themeColor);
+            var properties = TextFormattingRunProperties.CreateTextFormattingRunProperties()
+                .SetForeground(color);
+            if (withBackground)
+            {
+                properties = properties.SetBackground(color);
+            }
+
+            formatMap.SetExplicitTextProperties(type, properties);
+        }
+    }
+
+    /// <summary>
+    /// Feeds the theme's editor background to the "TextView Background" editor-format entry
+    /// (the standard VS Fonts-and-Colors item; recompiled Roslyn code reads it, e.g. inline
+    /// diagnostics adapting severity icons to the background).
+    /// </summary>
+    public void ApplyTextViewBackground(IEditorFormatMap formatMap)
+    {
+        if (Background is { } background)
+        {
+            var properties = new Avalonia.Controls.ResourceDictionary
+            {
+                [EditorFormatDefinition.BackgroundColorId] = background,
+            };
+            formatMap.SetProperties("TextView Background", properties);
+        }
+    }
+
     private void ApplyMarker(IEditorFormatMap formatMap, string markerName, string backgroundKey, string borderKey)
     {
         var background = _theme.TryGetColor(backgroundKey);

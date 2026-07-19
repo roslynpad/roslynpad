@@ -92,4 +92,11 @@ public sealed class StandardClassificationDefinitions
     [Name(PredefinedClassificationTypeNames.SymbolReference)]
     [BaseDefinition(PredefinedClassificationTypeNames.FormalLanguage)]
     public ClassificationTypeDefinition? SymbolReference { get; }
+
+    // Hyperlink text ("url" is VS's StandardClassification name, not part of the contract);
+    // Roslyn reads it e.g. for the diagnostic-id link on inline diagnostics.
+    [Export]
+    [Name("url")]
+    [BaseDefinition(PredefinedClassificationTypeNames.Text)]
+    public ClassificationTypeDefinition? Url { get; }
 }

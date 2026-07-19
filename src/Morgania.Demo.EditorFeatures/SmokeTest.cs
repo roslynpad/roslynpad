@@ -38,6 +38,7 @@ internal static class SmokeTest
             await VerifySnippetCommitAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifySignatureHelpAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyDiagnosticsAsync(exportProvider, view, buffer).ConfigureAwait(true);
+            await VerifyInlineDiagnosticsAsync(exportProvider, view, desktop).ConfigureAwait(true);
             await VerifyQuickFixAsync(exportProvider, view, buffer).ConfigureAwait(true);
             VerifyMultiCaret(exportProvider, view, buffer);
             await VerifyBraceMatchingAsync(exportProvider, view, buffer).ConfigureAwait(true);
@@ -387,6 +388,78 @@ internal static class SmokeTest
         }
 
         throw new TimeoutException("no error squiggle tag appeared over the bad identifier");
+    }
+
+    /// <summary>
+    /// Enables the inline-diagnostics option (recompiled Roslyn feature, off by default) while
+    /// the 'Conosle' error is still in the buffer, and waits for the adornment manager to draw
+    /// the message pill into its own layer: severity icon (CrispImage over the image catalog),
+    /// the diagnostic id as a link, and the message text. The manager skips the pill when it
+    /// would overlap the code (VS behavior), so the window is widened for the duration.
+    /// </summary>
+    private static async Task VerifyInlineDiagnosticsAsync(
+        ExportProvider exportProvider, IWpfTextView view, IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var window = desktop.MainWindow ?? throw new InvalidOperationException("no main window");
+        var originalWidth = window.Width;
+        window.Width = 1800;
+
+        var globalOptions = exportProvider.GetExportedValue<Microsoft.CodeAnalysis.Options.IGlobalOptionService>();
+        globalOptions.SetGlobalOption(
+            Microsoft.CodeAnalysis.Editor.InlineDiagnostics.InlineDiagnosticsOptionsStorage.EnableInlineDiagnostics,
+            Microsoft.CodeAnalysis.LanguageNames.CSharp,
+            true);
+
+        var layer = view.GetAdornmentLayer("RoslynInlineDiagnostics");
+        for (var i = 0; i < 120 && layer.IsEmpty; i++)
+        {
+            await Task.Delay(500).ConfigureAwait(true);
+        }
+
+        if (layer.IsEmpty)
+        {
+            throw new TimeoutException("no inline diagnostic adornment was drawn");
+        }
+
+        var adornment = layer.Elements[0].Adornment;
+
+        // The pill belongs after the end of its line, not over the code (the layer must
+        // honor the manager's Canvas coordinates rather than snapping to the span start).
+        var errorPosition = view.TextSnapshot.GetText().IndexOf("Conosle", StringComparison.Ordinal);
+        var errorLine = view.TextViewLines.GetTextViewLineContainingBufferPosition(new SnapshotPoint(view.TextSnapshot, errorPosition))
+            ?? throw new InvalidOperationException("error line is not in the layout");
+        var left = Avalonia.Controls.Canvas.GetLeft(adornment);
+        var expectedLeft = errorLine.Right - view.ViewportLeft;
+        if (Math.Abs(left - expectedLeft) > 1.0)
+        {
+            throw new InvalidOperationException($"inline diagnostic pill is misplaced: Canvas.Left={left:F1}, line end={expectedLeft:F1}");
+        }
+        var text = string.Join(string.Empty, adornment.GetVisualDescendants()
+            .OfType<Avalonia.Controls.TextBlock>()
+            .SelectMany(block => block.Inlines?.Count > 0
+                ? block.Inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text)
+                : [block.Text]));
+        if (!text.Contains("Conosle", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"inline diagnostic text does not mention the bad identifier: '{text}'");
+        }
+
+        var icon = adornment.GetVisualDescendants().OfType<Avalonia.Controls.Image>().FirstOrDefault();
+        if (icon?.Source is null)
+        {
+            throw new InvalidOperationException("inline diagnostic severity icon did not resolve from the image catalog");
+        }
+
+        var link = adornment.GetVisualDescendants()
+            .OfType<Microsoft.VisualStudio.Text.Adornments.Implementation.NavigationTextBlock>()
+            .FirstOrDefault();
+        Console.WriteLine($"inline diagnostics OK: '{text.Trim()}', icon resolved, id link {(link is null ? "absent (no help URI)" : $"'{link.Text}'")}");
+
+        globalOptions.SetGlobalOption(
+            Microsoft.CodeAnalysis.Editor.InlineDiagnostics.InlineDiagnosticsOptionsStorage.EnableInlineDiagnostics,
+            Microsoft.CodeAnalysis.LanguageNames.CSharp,
+            false);
+        window.Width = originalWidth;
     }
 
     /// <summary>

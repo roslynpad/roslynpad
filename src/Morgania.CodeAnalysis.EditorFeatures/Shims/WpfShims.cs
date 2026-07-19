@@ -8,8 +8,10 @@
 
 global using Border = Avalonia.Controls.Border;
 global using Brush = Avalonia.Media.Brush;
+global using Brushes = Avalonia.Media.Brushes;
 global using Canvas = Avalonia.Controls.Canvas;
 global using Color = Avalonia.Media.Color;
+global using CornerRadius = Avalonia.CornerRadius;
 global using DependencyObject = Avalonia.AvaloniaObject;
 global using DispatcherPriority = Avalonia.Threading.DispatcherPriority;
 global using FontStyles = Avalonia.Media.FontStyle;
@@ -17,8 +19,12 @@ global using FontWeights = Avalonia.Media.FontWeight;
 global using Geometry = Avalonia.Media.Geometry;
 global using Inline = Avalonia.Controls.Documents.Inline;
 global using Line = Avalonia.Controls.Shapes.Line;
+global using Orientation = Avalonia.Layout.Orientation;
+global using RoutedEventArgs = Avalonia.Interactivity.RoutedEventArgs;
 global using Run = Avalonia.Controls.Documents.Run;
+global using Size = Avalonia.Size;
 global using SolidColorBrush = Avalonia.Media.SolidColorBrush;
+global using StackPanel = Avalonia.Controls.StackPanel;
 global using TextBlock = Avalonia.Controls.TextBlock;
 global using TextElement = Avalonia.Controls.Documents.TextElement;
 global using TextTrimming = Avalonia.Media.TextTrimming;
@@ -39,7 +45,27 @@ namespace System.Windows.Controls
 
 namespace System.Windows.Documents
 {
-    file sealed class Dummy;
+    /// <summary>
+    /// WPF Hyperlink stand-in over Morgania's clickable embedded text block (Avalonia inlines
+    /// are not input elements). Font and foreground flow to the child through the normal
+    /// property inheritance chain, so setting <c>Foreground</c> on the hyperlink styles it.
+    /// </summary>
+    public sealed class Hyperlink : Avalonia.Controls.Documents.InlineUIContainer
+    {
+        public Hyperlink(Run run)
+        {
+            Child = new Microsoft.VisualStudio.Text.Adornments.Implementation.NavigationTextBlock
+            {
+                Text = run.Text,
+                TextDecorations = Avalonia.Media.TextDecorations.Underline,
+                NavigationAction = () => RequestNavigate?.Invoke(this, new RoutedEventArgs()),
+            };
+        }
+
+        public Uri? NavigateUri { get; set; }
+
+        public event EventHandler<RoutedEventArgs>? RequestNavigate;
+    }
 }
 
 namespace System.Windows.Media
@@ -92,6 +118,17 @@ internal static class WpfCompatExtensions
             get => line.EndPoint.Y;
             set => line.EndPoint = new Avalonia.Point(line.EndPoint.X, value);
         }
+    }
+
+    extension(Avalonia.Media.FontFamily family)
+    {
+        /// <summary>
+        /// WPF FontFamily.LineSpacing: the default line height as a ratio of em size.
+        /// </summary>
+        public double LineSpacing =>
+            Avalonia.Media.FontManager.Current.TryGetGlyphTypeface(new Avalonia.Media.Typeface(family), out var glyphTypeface)
+                ? (double)glyphTypeface.Metrics.LineSpacing / glyphTypeface.Metrics.DesignEmHeight
+                : 1.2;
     }
 
     extension(Avalonia.Controls.Shapes.Shape shape)

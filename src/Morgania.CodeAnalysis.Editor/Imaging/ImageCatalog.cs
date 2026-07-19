@@ -33,6 +33,12 @@ public static class ImageCatalog
         // The completion expander ("items from unimported namespaces"): Roslyn emits it
         // from the editor's KnownImageIds.ExpandScope rather than through a Glyph.
         names.TryAdd(1275, "ExpandScope");
+
+        // Severity icons inline diagnostics reach through KnownMonikers (ids from the
+        // public KnownImageIds documentation).
+        names.TryAdd(2926, "StatusError");
+        names.TryAdd(2933, "StatusInformation");
+        names.TryAdd(2956, "StatusWarning");
         return names;
     }
 

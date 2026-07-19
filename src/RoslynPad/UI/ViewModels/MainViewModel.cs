@@ -11,7 +11,9 @@ using Avalonia.Styling;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using System.Composition;
+using Microsoft.CodeAnalysis.Editor.InlineDiagnostics;
 using Microsoft.CodeAnalysis.MetadataAsSource;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
 using RoslynPad.Build;
 using RoslynPad.Roslyn;
@@ -37,6 +39,7 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
     private DocumentViewModel _documentRoot;
     private DocumentWatcher? _documentWatcher;
     private bool? _isSystemDarkTheme;
+    private IGlobalOptionService? _globalOptions;
 
     public IApplicationSettingsValues Settings { get; }
 
@@ -227,6 +230,11 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
             .ConfigureAwait(true);
 
         RoslynHost.GetService<NavigationBridge>().Host = this;
+        RoslynHost.GetService<SettingsOptionPersister>().Settings = Settings;
+
+        _globalOptions = RoslynHost.GetService<IGlobalOptionService>();
+        _globalOptions.AddOptionChangedHandler(this, OnGlobalOptionChanged);
+        OnPropertyChanged(nameof(EnableInlineDiagnostics));
 
         OpenDocumentFromCommandLine();
         await OpenAutoSavedDocuments().ConfigureAwait(true);
@@ -238,6 +246,20 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
         else
         {
             var task = Task.Run(CheckForUpdates);
+        }
+    }
+
+    public bool EnableInlineDiagnostics
+    {
+        get => _globalOptions?.GetOption(InlineDiagnosticsOptionsStorage.EnableInlineDiagnostics, LanguageNames.CSharp) ?? false;
+        set => _globalOptions?.SetGlobalOption(InlineDiagnosticsOptionsStorage.EnableInlineDiagnostics, LanguageNames.CSharp, value);
+    }
+
+    private void OnGlobalOptionChanged(object sender, object target, OptionChangedEventArgs args)
+    {
+        if (args.HasOption(static option => option.Equals(InlineDiagnosticsOptionsStorage.EnableInlineDiagnostics)))
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(EnableInlineDiagnostics)));
         }
     }
 
@@ -1075,5 +1097,10 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
     public void Dispose()
     {
         _documentFileWatcher?.Dispose();
+
+        if (IsInitialized)
+        {
+            RoslynHost.Dispose();
+        }
     }
 }

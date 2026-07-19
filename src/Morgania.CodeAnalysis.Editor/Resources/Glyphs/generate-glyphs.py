@@ -41,7 +41,7 @@ Namespace NuGet OpenFolder
 OperatorPublic OperatorProtected OperatorPrivate OperatorInternal
 PropertyPublic PropertyProtected PropertyPrivate PropertyInternal
 Reference Snippet SparkleNoColor
-StatusError StatusInformation
+StatusError StatusInformation StatusWarning
 Type
 ValueTypePublic ValueTypeProtected ValueTypePrivate ValueTypeInternal
 ExpandScope AddReference
@@ -84,7 +84,7 @@ header = '''<!-- Generated from the Visual Studio 2026 Image Library; keys are i
      moniker names (see ImageCatalog.cs). Regenerate rather than editing by hand. -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    x:Class="RoslynPad.Roslyn.Resources.Glyphs">
+                    x:Class="Morgania.CodeAnalysis.Editor.Resources.Glyphs">
 '''
 
 with open(OUTPUT, "w") as f:
