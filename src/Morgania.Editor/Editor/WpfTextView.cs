@@ -734,11 +734,6 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             _inLayout = false;
         }
 
-        foreach (var layer in _adornmentLayers.Values)
-        {
-            layer.OnLayoutChanged();
-        }
-
         // Classify per the contract: reused rows that moved are translations; only fresh
         // rows are new-or-reformatted.
         var newOrReformatted = new List<ITextViewLine>();
@@ -765,6 +760,13 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
                 line.SetChange(TextViewLineChange.NewOrReformatted);
                 newOrReformatted.Add(line);
             }
+        }
+
+        // Layers see fresh line-change flags so text-relative adornments on reformatted
+        // lines are dropped (VS contract) before the LayoutChanged event re-adds them.
+        foreach (var layer in _adornmentLayers.Values)
+        {
+            layer.OnLayoutChanged(removeReformatted: true);
         }
 
         var newState = new ViewState(this);

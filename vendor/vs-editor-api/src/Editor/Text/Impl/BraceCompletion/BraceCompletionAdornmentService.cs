@@ -143,6 +143,8 @@ namespace Microsoft.VisualStudio.Text.BraceCompletion.Implementation
                         Width = textBounds.Width,
                         Height = 2,
                     };
+                    Avalonia.Controls.Canvas.SetLeft(underline, textBounds.Left);
+                    Avalonia.Controls.Canvas.SetTop(underline, textBounds.TextBottom - underline.Height);
                     _adornmentLayer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, underline, null);
                 }
             }

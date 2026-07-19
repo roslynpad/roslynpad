@@ -43,6 +43,7 @@ internal static class SmokeTest
             VerifyMultiCaret(exportProvider, view, buffer);
             await VerifyBraceMatchingAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyReferenceHighlightingAsync(exportProvider, view, buffer).ConfigureAwait(true);
+            await VerifyStringIndentationAsync(exportProvider, view, buffer).ConfigureAwait(true);
             Console.WriteLine("SMOKE PASSED");
             exitCode = 0;
         }
@@ -732,6 +733,110 @@ internal static class SmokeTest
         }
 
         Console.WriteLine("reference highlighting OK: definition, reads, and write tagged and drawn");
+    }
+
+    /// <summary>
+    /// Inserts a raw string literal and waits for the recompiled StringIndentationAdornmentManager
+    /// to draw the vertical indentation guide. The guide is a Line whose geometry is authored in
+    /// text coordinates with no Canvas position, so the layer must render it at the text-space
+    /// origin rather than snapping it to the visual span's leading edge. Verifies the guide lands
+    /// just left of the closing delimiter's column, between the delimiter lines.
+    /// </summary>
+    private static async Task VerifyStringIndentationAsync(ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer)
+    {
+        var insertPosition = buffer.CurrentSnapshot.GetText().IndexOf("    public void Greet()", StringComparison.Ordinal);
+        buffer.Insert(insertPosition,
+            "    private const string Json = \"\"\"\n" +
+            "          {\n" +
+            "            \"n\": 1\n" +
+            "          }\n" +
+            "        \"\"\";\n\n");
+
+        var aggregatorFactory = exportProvider.GetExportedValue<IViewTagAggregatorFactoryService>();
+        using var aggregator = aggregatorFactory
+            .CreateTagAggregator<Microsoft.CodeAnalysis.Editor.Implementation.StringIndentation.StringIndentationTag>(view);
+        var layer = view.GetAdornmentLayer("RoslynStringIndentation");
+
+        await WaitForGuideAsync("initial").ConfigureAwait(true);
+
+        // Re-indent every line of the literal below the opening delimiter: the guide moves
+        // right, and the layer must drop the old guide when the reformatted lines lay out
+        // again (stale guides accumulated otherwise).
+        var text = buffer.CurrentSnapshot.GetText();
+        var literalStart = text.IndexOf("string Json", StringComparison.Ordinal);
+        var firstLine = buffer.CurrentSnapshot.GetLineFromPosition(literalStart).LineNumber;
+        var lastLine = buffer.CurrentSnapshot.GetLineFromPosition(text.IndexOf("\"\"\";", literalStart, StringComparison.Ordinal)).LineNumber;
+        using (var edit = buffer.CreateEdit())
+        {
+            for (var line = firstLine + 1; line <= lastLine; line++)
+            {
+                edit.Insert(buffer.CurrentSnapshot.GetLineFromLineNumber(line).Start, "    ");
+            }
+
+            edit.Apply();
+        }
+
+        await WaitForGuideAsync("after re-indent").ConfigureAwait(true);
+
+        async Task WaitForGuideAsync(string label)
+        {
+            Exception? failure = null;
+            for (var i = 0; i < 60; i++)
+            {
+                await Task.Delay(500).ConfigureAwait(true);
+                failure = CheckGuide(label);
+                if (failure is null)
+                {
+                    return;
+                }
+            }
+
+            throw failure;
+        }
+
+        // Recomputes the manager's geometry (x just left of the closing delimiter's quote,
+        // spanning from below the opening line to above the closing line) and requires the
+        // layer to hold exactly that one guide.
+        Exception? CheckGuide(string label)
+        {
+            var snapshot = view.TextSnapshot;
+            var tagSpan = aggregator
+                .GetTags(new SnapshotSpan(snapshot, 0, snapshot.Length))
+                .SelectMany(tag => tag.Span.GetSpans(snapshot))
+                .FirstOrDefault();
+            if (tagSpan.IsEmpty)
+            {
+                return new TimeoutException($"no string-indentation tag over the raw string literal ({label})");
+            }
+
+            var guides = layer.Elements.Select(element => element.Adornment).OfType<Avalonia.Controls.Shapes.Line>().ToList();
+            if (guides.Count != 1 || guides.Count != layer.Elements.Count)
+            {
+                return new InvalidOperationException(
+                    $"expected exactly one guide Line on the layer, found {layer.Elements.Count} adornments ({guides.Count} Lines) ({label})");
+            }
+
+            var anchorLine = view.GetTextViewLineContainingBufferPosition(tagSpan.End - 1);
+            var bounds = anchorLine.GetCharacterBounds(tagSpan.End - 1);
+            var expectedX = Math.Floor(bounds.Right - (anchorLine.VirtualSpaceWidth / 2)) - view.ViewportLeft;
+            var expectedTop = view.TextViewLines.GetTextViewLineContainingBufferPosition(tagSpan.Start).Bottom - view.ViewportTop;
+            var expectedBottom = view.TextViewLines.GetTextViewLineContainingBufferPosition(tagSpan.End).Top - view.ViewportTop;
+
+            var guide = guides[0];
+            var renderedX = Avalonia.Controls.Canvas.GetLeft(guide) + guide.StartPoint.X;
+            var renderedTop = Avalonia.Controls.Canvas.GetTop(guide) + guide.StartPoint.Y;
+            var renderedBottom = Avalonia.Controls.Canvas.GetTop(guide) + guide.EndPoint.Y;
+            if (Math.Abs(renderedX - expectedX) > 1.0
+                || Math.Abs(renderedTop - expectedTop) > 2.5
+                || Math.Abs(renderedBottom - expectedBottom) > 2.5)
+            {
+                return new InvalidOperationException(
+                    $"string-indentation guide is misplaced ({label}): x={renderedX:F1} (expected {expectedX:F1}), y={renderedTop:F1}-{renderedBottom:F1} (expected {expectedTop:F1}-{expectedBottom:F1})");
+            }
+
+            Console.WriteLine($"string indentation OK ({label}): guide at x={renderedX:F1} spanning y={renderedTop:F1}-{renderedBottom:F1}");
+            return null;
+        }
     }
 
     private static void RaiseKey(IWpfTextView view, Avalonia.Input.Key key, Avalonia.Input.KeyModifiers modifiers = Avalonia.Input.KeyModifiers.None)
