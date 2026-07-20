@@ -22,6 +22,12 @@ internal static class SampleCode
                 {
                     Console.WriteLine($"Hello, {Name}! ({i + 1} of {Repeat})");
                 }
+
+                var report = new
+                {
+                    Item = Name,
+                };
+                Console.WriteLine(report);
             }
 
             public static IEnumerable<int> Evens(IEnumerable<int> numbers) =>

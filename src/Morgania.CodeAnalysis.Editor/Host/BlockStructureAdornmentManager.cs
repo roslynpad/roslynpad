@@ -30,9 +30,9 @@ public static class BlockStructureFormatNames
 /// Roslyn's structure tagger) into the view's predefined BlockStructure adornment layer. The
 /// VS implementation of this manager lives in the closed-source editor; this one derives the
 /// guide from the tag spans per the <see cref="IStructureTag"/> contract: anchored at the
-/// header's first character, spanning from below the header line to the end of the outlining
-/// span, drawn in segments that skip lines with text at the guide's column (which naturally
-/// clips the guide at the block's braces).
+/// first non-whitespace character of the header's start line, spanning from below the header
+/// line to the end of the outlining span, drawn in segments that skip lines with text at the
+/// guide's column (which naturally clips the guide at the block's braces).
 /// </summary>
 [Export(typeof(IWpfTextViewCreationListener))]
 [Shared]
@@ -113,7 +113,7 @@ internal sealed class BlockStructureAdornmentManager
             var headerSpan = Translate(tag.HeaderSpan, tag.Snapshot);
             var guideSpan = Translate(tag.GuideLineSpan, tag.Snapshot)
                 ?? InferGuideSpan(headerSpan, Translate(tag.OutliningSpan, tag.Snapshot));
-            if (guideSpan is not { } guide || (tag.GuideLineHorizontalAnchorPoint ?? headerSpan?.Start) is not { } anchorPoint)
+            if (guideSpan is not { } guide || GetAnchorPoint(tag, headerSpan) is not { } anchorPoint)
             {
                 continue;
             }
@@ -127,8 +127,8 @@ internal sealed class BlockStructureAdornmentManager
                 continue;
             }
 
-            // The anchor is the header's first character; the view formats its line
-            // transiently when it is scrolled out, so the x is always measurable.
+            // The view formats the anchor's line transiently when it is scrolled out, so
+            // the x is always measurable.
             var anchor = new SnapshotPoint(snapshot, anchorPoint);
             var x = Math.Floor(_view.GetTextViewLineContainingBufferPosition(anchor).GetCharacterBounds(anchor).Left);
 
@@ -152,6 +152,28 @@ internal sealed class BlockStructureAdornmentManager
 
             AddSegment(x, segmentTop, yBottom, brush, drawn);
         }
+    }
+
+    // An explicit anchor point is used as-is; otherwise the guide aligns with the first
+    // non-whitespace character of the header's start line — headers whose hint begins
+    // mid-line (e.g. "new" of an initializer with the brace on the next line) must not
+    // pull the guide to the middle of the line.
+    private int? GetAnchorPoint(IStructureTag tag, Span? headerSpan)
+        => tag.GuideLineHorizontalAnchorPoint is { } anchor
+            ? Translate(new Span(anchor, 0), tag.Snapshot)?.Start
+            : headerSpan is { } header
+                ? FirstNonWhitespace(new SnapshotPoint(_view.TextSnapshot, header.Start).GetContainingLine())
+                : null;
+
+    private static int FirstNonWhitespace(ITextSnapshotLine line)
+    {
+        int position = line.Start, end = line.End;
+        while (position < end && char.IsWhiteSpace(line.Snapshot[position]))
+        {
+            position++;
+        }
+
+        return position;
     }
 
     private Span? Translate(Span? span, ITextSnapshot tagSnapshot)

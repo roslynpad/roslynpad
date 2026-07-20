@@ -846,8 +846,9 @@ internal static class SmokeTest
     /// <summary>
     /// Waits for Roslyn's structure tagger to produce structural block tags (class, methods,
     /// for-loop) and for BlockStructureAdornmentManager to draw the vertical guide lines.
-    /// Verifies every drawn guide is anchored at some structural block header's first
-    /// character, and that guides exist at several distinct indent levels.
+    /// Verifies every drawn guide is anchored at the first non-whitespace character of some
+    /// structural block header's start line, and that guides exist at several distinct
+    /// indent levels.
     /// </summary>
     private static async Task VerifyBlockStructureAsync(ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer)
     {
@@ -894,8 +895,10 @@ internal static class SmokeTest
                 .Select(tag =>
                 {
                     var header = new SnapshotSpan(tag.Snapshot, tag.HeaderSpan!.Value).TranslateTo(snapshot, SpanTrackingMode.EdgeExclusive);
-                    var line = view.GetTextViewLineContainingBufferPosition(header.Start);
-                    return Math.Floor(line.GetCharacterBounds(header.Start).Left) - view.ViewportLeft;
+                    var headerLineText = header.Start.GetContainingLine().GetText();
+                    var anchor = header.Start.GetContainingLine().Start + (headerLineText.Length - headerLineText.TrimStart().Length);
+                    var line = view.GetTextViewLineContainingBufferPosition(anchor);
+                    return Math.Floor(line.GetCharacterBounds(anchor).Left) - view.ViewportLeft;
                 })
                 .Distinct()
                 .ToList();
