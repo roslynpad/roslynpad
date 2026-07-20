@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad">
+        xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad"
+        xmlns:core="using:Dock.Model.Core">
 
   <!-- VS Code-style rounded dock: panes are rounded cards separated by invisible splitter
        gaps over the workbench background, and document tabs are rounded chips.
@@ -117,6 +118,44 @@
                VerticalAlignment="Center"
                Source="{Binding DataContext, Converter={x:Static rp:DocumentIconConverter.Instance}}"
                IsVisible="{Binding DataContext, Converter={x:Static rp:DocumentIconConverter.HasIcon}}" />
+      </DataTemplate>
+    </Setter>
+    <Setter Property="ModifiedTemplate">
+      <DataTemplate>
+        <Panel />
+      </DataTemplate>
+    </Setter>
+    <Setter Property="CloseTemplate">
+      <DataTemplate x:DataType="core:IDockable">
+        <Button Command="{x:Static rp:CloseDockableCommand.Instance}"
+                CommandParameter="{Binding}"
+                Theme="{Binding $parent[DocumentTabStrip].CloseButtonTheme}"
+                IsVisible="{Binding CanClose}"
+                Classes.modified="{Binding IsModified}">
+          <Panel>
+            <Path x:Name="CloseGlyph"
+                  Margin="{DynamicResource DockTabContentMargin}"
+                  Stretch="Uniform"
+                  UseLayoutRounding="False"
+                  Data="{DynamicResource DockIconCloseGeometry}"
+                  Fill="{Binding $parent[DocumentTabStripItem].Foreground}" />
+            <Ellipse x:Name="ModifiedDot"
+                     Width="8"
+                     Height="8"
+                     Fill="{Binding $parent[DocumentTabStripItem].Foreground}" />
+          </Panel>
+          <Button.Styles>
+            <Style Selector="Ellipse#ModifiedDot">
+              <Setter Property="IsVisible" Value="False" />
+            </Style>
+            <Style Selector="Button.modified:not(:pointerover) Path#CloseGlyph">
+              <Setter Property="IsVisible" Value="False" />
+            </Style>
+            <Style Selector="Button.modified:not(:pointerover) Ellipse#ModifiedDot">
+              <Setter Property="IsVisible" Value="True" />
+            </Style>
+          </Button.Styles>
+        </Button>
       </DataTemplate>
     </Setter>
   </Style>

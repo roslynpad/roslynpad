@@ -203,6 +203,18 @@ partial class MainWindow : Window
                     CanClose = item is not HomeViewModel,
                 };
 
+                if (item is OpenDocumentViewModel openDocument)
+                {
+                    document.IsModified = openDocument.IsDirty;
+                    openDocument.PropertyChanged += (_, args) =>
+                    {
+                        if (args.PropertyName == nameof(IDocumentContent.IsDirty))
+                        {
+                            document.IsModified = openDocument.IsDirty;
+                        }
+                    };
+                }
+
                 factory.AddDockable(DocumentsPane, document);
                 factory.SetActiveDockable(document);
                 factory.SetFocusedDockable(DocumentsPane, document);
