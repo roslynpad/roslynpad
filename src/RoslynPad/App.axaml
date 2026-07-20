@@ -15,6 +15,7 @@
     <FluentTheme />
     <DockFluentTheme />
     <StyleInclude Source="/DockTheme.axaml" />
+    <StyleInclude Source="/ScrollBarTheme.axaml" />
     <dialogHostAvalonia:DialogHostStyles />
     <Style Selector="TextBlock.Title">
       <Setter Property="FontSize" Value="16" />

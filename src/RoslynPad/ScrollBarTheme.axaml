@@ -1,0 +1,114 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rp="clr-namespace:RoslynPad;assembly=RoslynPad">
+
+  <!-- VS Code-style scrollbars, app-wide: a rounded translucent thumb over a transparent
+       track, no arrow buttons. Colors come from the theme's scrollbarSlider.* keys via
+       ThemeDictionary. A Styles file (StyleInclude in App.axaml) rather than
+       Application.Resources: assigning Application.Resources from XAML would replace the
+       dictionary the Icons are code-merged into before the XAML loads. -->
+
+  <Styles.Resources>
+    <ResourceDictionary>
+
+      <ControlTheme x:Key="VsCodeScrollBarPageButton" TargetType="RepeatButton">
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="Transparent" />
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+
+      <ControlTheme x:Key="VsCodeScrollBarThumb" TargetType="Thumb">
+        <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ScrollBarSliderBackground}}" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}" CornerRadius="4" />
+          </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+          <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ScrollBarSliderHoverBackground}}" />
+        </Style>
+        <Style Selector="^:pressed">
+          <Setter Property="Background" Value="{DynamicResource {x:Static rp:ThemeDictionary.ScrollBarSliderActiveBackground}}" />
+        </Style>
+      </ControlTheme>
+
+      <ControlTheme x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
+        <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="Transitions">
+          <Transitions>
+            <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+          </Transitions>
+        </Setter>
+        <Style Selector="^:vertical">
+          <Setter Property="Width" Value="14" />
+          <Setter Property="Template">
+            <ControlTemplate>
+              <Track Minimum="{TemplateBinding Minimum}"
+                     Maximum="{TemplateBinding Maximum}"
+                     Value="{TemplateBinding Value, Mode=TwoWay}"
+                     ViewportSize="{TemplateBinding ViewportSize}"
+                     Orientation="Vertical"
+                     IsDirectionReversed="True">
+                <Track.DecreaseButton>
+                  <RepeatButton Name="PART_PageUpButton"
+                                Theme="{StaticResource VsCodeScrollBarPageButton}"
+                                Focusable="False" />
+                </Track.DecreaseButton>
+                <Track.IncreaseButton>
+                  <RepeatButton Name="PART_PageDownButton"
+                                Theme="{StaticResource VsCodeScrollBarPageButton}"
+                                Focusable="False" />
+                </Track.IncreaseButton>
+                <Thumb Theme="{StaticResource VsCodeScrollBarThumb}"
+                       Width="8"
+                       Margin="3 0"
+                       MinHeight="20" />
+              </Track>
+            </ControlTemplate>
+          </Setter>
+        </Style>
+        <Style Selector="^:horizontal">
+          <Setter Property="Height" Value="14" />
+          <Setter Property="Template">
+            <ControlTemplate>
+              <Track Minimum="{TemplateBinding Minimum}"
+                     Maximum="{TemplateBinding Maximum}"
+                     Value="{TemplateBinding Value, Mode=TwoWay}"
+                     ViewportSize="{TemplateBinding ViewportSize}"
+                     Orientation="Horizontal">
+                <Track.DecreaseButton>
+                  <RepeatButton Name="PART_PageUpButton"
+                                Theme="{StaticResource VsCodeScrollBarPageButton}"
+                                Focusable="False" />
+                </Track.DecreaseButton>
+                <Track.IncreaseButton>
+                  <RepeatButton Name="PART_PageDownButton"
+                                Theme="{StaticResource VsCodeScrollBarPageButton}"
+                                Focusable="False" />
+                </Track.IncreaseButton>
+                <Thumb Theme="{StaticResource VsCodeScrollBarThumb}"
+                       Height="8"
+                       Margin="0 3"
+                       MinWidth="20" />
+              </Track>
+            </ControlTemplate>
+          </Setter>
+        </Style>
+      </ControlTheme>
+
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <!-- Bars fade in only while the pointer is inside their scroll area (:pointerover holds
+       on every ancestor of the hovered element) — a ScrollViewer's own bars, or the
+       editor's overlay margin bars inside a hovered editor control. -->
+  <Style Selector="ScrollViewer:pointerover /template/ ScrollBar,
+                   rp|CodeEditorView:pointerover ScrollBar,
+                   rp|ILViewer:pointerover ScrollBar">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+</Styles>

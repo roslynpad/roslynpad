@@ -1498,19 +1498,11 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             return;
         }
 
-        if (ReferenceEquals(e.Pointer.Captured, this)
-            && GetBufferPositionFromViewPoint(e.GetPosition(this), MultiSelectionBroker.IsBoxSelection) is { } position)
+        if (ReferenceEquals(e.Pointer.Captured, this))
         {
-            if (MultiSelectionBroker.IsBoxSelection)
-            {
-                MultiSelectionBroker.SetBoxSelection(
-                    new Microsoft.VisualStudio.Text.Selection(MultiSelectionBroker.BoxSelection.AnchorPoint, position));
-            }
-            else
-            {
-                MultiSelectionBroker.SetSelection(new Microsoft.VisualStudio.Text.Selection(_selection.AnchorPoint, position));
-            }
-
+            _dragPoint = e.GetPosition(this);
+            ExtendDragSelection(_dragPoint);
+            UpdateDragAutoScroll();
             return;
         }
 
@@ -1535,10 +1527,93 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+        _dragScrollTimer?.Stop();
         if (ReferenceEquals(e.Pointer.Captured, this))
         {
             e.Pointer.Capture(null);
         }
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        _dragScrollTimer?.Stop();
+    }
+
+    private DispatcherTimer? _dragScrollTimer;
+    private Point _dragPoint;
+
+    private void ExtendDragSelection(Point point)
+    {
+        if (GetBufferPositionFromViewPoint(point, MultiSelectionBroker.IsBoxSelection) is { } position)
+        {
+            if (MultiSelectionBroker.IsBoxSelection)
+            {
+                MultiSelectionBroker.SetBoxSelection(
+                    new Microsoft.VisualStudio.Text.Selection(MultiSelectionBroker.BoxSelection.AnchorPoint, position));
+            }
+            else
+            {
+                MultiSelectionBroker.SetSelection(new Microsoft.VisualStudio.Text.Selection(_selection.AnchorPoint, position));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Auto-scroll while drag-selecting past the viewport edges: the drag point clamps to the
+    /// formatted lines, so without scrolling the selection would stall at the edge. A timer
+    /// scrolls by the pointer's overshoot for as long as the captured pointer stays outside
+    /// (speed grows with distance, VS semantics) — the pointer resting outside produces no
+    /// further move events, hence a timer rather than scrolling from OnPointerMoved.
+    /// </summary>
+    private void UpdateDragAutoScroll()
+    {
+        if (GetDragOvershoot() == default)
+        {
+            _dragScrollTimer?.Stop();
+            return;
+        }
+
+        if (_dragScrollTimer is null)
+        {
+            _dragScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+            _dragScrollTimer.Tick += (_, _) => OnDragScrollTimerTick();
+        }
+
+        _dragScrollTimer.Start();
+    }
+
+    private void OnDragScrollTimerTick()
+    {
+        var (x, y) = _isClosed ? default : GetDragOvershoot();
+        if (x == 0.0 && y == 0.0)
+        {
+            _dragScrollTimer!.Stop();
+            return;
+        }
+
+        if (y != 0.0)
+        {
+            _viewScroller.ScrollViewportVerticallyByPixels(-y);
+        }
+
+        if (x != 0.0)
+        {
+            ViewportLeft += x;
+        }
+
+        ExtendDragSelection(_dragPoint);
+    }
+
+    private (double X, double Y) GetDragOvershoot()
+    {
+        double x = _dragPoint.X < 0.0 ? _dragPoint.X
+            : _dragPoint.X > ViewportWidth ? _dragPoint.X - ViewportWidth
+            : 0.0;
+        double y = _dragPoint.Y < ViewportTop ? _dragPoint.Y - ViewportTop
+            : _dragPoint.Y > ViewportBottom ? _dragPoint.Y - ViewportBottom
+            : 0.0;
+        return (x, y);
     }
 
     /// <summary>

@@ -294,6 +294,21 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
             SynchronizeFromView();
         }
 
+        // Style by the base type: the Fluent ScrollBar control theme is keyed by
+        // typeof(ScrollBar), and without this the margin subclass gets no template at all.
+        protected override Type StyleKeyOverride => typeof(ScrollBar);
+
+        protected override void OnPointerWheelChanged(Avalonia.Input.PointerWheelEventArgs e)
+        {
+            base.OnPointerWheelChanged(e);
+            // Content flows under the overlay scrollbar, so wheel there scrolls the view
+            // (the base forwards only to a ScrollViewer owner, which margins don't have).
+            if (!e.Handled && _view is WpfTextView view)
+            {
+                view.HandleMouseWheel(e);
+            }
+        }
+
         public Control VisualElement => this;
 
         public double MarginSize => Width;
@@ -466,6 +481,17 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
                     _view.ViewportLeft = e.NewValue;
                 }
             };
+        }
+
+        protected override Type StyleKeyOverride => typeof(ScrollBar);
+
+        protected override void OnPointerWheelChanged(Avalonia.Input.PointerWheelEventArgs e)
+        {
+            base.OnPointerWheelChanged(e);
+            if (!e.Handled && _view is WpfTextView view)
+            {
+                view.HandleMouseWheel(e);
+            }
         }
 
         public Control VisualElement => this;

@@ -9,7 +9,8 @@ using Microsoft.VisualStudio.Utilities;
 /// <summary>
 /// The view host: the text view surrounded by its four margin containers, whose child
 /// margins are MEF-discovered per container, filtered by content type and view roles, and
-/// stacked in definition order (M4 acceptance).
+/// stacked in definition order (M4 acceptance). The top/left containers reserve space;
+/// the right/bottom containers overlay the view's cell (VS Code-style scrollbars).
 /// </summary>
 internal sealed class WpfTextViewHost : IWpfTextViewHost
 {
@@ -64,8 +65,13 @@ internal sealed class WpfTextViewHost : IWpfTextViewHost
         // decorator's clip keeps it inside its cell (the transform ignores the view's own
         // ClipToBounds, which scales along with the content).
         AddCell(new Decorator { Child = wpfTextView.VisualElement, ClipToBounds = true }, row: 1, column: 1);
-        AddCell(right.VisualElement, row: 1, column: 2);
-        AddCell(bottom.VisualElement, row: 2, column: 0, columnSpan: 3);
+
+        // The right/bottom containers (the scrollbars) float over the view's cell instead of
+        // reserving space beside it, so content flows under them (VS Code overlay scrollbars).
+        right.VisualElement.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+        AddCell(right.VisualElement, row: 1, column: 1);
+        bottom.VisualElement.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom;
+        AddCell(bottom.VisualElement, row: 1, column: 1);
 
         if (setFocus)
         {

@@ -79,6 +79,26 @@ public class ThemeDictionary : ThemeDictionaryBase
         }
 
         MapDockResources(theme.Type);
+        MapScrollBarDefaults(theme.Type);
+    }
+
+    /// <summary>
+    /// VS Code's coded scrollbar defaults (colorRegistry.ts) for themes that don't set
+    /// <c>scrollbarSlider.*</c> — the bundled 2026 themes do, the classic ones don't.
+    /// </summary>
+    private void MapScrollBarDefaults(ThemeType type)
+    {
+        SetDefaultThemeColor(ScrollBarSliderBackground, type == ThemeType.Dark ? "#79797966" : "#64646466");
+        SetDefaultThemeColor(ScrollBarSliderHoverBackground, "#646464B3");
+        SetDefaultThemeColor(ScrollBarSliderActiveBackground, type == ThemeType.Dark ? "#BFBFBF66" : "#00000099");
+    }
+
+    private void SetDefaultThemeColor(string name, string color)
+    {
+        if (!TryGetValue(name, out _))
+        {
+            SetThemeColor(name, color);
+        }
     }
 
     /// <summary>

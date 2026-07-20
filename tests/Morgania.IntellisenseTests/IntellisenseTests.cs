@@ -31,7 +31,8 @@ public sealed class IntellisenseTests
     /// <summary>Pumps the dispatcher until <paramref name="condition"/> holds (or fails the test).</summary>
     private static void PumpUntil(Func<bool> condition, string reason)
     {
-        for (int i = 0; i < 200; i++)
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        while (stopwatch.Elapsed < TimeSpan.FromSeconds(10))
         {
             Dispatcher.UIThread.RunJobs();
             if (condition())
@@ -297,6 +298,8 @@ public sealed class IntellisenseTests
                 session.OpenOrUpdate(trigger, caret, CancellationToken.None);
                 session.GetComputedItems(CancellationToken.None);
 
+                // The presenter is created when the broker presents, a dispatcher beat later.
+                PumpUntil(() => view.Properties.ContainsProperty(typeof(CompletionPresenter)), "presenter attaches to the view");
                 var presenter = view.Properties.GetProperty<CompletionPresenter>(typeof(CompletionPresenter));
                 PumpUntil(() => presenter.IsSuggestionRowVisible, "suggestion mode shows the suggestion row");
 
