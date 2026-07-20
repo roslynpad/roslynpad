@@ -20,10 +20,13 @@ internal sealed class TextCaret : ITextCaret
     private VirtualSnapshotPoint _lastPosition;
     private PositionAffinity _lastAffinity = PositionAffinity.Successor;
 
-    public TextCaret(WpfTextView view, IBufferGraph bufferGraph)
+    public TextCaret(WpfTextView view, IBufferGraph bufferGraph, bool isHidden)
     {
         _view = view;
         _bufferGraph = bufferGraph;
+        // The initial state goes to the field: the IsHidden setter notifies the caret
+        // layer, which reads view state that is not built yet mid-construction.
+        _isHidden = isHidden;
         _lastPosition = new VirtualSnapshotPoint(new SnapshotPoint(view.TextSnapshot, 0));
     }
 

@@ -71,6 +71,7 @@ internal sealed class CommandingKeyBridge(
     {
         private readonly KeyModifiers _commandModifiers = hotkeys.CommandModifiers;
         private readonly KeyModifiers _wordModifiers = hotkeys.WholeWordTextActionModifiers;
+        private bool _outliningChordPending;
 
         public void OnKeyDown(KeyEventArgs e)
         {
@@ -84,6 +85,36 @@ internal sealed class CommandingKeyBridge(
 
             bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
             var chord = e.KeyModifiers & ~KeyModifiers.Shift;
+
+            // A pending command+M chord claims the next command-modified key: M toggles the
+            // regions at the selection, L toggles all outlining, O collapses to definitions
+            // (the VS Ctrl+M chord family).
+            if (_outliningChordPending)
+            {
+                if (e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
+                    or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin)
+                {
+                    return; // Modifier transitions keep the chord pending.
+                }
+
+                _outliningChordPending = false;
+                if (chord == _commandModifiers && !shift)
+                {
+                    bool? chordResult = e.Key switch
+                    {
+                        Key.M => TryRun(static (v, b) => new ToggleOutliningExpansionCommandArgs(v, b)),
+                        Key.L => TryRun(static (v, b) => new ToggleAllOutliningCommandArgs(v, b)),
+                        Key.O => TryRun(static (v, b) => new ToggleOutliningDefinitionsCommandArgs(v, b)),
+                        _ => null,
+                    };
+                    if (chordResult is not null)
+                    {
+                        // The chord swallows its second key even when no handler took it.
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
 
             // In a read-only view editing chords are suppressed here and blocked again by
             // the keymap; navigation, copy, and go-to commands stay live.
@@ -151,6 +182,8 @@ internal sealed class CommandingKeyBridge(
                 (Key.D, meta: true, shift: true) when !readOnly => TryRun(static (v, b) => new FormatDocumentCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: false) => TryRun(static (v, b) => new GotoBraceCommandArgs(v, b)),
                 (Key.OemCloseBrackets, meta: true, shift: true) => TryRun(static (v, b) => new GotoBraceExtCommandArgs(v, b)),
+                // Outlining chord prefix; the next command-modified key completes it above.
+                (Key.M, meta: true, shift: false) => _outliningChordPending = true,
                 (Key.F12, meta: false, shift: false) => TryRun(static (v, b) => new GoToDefinitionCommandArgs(v, b)),
                 (Key.F12, meta: true, shift: false) => TryRun(static (v, b) => new Microsoft.CodeAnalysis.Editor.Commanding.Commands.GoToImplementationCommandArgs(v, b)),
                 // Suggested actions: command+; everywhere, because on macOS Cmd+. never

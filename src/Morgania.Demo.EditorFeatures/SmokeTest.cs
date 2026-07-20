@@ -45,6 +45,7 @@ internal static class SmokeTest
             await VerifyReferenceHighlightingAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyStringIndentationAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyBlockStructureAsync(exportProvider, view, buffer).ConfigureAwait(true);
+            await VerifyOutliningAsync(exportProvider, view, buffer, desktop).ConfigureAwait(true);
             Console.WriteLine("SMOKE PASSED");
             exitCode = 0;
         }
@@ -931,6 +932,100 @@ internal static class SmokeTest
                 $"block structure OK: {layer.Elements.Count} guide segments at {distinctLevels} indent levels from {structuralTags.Count} structural tags");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Waits for Roslyn's structure tags to reach the outlining manager (through the
+    /// structure→outlining bridge), collapses the innermost region, and verifies the
+    /// collapse elides all but the region's last character and draws the collapsed-form
+    /// pill in the intra-text adornment layer; expanding restores the visual buffer.
+    /// </summary>
+    private static async Task VerifyOutliningAsync(
+        ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer, IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var manager = exportProvider
+            .GetExportedValue<Microsoft.VisualStudio.Text.Outlining.IOutliningManagerService>()
+            .GetOutliningManager(view)
+            ?? throw new InvalidOperationException("the view has no outlining manager");
+
+        Microsoft.VisualStudio.Text.Outlining.ICollapsible? region = null;
+        for (var i = 0; i < 120 && region is null; i++)
+        {
+            await Task.Delay(500).ConfigureAwait(true);
+            var snapshot = buffer.CurrentSnapshot;
+            region = manager.GetAllRegions(new SnapshotSpan(snapshot, 0, snapshot.Length))
+                .OrderBy(r => r.Extent.GetSpan(snapshot).Length)
+                .FirstOrDefault();
+        }
+
+        if (region is null)
+        {
+            throw new TimeoutException("no outlining regions arrived from the Roslyn structure tags");
+        }
+
+        int editLength = buffer.CurrentSnapshot.Length;
+        var collapsed = manager.TryCollapse(region) ?? throw new InvalidOperationException("the region did not collapse");
+        var extent = collapsed.Extent.GetSpan(buffer.CurrentSnapshot);
+        if (view.VisualSnapshot.Length != editLength - (extent.Length - 1))
+        {
+            throw new InvalidOperationException(
+                $"collapse elided {editLength - view.VisualSnapshot.Length} characters, expected {extent.Length - 1}");
+        }
+
+        var pillLayer = view.GetAdornmentLayer("Intra Text Adornment");
+        for (var i = 0; i < 40 && pillLayer.IsEmpty; i++)
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+        }
+
+        if (pillLayer.IsEmpty)
+        {
+            throw new TimeoutException("the collapsed-form pill was not drawn");
+        }
+
+        // The hover hint hosts a real text view over the hidden span (live classification,
+        // recolorizes when semantics land), not a static rendering.
+        if (collapsed.Tag.CollapsedHintForm is not Microsoft.CodeAnalysis.Editor.Shared.Utilities.ViewHostingControl hintControl)
+        {
+            throw new InvalidOperationException($"expected a view-hosting hint, got {collapsed.Tag.CollapsedHintForm?.GetType().Name}");
+        }
+
+        // Attach the hint (as a tooltip opening would) so the elision buffer and shrunken
+        // view materialize, and check the preview shows the collapsed code.
+        var window = desktop.MainWindow ?? throw new InvalidOperationException("no main window");
+        object? previousContent = window.Content;
+        window.Content = hintControl;
+        try
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+            var hintView = (IWpfTextView)hintControl.TextView_TestOnly;
+
+            // The preview view is non-interactive: no focus, no caret.
+            if (hintView.VisualElement.Focusable || !hintView.Caret.IsHidden)
+            {
+                throw new InvalidOperationException("the hint view must not be focusable or show a caret");
+            }
+
+            string Strip(string text) => string.Concat(text.Where(c => !char.IsWhiteSpace(c)));
+            var hintText = Strip(hintView.TextSnapshot.GetText());
+            if (hintText.Length == 0 || !Strip(buffer.CurrentSnapshot.GetText()).Contains(hintText, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("the hint view does not show the collapsed code");
+            }
+        }
+        finally
+        {
+            window.Content = previousContent;
+        }
+
+        manager.Expand(collapsed);
+        if (view.VisualSnapshot.Length != editLength)
+        {
+            throw new InvalidOperationException("expanding did not restore the visual buffer");
+        }
+
+        Console.WriteLine(
+            $"outlining OK: collapsed {extent.Length} characters behind the pill; hint hosts a text view; expand restored the view");
     }
 
     private static void RaiseKey(IWpfTextView view, Avalonia.Input.Key key, Avalonia.Input.KeyModifiers modifiers = Avalonia.Input.KeyModifiers.None)

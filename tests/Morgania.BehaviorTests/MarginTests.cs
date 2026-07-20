@@ -23,19 +23,23 @@ public sealed class MarginTests
             // Discovery: the standard margins resolve by name through the host.
             var lineNumbers = host.GetTextViewMargin(PredefinedMarginNames.LineNumber);
             var glyph = host.GetTextViewMargin(PredefinedMarginNames.Glyph);
+            var outlining = host.GetTextViewMargin(PredefinedMarginNames.Outlining);
             var verticalScrollBar = host.GetTextViewMargin(PredefinedMarginNames.VerticalScrollBar);
             var horizontalScrollBar = host.GetTextViewMargin(PredefinedMarginNames.HorizontalScrollBar);
             Assert.IsNotNull(lineNumbers);
             Assert.IsNotNull(glyph);
+            Assert.IsNotNull(outlining);
             Assert.IsNotNull(verticalScrollBar);
             Assert.IsNotNull(horizontalScrollBar);
 
-            // Ordering: within the Left container, Glyph precedes LineNumber per [Order].
+            // Ordering: within the Left container, Glyph precedes LineNumber precedes
+            // Outlining per [Order].
             var leftContainer = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Left)!;
             var panel = (Avalonia.Controls.StackPanel)leftContainer.VisualElement;
-            Assert.AreEqual(2, panel.Children.Count);
+            Assert.AreEqual(3, panel.Children.Count);
             Assert.AreEqual(glyph.VisualElement, panel.Children[0], "Glyph margin is ordered before LineNumber.");
             Assert.AreEqual(lineNumbers.VisualElement, panel.Children[1]);
+            Assert.AreEqual(outlining.VisualElement, panel.Children[2], "Outlining margin is ordered after LineNumber.");
 
             // Removable: the line-number margin follows its option (vendored default: off).
             view.Options.SetOptionValue(DefaultTextViewHostOptions.LineNumberMarginId, true);

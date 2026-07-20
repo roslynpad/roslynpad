@@ -35,12 +35,41 @@ global using UserControl = Avalonia.Controls.UserControl;
 
 namespace System.Windows
 {
-    file sealed class Dummy;
+    /// <summary>WPF property-change payload, as far as the vendored consumers need it.</summary>
+    public readonly struct DependencyPropertyChangedEventArgs(object? oldValue, object? newValue)
+    {
+        public object? OldValue { get; } = oldValue;
+
+        public object? NewValue { get; } = newValue;
+    }
+
+    public delegate void DependencyPropertyChangedEventHandler(object? sender, DependencyPropertyChangedEventArgs e);
 }
 
 namespace System.Windows.Controls
 {
-    file sealed class Dummy;
+    /// <summary>
+    /// WPF ContentControl stand-in whose <see cref="IsVisibleChanged"/> maps onto visual-tree
+    /// attachment: WPF effective visibility flips when an element enters or leaves the tree
+    /// (a tooltip opening/closing), which is the transition the vendored consumers
+    /// (ViewHostingControl) react to.
+    /// </summary>
+    public class ContentControl : Avalonia.Controls.ContentControl
+    {
+        public event DependencyPropertyChangedEventHandler? IsVisibleChanged;
+
+        protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            IsVisibleChanged?.Invoke(this, new DependencyPropertyChangedEventArgs(false, true));
+        }
+
+        protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            IsVisibleChanged?.Invoke(this, new DependencyPropertyChangedEventArgs(true, false));
+        }
+    }
 }
 
 namespace System.Windows.Documents

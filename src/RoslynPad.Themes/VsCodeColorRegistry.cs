@@ -254,6 +254,7 @@ internal class VsCodeColorRegistry : IColorRegistry
         RegisterColor("menubar.selectionBackground", toolbarHoverBackground);
 
         RegisterColor("editorGutter.foldingControlForeground", iconForeground);
+        RegisterColor("editor.foldPlaceholderForeground", new ColorDefaults(Dark: "#808080", Light: "#808080"));
     }
 
     private string RegisterColor(string name) => name;

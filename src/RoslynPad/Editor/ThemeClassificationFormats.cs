@@ -177,6 +177,36 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's folding colors to the outlining UI through the editor format map:
+    /// the gutter's folding-control color to the margin chevrons and the fold placeholder
+    /// color to the collapsed-region pill.
+    /// </summary>
+    public void ApplyOutlining(IEditorFormatMap formatMap)
+    {
+        if (_theme.TryGetColor("editorGutter.foldingControlForeground") is { } chevron)
+        {
+            formatMap.SetProperties(
+                Microsoft.VisualStudio.Text.Editor.Implementation.OutliningMarginFormatNames.Name,
+                new Avalonia.Controls.ResourceDictionary
+                {
+                    [Microsoft.VisualStudio.Text.Editor.Implementation.OutliningMarginFormatNames.Foreground] =
+                        new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(chevron)),
+                });
+        }
+
+        if (_theme.TryGetColor("editor.foldPlaceholderForeground") is { } placeholder)
+        {
+            formatMap.SetProperties(
+                Microsoft.VisualStudio.Text.Editor.Implementation.CollapsedAdornmentFormatNames.Name,
+                new Avalonia.Controls.ResourceDictionary
+                {
+                    [Microsoft.VisualStudio.Text.Editor.Implementation.CollapsedAdornmentFormatNames.Foreground] =
+                        new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(placeholder)),
+                });
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's cursor color to the caret layer through the editor format map.
     /// The bundled themes don't define <c>editorCursor.foreground</c>, so the fallback mirrors
     /// VS Code's coded defaults: black on light themes, a light gray on dark ones (the

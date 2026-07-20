@@ -462,6 +462,21 @@ internal sealed class FormattedLine : IFormattedLine
         return new ReadOnlyCollection<object>(tags);
     }
 
+    /// <summary>Whether the formatting index (paragraph-relative) falls inside a span an
+    /// adornment replaced.</summary>
+    private bool IsReplacedByAdornment(int sourceIndex)
+    {
+        foreach (var adornment in RowAdornments())
+        {
+            if (sourceIndex >= adornment.Start && sourceIndex < adornment.End)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private IEnumerable<AdornmentInfo> RowAdornments()
     {
         foreach (var adornment in _adornments)
@@ -529,6 +544,13 @@ internal sealed class FormattedLine : IFormattedLine
         }
 
         var hit = _textLine.GetCharacterHitFromDistance(xCoordinate - Left);
+        if (textOnly && IsReplacedByAdornment(hit.FirstCharacterIndex))
+        {
+            // A span replaced by a space-negotiating adornment is not text either (the
+            // adornment owns that ground — e.g. its own hover UI).
+            return null;
+        }
+
         int index = Math.Clamp(hit.FirstCharacterIndex - _rowStart, 0, Math.Max(0, _rowLength - 1));
         return new SnapshotPoint(_snapshot, GetEditPosition(index));
     }

@@ -125,9 +125,11 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         // No ClipToBounds here: the clip would apply in logical (pre-zoom) coordinates,
         // cutting the view short of its slot when zoomed out. The host wraps the view in
         // a clipping decorator that operates in screen coordinates.
-        Focusable = true;
+        // A view without the Interactive role (e.g. a tooltip preview) responds to no user
+        // input: it takes no focus and shows no caret.
+        Focusable = _roles.Contains(PredefinedTextViewRoles.Interactive);
 
-        _caret = new TextCaret(this, bufferGraph);
+        _caret = new TextCaret(this, bufferGraph, isHidden: !Focusable);
         _selection = new TextSelection(this);
         _viewScroller = new ViewScroller(this);
         _spaceReservationStack = new SpaceReservationStack(this);
@@ -1102,6 +1104,46 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
 
     #region Avalonia integration
 
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        var size = base.MeasureOverride(availableSize);
+        if (_isClosed || (!double.IsInfinity(availableSize.Width) && !double.IsInfinity(availableSize.Height)))
+        {
+            return size;
+        }
+
+        // Unconstrained measure: a popup (e.g. the collapsed-region hint) is sizing the
+        // view to its content. Answer the full text size on the unbounded axes — the
+        // viewport-driven layout only formats visible lines, so anything that waits for a
+        // layout pass to read the text extent under-measures. Viewport hosting never gets
+        // here (a viewport is a finite constraint by definition); content-sized hosts show
+        // small buffers, so formatting every line to find the widest is affordable.
+        var source = EnsureLineSource();
+        var snapshot = VisualSnapshot;
+        double scale = _zoomLevel / 100.0;
+
+        double width = size.Width;
+        if (double.IsInfinity(availableSize.Width))
+        {
+            width = 0.0;
+            for (int i = 0; i < snapshot.LineCount; i++)
+            {
+                foreach (var row in FormatSnapshotLine(source, snapshot.GetLineFromLineNumber(i)))
+                {
+                    width = Math.Max(width, row.TextWidth);
+                    row.Dispose();
+                }
+            }
+
+            width = (width + source.ColumnWidth) * scale;
+        }
+
+        double height = double.IsInfinity(availableSize.Height)
+            ? snapshot.LineCount * source.LineHeight * scale
+            : size.Height;
+        return new Size(width, height);
+    }
+
     protected override Size ArrangeOverride(Size finalSize)
     {
         // The viewport is in logical (pre-zoom) units; the render transform maps it onto
@@ -1155,7 +1197,10 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
-        HandleMouseWheel(e);
+        if (AllowsUserInput)
+        {
+            HandleMouseWheel(e);
+        }
     }
 
     /// <summary>
@@ -1198,9 +1243,17 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         AvaloniaClipboardBridge.Instance.Attach(TopLevel.GetTopLevel(this));
     }
 
+    /// <summary>Whether the view responds to user input (the Interactive role).</summary>
+    private bool AllowsUserInput => _roles.Contains(PredefinedTextViewRoles.Interactive);
+
     protected override void OnTextInput(TextInputEventArgs e)
     {
         base.OnTextInput(e);
+        if (!AllowsUserInput)
+        {
+            return;
+        }
+
         if (!_isClosed && !e.Handled && !string.IsNullOrEmpty(e.Text) && !char.IsControl(e.Text[0]))
         {
             if (!Options.DoesViewProhibitUserInput())
@@ -1215,6 +1268,11 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!AllowsUserInput)
+        {
+            return;
+        }
+
         if (!_isClosed && !e.Handled)
         {
             e.Handled = HandleKey(e.Key, e.KeyModifiers);
@@ -1381,7 +1439,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        if (_isClosed || e.Handled)
+        if (_isClosed || e.Handled || !AllowsUserInput)
         {
             return;
         }
@@ -1435,7 +1493,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        if (_isClosed)
+        if (_isClosed || !AllowsUserInput)
         {
             return;
         }

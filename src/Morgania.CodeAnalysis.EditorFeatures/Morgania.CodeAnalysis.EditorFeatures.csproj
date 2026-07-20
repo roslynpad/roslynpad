@@ -129,14 +129,11 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsView.xaml.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewFactory.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewStateVisibilityConverter.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/ProjectionBufferContent.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/DefinitionHighlightTagDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/WrittenReferenceHighlightTagDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/RenameTracking/RenameTrackingTagDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/StringCopyPaste/WpfStringCopyPasteService.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Structure/StructureTaggerProvider.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Utilities/BrushToColorConverter.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ViewHostingControl.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Workspaces/WpfTextBufferVisibilityTracker.cs" />
   </ItemGroup>
 

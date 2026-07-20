@@ -69,10 +69,11 @@ public sealed class OutliningTests
             var collapsed = manager.TryCollapse(region);
             Assert.IsNotNull(collapsed, "The test region is collapsible.");
 
-            // The collapse elides the extent from the visual buffer.
+            // The collapse elides the extent from the visual buffer, except its last
+            // character — the seat of the collapsed-form adornment.
             int regionStart = "header ".Length;
             int regionLength = editSnapshot.Length - regionStart - "\nfooter".Length;
-            Assert.AreEqual(editSnapshot.Length - regionLength, view.VisualSnapshot.Length);
+            Assert.AreEqual(editSnapshot.Length - (regionLength - 1), view.VisualSnapshot.Length);
 
             // A fresh layout joins header and footer across the collapse.
             view.DisplayTextLineContainingBufferPosition(new SnapshotPoint(editSnapshot, 0), 0.0, ViewRelativePosition.Top);
@@ -91,7 +92,12 @@ public sealed class OutliningTests
             Assert.AreEqual(collapsePointBounds.Leading, hiddenBounds.Leading, 0.01);
             var elementSpan = first.GetTextElementSpan(new SnapshotPoint(editSnapshot, regionStart + 5));
             Assert.AreEqual(regionStart, elementSpan.Start.Position);
-            Assert.AreEqual(regionStart + regionLength, elementSpan.End.Position);
+            Assert.AreEqual(regionStart + regionLength - 1, elementSpan.End.Position);
+
+            // The region's kept character carries the collapsed-form pill through the
+            // intra-text adornment pipeline.
+            var pillLayer = view.GetAdornmentLayer("Intra Text Adornment");
+            Assert.IsFalse(pillLayer.IsEmpty, "The collapsed region shows its collapsed-form adornment.");
 
             // Expanding restores the full text and the original line structure.
             manager.Expand(collapsed);

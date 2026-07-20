@@ -55,16 +55,23 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
     private readonly IViewElementFactoryService _viewElementFactory;
     private readonly Border _container;
     private readonly StackPanel _panel;
+    private readonly double _maxTipWidth;
     private ITrackingSpan? _applicableToSpan;
     private ISpaceReservationManager? _manager;
     private ISpaceReservationAgent? _agent;
     private bool _dismissed;
 
-    public ToolTipPresenter(ITextView view, ToolTipParameters parameters, IViewElementFactoryService viewElementFactory, PopupBrushes brushes)
+    public ToolTipPresenter(
+        ITextView view,
+        ToolTipParameters parameters,
+        IViewElementFactoryService viewElementFactory,
+        PopupBrushes brushes,
+        double maxTipWidth = MaxTipWidth)
     {
         _view = view;
         _parameters = parameters;
         _viewElementFactory = viewElementFactory;
+        _maxTipWidth = maxTipWidth;
         _panel = new StackPanel();
         _container = new Border
         {
@@ -74,7 +81,7 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
             BorderThickness = new Thickness(1.0),
             CornerRadius = new CornerRadius(3.0),
             Padding = new Thickness(8.0, 5.0),
-            MaxWidth = MaxTipWidth,
+            MaxWidth = maxTipWidth,
         };
         _container.SetValue(TextElement.ForegroundProperty, brushes.Foreground);
     }
@@ -93,7 +100,7 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
         }
 
         _applicableToSpan = applicableToSpan;
-        _container.MaxWidth = _view.ViewportWidth > 0.0 ? Math.Min(MaxTipWidth, _view.ViewportWidth) : MaxTipWidth;
+        _container.MaxWidth = _view.ViewportWidth > 0.0 ? Math.Min(_maxTipWidth, _view.ViewportWidth) : _maxTipWidth;
         _panel.Children.Clear();
         foreach (var item in content)
         {

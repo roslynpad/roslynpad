@@ -140,8 +140,12 @@ public sealed class IntraTextAdornmentSupportProvider : IViewTaggerProvider
                             (removedTag, _) => _visibleAdornments.Remove((XPlatIntraTextAdornmentTag)removedTag!));
                     }
 
+                    // The adornment's baseline sits on the line's text baseline (the tag's
+                    // default baseline is its height, i.e. bottom-on-baseline).
+                    double textHeight = tag.TextHeight ?? control.DesiredSize.Height;
+                    double baseline = tag.Baseline ?? textHeight;
                     Canvas.SetLeft(control, adornmentBounds.Left - _view.ViewportLeft);
-                    Canvas.SetTop(control, line.TextTop - _view.ViewportTop);
+                    Canvas.SetTop(control, line.TextTop + line.Baseline - baseline - _view.ViewportTop);
                 }
             }
 

@@ -44,3 +44,17 @@ namespace System.Drawing
         }
     }
 }
+
+// API-shape drift between the VS editor Roslyn compiles against and the vendored one.
+internal static class VisualStudioCompatExtensions
+{
+    extension(Microsoft.VisualStudio.Text.Editor.DefaultWpfViewOptions)
+    {
+        /// <summary>
+        /// Upstream WPF option id; the vendored editor hosts this option on
+        /// <see cref="Microsoft.VisualStudio.Text.Editor.DefaultTextViewOptions"/>.
+        /// </summary>
+        public static Microsoft.VisualStudio.Text.Editor.EditorOptionKey<bool> EnableHighlightCurrentLineId
+            => Microsoft.VisualStudio.Text.Editor.DefaultTextViewOptions.EnableHighlightCurrentLineId;
+    }
+}
