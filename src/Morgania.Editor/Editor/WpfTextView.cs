@@ -1455,6 +1455,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         {
             bool addCaret = e.KeyModifiers.HasFlag(KeyModifiers.Alt) || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
             bool extend = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+            _wordDragAnchor = null;
             if (box)
             {
                 // The box anchors at the press point (VS Code's Option+Shift+drag); dragging
@@ -1471,13 +1472,12 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             }
             else if (e.ClickCount == 2)
             {
-                // Double-click selects the word under the click; no capture, so the
-                // press-release of the second click can't collapse the selection
-                // (word-by-word drag extension is mouse-processor work, §5.6).
+                // Double-click selects the word under the click; the selected word becomes
+                // the anchor for word-by-word drag extension (VS semantics), which also
+                // keeps the second click's press-release from collapsing the selection.
                 MultiSelectionBroker.SetSelection(new Microsoft.VisualStudio.Text.Selection(position));
                 EditorOperations.SelectCurrentWord();
-                e.Handled = true;
-                return;
+                _wordDragAnchor = _selection.StreamSelectionSpan.SnapshotSpan;
             }
             else
             {
@@ -1542,6 +1542,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
 
     private DispatcherTimer? _dragScrollTimer;
     private Point _dragPoint;
+    private SnapshotSpan? _wordDragAnchor;
 
     private void ExtendDragSelection(Point point)
     {
@@ -1551,6 +1552,20 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             {
                 MultiSelectionBroker.SetBoxSelection(
                     new Microsoft.VisualStudio.Text.Selection(MultiSelectionBroker.BoxSelection.AnchorPoint, position));
+            }
+            else if (_wordDragAnchor is { } wordAnchor)
+            {
+                // Dragging out of a double-click extends whole-word-by-whole-word: the
+                // selection is the union of the anchor word and the word (or run of
+                // punctuation/whitespace) under the pointer, anchored at the far end.
+                var anchor = wordAnchor.TranslateTo(position.Position.Snapshot, SpanTrackingMode.EdgeInclusive);
+                var word = _factory.GetTextStructureNavigator(position.Position.Snapshot.TextBuffer)
+                    .GetExtentOfWord(position.Position).Span;
+                var (anchorPoint, activePoint) = word.Start < anchor.Start
+                    ? (anchor.End, word.Start)
+                    : (anchor.Start, word.End > anchor.End ? word.End : anchor.End);
+                MultiSelectionBroker.SetSelection(new Microsoft.VisualStudio.Text.Selection(
+                    new VirtualSnapshotPoint(anchorPoint), new VirtualSnapshotPoint(activePoint)));
             }
             else
             {

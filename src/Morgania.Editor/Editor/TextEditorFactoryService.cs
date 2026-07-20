@@ -25,6 +25,7 @@ public sealed class TextEditorFactoryService : ITextEditorFactoryService
     private readonly IMultiSelectionBrokerFactory _multiSelectionBrokerFactory;
     private readonly IEditorOperationsFactoryService _editorOperationsFactory;
     private readonly ITextBufferUndoManagerProvider _undoManagerProvider;
+    private readonly ITextStructureNavigatorSelectorService _navigatorSelectorService;
     private readonly ITextAndAdornmentSequencerFactoryService _sequencerFactory;
     private readonly Lazy<IWpfTextViewCreationListener, ContentTypeAndTextViewRoleMetadata>[] _creationListeners;
     private readonly Lazy<ITextViewCreationListener, ContentTypeAndTextViewRoleMetadata>[] _textViewCreationListeners;
@@ -49,6 +50,7 @@ public sealed class TextEditorFactoryService : ITextEditorFactoryService
         IEditorOperationsFactoryService editorOperationsFactory,
         ITextBufferUndoManagerProvider undoManagerProvider,
         ITextAndAdornmentSequencerFactoryService sequencerFactory,
+        ITextStructureNavigatorSelectorService navigatorSelectorService,
         [ImportMany] Lazy<AdornmentLayerDefinition, Orderable>[] adornmentLayerDefinitions,
         [ImportMany] Lazy<SpaceReservationManagerDefinition, Orderable>[] spaceReservationManagerDefinitions,
         [ImportMany] Lazy<IWpfTextViewCreationListener, ContentTypeAndTextViewRoleMetadata>[] creationListeners,
@@ -76,6 +78,7 @@ public sealed class TextEditorFactoryService : ITextEditorFactoryService
         _multiSelectionBrokerFactory = multiSelectionBrokerFactory;
         _editorOperationsFactory = editorOperationsFactory;
         _undoManagerProvider = undoManagerProvider;
+        _navigatorSelectorService = navigatorSelectorService;
 
         var ordered = Orderer.Order(adornmentLayerDefinitions.ToList());
         for (int i = 0; i < ordered.Count; i++)
@@ -308,6 +311,9 @@ public sealed class TextEditorFactoryService : ITextEditorFactoryService
 
     internal ITextBufferUndoManager GetUndoManager(ITextBuffer textBuffer)
         => _undoManagerProvider.GetTextBufferUndoManager(textBuffer);
+
+    internal ITextStructureNavigator GetTextStructureNavigator(ITextBuffer textBuffer)
+        => _navigatorSelectorService.GetTextStructureNavigator(textBuffer);
 
     public IWpfTextViewHost CreateTextViewHost(IWpfTextView wpfTextView, bool setFocus)
     {

@@ -14,10 +14,12 @@ using Microsoft.VisualStudio.Utilities;
 /// <c>DefaultTextNavigator</c> is a degenerate per-character fallback). A word is a maximal
 /// run of one character class: identifier characters (letters, digits, underscore),
 /// punctuation/symbols, or whitespace (insignificant). Enclosing spans grow word → line →
-/// document.
+/// document. Exported for "any", not "text": language navigators (e.g. Roslyn's) request
+/// their natural-language fallback for comment/string interiors with the "any" content
+/// type, which only providers declared on "any" itself can satisfy.
 /// </summary>
 [Export(typeof(ITextStructureNavigatorProvider))]
-[ContentType("text")]
+[ContentType("any")]
 public sealed class TextStructureNavigatorProvider : ITextStructureNavigatorProvider
 {
     public ITextStructureNavigator CreateTextStructureNavigator(ITextBuffer textBuffer)

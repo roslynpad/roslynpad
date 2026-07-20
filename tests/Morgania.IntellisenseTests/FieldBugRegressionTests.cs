@@ -97,6 +97,40 @@ public sealed class FieldBugRegressionTests
     }
 
     [TestMethod]
+    public async Task DraggingOutOfADoubleClickExtendsTheSelectionWordByWord()
+    {
+        await IntellisenseTestHost.RunAsync(() =>
+        {
+            var (view, window) = IntellisenseTestHost.CreateHostedView("alpha bravo charlie\n");
+            try
+            {
+                const string Text = "alpha bravo charlie";
+                var point = PointOver(view, window, Text.IndexOf("bravo", StringComparison.Ordinal) + 2);
+                window.MouseDown(point, MouseButton.Left);
+                window.MouseUp(point, MouseButton.Left);
+                window.MouseDown(point, MouseButton.Left);
+                Assert.AreEqual("bravo", view.Selection.StreamSelectionSpan.SnapshotSpan.GetText());
+
+                // Dragging forward mid-word selects through the end of that whole word.
+                window.MouseMove(PointOver(view, window, Text.IndexOf("charlie", StringComparison.Ordinal) + 3));
+                Assert.AreEqual("bravo charlie", view.Selection.StreamSelectionSpan.SnapshotSpan.GetText());
+                Assert.IsFalse(view.Selection.IsReversed);
+
+                // Dragging back before the anchor word selects whole words in reverse.
+                window.MouseMove(PointOver(view, window, Text.IndexOf("alpha", StringComparison.Ordinal) + 2));
+                Assert.AreEqual("alpha bravo", view.Selection.StreamSelectionSpan.SnapshotSpan.GetText());
+                Assert.IsTrue(view.Selection.IsReversed);
+
+                window.MouseUp(point, MouseButton.Left);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task ClickPastTheEndOfALineHonorsTheVirtualSpaceOption()
     {
         await IntellisenseTestHost.RunAsync(() =>

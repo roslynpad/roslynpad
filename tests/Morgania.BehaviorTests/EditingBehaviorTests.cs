@@ -74,6 +74,27 @@ public sealed class EditingBehaviorTests
     }
 
     [TestMethod]
+    public async Task NaturalLanguageNavigatorRequestedForAnyContentTypeHasWordSemantics()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            // Language navigators (e.g. Roslyn's) request their natural-language fallback —
+            // used for comment and string interiors — with the "any" content type, which
+            // only a provider declared on "any" itself can satisfy; anything less specific
+            // falls back to the per-character DefaultTextNavigator (double-click in a
+            // comment then selects a single letter).
+            var contentTypes = HeadlessEditor.Container.GetExport<IContentTypeRegistryService>();
+            var buffer = HeadlessEditor.Container.GetExport<ITextBufferFactoryService>()
+                .CreateTextBuffer("// alpha bravo", contentTypes.GetContentType("text"));
+            var navigator = HeadlessEditor.Container.GetExport<ITextStructureNavigatorSelectorService>()
+                .CreateTextStructureNavigator(buffer, contentTypes.GetContentType("any"));
+
+            var extent = navigator.GetExtentOfWord(new SnapshotPoint(buffer.CurrentSnapshot, 5));
+            Assert.AreEqual("alpha", extent.Span.GetText());
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task ShiftMovementExtendsTheSelection()
     {
         await HeadlessEditor.RunAsync(() =>
