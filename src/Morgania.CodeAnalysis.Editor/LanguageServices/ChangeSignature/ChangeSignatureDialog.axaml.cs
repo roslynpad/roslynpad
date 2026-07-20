@@ -9,8 +9,9 @@ using Microsoft.VisualStudio.Text.Classification;
 namespace Morgania.CodeAnalysis.Editor.LanguageServices.ChangeSignature;
 
 [Export(typeof(IChangeSignatureDialog))]
-internal partial class ChangeSignatureDialog : Window, IChangeSignatureDialog
+internal partial class ChangeSignatureDialog : DialogView, IChangeSignatureDialog
 {
+    private readonly DialogService? _dialogService;
     private readonly IClassificationFormatMap? _classificationFormatMap;
     private readonly ClassificationTypeMap? _classificationTypeMap;
     private ChangeSignatureDialogViewModel? _viewModel;
@@ -35,13 +36,14 @@ internal partial class ChangeSignatureDialog : Window, IChangeSignatureDialog
 
         InitializeComponent();
 
-        Opened += (_, _) => Members.Focus();
+        Loaded += (_, _) => Members.Focus();
     }
 
     [ImportingConstructor]
-    public ChangeSignatureDialog(IClassificationFormatMapService classificationFormatMapService, ClassificationTypeMap classificationTypeMap)
+    public ChangeSignatureDialog(DialogService dialogService, IClassificationFormatMapService classificationFormatMapService, ClassificationTypeMap classificationTypeMap)
         : this()
     {
+        _dialogService = dialogService;
         // The "text" appearance category is the map the editor host themes (colors and font),
         // so the signature preview renders exactly like the code in the editor.
         _classificationFormatMap = classificationFormatMapService.GetClassificationFormatMap("text");
@@ -136,7 +138,7 @@ internal partial class ChangeSignatureDialog : Window, IChangeSignatureDialog
 
     bool? IRoslynDialog.Show()
     {
-        return this.ShowDialogSync();
+        return _dialogService?.ShowDialog(this);
     }
 
     private class SimpleCommand(Action execute) : ICommand

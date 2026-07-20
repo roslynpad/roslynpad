@@ -7,8 +7,9 @@ using System.Composition;
 namespace Morgania.CodeAnalysis.Editor.LanguageServices.PickMembers;
 
 [Export(typeof(IPickMembersDialog))]
-internal partial class PickMembersDialog : Window, IPickMembersDialog
+internal partial class PickMembersDialog : DialogView, IPickMembersDialog
 {
+    private readonly DialogService? _dialogService;
     private PickMembersDialogViewModel? _viewModel;
 
     public string PickMembersDialogTitle => "Pick members";
@@ -22,13 +23,20 @@ internal partial class PickMembersDialog : Window, IPickMembersDialog
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
 
-    [ImportingConstructor]
+    // Required by the XAML compiler; instantiation goes through the importing constructor.
     public PickMembersDialog()
     {
         MoveUpCommand = new SimpleCommand(() => MoveUp_Click(null, null!));
         MoveDownCommand = new SimpleCommand(() => MoveDown_Click(null, null!));
 
         InitializeComponent();
+    }
+
+    [ImportingConstructor]
+    public PickMembersDialog(DialogService dialogService)
+        : this()
+    {
+        _dialogService = dialogService;
     }
 
     private void OK_Click(object? sender, RoutedEventArgs e)
@@ -105,7 +113,7 @@ internal partial class PickMembersDialog : Window, IPickMembersDialog
 
     bool? IRoslynDialog.Show()
     {
-        return this.ShowDialogSync();
+        return _dialogService?.ShowDialog(this);
     }
 
     private class SimpleCommand(Action execute) : ICommand

@@ -1,30 +1,31 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+﻿<roslyn:DialogView xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:roslyn="clr-namespace:Morgania.CodeAnalysis.Editor"
         x:Class="Morgania.CodeAnalysis.Editor.LanguageServices.PickMembers.PickMembersDialog"
         x:Name="dialog"
         x:CompileBindings="False"
         Height="380"
         Width="460"
-        MinHeight="380"
-        MinWidth="460"
-        Title="{Binding #dialog.PickMembersDialogTitle}"
-        CanResize="True"
-        ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
-    <Window.KeyBindings>
+        Title="{Binding #dialog.PickMembersDialogTitle}">
+    <roslyn:DialogView.KeyBindings>
         <KeyBinding Gesture="Alt+Up" Command="{Binding #dialog.MoveUpCommand}" />
         <KeyBinding Gesture="Alt+Down" Command="{Binding #dialog.MoveDownCommand}" />
-    </Window.KeyBindings>
+    </roslyn:DialogView.KeyBindings>
     <Grid Margin="11,6,11,11">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <HeaderedContentControl Grid.Row="0"
-                                Margin="0,9,0,0"
-                                Header="{Binding #dialog.DialogTitle}">
-            <Border BorderThickness="1" BorderBrush="Gray" Padding="4">
+        <TextBlock Grid.Row="0"
+                   Classes="Title"
+                   Margin="0,4,0,0"
+                   TextWrapping="Wrap"
+                   Text="{Binding #dialog.Title}" />
+        <Border Grid.Row="1"
+                Margin="0,9,0,0"
+                BorderThickness="1" BorderBrush="Gray" Padding="4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
@@ -98,10 +99,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Grid>
-            </Border>
-        </HeaderedContentControl>
+        </Border>
 
-        <StackPanel Grid.Row="1"
+        <StackPanel Grid.Row="2"
                     HorizontalAlignment="Right"
                     Margin="0,11,0,0"
                     Orientation="Horizontal">
@@ -120,4 +120,4 @@
                     MinHeight="21" />
         </StackPanel>
     </Grid>
-</Window>
+</roslyn:DialogView>

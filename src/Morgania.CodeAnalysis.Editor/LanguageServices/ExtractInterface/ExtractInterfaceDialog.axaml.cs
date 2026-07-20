@@ -6,8 +6,9 @@ using System.Composition;
 namespace Morgania.CodeAnalysis.Editor.LanguageServices.ExtractInterface;
 
 [Export(typeof(IExtractInterfaceDialog))]
-internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
+internal partial class ExtractInterfaceDialog : DialogView, IExtractInterfaceDialog
 {
+    private readonly DialogService? _dialogService;
     private ExtractInterfaceDialogViewModel? _viewModel;
 
     public string ExtractInterfaceDialogTitle => "Extract Interface";
@@ -23,15 +24,23 @@ internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
     public string OK => "OK";
     public string Cancel => "Cancel";
 
+    // Required by the XAML compiler; instantiation goes through the importing constructor.
     public ExtractInterfaceDialog()
     {
         InitializeComponent();
 
-        Opened += (_, _) =>
+        Loaded += (_, _) =>
         {
             InterfaceNameTextBox.Focus();
             InterfaceNameTextBox.SelectAll();
         };
+    }
+
+    [ImportingConstructor]
+    public ExtractInterfaceDialog(DialogService dialogService)
+        : this()
+    {
+        _dialogService = dialogService;
     }
 
     private void OK_Click(object? sender, RoutedEventArgs e)
@@ -103,7 +112,7 @@ internal partial class ExtractInterfaceDialog : Window, IExtractInterfaceDialog
 
     bool? IRoslynDialog.Show()
     {
-        return this.ShowDialogSync();
+        return _dialogService?.ShowDialog(this);
     }
 }
 

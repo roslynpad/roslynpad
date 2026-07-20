@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+﻿<roslyn:DialogView xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:roslyn="clr-namespace:Morgania.CodeAnalysis.Editor"
         x:Class="Morgania.CodeAnalysis.Editor.LanguageServices.ChangeSignature.ChangeSignatureDialog"
@@ -6,28 +6,28 @@
         x:CompileBindings="False"
         Height="420"
         Width="560"
-        MinHeight="420"
-        MinWidth="560"
-        Title="{Binding #dialog.ChangeSignatureDialogTitle}"
-        CanResize="True"
-        ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
-    <Window.KeyBindings>
+        Title="{Binding #dialog.ChangeSignatureDialogTitle}">
+    <roslyn:DialogView.KeyBindings>
         <KeyBinding Gesture="Alt+Up" Command="{Binding #dialog.MoveUpCommand}" />
         <KeyBinding Gesture="Alt+Down" Command="{Binding #dialog.MoveDownCommand}" />
         <KeyBinding Gesture="Delete" Command="{Binding #dialog.ToggleRemovedCommand}" />
-    </Window.KeyBindings>
+    </roslyn:DialogView.KeyBindings>
     <Grid Margin="11,6,11,11">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0"
+                   Classes="Title"
+                   Margin="0,4,0,0"
+                   Text="{Binding #dialog.Title}" />
+        <TextBlock Grid.Row="1"
                    Padding="0,4,0,0"
                    Text="{Binding #dialog.Parameters}" />
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition MinHeight="180" />
                 <RowDefinition Height="Auto" />
@@ -130,7 +130,7 @@
             </StackPanel>
         </Grid>
 
-        <StackPanel Grid.Row="3"
+        <StackPanel Grid.Row="4"
                     HorizontalAlignment="Right"
                     Margin="0,11,0,0"
                     Orientation="Horizontal">
@@ -152,4 +152,4 @@
                     MinHeight="21" />
         </StackPanel>
     </Grid>
-</Window>
+</roslyn:DialogView>
