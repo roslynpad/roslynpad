@@ -179,6 +179,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
             theme.ApplyReferenceHighlighting(editorFormatMap);
             theme.ApplyInlineRename(editorFormatMap);
             theme.ApplyCaret(editorFormatMap);
+            theme.ApplySelection(editorFormatMap);
             theme.ApplyFindReplace(editorFormatMap);
             theme.ApplyBackgroundWorkIndicator(editorFormatMap);
             theme.ApplyBlockStructure(editorFormatMap);

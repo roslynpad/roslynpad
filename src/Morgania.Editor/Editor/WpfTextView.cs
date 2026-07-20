@@ -145,6 +145,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         classificationFormatMap.ClassificationFormatMappingChanged += OnFormatMappingChanged;
         editorFormatMap.FormatMappingChanged += OnEditorFormatMappingChanged;
         _caretLayer.UpdateBrushes(editorFormatMap);
+        _selectionLayer.UpdateBrushes(editorFormatMap);
         options.OptionChanged += OnOptionChanged;
         ApplyZoomLevel(options.GetOptionValue(DefaultTextViewOptions.ZoomLevelId));
 
@@ -1716,8 +1717,11 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         QueueRelayout();
     }
 
-    private void OnEditorFormatMappingChanged(object? sender, FormatItemsEventArgs e) =>
+    private void OnEditorFormatMappingChanged(object? sender, FormatItemsEventArgs e)
+    {
         _caretLayer.UpdateBrushes(_editorFormatMap);
+        _selectionLayer.UpdateBrushes(_editorFormatMap);
+    }
 
     private void OnOptionChanged(object? sender, EditorOptionChangedEventArgs e)
     {

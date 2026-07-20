@@ -223,6 +223,29 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's selection colors to the selection layer through the editor format map
+    /// (<c>editor.selectionBackground</c> for focused views, <c>editor.inactiveSelectionBackground</c>
+    /// otherwise; the registry defaults the inactive color to the active one at half opacity,
+    /// matching VS Code).
+    /// </summary>
+    public void ApplySelection(IEditorFormatMap formatMap)
+    {
+        Set(SelectionFormatNames.Active, "editor.selectionBackground");
+        Set(SelectionFormatNames.Inactive, "editor.inactiveSelectionBackground");
+
+        void Set(string key, string colorId)
+        {
+            if (_theme.TryGetColor(colorId) is { } color)
+            {
+                formatMap.SetProperties(key, new Avalonia.Controls.ResourceDictionary
+                {
+                    [EditorFormatDefinition.BackgroundColorId] = ThemeDictionaryBase.ParseThemeColor(color),
+                });
+            }
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's cursor color to the caret layer through the editor format map.
     /// The bundled themes don't define <c>editorCursor.foreground</c>, so the fallback mirrors
     /// VS Code's coded defaults: black on light themes, a light gray on dark ones (the

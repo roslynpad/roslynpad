@@ -5,6 +5,7 @@ namespace Microsoft.VisualStudio.Text.Editor.Implementation;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Microsoft.VisualStudio.Text.Classification;
 
 /// <summary>
 /// Renders every selection of the multi-selection broker as filled rectangles under the
@@ -13,8 +14,11 @@ using Avalonia.Media;
 /// </summary>
 internal sealed class SelectionLayer : Control
 {
-    private static readonly IBrush ActiveBrush = new SolidColorBrush(Color.FromArgb(0x66, 0x26, 0x4F, 0x78));
-    private static readonly IBrush InactiveBrush = new SolidColorBrush(Color.FromArgb(0x44, 0x68, 0x68, 0x68));
+    private static readonly IBrush DefaultActiveBrush = new SolidColorBrush(Color.FromRgb(0x26, 0x4F, 0x78));
+    private static readonly IBrush DefaultInactiveBrush = new SolidColorBrush(Color.FromArgb(0x80, 0x26, 0x4F, 0x78));
+
+    private IBrush _activeBrush = DefaultActiveBrush;
+    private IBrush _inactiveBrush = DefaultInactiveBrush;
 
     private readonly WpfTextView _view;
 
@@ -23,6 +27,30 @@ internal sealed class SelectionLayer : Control
         _view = view;
         IsHitTestVisible = false;
         ClipToBounds = true;
+    }
+
+    /// <summary>
+    /// Re-resolves the selection brushes from the host-themeable format map entries
+    /// (<see cref="SelectionFormatNames"/>); called at view creation and on format map changes.
+    /// </summary>
+    public void UpdateBrushes(IEditorFormatMap formatMap)
+    {
+        _activeBrush = ReadBackground(formatMap, SelectionFormatNames.Active) ?? DefaultActiveBrush;
+        _inactiveBrush = ReadBackground(formatMap, SelectionFormatNames.Inactive) ?? DefaultInactiveBrush;
+        InvalidateVisual();
+    }
+
+    private static IBrush? ReadBackground(IEditorFormatMap formatMap, string key)
+    {
+        var properties = formatMap.GetProperties(key);
+        if (properties.TryGetValue(EditorFormatDefinition.BackgroundBrushId, out var brushValue) && brushValue is IBrush brush)
+        {
+            return brush;
+        }
+
+        return properties.TryGetValue(EditorFormatDefinition.BackgroundColorId, out var colorValue) && colorValue is Color color
+            ? new SolidColorBrush(color)
+            : null;
     }
 
     public override void Render(DrawingContext context)
@@ -41,7 +69,7 @@ internal sealed class SelectionLayer : Control
             return;
         }
 
-        var brush = broker.AreSelectionsActive ? ActiveBrush : InactiveBrush;
+        var brush = broker.AreSelectionsActive ? _activeBrush : _inactiveBrush;
         var formattedSpan = textViewLines.FormattedSpan;
         foreach (var virtualSpan in broker.VirtualSelectedSpans)
         {
