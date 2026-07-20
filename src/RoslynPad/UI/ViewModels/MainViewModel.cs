@@ -225,7 +225,6 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
     {
         RoslynHost = await Task.Run(() => new RoslynHost(CompositionAssemblies,
             RoslynHostReferences.Empty.With(imports: Settings.DefaultUsings ?? []),
-            disabledDiagnostics: ["CS1701", "CS1702", "CS7011", "CS8097"],
             analyzerConfigFiles: [_editorConfigPath]))
             .ConfigureAwait(true);
 

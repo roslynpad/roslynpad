@@ -31,6 +31,14 @@ internal static class BuildCode
             }
         ";
 
+    /// <summary>
+    /// Finds the last bare expression (a global expression statement with a missing semicolon)
+    /// that execution rewrites into a Dump call, so its CS1002/CA1806 diagnostics can be hidden.
+    /// </summary>
+    public static GlobalStatementSyntax? FindTrailingExpression(CompilationUnitSyntax compilationUnit) =>
+        compilationUnit.Members.OfType<GlobalStatementSyntax>()
+            .LastOrDefault(m => m.Statement is ExpressionStatementSyntax expr && expr.SemicolonToken.IsMissing);
+
     public static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
         GlobalStatement(
             ExpressionStatement(

@@ -416,11 +416,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             }
 
             var code = match.Groups["code"].Value;
-            if (_parameters.DisabledDiagnostics.Contains(code))
-            {
-                continue;
-            }
-
             var error = new CompilationErrorResultObject
             {
                 Severity = severity,
@@ -691,8 +686,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         var members = compilationUnit.Members;
 
         // add .Dump() to the last bare expression
-        var lastMissingSemicolon = compilationUnit.Members.OfType<GlobalStatementSyntax>()
-            .LastOrDefault(m => m.Statement is ExpressionStatementSyntax expr && expr.SemicolonToken.IsMissing);
+        var lastMissingSemicolon = BuildCode.FindTrailingExpression(compilationUnit);
         if (lastMissingSemicolon != null)
         {
             var statement = (ExpressionStatementSyntax)lastMissingSemicolon.Statement;
@@ -708,7 +702,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     {
         if (diagnostics.Length > 0)
         {
-            CompilationErrors?.Invoke([.. diagnostics.Where(d => !_parameters.DisabledDiagnostics.Contains(d.Id)).Select(GetCompilationErrorResultObject)]);
+            CompilationErrors?.Invoke([.. diagnostics.Select(GetCompilationErrorResultObject)]);
         }
     }
 

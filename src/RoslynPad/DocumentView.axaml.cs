@@ -65,8 +65,6 @@ partial class DocumentView : UserControl, IDisposable
 
         var roslynHost = viewModel.MainViewModel.RoslynHost;
 
-        Morgania.CodeAnalysis.Editor.DiagnosticsSquiggles.DisabledDiagnostics = roslynHost.DisabledDiagnostics;
-
         var buffer = _editor.CreateBuffer(viewModel.MainViewModel, documentText);
         _buffer = buffer;
 

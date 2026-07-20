@@ -32,12 +32,10 @@ public class RoslynHost : IRoslynHost, IDisposable
     public ParseOptions ParseOptions { get; }
     public ImmutableArray<MetadataReference> DefaultReferences { get; }
     public ImmutableArray<string> DefaultImports { get; }
-    public ImmutableHashSet<string> DisabledDiagnostics { get; }
     public ImmutableArray<string> AnalyzerConfigFiles { get; }
 
     public RoslynHost(IEnumerable<Assembly>? additionalAssemblies = null,
         RoslynHostReferences? references = null,
-        ImmutableHashSet<string>? disabledDiagnostics = null,
         ImmutableArray<string>? analyzerConfigFiles = null)
     {
         references ??= RoslynHostReferences.Empty;
@@ -57,7 +55,6 @@ public class RoslynHost : IRoslynHost, IDisposable
         DefaultReferences = references.GetReferences(DocumentationProviderFactory);
         DefaultImports = references.Imports;
 
-        DisabledDiagnostics = disabledDiagnostics ?? [];
         AnalyzerConfigFiles = analyzerConfigFiles ?? [];
 
         _analyzerConfigWatchers = CreateAnalyzerConfigWatchers();

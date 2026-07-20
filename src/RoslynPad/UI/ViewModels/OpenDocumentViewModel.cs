@@ -174,7 +174,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
             BuildPath,
             _serviceProvider.GetRequiredService<NuGetViewModel>().ConfigPath,
             roslynHost.DefaultImports,
-            roslynHost.DisabledDiagnostics,
             WorkingDirectory,
             SourceCodeKind);
 

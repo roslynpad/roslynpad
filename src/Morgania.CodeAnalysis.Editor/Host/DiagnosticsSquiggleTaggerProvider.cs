@@ -11,17 +11,6 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace Morgania.CodeAnalysis.Editor;
 
-/// <summary>Host-configurable options for the diagnostics squiggles.</summary>
-public static class DiagnosticsSquiggles
-{
-    /// <summary>
-    /// Diagnostic ids that should not produce squiggles, from the host's settings
-    /// (set by the host after composition; the tagger is composed by MEF, so the set
-    /// cannot flow through the constructor).
-    /// </summary>
-    public static ImmutableHashSet<string> DisabledDiagnostics { get; set; } = [];
-}
-
 /// <summary>
 /// The classic diagnostics squiggle tagger. Visual Studio gets its squiggles through LSP pull
 /// diagnostics these days, so upstream EditorFeatures no longer ships an IErrorTag tagger —
@@ -48,8 +37,7 @@ internal sealed class DiagnosticsSquiggleTaggerProvider : AbstractDiagnosticsTag
 
     protected override bool IncludeDiagnostic(DiagnosticData data) =>
         data.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning or DiagnosticSeverity.Info &&
-        !string.IsNullOrWhiteSpace(data.Message) &&
-        !DiagnosticsSquiggles.DisabledDiagnostics.Contains(data.Id);
+        !string.IsNullOrWhiteSpace(data.Message);
 
     protected override IErrorTag? CreateTag(Workspace workspace, DiagnosticData diagnostic) =>
         GetErrorType(diagnostic.Severity) is { } errorType
