@@ -29,7 +29,16 @@ public class Theme
 
     internal Trie<TokenColorSettings> ScopeSettings { get; } = new();
 
-    public KeyValuePair<string, TokenColorSettings>? TryGetScopeSettings(string scope) => ScopeSettings.FindLongestPrefix(scope);
+    /// <summary>
+    /// Scope settings from the built-in base theme, consulted only when <see cref="ScopeSettings"/>
+    /// (this theme and its includes) has no match at any specificity. Kept separate so a base
+    /// rule that is more specific than a theme rule (e.g. the base's <c>comment.documentation</c>
+    /// vs. the theme's <c>comment</c>) cannot outrank the theme via longest-prefix matching.
+    /// </summary>
+    internal Trie<TokenColorSettings> ScopeSettingsFallback { get; } = new();
+
+    public KeyValuePair<string, TokenColorSettings>? TryGetScopeSettings(string scope) =>
+        ScopeSettings.FindLongestPrefix(scope) ?? ScopeSettingsFallback.FindLongestPrefix(scope);
 
     public string? TryGetColor(string id)
     {

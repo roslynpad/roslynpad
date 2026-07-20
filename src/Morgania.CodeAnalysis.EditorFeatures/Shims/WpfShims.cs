@@ -11,7 +11,9 @@ global using Brush = Avalonia.Media.Brush;
 global using Brushes = Avalonia.Media.Brushes;
 global using Canvas = Avalonia.Controls.Canvas;
 global using Color = Avalonia.Media.Color;
+global using Colors = Avalonia.Media.Colors;
 global using CornerRadius = Avalonia.CornerRadius;
+global using DashStyle = Avalonia.Media.DashStyle;
 global using DependencyObject = Avalonia.AvaloniaObject;
 global using DispatcherPriority = Avalonia.Threading.DispatcherPriority;
 global using FontStyles = Avalonia.Media.FontStyle;
@@ -20,6 +22,7 @@ global using Geometry = Avalonia.Media.Geometry;
 global using Inline = Avalonia.Controls.Documents.Inline;
 global using Line = Avalonia.Controls.Shapes.Line;
 global using Orientation = Avalonia.Layout.Orientation;
+global using Pen = Avalonia.Media.Pen;
 global using RoutedEventArgs = Avalonia.Interactivity.RoutedEventArgs;
 global using Run = Avalonia.Controls.Documents.Run;
 global using Size = Avalonia.Size;
@@ -97,6 +100,16 @@ namespace System.Windows.Documents
     }
 }
 
+namespace System.Windows
+{
+    /// <summary>Maps WPF's <c>System.Windows.TextDecorations</c> presets onto Avalonia's.</summary>
+    public static class TextDecorations
+    {
+        public static Avalonia.Media.TextDecorationCollection Underline => Avalonia.Media.TextDecorations.Underline;
+        public static Avalonia.Media.TextDecorationCollection Strikethrough => Avalonia.Media.TextDecorations.Strikethrough;
+    }
+}
+
 namespace System.Windows.Media
 {
     file sealed class Dummy;
@@ -146,6 +159,14 @@ internal static class WpfCompatExtensions
         {
             get => line.EndPoint.Y;
             set => line.EndPoint = new Avalonia.Point(line.EndPoint.X, value);
+        }
+    }
+
+    extension(Avalonia.Media.Pen pen)
+    {
+        /// <summary>WPF Freezable.Freeze; Avalonia pens are not freezable, so this is a no-op.</summary>
+        public void Freeze()
+        {
         }
     }
 

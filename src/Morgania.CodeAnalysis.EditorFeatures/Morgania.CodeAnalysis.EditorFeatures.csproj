@@ -94,20 +94,16 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/TypeForwarders.cs" />
   </ItemGroup>
 
-  <!-- WPF-dependent (System.Windows.*) - should be restored & compiled on Avalonia -->
+  <!-- WPF-dependent (System.Windows.*) still excluded. The InlineHints adornment UI and the
+       inline-rename flyout (with its helpers IWpfThemeService, BrushToColorConverter,
+       RenameUserInput*) need native Avalonia UI rather than shims; the preview/quick-info
+       tooltip surfaces need an IDifferenceViewer; EditorNotificationServiceFactory shows WPF
+       dialogs (hosts export INotificationService instead); WpfStringCopyPasteService is Win32
+       OLE clipboard code. -->
   <ItemGroup>
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/BraceMatching/BraceMatchingTypeFormatDefinitions.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Classification/ClassificationTypeFormatDefinitions.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ConflictTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/ActiveStatementTagFormatDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/EditAndContinueErrorTypeFormatDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsFormatDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsKeyProcessorProvider.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineHints/InlineHintsTag.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameConflictTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameFieldBackgroundAndBorderTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/HighlightTags/RenameFixupTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/Taggers/ClassificationFormatDefinitions.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameFlyout.xaml.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameFlyoutViewModel.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/InlineRename/UI/Adornment/RenameUserInputTextBox.xaml.cs" />
@@ -121,7 +117,6 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Notification/EditorNotificationServiceFactory.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Preview/DifferenceViewerPreview.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Preview/PreviewFactoryService.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/PreviewWarningTagDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/ContentControlService.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/DisposableToolTip.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/IContentControlService.cs" />
@@ -129,11 +124,12 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsView.xaml.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewFactory.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/QuickInfo/OnTheFlyDocsViewStateVisibilityConverter.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/DefinitionHighlightTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ReferenceHighlighting/WrittenReferenceHighlightTagDefinition.cs" />
-    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/RenameTracking/RenameTrackingTagDefinition.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/StringCopyPaste/WpfStringCopyPasteService.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Utilities/BrushToColorConverter.cs" />
+  </ItemGroup>
+
+  <!-- WPF/Win32-specific implementations replaced by Avalonia equivalents in Stubs/ -->
+  <ItemGroup>
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Workspaces/WpfTextBufferVisibilityTracker.cs" />
   </ItemGroup>
 

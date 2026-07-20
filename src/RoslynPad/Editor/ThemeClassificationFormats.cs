@@ -55,6 +55,22 @@ public sealed partial class ThemeClassificationFormats
 
             formatMap.DefaultTextProperties = defaultProperties;
 
+            // The theme is authoritative: a classification the theme doesn't color must fall back
+            // to the default foreground (or an ancestor classification the theme does color) the
+            // way VS Code renders an unstyled semantic token — not to the static per-classification
+            // fallback color, which is a single-theme (dark) default that bleeds wrongly onto other
+            // themes (e.g. cyan parameters on a light background). Clearing the explicit properties
+            // lets the format map resolve the color through the base-type chain: "record class
+            // name" still inherits the themed "class name", while "parameter name" resolves through
+            // "identifier" to the default text color.
+            foreach (var type in formatMap.CurrentPriorityOrder)
+            {
+                if (type is not null && !_styles.ContainsKey(type.Classification))
+                {
+                    formatMap.SetExplicitTextProperties(type, TextFormattingRunProperties.CreateTextFormattingRunProperties());
+                }
+            }
+
             foreach (var (classification, style) in _styles)
             {
                 if (registry.GetClassificationType(ClassificationLayer.Semantic, classification) is not { } type)
@@ -228,7 +244,7 @@ public sealed partial class ThemeClassificationFormats
     /// <summary>
     /// Feeds the theme's bracket-match colors to the brace highlight markers
     /// (TextMarkerAdornmentManager) through the editor format map entry Roslyn's
-    /// BraceHighlightTag names. The static BraceMatchingMarkerFormat export remains the
+    /// BraceHighlightTag names. Roslyn's recompiled BraceMatchingFormatDefinition remains the
     /// fallback when the theme defines neither color.
     /// </summary>
     public void ApplyBraceMatching(IEditorFormatMap formatMap) =>
@@ -239,8 +255,9 @@ public sealed partial class ThemeClassificationFormats
     /// Feeds the theme's word-highlight colors to the reference highlight markers
     /// (TextMarkerAdornmentManager) through the editor format map entries Roslyn's
     /// NavigableHighlightTags name: read references use editor.wordHighlight*, the definition
-    /// and written references the strong variants (VS Code's write-access colors). The static
-    /// marker format exports in Morgania.CodeAnalysis.Editor remain the fallback.
+    /// and written references the strong variants (VS Code's write-access colors). Roslyn's
+    /// recompiled tag definitions (and the host's read-reference marker format) remain the
+    /// fallback.
     /// </summary>
     public void ApplyReferenceHighlighting(IEditorFormatMap formatMap)
     {
@@ -250,6 +267,25 @@ public sealed partial class ThemeClassificationFormats
             "editor.wordHighlightStrongBackground", "editor.wordHighlightStrongBorder");
         ApplyMarker(formatMap, Microsoft.CodeAnalysis.Editor.ReferenceHighlighting.WrittenReferenceHighlightTag.TagId,
             "editor.wordHighlightStrongBackground", "editor.wordHighlightStrongBorder");
+    }
+
+    /// <summary>
+    /// Colors the inline rename field markers (the identifier and its references while a rename
+    /// session edits them in place) with VS's green rename wash: the VS-light value from
+    /// Roslyn's own definition on light themes, an equivalent dark green on dark themes. VS Code
+    /// has no color for in-buffer rename (its F2 opens an input widget), so this is the one spot
+    /// the VS look wins over theme keys. The conflict/fixup markers keep their theme-neutral
+    /// red/green dashed borders, and the "inline rename field" text color is cleared by
+    /// <see cref="Apply"/> like any unthemed classification.
+    /// </summary>
+    public void ApplyInlineRename(IEditorFormatMap formatMap)
+    {
+        var fill = _theme.Type == ThemeType.Light
+            ? Color.FromRgb(0xD3, 0xF8, 0xD3)
+            : Color.FromRgb(0x2B, 0x4B, 0x2B);
+        formatMap.SetProperties(
+            Microsoft.CodeAnalysis.Editor.Implementation.InlineRename.HighlightTags.RenameFieldBackgroundAndBorderTag.TagId,
+            new Avalonia.Controls.ResourceDictionary { [MarkerFormatDefinition.FillId] = new SolidColorBrush(fill) });
     }
 
     /// <summary>

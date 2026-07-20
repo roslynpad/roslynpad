@@ -37,6 +37,8 @@ internal sealed class EditorContextMenu(
         var commanding = commandServiceFactory.GetService(textView);
         var operations = operationsFactory.GetEditorOperations(textView);
 
+        var rename = Item("Rename", Gesture(KeyModifiers.None, Key.F2),
+            () => commanding.Execute(static (v, b) => new RenameCommandArgs(v, b), static () => { }));
         var cut = Item("Cut", Gesture(meta, Key.X),
             () => commanding.Execute(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()));
         var paste = Item("Paste", Gesture(meta, Key.V),
@@ -45,7 +47,7 @@ internal sealed class EditorContextMenu(
             () => commanding.Execute(static (v, b) => new ToggleLineCommentCommandArgs(v, b), static () => { }));
         var formatDocument = Item("Format Document", Gesture(meta | KeyModifiers.Shift, Key.D),
             () => commanding.Execute(static (v, b) => new FormatDocumentCommandArgs(v, b), static () => { }));
-        MenuItem[] editingItems = [cut, paste, toggleComment, formatDocument];
+        MenuItem[] editingItems = [rename, cut, paste, toggleComment, formatDocument];
 
         textView.VisualElement.ContextMenu = new ContextMenu
         {
@@ -55,6 +57,8 @@ internal sealed class EditorContextMenu(
                     () => commanding.Execute(static (v, b) => new GoToDefinitionCommandArgs(v, b), static () => { })),
                 Item("Go to Implementation", Gesture(meta, Key.F12),
                     () => commanding.Execute(static (v, b) => new RoslynGoToImplementationCommandArgs(v, b), static () => { })),
+                new Separator(),
+                rename,
                 new Separator(),
                 cut,
                 Item("Copy", Gesture(meta, Key.C),

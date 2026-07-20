@@ -2,6 +2,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.VisualTree;
 using Microsoft.CodeAnalysis.Completion.Providers.Snippets;
 using Microsoft.CodeAnalysis.Editor.Implementation.IntelliSense.AsyncCompletion;
+using Microsoft.CodeAnalysis.Editor.Implementation.InlineRename;
+using Microsoft.CodeAnalysis.Editor.Implementation.InlineRename.HighlightTags;
 using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
@@ -46,6 +48,7 @@ internal static class SmokeTest
             await VerifyStringIndentationAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyBlockStructureAsync(exportProvider, view, buffer).ConfigureAwait(true);
             await VerifyOutliningAsync(exportProvider, view, buffer, desktop).ConfigureAwait(true);
+            await VerifyInlineRenameAsync(exportProvider, view, buffer).ConfigureAwait(true);
             Console.WriteLine("SMOKE PASSED");
             exitCode = 0;
         }
@@ -334,7 +337,7 @@ internal static class SmokeTest
             .First();
         var runs = signatureBlock.Inlines!.OfType<Avalonia.Controls.Documents.Run>().ToList();
 
-        var keywordColor = Avalonia.Media.Color.FromRgb(0x56, 0x9C, 0xD6);
+        var keywordColor = Avalonia.Media.Color.FromRgb(0x00, 0x00, 0xFF);
         var voidRun = runs.FirstOrDefault(run => run.Text == "void");
         if (voidRun is null || (voidRun.Foreground as Avalonia.Media.ISolidColorBrush)?.Color != keywordColor)
         {
@@ -1026,6 +1029,98 @@ internal static class SmokeTest
 
         Console.WriteLine(
             $"outlining OK: collapsed {extent.Length} characters behind the pill; hint hosts a text view; expand restored the view");
+    }
+
+    /// <summary>
+    /// Puts the caret on the for-loop variable and presses F2 through the key chain (bridge →
+    /// RenameCommandHandler → InlineRenameService). Waits for the session and for the rename-field
+    /// markers to be tagged, types a prefix — the session's linked spans propagate the edit to
+    /// every reference — and commits with Enter.
+    /// </summary>
+    private static async Task VerifyInlineRenameAsync(ExportProvider exportProvider, IWpfTextView view, ITextBuffer buffer)
+    {
+        var text = buffer.CurrentSnapshot.GetText();
+        var loopVariable = text.IndexOf("var i", text.IndexOf("for (", StringComparison.Ordinal), StringComparison.Ordinal) + "var ".Length;
+        view.Caret.MoveTo(new SnapshotPoint(buffer.CurrentSnapshot, loopVariable));
+
+        var renameService = exportProvider.GetExportedValue<InlineRenameService>();
+        RaiseKey(view, Avalonia.Input.Key.F2);
+
+        for (var i = 0; i < 60 && renameService.ActiveSession is null; i++)
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+        }
+
+        if (renameService.ActiveSession is null)
+        {
+            throw new TimeoutException("F2 did not start an inline rename session");
+        }
+
+        var aggregatorFactory = exportProvider.GetExportedValue<IViewTagAggregatorFactoryService>();
+        using (var aggregator = aggregatorFactory.CreateTagAggregator<ITextMarkerTag>(view))
+        {
+            var fields = 0;
+            for (var i = 0; i < 60 && fields < 4; i++)
+            {
+                await Task.Delay(250).ConfigureAwait(true);
+                var snapshot = buffer.CurrentSnapshot;
+                fields = aggregator
+                    .GetTags(new SnapshotSpan(snapshot, 0, snapshot.Length))
+                    .Count(tag => tag.Tag.Type == RenameFieldBackgroundAndBorderTag.TagId);
+            }
+
+            if (fields < 4)
+            {
+                throw new TimeoutException($"expected 4 rename-field markers, got {fields}");
+            }
+        }
+
+        // Collapse the selection (session start may have selected the identifier) so typing
+        // appends deterministically: 'i' becomes 'ix' at every reference.
+        view.Selection.Clear();
+        view.Caret.MoveTo(new SnapshotPoint(buffer.CurrentSnapshot, loopVariable + 1));
+        view.VisualElement.RaiseEvent(new Avalonia.Input.TextInputEventArgs
+        {
+            RoutedEvent = Avalonia.Input.InputElement.TextInputEvent,
+            Text = "x",
+            Source = view.VisualElement,
+        });
+
+        static int CountRenamed(ITextBuffer buffer)
+            => System.Text.RegularExpressions.Regex.Matches(buffer.CurrentSnapshot.GetText(), @"\bix\b").Count;
+
+        for (var i = 0; i < 60 && CountRenamed(buffer) < 4; i++)
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+        }
+
+        if (CountRenamed(buffer) < 4)
+        {
+            var snapshot = buffer.CurrentSnapshot;
+            var loopLine = snapshot.GetLineFromPosition(Math.Min(loopVariable, snapshot.Length)).GetText();
+            throw new TimeoutException($"typing in the rename field reached {CountRenamed(buffer)} of 4 references; loop line: '{loopLine}'");
+        }
+
+        // Typing may also have triggered completion; dismiss it so Enter commits the rename.
+        exportProvider.GetExportedValue<IAsyncCompletionBroker>().GetSession(view)?.Dismiss();
+        RaiseKey(view, Avalonia.Input.Key.Enter);
+
+        for (var i = 0; i < 60 && renameService.ActiveSession is not null; i++)
+        {
+            await Task.Delay(250).ConfigureAwait(true);
+        }
+
+        if (renameService.ActiveSession is not null)
+        {
+            throw new TimeoutException("Enter did not commit the inline rename session");
+        }
+
+        if (CountRenamed(buffer) != 4)
+        {
+            throw new InvalidOperationException($"expected 4 renamed references after commit, got {CountRenamed(buffer)}");
+        }
+
+        Console.WriteLine("inline rename OK: F2 session, 4 fields tagged, typed prefix propagated, Enter committed");
     }
 
     private static void RaiseKey(IWpfTextView view, Avalonia.Input.Key key, Avalonia.Input.KeyModifiers modifiers = Avalonia.Input.KeyModifiers.None)

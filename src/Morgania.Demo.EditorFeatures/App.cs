@@ -18,7 +18,7 @@ public sealed class App : Application
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());
-        RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
+        RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -84,10 +84,13 @@ public sealed class App : Application
         view.Options.SetOptionValue(DefaultTextViewOptions.BraceCompletionEnabledOptionId, true);
 
         var formatMap = formatMaps.GetClassificationFormatMap(view);
+        // The demo applies no VS Code theme; classification colors come from the recompiled Roslyn
+        // ClassificationTypeFormatDefinitions (VS light defaults) plus the host's standard-classification
+        // fallbacks, so the canvas is light to match.
         formatMap.DefaultTextProperties = formatMap.DefaultTextProperties
-            .SetForeground(Color.FromRgb(0xD4, 0xD4, 0xD4))
+            .SetForeground(Color.FromRgb(0x00, 0x00, 0x00))
             .SetFontRenderingEmSize(14.0);
-        view.Background = new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x1E));
+        view.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
 
         var viewHost = editorFactory.CreateTextViewHost(view, setFocus: true);
         var window = new Window

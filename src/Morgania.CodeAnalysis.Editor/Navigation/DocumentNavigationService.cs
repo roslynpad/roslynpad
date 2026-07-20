@@ -1,11 +1,15 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Composition;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Navigation;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Morgania.CodeAnalysis.Editor.Navigation;
 
-[ExportWorkspaceService(typeof(IDocumentNavigationService))]
+// ServiceLayer.Editor: sits above Roslyn's Features-layer DefaultDocumentNavigationService
+// (same contract, Default layer — two defaults would be ambiguous) and below the Host layer
+// where an app plugs in real navigation.
+[ExportWorkspaceService(typeof(IDocumentNavigationService), ServiceLayer.Editor), Shared]
 internal sealed class DocumentNavigationService : IDocumentNavigationService
 {
     public Task<bool> CanNavigateToSpanAsync(Workspace workspace, DocumentId documentId, TextSpan textSpan, bool allowInvalidSpan, CancellationToken cancellationToken) => Task.FromResult(true);

@@ -56,6 +56,7 @@ partial class DocumentView : UserControl, IDisposable
 
         viewModel.ReadInput += OnReadInput;
         viewModel.EditorFocus += (o, e) => FocusEditor();
+        viewModel.RenameRequested += (o, e) => _editor.InvokeRename();
         viewModel.NavigationRequested += span => _editor.NavigateToSpan(span);
         viewModel.FindRequested += (o, e) => FindReplace?.Show(showReplace: false);
         viewModel.FindReplaceRequested += (o, e) => FindReplace?.Show(showReplace: true);

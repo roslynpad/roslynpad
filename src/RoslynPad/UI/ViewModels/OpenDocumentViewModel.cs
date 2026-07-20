@@ -5,14 +5,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 using RoslynPad.Build;
-using RoslynPad.Roslyn.Rename;
 using RoslynPad.Utilities;
 
 namespace RoslynPad.UI;
@@ -158,7 +156,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         FormatDocumentCommand = commands.CreateAsync(FormatDocumentAsync);
         CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Comment));
         UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Uncomment));
-        RenameSymbolCommand = commands.CreateAsync(RenameSymbolAsync);
+        RenameSymbolCommand = commands.Create(() => RenameRequested?.Invoke(this, EventArgs.Empty));
         ToggleLiveModeCommand = commands.Create(() => IsLiveMode = !IsLiveMode);
         SetDefaultPlatformCommand = commands.Create(SetDefaultPlatform);
 
@@ -339,33 +337,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     }
 
     public void SendInput(string input) => _ = _executionHost?.SendInputAsync(input);
-
-    private async Task RenameSymbolAsync()
-    {
-        var host = MainViewModel.RoslynHost;
-        var document = host.GetDocument(DocumentId);
-        if (document == null || _getSelection == null)
-        {
-            return;
-        }
-
-        var symbol = await RenameHelper.GetRenameSymbol(document, _getSelection().Start).ConfigureAwait(true);
-        if (symbol == null) return;
-
-        var dialog = _serviceProvider.GetRequiredService<IRenameSymbolDialog>();
-        dialog.Initialize(symbol.Name);
-        await dialog.ShowAsync().ConfigureAwait(true);
-        if (dialog.ShouldRename)
-        {
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, symbol, new SymbolRenameOptions(), dialog.SymbolName ?? string.Empty).ConfigureAwait(true);
-#pragma warning disable VSTHRD103 // Solution.GetDocument is a lookup, not a blocking call
-            var newDocument = newSolution.GetDocument(DocumentId);
-#pragma warning restore VSTHRD103
-            // TODO: possibly update entire solution
-            host.UpdateDocument(newDocument!);
-        }
-        OnEditorFocus();
-    }
 
     private enum CommentAction
     {
@@ -838,6 +809,10 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     {
         EditorFocus?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>Raised when the user invokes rename outside the editor (toolbar, app menu);
+    /// the view dispatches it into the editor's inline rename session.</summary>
+    public event EventHandler? RenameRequested;
 
     public event EventHandler? FindRequested;
 

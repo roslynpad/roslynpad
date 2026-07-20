@@ -31,7 +31,6 @@ public class VsCodeThemeReader : IThemeReader
         }
 
         var baseTheme = await (type == ThemeType.Dark ? s_vsDarkTheme.Value : s_vsLightTheme.Value).ConfigureAwait(false);
-        themes.Push(baseTheme);
 
         var theme = new Theme(new VsCodeColorRegistry())
         {
@@ -39,6 +38,19 @@ public class VsCodeThemeReader : IThemeReader
             Colors = [],
             TokenColors = [],
         };
+
+        // The base theme contributes fallback UI colors (overridden by the theme and its includes)
+        // and fallback scope settings. Its scopes go into a separate trie so they only fill scopes
+        // the theme leaves entirely unstyled — never outranking a theme rule by being more specific.
+        if (baseTheme.Colors is not null)
+        {
+            foreach (var color in baseTheme.Colors)
+            {
+                theme.Colors[color.Key] = color.Value;
+            }
+        }
+
+        AddScopeSettings(baseTheme, theme.ScopeSettingsFallback);
 
         while (themes.TryPop(out var nextTheme))
         {
@@ -76,6 +88,27 @@ public class VsCodeThemeReader : IThemeReader
 
         theme.Type = type;
         return theme;
+
+        static void AddScopeSettings(Theme source, Trie<TokenColorSettings> trie)
+        {
+            if (source.TokenColors is null)
+            {
+                return;
+            }
+
+            foreach (var tokenColor in source.TokenColors)
+            {
+                if (tokenColor.Settings is null || tokenColor.Scope is null)
+                {
+                    continue;
+                }
+
+                foreach (var scope in tokenColor.Scope)
+                {
+                    trie.TryAdd(scope, tokenColor.Settings);
+                }
+            }
+        }
     }
 
     private static async Task<Theme> ReadThemeFileAsync(string file)

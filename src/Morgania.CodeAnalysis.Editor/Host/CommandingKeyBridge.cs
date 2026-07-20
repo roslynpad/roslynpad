@@ -184,6 +184,7 @@ internal sealed class CommandingKeyBridge(
                 (Key.OemCloseBrackets, meta: true, shift: true) => TryRun(static (v, b) => new GotoBraceExtCommandArgs(v, b)),
                 // Outlining chord prefix; the next command-modified key completes it above.
                 (Key.M, meta: true, shift: false) => _outliningChordPending = true,
+                (Key.F2, meta: false, shift: false) when !readOnly => TryRun(static (v, b) => new RenameCommandArgs(v, b)),
                 (Key.F12, meta: false, shift: false) => TryRun(static (v, b) => new GoToDefinitionCommandArgs(v, b)),
                 (Key.F12, meta: true, shift: false) => TryRun(static (v, b) => new Microsoft.CodeAnalysis.Editor.Commanding.Commands.GoToImplementationCommandArgs(v, b)),
                 // Suggested actions: command+; everywhere, because on macOS Cmd+. never

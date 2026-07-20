@@ -4,6 +4,8 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Editor.Commanding;
+using Microsoft.VisualStudio.Text.Editor.Commanding.Commands;
 using Microsoft.VisualStudio.Text.Outlining;
 using Microsoft.VisualStudio.Utilities;
 using RoslynPad.Editor;
@@ -107,6 +109,22 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
 
     public void FocusEditor() => TextView?.VisualElement.Focus();
 
+    /// <summary>Starts an inline rename session at the caret, as if F2 was pressed in the view.</summary>
+    public void InvokeRename()
+    {
+        if (TextView is not { } textView || _mainViewModel is not { } mainViewModel)
+        {
+            return;
+        }
+
+        // Typing edits the rename field in the buffer, so the editor must own focus even when
+        // rename was invoked from the toolbar or menu.
+        FocusEditor();
+        mainViewModel.RoslynHost.ExportProvider.GetExportedValue<IEditorCommandHandlerServiceFactory>()
+            .GetService(textView)
+            .Execute(static (v, b) => new RenameCommandArgs(v, b), static () => { });
+    }
+
     public void ApplyFontSettings(string fontFamilies, double fontSize)
     {
         if (_formatMap is not { } formatMap)
@@ -159,6 +177,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
             theme.ApplyPopup(editorFormatMap);
             theme.ApplyBraceMatching(editorFormatMap);
             theme.ApplyReferenceHighlighting(editorFormatMap);
+            theme.ApplyInlineRename(editorFormatMap);
             theme.ApplyCaret(editorFormatMap);
             theme.ApplyFindReplace(editorFormatMap);
             theme.ApplyBackgroundWorkIndicator(editorFormatMap);
