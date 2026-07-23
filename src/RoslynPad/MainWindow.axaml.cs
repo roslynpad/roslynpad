@@ -151,12 +151,12 @@ partial class MainWindow : Window
         app.Resources.MergedDictionaries.Add(_themeDictionary);
     }
 
-    private async void OnDockableClosedAsync(object? sender, DockableClosedEventArgs e)
+    private async void OnDockableClosingAsync(object? sender, DockableClosingEventArgs e)
     {
         if (e.Dockable is Document document && document.DataContext is IDocumentContent content)
         {
+            e.Cancel = true;
             await ViewModel.CloseTab(content).ConfigureAwait(true);
-            (document.Content as IDisposable)?.Dispose();
         }
     }
 
@@ -173,9 +173,7 @@ partial class MainWindow : Window
             {
                 if (factory.FindDockable(DocumentsPane, d => d.Id == item.Id) is { } dockable)
                 {
-                    // RemoveDockable doesn't raise DockableClosed, so programmatic closes
-                    // (Cmd+W, close-all) must dispose the view here; UI closes go through
-                    // CloseDockable, which removes the dockable before this handler runs.
+                    // RemoveDockable doesn't dispose the view after a view-model close.
                     factory.RemoveDockable(dockable, collapse: false);
                     ((dockable as Document)?.Content as IDisposable)?.Dispose();
                 }
