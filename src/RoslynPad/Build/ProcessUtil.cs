@@ -32,7 +32,7 @@ internal class ProcessUtil
             try
             {
                 exitTcs.TrySetCanceled();
-                process.Kill();
+                process.Kill(entireProcessTree: true);
             }
             catch { }
         });

@@ -151,7 +151,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
         OpenBuildPathCommand = commands.Create(OpenBuildPath);
         SaveCommand = commands.CreateAsync(() => SaveAsync(promptSave: false));
-        RunCommand = commands.CreateAsync(RunAsync, () => !IsRunning && RestoreSuccessful && Platform != null);
+        RunCommand = commands.CreateAsync(RunAsync, () => !IsRunning && Platform != null && (RestoreSuccessful || !IsRestoring));
         TerminateCommand = commands.CreateAsync(TerminateAsync, () => Platform != null);
         FormatDocumentCommand = commands.CreateAsync(FormatDocumentAsync);
         CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelectionAsync(CommentAction.Comment));
@@ -262,7 +262,13 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     public bool IsRestoring
     {
         get;
-        private set => SetProperty(ref field, value);
+        private set
+        {
+            if (SetProperty(ref field, value))
+            {
+                _dispatcher.InvokeAsync(RunCommand.RaiseCanExecuteChanged);
+            }
+        }
     }
 
     public bool RestoreSuccessful
@@ -685,6 +691,11 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         {
             if (_executionHost is not null && _executionHostParameters is not null)
             {
+                if (!RestoreSuccessful && !IsRestoring)
+                {
+                    await _executionHost.UpdateReferencesAsync(alwaysRestore: true).ConfigureAwait(true);
+                }
+
                 // Make sure the execution working directory matches the current script path
                 // which may have changed since we loaded.
                 if (_executionHostParameters.WorkingDirectory != WorkingDirectory)

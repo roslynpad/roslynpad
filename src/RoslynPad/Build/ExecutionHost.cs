@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Buffers.Text;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -53,6 +54,10 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     ];
 
     private static readonly ImmutableArray<byte> s_newLine = [.. Encoding.UTF8.GetBytes(Environment.NewLine)];
+
+    // Restore directories are content-hashed and shared across documents; serialize builds
+    // of the same directory so concurrent MSBuild processes don't collide on its output files.
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> s_restoreLocks = new();
 
     private readonly ExecutionHostParameters _parameters;
     private readonly IRoslynHost _roslynHost;
@@ -241,7 +246,10 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         await new NoContextYieldAwaitable();
 
-        await RestoreTask.ConfigureAwait(false);
+        if (!(await RestoreTask.ConfigureAwait(false)).Success)
+        {
+            return;
+        }
 
         using var executeCts = CancelAndCreateNew(ref _executeCts, cancellationToken);
         cancellationToken = executeCts.Token;
@@ -912,7 +920,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         return (directiveText.Trim(), null);
     }
 
-    private Task RestoreTask { get => field ?? Task.CompletedTask; set; }
+    private Task<RestoreResult> RestoreTask { get => field ?? Task.FromResult(RestoreResult.SuccessResult); set; }
 
     public DocumentId? DocumentId { get; set; }
 
@@ -931,14 +939,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         var lockDisposer = await _lock.DisposableWaitAsync(cancellationToken).ConfigureAwait(false);
         RestoreTask = DoRestoreAsync(RestoreTask, cancellationToken);
 
-        async Task DoRestoreAsync(Task previousTask, CancellationToken cancellationToken)
+        async Task<RestoreResult> DoRestoreAsync(Task previousTask, CancellationToken cancellationToken)
         {
             try
             {
                 if (!HasDotNetExecutable)
                 {
                     NoDotNetError();
-                    return;
+                    return RestoreResult.FromErrors([ErrorMessages.MissingSdk]);
                 }
 
                 try
@@ -956,38 +964,47 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                 if (!projBuildResult.MarkerExists)
                 {
-                    await File.WriteAllTextAsync(Path.Combine(projBuildResult.RestorePath, "Program.cs"), "_ = 0;", cancellationToken).ConfigureAwait(false);
-                    await BuildGlobalJson(projBuildResult.RestorePath).ConfigureAwait(false);
-                    File.Copy(_parameters.NuGetConfigPath, Path.Combine(projBuildResult.RestorePath, "nuget.config"), overwrite: true);
+                    var restoreLock = s_restoreLocks.GetOrAdd(projBuildResult.RestorePath, static _ => new SemaphoreSlim(1, 1));
+                    using var restoreLockDisposer = await restoreLock.DisposableWaitAsync(cancellationToken).ConfigureAwait(false);
 
-                    var restoreErrorsPath = Path.Combine(projBuildResult.RestorePath, "restore-errors.log");
-                    File.Delete(restoreErrorsPath);
-
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    var buildArgs =
-                        $"--interactive -nologo " +
-                        $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
-                        $"-getTargetResult:build -getItem:ReferencePathWithRefAssemblies,Analyzer ";
-                    using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
-                        $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
-
-                    await restoreResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-
-                    if (restoreResult.ExitCode != 0)
+                    // another document may have restored this directory while we waited
+                    if (!projBuildResult.UsesCache || !File.Exists(projBuildResult.MarkerPath))
                     {
-                        var errors = await GetRestoreErrorsAsync(restoreErrorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
-                        RestoreCompleted?.Invoke(RestoreResult.FromErrors(errors));
-                        return;
-                    }
+                        await Task.Run(() => projBuildResult.Csproj.Save(projBuildResult.CsprojPath), cancellationToken).ConfigureAwait(false);
+                        await File.WriteAllTextAsync(Path.Combine(projBuildResult.RestorePath, "Program.cs"), "_ = 0;", cancellationToken).ConfigureAwait(false);
+                        await BuildGlobalJson(projBuildResult.RestorePath).ConfigureAwait(false);
+                        File.Copy(_parameters.NuGetConfigPath, Path.Combine(projBuildResult.RestorePath, "nuget.config"), overwrite: true);
 
-                    var restoreOutput = JsonSerializer.Deserialize<BuildOutput>(restoreResult.StandardOutput);
-                    using var resultOutputStream = File.OpenWrite(outputPath);
-                    await JsonSerializer.SerializeAsync(resultOutputStream, restoreOutput, cancellationToken: cancellationToken).ConfigureAwait(false);
+                        var restoreErrorsPath = Path.Combine(projBuildResult.RestorePath, "restore-errors.log");
+                        File.Delete(restoreErrorsPath);
 
-                    if (projBuildResult.UsesCache)
-                    {
-                        await File.WriteAllTextAsync(projBuildResult.MarkerPath, string.Empty, cancellationToken).ConfigureAwait(false);
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        var buildArgs =
+                            $"--interactive -nologo " +
+                            $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
+                            $"-getTargetResult:build -getItem:ReferencePathWithRefAssemblies,Analyzer ";
+                        using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
+                            $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
+
+                        await restoreResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+                        if (restoreResult.ExitCode != 0)
+                        {
+                            var errors = await GetRestoreErrorsAsync(restoreErrorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
+                            var errorResult = RestoreResult.FromErrors(errors);
+                            RestoreCompleted?.Invoke(errorResult);
+                            return errorResult;
+                        }
+
+                        var restoreOutput = JsonSerializer.Deserialize<BuildOutput>(restoreResult.StandardOutput);
+                        using var resultOutputStream = File.OpenWrite(outputPath);
+                        await JsonSerializer.SerializeAsync(resultOutputStream, restoreOutput, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                        if (projBuildResult.UsesCache)
+                        {
+                            await File.WriteAllTextAsync(projBuildResult.MarkerPath, string.Empty, cancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
 
@@ -1021,11 +1038,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                 await ReadReferencesAsync(outputPath, cancellationToken).ConfigureAwait(false);
                 RestoreCompleted?.Invoke(RestoreResult.SuccessResult);
+                return RestoreResult.SuccessResult;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.RestoreError(ex);
-                RestoreCompleted?.Invoke(RestoreResult.FromErrors([ex.ToString()]));
+                var errorResult = RestoreResult.FromErrors([ex.ToString()]);
+                RestoreCompleted?.Invoke(errorResult);
+                return errorResult;
             }
             finally
             {
@@ -1096,12 +1116,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 markerExists = false;
             }
 
-            if (!markerExists)
-            {
-                await Task.Run(() => csproj.Save(csprojPath), cancellationToken).ConfigureAwait(false);
-            }
-
-            return new(_restorePath, csprojPath, markerPath, markerExists);
+            return new(_restorePath, csprojPath, markerPath, markerExists, csproj);
         }
 
         static async Task<string[]> GetRestoreErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
@@ -1185,7 +1200,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private record BuildOutput(BuildOutputItems Items);
     private record BuildOutputItems(BuildOutputReferenceItem[] ReferencePathWithRefAssemblies, BuildOutputReferenceItem[] Analyzer);
     private record BuildOutputReferenceItem(string FullPath);
-    private record CsprojBuildResult(string RestorePath, string CsprojPath, string? MarkerPath, bool MarkerExists)
+    private record CsprojBuildResult(string RestorePath, string CsprojPath, string? MarkerPath, bool MarkerExists, XDocument Csproj)
     {
         [MemberNotNullWhen(true, nameof(MarkerPath))]
         public bool UsesCache => MarkerPath is not null;
