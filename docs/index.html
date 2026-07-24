@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Cross-platform C# code editor and runner. Built with Roslyn.">
     <title>RoslynPad</title>
+    <link rel="icon" href="roslynpad.svg" type="image/svg+xml">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="RoslynPad">
+    <meta property="og:description" content="Cross-platform C# code editor and runner. Built with Roslyn.">
+    <meta property="og:url" content="https://roslynpad.net/">
+    <meta property="og:image" content="https://roslynpad.net/screenshots/roslynpad.png">
+    <meta name="twitter:card" content="summary_large_image">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -62,54 +69,59 @@
     <!-- Features -->
     <section id="features" class="features">
         <div class="hero-screenshot">
-            <img src="screenshots/roslynpad.png" alt="RoslynPad app screenshot" loading="lazy">
+            <img src="screenshots/roslynpad.webp" alt="RoslynPad app screenshot" width="2186" height="1460" loading="lazy">
         </div>
         <div class="container">
             <h2>Features</h2>
             <div class="feature-grid">
                 <div class="feature-card">
-                    <img src="screenshots/completion.png" alt="Code Completion">
+                    <a href="screenshots/completion.webp" target="_blank" rel="noopener"><img src="screenshots/completion.webp" alt="Code Completion" width="1510" height="664" loading="lazy"></a>
                     <h3>Code Completion</h3>
                     <p>Smart suggestions as you type, powered by Roslyn.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/quick-info.png" alt="Quick Info">
+                    <a href="screenshots/quick-info.webp" target="_blank" rel="noopener"><img src="screenshots/quick-info.webp" alt="Quick Info" width="1422" height="664" loading="lazy"></a>
                     <h3>Quick Info</h3>
                     <p>Hover any symbol for its documentation, signature, and type info.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/signature-help.png" alt="Signature Help">
+                    <a href="screenshots/signature-help.webp" target="_blank" rel="noopener"><img src="screenshots/signature-help.webp" alt="Signature Help" width="1398" height="592" loading="lazy"></a>
                     <h3>Signature Help</h3>
                     <p>Method signatures and parameter info as you write.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/diagnostics.png" alt="Diagnostics">
+                    <a href="screenshots/diagnostics.webp" target="_blank" rel="noopener"><img src="screenshots/diagnostics.webp" alt="Diagnostics" width="1412" height="902" loading="lazy"></a>
                     <h3>Diagnostics</h3>
                     <p>Real-time error detection and warnings as you code.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/actions.png" alt="Code Fixes">
+                    <a href="screenshots/actions.webp" target="_blank" rel="noopener"><img src="screenshots/actions.webp" alt="Code Fixes" width="1406" height="686" loading="lazy"></a>
                     <h3>Code Fixes</h3>
                     <p>Quick actions and refactorings to fix issues instantly.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/dump.png" alt="Real-time Execution">
+                    <a href="screenshots/dump.webp" target="_blank" rel="noopener"><img src="screenshots/dump.webp" alt="Real-time Execution" width="1412" height="838" loading="lazy"></a>
                     <h3>Real-time Execution</h3>
                     <p>Run C# file-based apps and view the results.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/nuget.png" alt="NuGet Packages">
+                    <a href="screenshots/nuget.webp" target="_blank" rel="noopener"><img src="screenshots/nuget.webp" alt="NuGet Packages" width="1414" height="682" loading="lazy"></a>
                     <h3>NuGet Packages</h3>
                     <p>Add NuGet packages with integrated search and install.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="screenshots/documents.png" alt="Document Management">
+                    <a href="screenshots/documents.webp" target="_blank" rel="noopener"><img src="screenshots/documents.webp" alt="Document Management" width="1266" height="736" loading="lazy"></a>
                     <h3>Document Management</h3>
                     <p>Organize, search, and switch between scripts in the documents panel.</p>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Lightbox -->
+    <div class="lightbox" hidden>
+        <img alt="">
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -124,6 +136,10 @@
 
     <script>
     {
+        if (!navigator.userAgent.includes('Windows')) {
+            document.querySelector('.btn-store').style.display = 'none';
+        }
+
         const header = document.querySelector('header');
         const headerLogo = document.querySelector('.header-logo');
         const hero = document.querySelector('.hero');
@@ -148,6 +164,25 @@
             });
         }, { threshold: 0.15 });
         cards.forEach(card => observer.observe(card));
+
+        // Feature screenshot lightbox
+        const lightbox = document.querySelector('.lightbox');
+        const lightboxImg = lightbox.querySelector('img');
+        const closeLightbox = () => {
+            lightbox.hidden = true;
+            document.body.style.overflow = '';
+        };
+        document.querySelectorAll('.feature-card > a').forEach(a => a.addEventListener('click', e => {
+            e.preventDefault();
+            lightboxImg.src = a.href;
+            lightboxImg.alt = a.querySelector('img').alt;
+            lightbox.hidden = false;
+            document.body.style.overflow = 'hidden';
+        }));
+        lightbox.addEventListener('click', closeLightbox);
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeLightbox();
+        });
     }
     </script>
 </body>

@@ -15,7 +15,8 @@ body {
     color: #1a1a1a;
     line-height: 1.6;
     background: #fafaf5;
-    overflow-x: hidden;
+    /* clip (not hidden) keeps body from becoming a scroll container, so the sticky header works */
+    overflow-x: clip;
 }
 
 .container {
@@ -236,6 +237,7 @@ nav ul li a:hover {
 .hero-screenshot img {
     display: block;
     width: 100%;
+    height: auto;
 }
 
 /* === Decorative Shapes === */
@@ -357,11 +359,16 @@ nav ul li a:hover {
 .feature-card:nth-child(7):hover { box-shadow: 3px 3px 0 var(--yellow); }
 .feature-card:nth-child(8):hover { box-shadow: 3px 3px 0 var(--green-light); }
 
+.feature-card > a {
+    display: block;
+    cursor: zoom-in;
+}
+
 .feature-card img {
     width: 100%;
     height: 180px;
-    object-fit: cover;
-    object-position: top;
+    object-fit: contain;
+    background: #fff;
     border: 2px solid var(--black);
     margin-bottom: 16px;
 }
@@ -469,5 +476,51 @@ footer p {
     nav ul li a {
         padding: 6px 10px;
         font-size: 0.9em;
+    }
+
+    .header-logo span {
+        display: none;
+    }
+}
+
+/* === Lightbox === */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(26, 26, 26, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5vh 5vw;
+    cursor: zoom-out;
+}
+
+.lightbox[hidden] {
+    display: none;
+}
+
+.lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    background: #fff;
+    border: 3px solid var(--black);
+    box-shadow: 8px 8px 0 var(--pink);
+}
+
+/* === Reduced Motion === */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    .feature-card {
+        opacity: 1;
+        transform: none;
     }
 }
