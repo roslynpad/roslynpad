@@ -129,14 +129,15 @@ Scripts in `deploy/` handle release packaging:
 
 **Platform Packaging** (all from `RoslynPad`):
 - **Windows**: creates `.zip` + `.appx` (Microsoft Store), updates winget manifests
-- **macOS**: creates `.dmg` (requires `appdmg` via npm) and `.tgz`
+- **macOS**: creates a signed + notarized `.dmg` (requires `appdmg` via npm) and `.tgz`, updates the Homebrew cask
 - **Linux**: creates `.tgz`
 
 **Key Details:**
 - `Common.ps1` - Shared functions, reads version from `Directory.Build.props`
 - Windows packages run on Windows, macOS/Linux packages run on macOS
 - `dotnet publish -r <rid>` with `ContinuousIntegrationBuild=true` for reproducible builds
-- Version is centrally defined as `RoslynPadVersion` in `Directory.Build.props`
+- Version is centrally defined as `RoslynPadVersion` in `Directory.Build.props`; download URLs use `Get-ReleaseTag`, which drops trailing zero components to match the release tag (`22.0.0` → `22`, `21.1.0` → `21.1`)
+- `deploy/brew/roslynpad.rb` is the Homebrew cask (distributed through the `roslynpad/homebrew-tap` repo). `CreatePackages.ps1` rewrites its version and both architecture hashes after notarization — stapling changes the image, so the hash must come last — and copies it into a `homebrew-tap` checkout sitting next to the repo, if there is one
 
 ## Important Files
 

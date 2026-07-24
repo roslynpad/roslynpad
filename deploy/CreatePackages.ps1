@@ -19,6 +19,8 @@ Add-Type -A 'System.IO.Compression.FileSystem'
 
 . ./Common.ps1
 
+$MacOSHashes = @{}
+
 function Get-PackageRoot {
   param (
     $RuntimeIdentifier
@@ -88,6 +90,31 @@ function Build-MacOSPackage($PackageName, $RootPath) {
   if ($SigningIdentity -and $NotaryProfile) {
     Notarize-MacOSDmg -DmgPath $dmgPath -Identity $SigningIdentity -Profile $NotaryProfile
   }
+
+  # Stapling rewrites the image, so hash only once the package is final.
+  $script:MacOSHashes[$PackageName] = (Get-FileHash $dmgPath -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+function Update-HomebrewCask {
+  if (!$MacOSHashes['macos-arm64'] -or !$MacOSHashes['macos-x64']) {
+    return
+  }
+
+  Write-Host 'Updating Homebrew cask...'
+
+  $caskPath = Join-Path 'brew' 'roslynpad.rb'
+  $cask = Get-Content $caskPath
+  $cask = $cask -replace 'version "[^"]*"', "version `"$(Get-ReleaseTag)`""
+  $cask = $cask -replace '(arm:\s+)"[0-9a-f]{64}"', ('$1"' + $MacOSHashes['macos-arm64'] + '"')
+  $cask = $cask -replace '(intel:\s+)"[0-9a-f]{64}"', ('$1"' + $MacOSHashes['macos-x64'] + '"')
+  Set-Content -Path $caskPath -Value $cask
+
+  # Mirror into the tap checkout when it sits next to the repo, like winget-pkgs.
+  $tapCaskPath = Join-Path $PSScriptRoot '..' '..' 'homebrew-tap' 'Casks' 'roslynpad.rb'
+  if (Test-Path $tapCaskPath) {
+    Copy-Item $caskPath $tapCaskPath -Force
+    Write-Host "Copied cask to $((Resolve-Path $tapCaskPath).Path)"
+  }
 }
 
 function Build-MacOSLinuxPackage($PackageName, $RootPath, [switch] $IsMacOSPackage) {
@@ -127,7 +154,7 @@ function Build-WindowsPackages($PackageName, $RootPath) {
   $wingetManifestPath = "winget-$PackageName.yaml"
   $wingetManifest = Get-Content $wingetManifestPath
   $version = [Version] (Get-RoslynPadVersion)
-  $releaseVersion = $version.Minor -le 0 -and $version.Build -le 0 ? $version.Major : $version
+  $releaseVersion = Get-ReleaseTag
   $hash = (Get-FileHash $archiveFile -Algorithm SHA256).Hash
   $wingetManifest = $wingetManifest -replace 'PackageVersion:.*', "PackageVersion: $version"
   $wingetManifest = $wingetManifest -replace 'InstallerUrl:.*', "InstallerUrl: https://github.com/roslynpad/roslynpad/releases/download/$releaseVersion/RoslynPad-$PackageName.zip"
@@ -161,6 +188,7 @@ function Build-Package($PackageName, $RuntimeIdentifier) {
 
 Build-Package -PackageName 'macos-x64' -RuntimeIdentifier 'osx-x64'
 Build-Package -PackageName 'macos-arm64' -RuntimeIdentifier 'osx-arm64'
+Update-HomebrewCask
 Build-Package -PackageName 'linux-x64' -RuntimeIdentifier 'linux-x64'
 Build-Package -PackageName 'linux-arm64' -RuntimeIdentifier 'linux-arm64'
 Build-Package -PackageName 'windows-x64' -RuntimeIdentifier 'win-x64'

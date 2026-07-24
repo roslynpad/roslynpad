@@ -22,6 +22,17 @@ function Get-RoslynPadVersion($PatchVersion) {
     return $versionString
 }
 
+# Release tags omit trailing zero components: 22.0.0 -> '22', 21.1.0 -> '21.1'.
+function Get-ReleaseTag($PatchVersion) {
+    $version = [Version] (Get-RoslynPadVersion $PatchVersion)
+
+    if ($version.Build -gt 0) {
+        return $version.ToString()
+    }
+
+    return $version.Minor -gt 0 ? "$($version.Major).$($version.Minor)" : "$($version.Major)"
+}
+
 function Get-AdditionalDirectory($RootPath, $Name) {
     if (Test-Path "$RootPath/$Name") {
         return Get-ChildItem (Join-Path $RootPath $Name '*.*') -Recurse -File | Select-Object -ExpandProperty FullName
