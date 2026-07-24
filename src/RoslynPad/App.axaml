@@ -23,6 +23,7 @@
 
     <!-- Flat icon buttons used in toolbars; hover/active colors follow the VS Code theme -->
     <Style Selector="Button.tool, ToggleButton.tool">
+      <Setter Property="Focusable" Value="False" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="CornerRadius" Value="4" />
