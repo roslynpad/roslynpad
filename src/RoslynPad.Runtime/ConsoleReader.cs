@@ -10,7 +10,7 @@ internal class ConsoleReader(JsonConsoleDumper dumper) : TextReader
 
     public override int Read()
     {
-        if (_readString == null || _readPosition >= _readString.Length - 1)
+        if (_readString == null || _readPosition >= _readString.Length)
         {
             _dumper.DumpInputReadRequest();
 

@@ -313,7 +313,40 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         ReadInput?.Invoke();
     }, AppDispatcherPriority.Low);
 
-    private void ExecutionHostOnDump(ResultObject result) => AddResult(result);
+    // Bound merged-row values can grow with every Console.Write; cap them so a
+    // newline-less write loop can't accumulate a single huge string
+    private const int MaxMergedConsoleValueLength = 10000;
+
+    private ResultObject? _openConsoleResult;
+
+    private void ExecutionHostOnDump(ResultObject result)
+    {
+        if (result.EndsLine is not { } endsLine)
+        {
+            AddResult(result);
+            return;
+        }
+
+        lock (_results)
+        {
+            // Merge only into a still-last row so interleaved dumps/errors keep their order
+            if (_openConsoleResult is { } open &&
+                _results.Count > 0 && ReferenceEquals(_results[^1], open) &&
+                string.Equals(open.Header, result.Header, StringComparison.Ordinal) &&
+                (open.Value?.Length ?? 0) <= MaxMergedConsoleValueLength)
+            {
+                open.Value += result.Value;
+                _openConsoleResult = endsLine ? null : open;
+            }
+            else
+            {
+                _openConsoleResult = endsLine ? null : result;
+                AddResult(result);
+            }
+        }
+
+        MainViewModel.OnResultsAvailable();
+    }
 
     private void ExecutionHostOnError(ExceptionResultObject errorResult) => _dispatcher.InvokeAsync(() =>
     {
@@ -734,6 +767,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     {
         lock (_results)
         {
+            _openConsoleResult = null;
             _results.Clear();
             _results.AddRange(_restoreResults);
         }

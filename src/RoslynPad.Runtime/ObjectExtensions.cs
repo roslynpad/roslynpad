@@ -70,7 +70,9 @@ public static class ObjectExtensions
     internal delegate void DumpDelegate(in DumpData data);
 }
 
-internal record struct DumpData(object? Object, string? Header, int? Line, DumpQuotas Quotas);
+// EndsLine is set only for console-redirect chunks: false = an open line more writes may append to,
+// true = newline-terminated; null = a regular Dump result (never merged in the host)
+internal record struct DumpData(object? Object, string? Header, int? Line, DumpQuotas Quotas, bool? EndsLine = null);
 
 internal record struct DumpQuotas(int MaxDepth, int MaxExpandedDepth, int MaxEnumerableLength, int MaxStringLength)
 {

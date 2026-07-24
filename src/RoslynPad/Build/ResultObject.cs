@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -16,16 +17,41 @@ public interface IResultWithLineNumber
     int Column { get; }
 }
 
-public class ResultObject : IResultObject, IResultWithLineNumber
+public class ResultObject : IResultObject, IResultWithLineNumber, INotifyPropertyChanged
 {
+    private static readonly PropertyChangedEventArgs s_valueChangedArgs = new(nameof(Value));
+
+    private string? _value;
+
     [JsonPropertyName("h")]
     public string? Header { get; set; }
     [JsonPropertyName("l")]
     public int? LineNumber { get; set; }
     int IResultWithLineNumber.Column => 0;
 
+    // Console-write chunks merge into the same row until the line ends, so the bound row updates in place
     [JsonPropertyName("v")]
-    public string? Value { get; set; }
+    public string? Value
+    {
+        get => _value;
+        set
+        {
+            if (!string.Equals(_value, value, StringComparison.Ordinal))
+            {
+                _value = value;
+                PropertyChanged?.Invoke(this, s_valueChangedArgs);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Set only for console-redirect chunks: false = an open line later chunks may append to,
+    /// true = newline-terminated; null = a regular Dump result.
+    /// </summary>
+    [JsonPropertyName("n")]
+    public bool? EndsLine { get; set; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     [JsonPropertyName("t")]
     public string? Type { get; set; }

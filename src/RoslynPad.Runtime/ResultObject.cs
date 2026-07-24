@@ -372,10 +372,13 @@ internal class ExceptionResultObject : ResultObject
     {
         Message = exception.Message;
 
+        // User code is the entry assembly in both modes; keying on the file name doesn't work
+        // across them (scripts compile with an empty source path, msbuild mode with Program.cs)
+        var entryAssembly = Assembly.GetEntryAssembly();
         var stackFrames = new StackTrace(exception, fNeedFileInfo: true).GetFrames() ?? [];
         foreach (var stackFrame in stackFrames)
         {
-            if (string.IsNullOrWhiteSpace(stackFrame.GetFileName()) &&
+            if (stackFrame.GetMethod()?.Module.Assembly == entryAssembly &&
                 stackFrame.GetFileLineNumber() is var lineNumber && lineNumber > 0)
             {
                 LineNumber = lineNumber;

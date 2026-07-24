@@ -159,7 +159,13 @@ partial class DocumentView : UserControl, IDisposable
 
     private async void OnReadInput()
     {
-        var textBox = new TextBox();
+        var textBox = new TextBox
+        {
+            Width = 400,
+            Height = 100,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        ScrollViewer.SetVerticalScrollBarVisibility(textBox, ScrollBarVisibility.Auto);
 
         var dialog = new HeaderedContentControl
         {

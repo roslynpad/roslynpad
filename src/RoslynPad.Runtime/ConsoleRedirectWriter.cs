@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace RoslynPad.Runtime;
 
@@ -14,53 +14,64 @@ internal class ConsoleRedirectWriter(JsonConsoleDumper dumper, string? header = 
 
     public override void Write(string? value)
     {
-        if (string.Equals(Environment.NewLine, value, StringComparison.Ordinal))
+        if (value == null)
         {
             return;
         }
 
-        Dump(value);
+        var endsLine = value.Length > 0 && value[value.Length - 1] == '\n';
+        if (endsLine)
+        {
+            var length = value.Length - 1;
+            if (length > 0 && value[length - 1] == '\r')
+            {
+                length--;
+            }
+
+            value = value.Substring(0, length);
+        }
+
+        Dump(value, endsLine);
     }
+
+    public override void WriteLine(string? value) => Dump(value ?? string.Empty, endsLine: true);
 
     public override void Write(char[] buffer, int index, int count)
     {
-        if (buffer != null)
+        if (buffer == null)
         {
-            if (EndsWithNewLine(buffer, index, count))
-            {
-                count -= Environment.NewLine.Length;
-            }
-
-            if (count > 0)
-            {
-                Dump(new string(buffer, index, count));
-            }
-        }
-    }
-
-    private bool EndsWithNewLine(char[] buffer, int index, int count)
-    {
-        var nl = Environment.NewLine;
-
-        if (count < nl.Length)
-        {
-            return false;
+            return;
         }
 
-        for (int i = nl.Length; i >= 1; --i)
+        var endsLine = count > 0 && buffer[index + count - 1] == '\n';
+        if (endsLine)
         {
-            if (buffer[index + count - i] != nl[nl.Length - i])
+            count--;
+            if (count > 0 && buffer[index + count - 1] == '\r')
             {
-                return false;
+                count--;
             }
         }
 
-        return true;
+        if (count > 0 || endsLine)
+        {
+            Dump(count > 0 ? new string(buffer, index, count) : string.Empty, endsLine);
+        }
     }
 
     public override void Write(bool value) => Dump(value);
 
-    public override void Write(char value) => Dump(value);
+    public override void Write(char value)
+    {
+        if (value == '\n')
+        {
+            Dump(string.Empty, endsLine: true);
+        }
+        else
+        {
+            Dump(value);
+        }
+    }
 
     public override void Write(decimal value) => Dump(value);
 
@@ -78,7 +89,8 @@ internal class ConsoleRedirectWriter(JsonConsoleDumper dumper, string? header = 
 
     public override void Write(ulong value) => Dump(value);
 
-    public override void WriteLine(object? value) => Dump(value);
+    public override void WriteLine(object? value) => Dump(value, endsLine: true);
 
-    private void Dump(object? value) => _dumper.Dump(new DumpData(value, _header, Line: null, DumpQuotas.Default));
+    private void Dump(object? value, bool endsLine = false) =>
+        _dumper.Dump(new DumpData(value, _header, Line: null, DumpQuotas.Default, endsLine));
 }

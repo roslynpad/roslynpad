@@ -53,7 +53,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
         try
         {
-            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header, data.Line));
+            DumpResultObject(ResultObject.Create(data.Object, data.Quotas, data.Header, data.Line), data.EndsLine);
         }
         catch (Exception ex)
         {
@@ -179,7 +179,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
         }
     }
 
-    private void DumpResultObject(ResultObject result)
+    private void DumpResultObject(ResultObject result, bool? endsLine = null)
     {
         lock (_lock)
         {
@@ -187,7 +187,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
             using (var jsonWriter = CreateJsonWriter())
             {
-                WriteResultObject(jsonWriter, result, isRoot: true);
+                WriteResultObject(jsonWriter, result, isRoot: true, endsLine);
             }
 
             WriteNewLine();
@@ -196,10 +196,14 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
     private void WriteNewLine() => Write(s_newLine);
 
-    private void WriteResultObject(XmlDictionaryWriter jsonWriter, ResultObject result, bool isRoot)
+    private void WriteResultObject(XmlDictionaryWriter jsonWriter, ResultObject result, bool isRoot, bool? endsLine = null)
     {
         using var _ = jsonWriter.WriteObject(name: isRoot ? "root" : "item");
         WriteResultObjectContent(jsonWriter, result);
+        if (endsLine is { } endsLineValue)
+        {
+            jsonWriter.WriteProperty("n", endsLineValue);
+        }
     }
 
     private void WriteResultObjectContent(XmlDictionaryWriter jsonWriter, ResultObject result)
