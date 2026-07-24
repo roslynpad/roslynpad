@@ -168,7 +168,7 @@
       <DockControl x:Name="Dock" Margin="8,4,8,8" InitializeLayout="True" InitializeFactory="True">
         <DockControl.Factory>
           <Factory ActiveDockableChanged="OnActiveDockableChanged"
-                   DockableClosed="OnDockableClosedAsync" />
+                   DockableClosing="OnDockableClosingAsync" />
         </DockControl.Factory>
 
         <RootDock x:Name="Root" Id="Root" IsCollapsable="False" DefaultDockable="{Binding #MainLayout}">
