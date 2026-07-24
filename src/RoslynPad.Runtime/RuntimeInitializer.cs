@@ -53,6 +53,9 @@ public static class RuntimeInitializer
             Helpers.Progress += progress => consoleDumper.DumpProgress(ProgressResultObject.Create(progress));
         }
 
+        Trace.Listeners.Clear();
+        Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+
         ObjectExtensions.Dumped += consoleDumper.Dump;
         AppDomain.CurrentDomain.ProcessExit += (o, e) => consoleDumper.Flush();
     }
