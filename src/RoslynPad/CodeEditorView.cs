@@ -30,18 +30,18 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
     public ITextBuffer? Buffer { get; private set; }
     public IWpfTextView? TextView { get; private set; }
 
-    public ITextBuffer CreateBuffer(MainViewModel mainViewModel, string text)
+    public ITextBuffer CreateBuffer(MainViewModel mainViewModel, string text, string contentTypeName = "CSharp")
     {
         _mainViewModel = mainViewModel;
         var exportProvider = mainViewModel.RoslynHost.ExportProvider;
 
-        var contentType = exportProvider.GetExportedValue<IContentTypeRegistryService>().GetContentType("CSharp")
-            ?? throw new InvalidOperationException("The CSharp content type is not registered");
+        var contentType = exportProvider.GetExportedValue<IContentTypeRegistryService>().GetContentType(contentTypeName)
+            ?? throw new InvalidOperationException($"The {contentTypeName} content type is not registered");
         Buffer = exportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer(text, contentType);
         return Buffer;
     }
 
-    public IWpfTextView CreateView(bool isReadOnly)
+    public IWpfTextView CreateView(bool isReadOnly, bool setFocus = true)
     {
         var mainViewModel = _mainViewModel ?? throw new InvalidOperationException($"{nameof(CreateBuffer)} was not called");
         var exportProvider = mainViewModel.RoslynHost.ExportProvider;
@@ -69,8 +69,31 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
         mainViewModel.EditorFontSizeChanged += OnEditorFontSizeChanged;
         mainViewModel.ThemeChanged += OnThemeChanged;
 
-        Content = editorFactory.CreateTextViewHost(textView, setFocus: true).HostControl;
+        Content = editorFactory.CreateTextViewHost(textView, setFocus).HostControl;
+
+        ApplyFindReplaceGestures(textView);
+
         return textView;
+    }
+
+    /// <summary>
+    /// Replaces the panel's platform-default chords with the current (default or
+    /// user-customized) gestures from the KeyBindings service; an unparsable gesture keeps
+    /// the panel's default.
+    /// </summary>
+    private static void ApplyFindReplaceGestures(IWpfTextView textView)
+    {
+        if (FindReplacePanel.Get(textView) is not { } findReplace)
+        {
+            return;
+        }
+
+        findReplace.ShowGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.Find) ?? findReplace.ShowGesture;
+        findReplace.ShowReplaceGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.Replace) ?? findReplace.ShowReplaceGesture;
+        findReplace.FindNextGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.FindNext) ?? findReplace.FindNextGesture;
+        findReplace.FindPreviousGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.FindPrevious) ?? findReplace.FindPreviousGesture;
+        findReplace.ReplaceNextGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.SearchReplaceNext) ?? findReplace.ReplaceNextGesture;
+        findReplace.ReplaceAllGesture = KeyBindingHelper.GetKeyGesture(KeyBindingCommands.SearchReplaceAll) ?? findReplace.ReplaceAllGesture;
     }
 
     /// <summary>Selects the span, scrolls it into view, and focuses the editor.</summary>
@@ -123,6 +146,27 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
         mainViewModel.RoslynHost.ExportProvider.GetExportedValue<IEditorCommandHandlerServiceFactory>()
             .GetService(textView)
             .Execute(static (v, b) => new RenameCommandArgs(v, b), static () => { });
+    }
+
+    /// <summary>Opens the find/replace panel, as if the find chord was pressed in the view.</summary>
+    public void InvokeFindReplace(bool showReplace)
+    {
+        if (TextView is not { } textView || _mainViewModel is not { } mainViewModel)
+        {
+            return;
+        }
+
+        var commanding = mainViewModel.RoslynHost.ExportProvider
+            .GetExportedValue<IEditorCommandHandlerServiceFactory>()
+            .GetService(textView);
+        if (showReplace)
+        {
+            commanding.Execute(static (v, b) => new ShowReplaceCommandArgs(v, b), static () => { });
+        }
+        else
+        {
+            commanding.Execute(static (v, b) => new ShowFindCommandArgs(v, b), static () => { });
+        }
     }
 
     public void ApplyFontSettings(string fontFamilies, double fontSize)

@@ -67,8 +67,10 @@ public sealed class FindReplacePanelProvider : IWpfTextViewCreationListener
 /// <summary>
 /// The find/replace control, floating over the top-right corner of the text view (VS
 /// placement): a search box with match-case / whole-word / regex toggles, a match count,
-/// next/previous navigation, and a collapsible replace row. Hidden until a host calls
-/// <see cref="Show"/> on the instance obtained via <see cref="Get"/>. All matches in the
+/// next/previous navigation, and a collapsible replace row. Shown by the view-level chords
+/// (<see cref="ShowGesture"/> and friends — platform defaults derived from the OS command
+/// modifier, rebindable per view by the host) or by a host calling <see cref="Show"/> on
+/// the instance obtained via <see cref="Get"/>. All matches in the
 /// viewport are highlighted on the panel's adornment layer; colors come from the
 /// <see cref="FindReplaceFormatNames"/> editor-format-map entry.
 /// </summary>
@@ -91,6 +93,8 @@ public sealed class FindReplacePanel
     private readonly ToggleButton _useRegex;
     private readonly ToggleButton _replaceToggle;
     private readonly StackPanel _replaceRow;
+    private readonly Button _replaceNextButton;
+    private readonly Button _replaceAllButton;
     private readonly TextBlock _statusText;
     private readonly Avalonia.Controls.Shapes.Path _closeGlyph;
 
@@ -110,6 +114,20 @@ public sealed class FindReplacePanel
         _navigator = navigator;
         _formatMap = formatMap;
         _brushes = FindReplaceBrushes.Read(formatMap);
+
+        var commandModifiers = (Application.Current?.PlatformSettings?.HotkeyConfiguration
+            ?? throw new InvalidOperationException("The Avalonia platform is not initialized.")).CommandModifiers;
+        bool macStyle = commandModifiers == KeyModifiers.Meta;
+        ShowGesture = new KeyGesture(Key.F, commandModifiers);
+        ShowReplaceGesture = macStyle
+            ? new KeyGesture(Key.F, commandModifiers | KeyModifiers.Alt)
+            : new KeyGesture(Key.H, commandModifiers);
+        FindNextGesture = macStyle ? new KeyGesture(Key.G, commandModifiers) : new KeyGesture(Key.F3);
+        FindPreviousGesture = macStyle
+            ? new KeyGesture(Key.G, commandModifiers | KeyModifiers.Shift)
+            : new KeyGesture(Key.F3, KeyModifiers.Shift);
+        ReplaceNextGesture = new KeyGesture(Key.R, KeyModifiers.Alt);
+        ReplaceAllGesture = new KeyGesture(Key.A, KeyModifiers.Alt);
 
         _findBox = MakeInputBox("Find");
         _replaceBox = MakeInputBox("Replace");
@@ -136,10 +154,14 @@ public sealed class FindReplacePanel
         findRow.Children.Add(MakeButton(MakeIcon(FindReplaceIcons.FindNext), "Next Match (Enter)", FindNext));
         findRow.Children.Add(closeButton);
 
+        _replaceNextButton = MakeButton(MakeIcon(FindReplaceIcons.ReplaceNext), string.Empty, ReplaceNext);
+        _replaceAllButton = MakeButton(MakeIcon(FindReplaceIcons.ReplaceAll), string.Empty, ReplaceAll);
+        UpdateReplaceTooltips();
+
         _replaceRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2.0, IsVisible = false };
         _replaceRow.Children.Add(_replaceBox);
-        _replaceRow.Children.Add(MakeButton(MakeIcon(FindReplaceIcons.ReplaceNext), "Replace Next (Alt+R)", ReplaceNext));
-        _replaceRow.Children.Add(MakeButton(MakeIcon(FindReplaceIcons.ReplaceAll), "Replace All (Alt+A)", ReplaceAll));
+        _replaceRow.Children.Add(_replaceNextButton);
+        _replaceRow.Children.Add(_replaceAllButton);
 
         var optionsRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2.0 };
         optionsRow.Children.Add(_matchCase);
@@ -226,10 +248,52 @@ public sealed class FindReplacePanel
         set => _replaceBox.Text = value;
     }
 
+    /// <summary>
+    /// The chord that opens the panel. Defaults to the platform find chord (Cmd+F when the
+    /// OS command modifier is Cmd, Ctrl+F otherwise); assign to rebind, null to unbind.
+    /// </summary>
+    public KeyGesture? ShowGesture { get; set; }
+
+    /// <summary>
+    /// The chord that opens the panel with the replace row. Defaults to Cmd+Alt+F when the
+    /// OS command modifier is Cmd, Ctrl+H otherwise; assign to rebind, null to unbind.
+    /// </summary>
+    public KeyGesture? ShowReplaceGesture { get; set; }
+
+    /// <summary>
+    /// The chord that moves to the next match. Defaults to Cmd+G when the OS command
+    /// modifier is Cmd, F3 otherwise; assign to rebind, null to unbind.
+    /// </summary>
+    public KeyGesture? FindNextGesture { get; set; }
+
+    /// <summary>
+    /// The chord that moves to the previous match. Defaults to Cmd+Shift+G when the OS
+    /// command modifier is Cmd, Shift+F3 otherwise; assign to rebind, null to unbind.
+    /// </summary>
+    public KeyGesture? FindPreviousGesture { get; set; }
+
+    /// <summary>
+    /// The chord that replaces the current match and moves to the next. Defaults to Alt+R;
+    /// assign to rebind, null to unbind. The replace buttons' tooltips follow the gesture.
+    /// </summary>
+    public KeyGesture? ReplaceNextGesture { get; set; }
+
+    /// <summary>
+    /// The chord that replaces every match in one edit. Defaults to Alt+A; assign to
+    /// rebind, null to unbind. The replace buttons' tooltips follow the gesture.
+    /// </summary>
+    public KeyGesture? ReplaceAllGesture { get; set; }
+
     /// <summary>Whether the panel is currently visible.</summary>
     public bool IsOpen => _isOpen;
 
-    /// <summary>Opens the panel (optionally with the replace row), seeding it from the selection.</summary>
+    private bool IsReadOnly => _view.Options.GetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId);
+
+    /// <summary>
+    /// Opens the panel (optionally with the replace row), seeding it from the selection.
+    /// On a read-only view (<see cref="DefaultTextViewOptions.ViewProhibitUserInputId"/>)
+    /// the panel is find-only: the replace row is unavailable.
+    /// </summary>
     public void Show(bool showReplace = false)
     {
         if (_isDisposed || _view.IsClosed || !EnsureAttached())
@@ -239,7 +303,14 @@ public sealed class FindReplacePanel
 
         _isOpen = true;
         _root.IsVisible = true;
-        if (showReplace)
+        UpdateReplaceTooltips();
+        var readOnly = IsReadOnly;
+        _replaceToggle.IsVisible = !readOnly;
+        if (readOnly)
+        {
+            _replaceToggle.IsChecked = false;
+        }
+        else if (showReplace)
         {
             _replaceToggle.IsChecked = true;
         }
@@ -286,6 +357,11 @@ public sealed class FindReplacePanel
     /// </summary>
     public void ReplaceNext()
     {
+        if (IsReadOnly)
+        {
+            return;
+        }
+
         if (string.IsNullOrEmpty(_findBox.Text))
         {
             Show(showReplace: true);
@@ -315,6 +391,11 @@ public sealed class FindReplacePanel
     /// <summary>Replaces every match in the buffer in a single edit (one undo step).</summary>
     public void ReplaceAll()
     {
+        if (IsReadOnly)
+        {
+            return;
+        }
+
         if (string.IsNullOrEmpty(_findBox.Text))
         {
             Show(showReplace: true);
@@ -544,6 +625,47 @@ public sealed class FindReplacePanel
         }
     }
 
+    private bool TryHandleChord(KeyEventArgs e)
+    {
+        if (ShowGesture?.Matches(e) == true)
+        {
+            Show();
+            return true;
+        }
+
+        if (ShowReplaceGesture?.Matches(e) == true)
+        {
+            Show(showReplace: true);
+            return true;
+        }
+
+        if (FindNextGesture?.Matches(e) == true)
+        {
+            FindNext();
+            return true;
+        }
+
+        if (FindPreviousGesture?.Matches(e) == true)
+        {
+            FindPrevious();
+            return true;
+        }
+
+        if (ReplaceNextGesture?.Matches(e) == true)
+        {
+            ReplaceNext();
+            return true;
+        }
+
+        if (ReplaceAllGesture?.Matches(e) == true)
+        {
+            ReplaceAll();
+            return true;
+        }
+
+        return false;
+    }
+
     private void OnViewKeyDown(object? sender, KeyEventArgs e)
     {
         if (_isOpen && e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None)
@@ -551,24 +673,28 @@ public sealed class FindReplacePanel
             Hide();
             e.Handled = true;
         }
+        else if (TryHandleChord(e))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private void UpdateReplaceTooltips()
+    {
+        ToolTip.SetTip(_replaceNextButton, ReplaceNextGesture is { } next ? $"Replace Next ({next})" : "Replace Next");
+        ToolTip.SetTip(_replaceAllButton, ReplaceAllGesture is { } all ? $"Replace All ({all})" : "Replace All");
     }
 
     private void OnPanelKeyDown(object? sender, KeyEventArgs e)
     {
-        switch (e.Key, e.KeyModifiers)
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None)
         {
-            case (Key.Escape, KeyModifiers.None):
-                Hide();
-                e.Handled = true;
-                break;
-            case (Key.R, KeyModifiers.Alt):
-                ReplaceNext();
-                e.Handled = true;
-                break;
-            case (Key.A, KeyModifiers.Alt):
-                ReplaceAll();
-                e.Handled = true;
-                break;
+            Hide();
+            e.Handled = true;
+        }
+        else
+        {
+            e.Handled = TryHandleChord(e);
         }
     }
 

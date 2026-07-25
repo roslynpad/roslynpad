@@ -1,9 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 using RoslynPad.Editor;
 using RoslynPad.UI;
 
@@ -11,10 +8,7 @@ namespace RoslynPad;
 
 partial class ILViewer : UserControl
 {
-    private readonly ContentControl _editorHost;
-
-    private ITextBuffer? _buffer;
-    private IWpfTextView? _textView;
+    private readonly CodeEditorView _editor;
 
     static ILViewer()
     {
@@ -26,7 +20,7 @@ partial class ILViewer : UserControl
     {
         InitializeComponent();
 
-        _editorHost = this.FindControl<ContentControl>("EditorHost") ?? throw new InvalidOperationException("Missing EditorHost");
+        _editor = this.FindControl<CodeEditorView>("Editor") ?? throw new InvalidOperationException("Missing Editor");
     }
 
     public static readonly StyledProperty<string?> TextProperty =
@@ -49,7 +43,7 @@ partial class ILViewer : UserControl
 
     private void OnTextChanged(string? text)
     {
-        if (_buffer is { } buffer)
+        if (_editor.Buffer is { } buffer)
         {
             buffer.Replace(new Span(0, buffer.CurrentSnapshot.Length), text ?? string.Empty);
             return;
@@ -59,36 +53,8 @@ partial class ILViewer : UserControl
         // since the IL comes from building an open document.
         if (!string.IsNullOrEmpty(text) && ViewModel is { IsInitialized: true } viewModel)
         {
-            CreateEditor(viewModel, text);
-        }
-    }
-
-    private void CreateEditor(MainViewModel viewModel, string text)
-    {
-        var exportProvider = viewModel.RoslynHost.ExportProvider;
-
-        var contentType = exportProvider.GetExportedValue<IContentTypeRegistryService>().GetContentType(ILClassificationDefinitions.ContentType)
-            ?? throw new InvalidOperationException("The ILAsm content type is not registered");
-        var buffer = exportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer(text, contentType);
-        _buffer = buffer;
-
-        var editorFactory = exportProvider.GetExportedValue<ITextEditorFactoryService>();
-        var textView = editorFactory.CreateTextView(buffer);
-        _textView = textView;
-        textView.Options.SetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId, true);
-
-        ApplyTheme(viewModel);
-        viewModel.ThemeChanged += (o, e) => ApplyTheme(viewModel);
-
-        var viewHost = editorFactory.CreateTextViewHost(textView, setFocus: false);
-        _editorHost.Content = viewHost.HostControl;
-    }
-
-    private void ApplyTheme(MainViewModel viewModel)
-    {
-        if (_textView is { } textView && viewModel.Theme.TryGetColor("editor.background") is { } background)
-        {
-            textView.Background = new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(background));
+            _editor.CreateBuffer(viewModel, text, ILClassificationDefinitions.ContentType);
+            _editor.CreateView(isReadOnly: true, setFocus: false);
         }
     }
 }

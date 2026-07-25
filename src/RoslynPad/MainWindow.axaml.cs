@@ -12,6 +12,7 @@ using Dock.Model;
 using Dock.Model.Avalonia.Controls;
 using Dock.Model.Core;
 using Dock.Model.Core.Events;
+using Avalonia.VisualTree;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RoslynPad.Themes;
@@ -477,11 +478,36 @@ partial class MainWindow : Window
 
     private void OnFindClick(object? sender, EventArgs e)
     {
-        ViewModel.CurrentOpenDocument?.RequestFind();
+        ShowFindReplace(showReplace: false);
     }
 
     private void OnReplaceClick(object? sender, EventArgs e)
     {
-        ViewModel.CurrentOpenDocument?.RequestReplace();
+        ShowFindReplace(showReplace: true);
+    }
+
+    /// <summary>
+    /// Routes the menu's Find/Replace to the editor containing the focused element —
+    /// including read-only metadata tabs and the IL viewer — falling back to the active
+    /// document tab when focus is outside any editor.
+    /// </summary>
+    private void ShowFindReplace(bool showReplace)
+    {
+        if (FocusManager?.GetFocusedElement() is Visual focused
+            && focused.FindAncestorOfType<CodeEditorView>(includeSelf: true) is { } editor)
+        {
+            editor.InvokeFindReplace(showReplace);
+        }
+        else if (ViewModel.ActiveContent is OpenDocumentViewModel doc)
+        {
+            if (showReplace)
+            {
+                doc.RequestReplace();
+            }
+            else
+            {
+                doc.RequestFind();
+            }
+        }
     }
 }

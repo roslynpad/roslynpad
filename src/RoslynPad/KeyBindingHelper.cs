@@ -14,6 +14,22 @@ internal static class KeyBindingHelper
     /// </summary>
     public static AvaloniaKeyBinding? CreateKeyBinding(string command, System.Windows.Input.ICommand boundCommand, object? commandParameter = null)
     {
+        return GetKeyGesture(command) is { } gesture
+            ? new AvaloniaKeyBinding
+            {
+                Gesture = gesture,
+                Command = boundCommand,
+                CommandParameter = commandParameter!
+            }
+            : null;
+    }
+
+    /// <summary>
+    /// Gets the current (default or user-customized) gesture of a command from the
+    /// KeyBindings service, or null when unbound or unparsable.
+    /// </summary>
+    public static KeyGesture? GetKeyGesture(string command)
+    {
         var keySequence = KeyBindings.Service.GetKeyBinding(command);
         if (string.IsNullOrWhiteSpace(keySequence))
         {
@@ -22,13 +38,7 @@ internal static class KeyBindingHelper
 
         try
         {
-            var gesture = KeyGesture.Parse(keySequence);
-            return new AvaloniaKeyBinding
-            {
-                Gesture = gesture,
-                Command = boundCommand,
-                CommandParameter = commandParameter!
-            };
+            return KeyGesture.Parse(keySequence);
         }
         catch (FormatException)
         {

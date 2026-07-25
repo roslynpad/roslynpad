@@ -58,8 +58,8 @@ partial class DocumentView : UserControl, IDisposable
         viewModel.EditorFocus += (o, e) => FocusEditor();
         viewModel.RenameRequested += (o, e) => _editor.InvokeRename();
         viewModel.NavigationRequested += span => _editor.NavigateToSpan(span);
-        viewModel.FindRequested += (o, e) => FindReplace?.Show(showReplace: false);
-        viewModel.FindReplaceRequested += (o, e) => FindReplace?.Show(showReplace: true);
+        viewModel.FindRequested += (o, e) => _editor.InvokeFindReplace(showReplace: false);
+        viewModel.FindReplaceRequested += (o, e) => _editor.InvokeFindReplace(showReplace: true);
 
         var documentText = await viewModel.LoadTextAsync().ConfigureAwait(true);
 
@@ -121,8 +121,6 @@ partial class DocumentView : UserControl, IDisposable
 
     private void FocusEditor() => _editor.FocusEditor();
 
-    private FindReplacePanel? FindReplace => _textView is { } textView ? FindReplacePanel.Get(textView) : null;
-
     private void InitializeKeyBindings(OpenDocumentViewModel viewModel)
     {
         this.AddKeyBinding(KeyBindingCommands.RunScript, viewModel.RunCommand);
@@ -133,12 +131,6 @@ partial class DocumentView : UserControl, IDisposable
         this.AddKeyBinding(KeyBindingCommands.UncommentSelection, viewModel.UncommentSelectionCommand);
         this.AddKeyBinding(KeyBindingCommands.RenameSymbol, viewModel.RenameSymbolCommand);
         this.AddKeyBinding(KeyBindingCommands.SearchNuGet, new DelegateCommand(() => _nuGetSearch.Focus()));
-        this.AddKeyBinding(KeyBindingCommands.Find, new DelegateCommand(() => FindReplace?.Show(showReplace: false)));
-        this.AddKeyBinding(KeyBindingCommands.Replace, new DelegateCommand(() => FindReplace?.Show(showReplace: true)));
-        this.AddKeyBinding(KeyBindingCommands.FindNext, new DelegateCommand(() => FindReplace?.FindNext()));
-        this.AddKeyBinding(KeyBindingCommands.FindPrevious, new DelegateCommand(() => FindReplace?.FindPrevious()));
-        this.AddKeyBinding(KeyBindingCommands.SearchReplaceNext, new DelegateCommand(() => FindReplace?.ReplaceNext()));
-        this.AddKeyBinding(KeyBindingCommands.SearchReplaceAll, new DelegateCommand(() => FindReplace?.ReplaceAll()));
     }
 
     private void NuGetSearch_OnKeyDown(object? sender, KeyEventArgs e)

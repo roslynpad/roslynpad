@@ -76,36 +76,6 @@ public sealed class App : Application
             }
         };
 
-        // Find/replace (Ctrl+F, Ctrl+H, F3/Shift+F3): the panel ships with the editor.
-        var findReplace = FindReplacePanel.Get(view);
-        window.AddHandler(InputElement.KeyDownEvent, (_, e) =>
-        {
-            if (findReplace is null || view.IsClosed)
-            {
-                return;
-            }
-
-            switch (e.Key, e.KeyModifiers)
-            {
-                case (Key.F, KeyModifiers.Control):
-                    findReplace.Show(showReplace: false);
-                    e.Handled = true;
-                    break;
-                case (Key.H, KeyModifiers.Control):
-                    findReplace.Show(showReplace: true);
-                    e.Handled = true;
-                    break;
-                case (Key.F3, KeyModifiers.None):
-                    findReplace.FindNext();
-                    e.Handled = true;
-                    break;
-                case (Key.F3, KeyModifiers.Shift):
-                    findReplace.FindPrevious();
-                    e.Handled = true;
-                    break;
-            }
-        });
-
         return window;
     }
 }
