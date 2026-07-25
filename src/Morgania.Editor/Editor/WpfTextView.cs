@@ -1442,6 +1442,13 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         }
 
         Focus();
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            // Right-click caret/selection semantics live in the context menu's
+            // ContextRequested handler (keep the selection when inside it).
+            return;
+        }
+
         var point = e.GetPosition(this);
 
         // Interim mouse handling: click moves the caret, shift-click and drag extend,
