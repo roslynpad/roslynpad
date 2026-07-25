@@ -18,5 +18,4 @@ using System.Runtime.InteropServices;
 //
 
 [assembly: InternalsVisibleTo("Morgania.UI.Text.EditorOperations.UnitTests")]
-// Morgania: the view layer installs the platform clipboard provider (ClipboardShim seam).
 [assembly: InternalsVisibleTo("Morgania.UI.Text.Wpf.View.Implementation")]

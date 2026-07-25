@@ -42,7 +42,8 @@ internal sealed class EditorContextMenu(
         var cut = Item("Cut", Gesture(meta, Key.X),
             () => commanding.Execute(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()));
         var paste = Item("Paste", Gesture(meta, Key.V),
-            () => commanding.Execute(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()));
+            () => _ = textView.PasteFromClipboardAsync(
+                () => commanding.Execute(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste())));
         var toggleComment = Item("Toggle Line Comment", Gesture(meta, Key.OemQuestion),
             () => commanding.Execute(static (v, b) => new ToggleLineCommentCommandArgs(v, b), static () => { }));
         var formatDocument = Item("Format Document", Gesture(meta | KeyModifiers.Shift, Key.D),

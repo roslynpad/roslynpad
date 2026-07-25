@@ -2766,41 +2766,17 @@ namespace Microsoft.VisualStudio.Text.Operations.Implementation
         /// </summary>
         public bool Paste()
         {
-            string text = null;
-            bool dataHasLineCutCopyTag = false;
-            bool dataHasBoxCutCopyTag = false;
-
-            // Clipboard may throw exceptions, so enclose Clipboard calls in a try-catch block
-            try
+            // Morgania: the OS clipboard is async-only, so paste entry points fetch it and
+            // prime the view with the snapshot (TextViewClipboardExtensions.PasteFromClipboardAsync)
+            // before this synchronous dispatch runs.
+            if (!_textView.Properties.TryGetProperty(typeof(PendingClipboardPaste), out PendingClipboardPaste pendingPaste))
             {
-                IDataObject dataObj = Clipboard.GetDataObject();
-
-                if (dataObj == null || !dataObj.GetDataPresent(typeof(string)))
-                {
-                    return true;
-                }
-
-                text = (string) dataObj.GetData(DataFormats.UnicodeText);
-                if (text == null)
-                {
-                    text = (string) dataObj.GetData(DataFormats.Text);
-                }
-
-                dataHasLineCutCopyTag = dataObj.GetDataPresent(_clipboardLineBasedCutCopyTag);
-                dataHasBoxCutCopyTag = dataObj.GetDataPresent(_boxSelectionCutCopyTag);
+                return true;
             }
-            catch (System.Runtime.InteropServices.ExternalException)
-            {
-                // TODO: Log error
-                return false;
-            }
-            catch (OutOfMemoryException)
-            {
-                // silently fail on out of memory exceptions.
-                // the clipboard also throws out of memory exceptions when the data in the clipboard is corrupt
-                // see bug 780687
-                return false;
-            }
+
+            string text = pendingPaste.Text;
+            bool dataHasLineCutCopyTag = pendingPaste.ApplicationFormats.Contains(_clipboardLineBasedCutCopyTag);
+            bool dataHasBoxCutCopyTag = pendingPaste.ApplicationFormats.Contains(_boxSelectionCutCopyTag);
 
             if (text != null)
             {
@@ -2880,16 +2856,10 @@ namespace Microsoft.VisualStudio.Text.Operations.Implementation
         {
             get
             {
-                // Clipboard may throw exceptions, so enclose Clipboard calls in a try-catch block
-                try
-                {
-                    return Clipboard.ContainsText() && !_textView.TextSnapshot.TextBuffer.IsReadOnly(_editorPrimitives.Caret.CurrentPosition);
-                }
-                catch (System.Runtime.InteropServices.ExternalException)
-                {
-                    // TODO: Log error
-                    return false;
-                }
+                // Morgania: only answerable synchronously while a paste dispatch has primed
+                // the view (the OS clipboard cannot be queried synchronously).
+                return _textView.Properties.ContainsProperty(typeof(PendingClipboardPaste))
+                    && !_textView.TextSnapshot.TextBuffer.IsReadOnly(_editorPrimitives.Caret.CurrentPosition);
             }
         }
 
@@ -3844,52 +3814,24 @@ namespace Microsoft.VisualStudio.Text.Operations.Implementation
         /// <param name="textData">The textual content to put in the clipboard</param>
         /// <param name="rtfData">The RTF formatted data to put in the clipboard</param>
         /// <returns>true if operation succeeded.</returns>
-        private static bool CopyToClipboard(string textData, string rtfData, bool lineCutCopyTag, bool boxCutCopyTag)
+        private bool CopyToClipboard(string textData, string rtfData, bool lineCutCopyTag, bool boxCutCopyTag)
         {
-            // note: we should change clipboard data even if textData or rtfData are empty
-
-            // Clipboard may throw exceptions, so enclose Clipboard calls in a try-catch block
-            try
+            // Morgania: pushed asynchronously to the view's OS clipboard, with the cut-copy
+            // tags as application data formats so they round-trip through the OS. rtfData is
+            // always null (RTF generation is disabled in GenerateRtf).
+            var tags = new List<string>(2);
+            if (lineCutCopyTag)
             {
-                DataObject dataObject = new DataObject();
-
-                //set plain text format
-                dataObject.SetText(textData);
-
-                //set any additional data
-                if (rtfData != null)
-                {
-                    dataObject.SetData(DataFormats.Rtf, rtfData);
-                }
-
-                //tag the data in the clipboard if requested
-                if (lineCutCopyTag)
-                {
-                    dataObject.SetData(_clipboardLineBasedCutCopyTag, true);
-                }
-
-                if (boxCutCopyTag)
-                {
-                    dataObject.SetData(_boxSelectionCutCopyTag, true);
-                }
-
-                // When adding an item to the clipboard, use delay rendering. We expect the host to flush
-                // the data down during shutdown if it so desires. Putting the data on the clipboard with delay 
-                // rendering helps with clipboard contention issues with remote desktop and multiple clipboard 
-                // chain listeners.
-                // WPF, when doing no delay rendering, calls OleSetClipboard and OleFlushClipboard under the covers 
-                // which causes the OS to send out two almost simultaneous clipboard open/close notification pairs 
-                // which confuse applications that try to synchronize clipboard data between multiple machines such 
-                // as MagicMouse or remote desktop.
-                Clipboard.SetDataObject(dataObject, false);
-
-                return true;
+                tags.Add(_clipboardLineBasedCutCopyTag);
             }
-            catch (System.Runtime.InteropServices.ExternalException)
+
+            if (boxCutCopyTag)
             {
-                // TODO: Log error
-                return false;
+                tags.Add(_boxSelectionCutCopyTag);
             }
+
+            _textView.SetClipboardText(textData, tags);
+            return true;
         }
 
         private string GenerateRtf(NormalizedSnapshotSpanCollection spans)

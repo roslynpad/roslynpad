@@ -1238,12 +1238,6 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         }
     }
 
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        AvaloniaClipboardBridge.Instance.Attach(TopLevel.GetTopLevel(this));
-    }
-
     /// <summary>Whether the view responds to user input (the Interactive role).</summary>
     private bool AllowsUserInput => _roles.Contains(PredefinedTextViewRoles.Interactive);
 
@@ -1374,7 +1368,9 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             case Key.X when command:
                 return operations.CutSelection();
             case Key.V when command:
-                return operations.Paste();
+                // Async OS-clipboard fetch, then the synchronous paste over the snapshot.
+                _ = this.PasteFromClipboardAsync(() => operations.Paste());
+                return true;
             case Key.Z when command && extend:
             case Key.Y when command:
                 return TryUndoRedo(undo: false);

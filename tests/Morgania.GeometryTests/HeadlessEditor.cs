@@ -45,6 +45,16 @@ internal static class HeadlessEditor
             },
             CancellationToken.None);
 
+    /// <summary>Runs an async <paramref name="action"/> on the UI thread, pumping the dispatcher across awaits.</summary>
+    public static Task RunAsync(Func<Task> action) =>
+        s_session.Dispatch(
+            async () =>
+            {
+                await action().ConfigureAwait(true);
+                return true;
+            },
+            CancellationToken.None);
+
     public static CompositionHost Container => s_container ??= CreateContainer();
 
     /// <summary>Creates a view over the given text with an explicit viewport.</summary>

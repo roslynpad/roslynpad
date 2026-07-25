@@ -155,8 +155,8 @@ internal sealed class CommandingKeyBridge(
                 (Key.Tab, meta: false, shift: true) when !readOnly => Run(static (v, b) => new BackTabKeyCommandArgs(v, b), () => operations.Unindent()),
                 (Key.Back, meta: false, shift: _) when !readOnly => Run(static (v, b) => new BackspaceKeyCommandArgs(v, b), () => operations.Backspace()),
                 (Key.Delete, meta: false, shift: false) when !readOnly => Run(static (v, b) => new DeleteKeyCommandArgs(v, b), () => operations.Delete()),
-                (Key.V, meta: true, shift: false) when !readOnly => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
-                (Key.Insert, meta: false, shift: true) when !readOnly => Run(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()),
+                (Key.V, meta: true, shift: false) when !readOnly => RunPaste(),
+                (Key.Insert, meta: false, shift: true) when !readOnly => RunPaste(),
                 (Key.X, meta: true, shift: false) when !readOnly => Run(static (v, b) => new CutCommandArgs(v, b), () => operations.CutSelection()),
                 (Key.C, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
                 (Key.Insert, meta: true, shift: false) => Run(static (v, b) => new CopyCommandArgs(v, b), () => operations.CopySelection()),
@@ -238,6 +238,18 @@ internal sealed class CommandingKeyBridge(
             where T : EditorCommandArgs
         {
             commanding.Execute(argsFactory, defaultAction);
+            return true;
+        }
+
+        /// <summary>
+        /// Paste is the one command that cannot dispatch synchronously: the OS clipboard is
+        /// async-only, so the key is consumed immediately and the command chain runs once
+        /// the clipboard data arrives.
+        /// </summary>
+        private bool RunPaste()
+        {
+            _ = view.PasteFromClipboardAsync(
+                () => commanding.Execute(static (v, b) => new PasteCommandArgs(v, b), () => operations.Paste()));
             return true;
         }
 

@@ -1,3 +1,7 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Input.Platform;
+
 using Microsoft.VisualStudio.GeometryTests;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -301,23 +305,89 @@ public sealed class EditingBehaviorTests
     }
 
     [TestMethod]
-    public async Task CutAndPasteRoundTripThroughTheClipboardSeam()
+    public async Task CutAndPasteRoundTripThroughTheOsClipboard()
     {
-        await HeadlessEditor.RunAsync(() =>
+        await HeadlessEditor.RunAsync(async () =>
         {
             var view = HeadlessEditor.CreateView("keep MOVE end");
+            var window = ShowInWindow(view);
             var operations = GetOperations(view);
 
             view.Selection.Select(new SnapshotSpan(view.TextSnapshot, 5, 5), false);
             Assert.IsTrue(operations.CutSelection());
             Assert.AreEqual("keep end", view.TextBuffer.CurrentSnapshot.GetText());
 
+            // The cut's OS-clipboard push is fire-and-forget; let its continuations drain.
+            await Task.Yield();
+
             operations.MoveToEndOfDocument(false);
-            Assert.IsTrue(operations.Paste());
+            var pasted = false;
+            await view.PasteFromClipboardAsync(() => pasted = operations.Paste()).ConfigureAwait(true);
+            Assert.IsTrue(pasted);
             Assert.AreEqual("keep endMOVE ", view.TextBuffer.CurrentSnapshot.GetText());
 
             view.Close();
+            window.Close();
         }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task PasteInsertsTextPlacedOnTheOsClipboardByAnotherSource()
+    {
+        await HeadlessEditor.RunAsync(async () =>
+        {
+            var view = HeadlessEditor.CreateView("start ");
+            var window = ShowInWindow(view);
+            var operations = GetOperations(view);
+
+            await TopLevel.GetTopLevel(view.VisualElement)!.Clipboard!
+                .SetValueAsync(DataFormat.Text, "external").ConfigureAwait(true);
+
+            operations.MoveToEndOfDocument(false);
+            await view.PasteFromClipboardAsync(() => operations.Paste()).ConfigureAwait(true);
+            Assert.AreEqual("start external", view.TextBuffer.CurrentSnapshot.GetText());
+
+            view.Close();
+            window.Close();
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task LineCutTagSurvivesTheOsClipboardRoundTrip()
+    {
+        await HeadlessEditor.RunAsync(async () =>
+        {
+            var view = HeadlessEditor.CreateView("first\nsecond");
+            var window = ShowInWindow(view);
+            var operations = GetOperations(view);
+
+            // An empty selection cuts the whole caret line, tagged as a line cut.
+            view.Caret.MoveTo(new SnapshotPoint(view.TextSnapshot, 0));
+            Assert.IsTrue(operations.CutSelection());
+            Assert.AreEqual("second", view.TextBuffer.CurrentSnapshot.GetText());
+
+            await Task.Yield();
+
+            // The tag survives the OS round trip: pasting mid-line inserts a full line
+            // above the caret's line rather than splitting it at the caret.
+            view.Caret.MoveTo(new SnapshotPoint(view.TextSnapshot, 3));
+            await view.PasteFromClipboardAsync(() => operations.Paste()).ConfigureAwait(true);
+            Assert.AreEqual("first\nsecond", view.TextBuffer.CurrentSnapshot.GetText());
+
+            view.Close();
+            window.Close();
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hosts the view in a shown headless window so the clipboard bridge attaches to a
+    /// TopLevel and reaches the (in-memory) headless OS clipboard.
+    /// </summary>
+    private static Window ShowInWindow(IWpfTextView view)
+    {
+        var window = new Window { Content = view.VisualElement };
+        window.Show();
+        return window;
     }
 
     [TestMethod]
