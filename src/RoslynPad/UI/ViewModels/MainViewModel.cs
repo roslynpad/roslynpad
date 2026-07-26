@@ -330,7 +330,7 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
         _ = Task.Run(() => Process.Start(
             new ProcessStartInfo
             {
-                FileName = "https://github.com/aelij/RoslynPad/issues",
+                FileName = "https://github.com/roslynpad/roslynpad/issues",
                 UseShellExecute = true,
             }));
     }

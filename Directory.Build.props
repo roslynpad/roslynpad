@@ -46,7 +46,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)\src\RoslynPad\Resources\RoslynPad.png" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)\docs\RoslynPad.png" Pack="true" PackagePath="\" Visible="false" />
     <None Include="README.md" Pack="true" PackagePath="\"
           Condition=" Exists('$(MSBuildProjectDirectory)\README.md') " />
   </ItemGroup>

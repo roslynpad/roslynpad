@@ -30,10 +30,10 @@
     <_ResizetizerIsiOSApp>true</_ResizetizerIsiOSApp>
     <ResizetizerIncludeSelfProject>true</ResizetizerIncludeSelfProject>
     <OptimizePNGs>true</OptimizePNGs>
-    <_XSAppIconAssets>Assets.xcassets/appicon.appiconset</_XSAppIconAssets>
+    <_XSAppIconAssets>Assets.xcassets/roslynpad.appiconset</_XSAppIconAssets>
   </PropertyGroup>
   <ItemGroup>
-    <MauiIcon Include="$(RepoRoot)/deploy/resources/macos/appicon.svg" />
+    <MauiIcon Include="$(RepoRoot)/docs/roslynpad.svg" />
     <AvaloniaResource Include="Resources\RoslynPad.ico" />
     <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
     <EmbeddedResource Include="Editor\Resources\*.json" LogicalName="RoslynPad.Editor.Resources.%(Filename)%(Extension)" />

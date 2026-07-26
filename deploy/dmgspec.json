@@ -1,6 +1,6 @@
 {
   "title": "RoslynPad",
-  "icon": "RoslynPad.app/Contents/Resources/appicon.icns",
+  "icon": "RoslynPad.app/Contents/Resources/roslynpad.icns",
   "icon-size": 80,
   "contents": [
     { "x": 192, "y": 100, "type": "file", "path": "RoslynPad.app" },

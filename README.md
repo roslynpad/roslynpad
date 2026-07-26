@@ -12,7 +12,7 @@ A cross-platform C# editor powered by Roslyn and the Morgania editor - an Avalon
 
 | Source | |
 |-|-|
-| GitHub | [![Downloads](https://img.shields.io/github/downloads/aelij/RoslynPad/total.svg?style=flat-square)](https://github.com/aelij/RoslynPad/releases/latest) |
+| GitHub | [![Downloads](https://img.shields.io/github/downloads/roslynpad/roslynpad/total.svg?style=flat-square)](https://github.com/roslynpad/roslynpad/releases/latest) |
 | Microsoft Store | <a href="https://www.microsoft.com/store/apps/9nctj2cqwxv0?ocid=badge"><img src="https://get.microsoft.com/images/en-us%20light.svg" height="30" alt="Microsoft Store badge logo" /></a> |
 | winget | `winget install --id RoslynPad.RoslynPad` |
 | Homebrew | `brew install --cask roslynpad` |
