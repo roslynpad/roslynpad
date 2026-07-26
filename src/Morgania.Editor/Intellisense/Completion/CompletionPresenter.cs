@@ -120,6 +120,12 @@ internal sealed class CompletionPresenter : ICompletionPresenter
             BorderThickness = new Thickness(1.0),
             MinWidth = 180.0,
             MaxWidth = 480.0,
+            // The declared growth bound the popup agent's placement decides by (list cap plus
+            // the suggestion and filter rows, with headroom at the largest editor font — the
+            // real content never reaches it, so nothing clips): the list often opens with few
+            // items and fills in a moment later, and deciding by the momentary size would
+            // open the popup below the caret only to flip it above mid-growth.
+            MaxHeight = 320.0,
         };
         ApplyBrushes();
         _view.LostAggregateFocus += OnViewLostAggregateFocus;
