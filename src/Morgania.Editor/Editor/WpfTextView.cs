@@ -1225,6 +1225,15 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             return;
         }
 
+        // Shift+wheel scrolls horizontally (the standard editor gesture for mice without a
+        // tilt wheel): the wheel's vertical notches take the horizontal mapping below.
+        if (!_isClosed && e.Delta.Y != 0 && e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            _viewScroller.ScrollViewportHorizontallyByPixels(-e.Delta.Y * 3.0 * LineHeight);
+            e.Handled = true;
+            return;
+        }
+
         if (!_isClosed && e.Delta.Y != 0)
         {
             _viewScroller.ScrollViewportVerticallyByPixels(e.Delta.Y * 3.0 * LineHeight);
