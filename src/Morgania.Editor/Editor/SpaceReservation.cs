@@ -395,37 +395,48 @@ internal sealed class PopupAgent : ISpaceReservationAgent
         }
 
         var anchor = new Rect(topLeft, bottomRight);
+
+        // The content must live IN the tree before it can measure truthfully: detached, its
+        // controls have neither styles nor control templates applied, so Measure answers a
+        // near-empty shell of bare paddings — the popup then opened as a sliver and grew to
+        // its real size a beat later. Attach it parked far off-screen instead; everything
+        // below runs before the next render pass, so the parking spot never paints.
+        if (_overlay is null)
+        {
+            _overlay = overlay;
+            Canvas.SetLeft(Content, ParkedOffscreen);
+            Canvas.SetTop(Content, ParkedOffscreen);
+            overlay.Children.Add(Content);
+        }
+
+        Content.IsVisible = true; // before the measure — an invisible control measures empty
         Content.Measure(Size.Infinity);
         // The window's client area bounds the popup (the overlay itself may not have been
         // arranged yet — its Bounds lag behind the window's on the first pass).
         var overlayBounds = TopLevel.GetTopLevel(_view) is { } topLevel
             ? new Rect(topLevel.ClientSize)
             : new Rect(overlay.Bounds.Size);
-        var rect = ChoosePlacement(anchor, Content.DesiredSize, overlayBounds, reservedSpace, _style);
-
-        if (_overlay is null)
-        {
-            _overlay = overlay;
-            overlay.Children.Add(Content);
-        }
+        var rect = ChoosePlacement(anchor, Content.DesiredSize, PotentialSize(Content), overlayBounds, reservedSpace, _style);
 
         Canvas.SetLeft(Content, rect.X);
         Canvas.SetTop(Content, rect.Y);
-        Content.IsVisible = true;
         EnsureMouseTracking();
 
         if (_adjunctContent is { } adjunct)
         {
-            adjunct.Measure(Size.Infinity);
-            var adjunctRect = PlaceAdjunct(rect, adjunct.DesiredSize, overlayBounds);
+            // Same attach-before-measure rule as the popup itself.
             if (!overlay.Children.Contains(adjunct))
             {
+                Canvas.SetLeft(adjunct, ParkedOffscreen);
+                Canvas.SetTop(adjunct, ParkedOffscreen);
                 overlay.Children.Add(adjunct);
             }
 
+            adjunct.IsVisible = true;
+            adjunct.Measure(Size.Infinity);
+            var adjunctRect = PlaceAdjunct(rect, adjunct.DesiredSize, overlayBounds);
             Canvas.SetLeft(adjunct, adjunctRect.X);
             Canvas.SetTop(adjunct, adjunctRect.Y);
-            adjunct.IsVisible = true;
             return new GeometryGroup
             {
                 Children = { new RectangleGeometry(rect), new RectangleGeometry(adjunctRect) },
@@ -434,6 +445,10 @@ internal sealed class PopupAgent : ISpaceReservationAgent
 
         return new RectangleGeometry(rect);
     }
+
+    /// <summary>The parking coordinate for the attach-before-measure pass (see
+    /// <see cref="PositionAndDisplay"/>) — far outside any window.</summary>
+    private const double ParkedOffscreen = -100000.0;
 
     /// <summary>
     /// Adjunct placement: beside the popup, top-aligned — on the left when it fits, else
@@ -480,42 +495,61 @@ internal sealed class PopupAgent : ISpaceReservationAgent
         return null;
     }
 
+    /// <summary>The size the popup may still grow to: its declared Max constraints on top of
+    /// the current desired size (unconstrained axes keep the desired size).</summary>
+    private static Size PotentialSize(Control content) => new(
+        double.IsFinite(content.MaxWidth) ? Math.Max(content.DesiredSize.Width, content.MaxWidth) : content.DesiredSize.Width,
+        double.IsFinite(content.MaxHeight) ? Math.Max(content.DesiredSize.Height, content.MaxHeight) : content.DesiredSize.Height);
+
     /// <summary>
     /// Places the popup per <see cref="PopupStyles"/>: below the span (or right, with
     /// <see cref="PopupStyles.PositionLeftOrRight"/>), preferring the top/left side when
     /// requested, flipping to the opposite side when the preferred one runs off the window
     /// or into space other agents reserved, and finally clamping into the window.
+    /// The side DECISION sizes the popup by <paramref name="potential"/> on the flip axis:
+    /// async popup content often opens small and fills in moments later — deciding by the
+    /// momentary size would place it on one side and flip it mid-growth (VS Code's suggest
+    /// widget reserves by its max size for the same reason). The rendered rect keeps the
+    /// actual <paramref name="size"/>.
     /// </summary>
-    private static Rect ChoosePlacement(Rect anchor, Size size, Rect bounds, Geometry reservedSpace, PopupStyles style)
+    private static Rect ChoosePlacement(Rect anchor, Size size, Size potential, Rect bounds, Geometry reservedSpace, PopupStyles style)
     {
         bool leftOrRight = style.HasFlag(PopupStyles.PositionLeftOrRight);
         bool preferTopOrLeft = style.HasFlag(PopupStyles.PreferLeftOrTopPosition);
         bool justify = style.HasFlag(PopupStyles.RightOrBottomJustify);
 
-        Rect first, second;
+        Rect first, second, firstDecision, secondDecision;
         if (leftOrRight)
         {
             double y = justify ? anchor.Bottom - size.Height : anchor.Top;
             var right = new Rect(new Point(anchor.Right, y), size);
             var left = new Rect(new Point(anchor.Left - size.Width, y), size);
-            (first, second) = preferTopOrLeft ? (left, right) : (right, left);
+            var rightDecision = new Rect(new Point(anchor.Right, y), new Size(potential.Width, size.Height));
+            var leftDecision = new Rect(new Point(anchor.Left - potential.Width, y), new Size(potential.Width, size.Height));
+            (first, firstDecision, second, secondDecision) = preferTopOrLeft
+                ? (left, leftDecision, right, rightDecision)
+                : (right, rightDecision, left, leftDecision);
         }
         else
         {
             double x = justify ? anchor.Right - size.Width : anchor.Left;
             var below = new Rect(new Point(x, anchor.Bottom), size);
             var above = new Rect(new Point(x, anchor.Top - size.Height), size);
-            (first, second) = preferTopOrLeft ? (above, below) : (below, above);
+            var belowDecision = new Rect(new Point(x, anchor.Bottom), new Size(size.Width, potential.Height));
+            var aboveDecision = new Rect(new Point(x, anchor.Top - potential.Height), new Size(size.Width, potential.Height));
+            (first, firstDecision, second, secondDecision) = preferTopOrLeft
+                ? (above, aboveDecision, below, belowDecision)
+                : (below, belowDecision, above, aboveDecision);
         }
 
         bool Fits(Rect rect) => bounds.Contains(rect) && !IntersectsReserved(rect, reservedSpace);
 
-        if (Fits(first))
+        if (Fits(firstDecision))
         {
             return first;
         }
 
-        if (Fits(second))
+        if (Fits(secondDecision))
         {
             return second;
         }
