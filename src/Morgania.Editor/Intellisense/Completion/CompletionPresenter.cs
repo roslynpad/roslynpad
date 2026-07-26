@@ -93,6 +93,9 @@ internal sealed class CompletionPresenter : ICompletionPresenter
             Content = _itemsPanel,
             MaxHeight = 220.0,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            // The bar is permanent while the content overflows; the auto-hide
+            // expand/collapse timers only add hover churn inside the popup.
+            AllowAutoHide = false,
         };
         _suggestionRow = new Border
         {
