@@ -10,8 +10,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
@@ -93,6 +95,9 @@ internal sealed class CompletionPresenter : ICompletionPresenter
             Content = _itemsPanel,
             MaxHeight = 220.0,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            // The list's scrollbar is permanent while the content overflows; the auto-hide
+            // expand/collapse timers only add hover churn inside the popup.
+            AllowAutoHide = false,
         };
         _suggestionRow = new Border
         {
@@ -123,6 +128,121 @@ internal sealed class CompletionPresenter : ICompletionPresenter
         };
         ApplyBrushes();
         _view.LostAggregateFocus += OnViewLostAggregateFocus;
+        // The scrollbar wiring below needs the scroll template's parts, which materialize with
+        // layout — retried per layout until found, re-armed when the template re-applies
+        // (a theme change replaces the parts).
+        _scroll.TemplateApplied += (_, _) => ArmScrollBarSetup();
+        ArmScrollBarSetup();
+    }
+
+    /// <summary>The scrollbar parts already wired by <see cref="SetUpScrollBarParts"/>.</summary>
+    private readonly HashSet<object> _scrollBarPartsSetUp = [];
+
+    /// <summary>Retry the scrollbar wiring per layout until its parts exist (they materialize
+    /// with the scroll template's first layout).</summary>
+    private void ArmScrollBarSetup()
+    {
+        _scroll.LayoutUpdated -= OnScrollLayoutUpdated;
+        _scroll.LayoutUpdated += OnScrollLayoutUpdated;
+    }
+
+    private void OnScrollLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (SetUpScrollBarParts())
+        {
+            _scroll.LayoutUpdated -= OnScrollLayoutUpdated;
+        }
+    }
+
+    /// <summary>
+    /// Wire the list's vertical scrollbar for the popup context; returns whether both parts
+    /// were found. Popup content sits on the top-level's overlay layer, where the pointer-over
+    /// evaluation can strobe between the thumb and the bar behind it at render cadence — the
+    /// theme's thumb hover color would flash, and a press is routed to whichever of the two the
+    /// landing frame picks. So: the thumb's visual is pinned to its resting brush (a local
+    /// binding outranks the hover style), and the bar gets whole-bar dragging (the VS Code
+    /// scrollbar gesture) — a press anywhere on it jumps the list to that position and starts a
+    /// drag, so the gesture works no matter which part receives the press; a thumb-handled
+    /// press remains the classic drag.
+    /// </summary>
+    private bool SetUpScrollBarParts()
+    {
+        bool thumbFound = false;
+        foreach (var thumb in _scroll.GetVisualDescendants().OfType<Thumb>())
+        {
+            thumbFound = true;
+            if (!_scrollBarPartsSetUp.Add(thumb))
+            {
+                continue;
+            }
+
+            if (thumb.GetVisualDescendants().OfType<Border>().FirstOrDefault() is { } visual)
+            {
+                visual[!Border.BackgroundProperty] = thumb[!TemplatedControl.BackgroundProperty];
+            }
+        }
+
+        bool barFound = false;
+        foreach (var bar in _scroll.GetVisualDescendants().OfType<ScrollBar>())
+        {
+            if (bar.Orientation != Avalonia.Layout.Orientation.Vertical)
+            {
+                continue;
+            }
+
+            barFound = true;
+            if (!_scrollBarPartsSetUp.Add(bar))
+            {
+                continue;
+            }
+
+            bool barDragging = false;
+            bar.AddHandler(InputElement.PointerPressedEvent, (_, e) =>
+            {
+                if (e.Handled || !e.GetCurrentPoint(bar).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                barDragging = true;
+                e.Pointer.Capture(bar);
+                ScrollBarToPointer(bar, e.GetPosition(bar).Y);
+                e.Handled = true;
+            }, RoutingStrategies.Bubble);
+            bar.AddHandler(InputElement.PointerMovedEvent, (_, e) =>
+            {
+                if (barDragging && ReferenceEquals(e.Pointer.Captured, bar))
+                {
+                    ScrollBarToPointer(bar, e.GetPosition(bar).Y);
+                    e.Handled = true;
+                }
+            }, RoutingStrategies.Bubble, handledEventsToo: true);
+            bar.AddHandler(InputElement.PointerReleasedEvent, (_, _) => barDragging = false,
+                RoutingStrategies.Bubble, handledEventsToo: true);
+        }
+
+        return thumbFound && barFound;
+    }
+
+    /// <summary>Centers the bar's thumb on the given track position (jump-scroll + drag).</summary>
+    private static void ScrollBarToPointer(ScrollBar bar, double y)
+    {
+        double range = bar.Maximum - bar.Minimum;
+        double trackLength = bar.Bounds.Height;
+        if (range <= 0.0 || trackLength <= 0.0)
+        {
+            return;
+        }
+
+        double thumbLength = Math.Max(0.0, bar.ViewportSize / (range + bar.ViewportSize) * trackLength);
+        double usable = trackLength - thumbLength;
+        if (usable <= 0.0)
+        {
+            return;
+        }
+
+        double fraction = Math.Clamp((y - (thumbLength / 2.0)) / usable, 0.0, 1.0);
+        bar.Value = bar.Minimum + (fraction * range);
     }
 
     private void OnViewLostAggregateFocus(object? sender, EventArgs e) => _session?.Dismiss();
