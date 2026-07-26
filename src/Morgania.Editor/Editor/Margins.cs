@@ -483,6 +483,9 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
             AllowAutoHide = false;
             Minimum = 0.0;
             view.LayoutChanged += (_, _) => SynchronizeFromView();
+            // A purely horizontal scroll (wheel tilt, Shift+wheel) shifts the viewport without
+            // re-laying-out the lines — no LayoutChanged — so the thumb must follow this event.
+            view.ViewportLeftChanged += (_, _) => SynchronizeFromView();
             view.Options.OptionChanged += (_, _) => SynchronizeFromView();
             Scroll += (_, e) =>
             {
