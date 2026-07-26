@@ -272,6 +272,7 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         private readonly IWpfTextView _view;
         private readonly LineScrollMap _map;
         private bool _synchronizing;
+        private bool _thumbDragging;
 
         public VerticalScrollBarMargin(IWpfTextView view)
         {
@@ -285,6 +286,12 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
             view.LayoutChanged += (_, _) => SynchronizeFromView();
             Scroll += (_, e) =>
             {
+                // While the thumb is being dragged the drag owns Value: the layout sync must
+                // not write it back — its whole-line quantization would round away every
+                // sub-line drag delta, so the thumb sticks and the view crawls far behind the
+                // pointer. Any other scroll (EndScroll on release, paging, line steps) hands
+                // Value back to the sync, which settles it on a line boundary.
+                _thumbDragging = e.ScrollEventType == ScrollEventType.ThumbTrack;
                 if (!_synchronizing && !_view.IsClosed)
                 {
                     _view.DisplayTextLineContainingBufferPosition(
@@ -385,7 +392,10 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
                 Maximum = Math.Max(0.0, _view.VisualSnapshot.LineCount - viewportLines);
                 ViewportSize = viewportLines;
                 LargeChange = viewportLines;
-                Value = firstLine;
+                if (!_thumbDragging)
+                {
+                    Value = firstLine;
+                }
             }
             finally
             {
