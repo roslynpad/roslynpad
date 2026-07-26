@@ -95,6 +95,9 @@
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="RoslynPad.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="ResultsView.axaml.cs">
       <DependentUpon>ResultsView.axaml</DependentUpon>
     </Compile>

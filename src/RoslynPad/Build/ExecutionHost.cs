@@ -47,12 +47,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
-    private static readonly ImmutableArray<string> s_binFilesToRename = [
-        "{0}.deps.json",
-        "{0}.runtimeconfig.json",
-        "{0}.exe.config"
-    ];
-
     private static readonly ImmutableArray<byte> s_newLine = [.. Encoding.UTF8.GetBytes(Environment.NewLine)];
 
     // Restore directories are content-hashed and shared across documents; serialize builds
@@ -64,12 +58,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private readonly ILogger _logger;
     private readonly IAnalyzerAssemblyLoader _analyzerAssemblyLoader;
     private readonly SortedSet<LibraryRef> _libraries;
-    private readonly ImmutableArray<string> _imports;
     private readonly SemaphoreSlim _lock;
-    private readonly SyntaxTree _scriptInitSyntax;
-    private readonly SyntaxTree _moduleInitAttributeSyntax;
-    private readonly SyntaxTree _moduleInitSyntax;
-    private readonly SyntaxTree _importsSyntax;
     private readonly LibraryRef _runtimeAssemblyLibraryRef;
     private readonly LibraryRef _runtimeNetFxAssemblyLibraryRef;
     private readonly string _restoreCachePath;
@@ -153,6 +142,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
     private string BuildPath => _parameters.BuildPath;
 
+    private string ScriptCompileTaskAssemblyPath { get; }
+
     private string ExecutableExtension => Platform.IsDotNet ? "dll" : "exe";
 
     public ImmutableArray<MetadataReference> MetadataReferences { get; private set; } = [];
@@ -166,21 +157,16 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         _logger = logger;
         _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
         _libraries = [];
-        _imports = parameters.Imports;
 
         _ctsLock = new object();
         _lock = new SemaphoreSlim(1, 1);
-
-        _scriptInitSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ScriptInit, roslynHost.ParseOptions.WithKind(SourceCodeKind.Script));
-        var regularParseOptions = roslynHost.ParseOptions.WithKind(SourceCodeKind.Regular);
-        _moduleInitAttributeSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ModuleInitAttribute, regularParseOptions);
-        _moduleInitSyntax = SyntaxFactory.ParseSyntaxTree(BuildCode.ModuleInit, regularParseOptions);
-        _importsSyntax = SyntaxFactory.ParseSyntaxTree(GetGlobalUsings(), regularParseOptions);
 
         MetadataReferences = [];
 
         _runtimeAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "net", "RoslynPad.Runtime.dll"));
         _runtimeNetFxAssemblyLibraryRef = LibraryRef.Reference(Path.Combine(AppContext.BaseDirectory, "runtimes", "netfx", "RoslynPad.Runtime.dll"));
+
+        ScriptCompileTaskAssemblyPath = Path.Combine(AppContext.BaseDirectory, "BuildTasks", "RoslynPad.BuildTasks.dll");
 
         _restoreCachePath = Path.Combine(Path.GetTempPath(), "roslynpad", "restore");
     }
@@ -194,13 +180,16 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     public event Action<RestoreResult>? RestoreCompleted;
     public event Action<ProgressResultObject>? ProgressChanged;
 
+    public Func<BuildOutputSource, bool, TextWriter>? BuildOutputWriterFactory { get; set; }
+
+    private TextWriter CreateBuildOutputWriter(BuildOutputSource source, bool cached = false) =>
+        BuildOutputWriterFactory?.Invoke(source, cached) ?? TextWriter.Null;
+
     public void Dispose()
     {
         _executeCts?.Dispose();
         _restoreCts?.Dispose();
     }
-
-    private string GetGlobalUsings() => string.Join(" ", _imports.Select(i => $"global using {i};"));
 
     private void InitializeBuildPath(bool stopProcess)
     {
@@ -261,12 +250,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             _running = true;
 
             // Traditional execution: compile first, then run
-            var binPath = IsScript ? BuildPath : Path.Combine(BuildPath, "bin");
-            _assemblyPath = Path.Combine(binPath, $"{Name}.{ExecutableExtension}");
+            _assemblyPath = Path.Combine(BuildPath, "bin", $"{Name}.{ExecutableExtension}");
 
-            var success = IsScript
-                ? CompileInProcess(path, optimizationLevel, _assemblyPath, cancellationToken)
-                : await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
+            var success = await CompileWithMsbuild(path, optimizationLevel, cancellationToken).ConfigureAwait(false);
 
             if (!success)
             {
@@ -301,9 +287,10 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return false;
         }
 
-        var targetPath = Path.Combine(BuildPath, "Program.cs");
+        var targetPath = Path.Combine(BuildPath, IsScript ? MSBuildHelper.ScriptFileName : "Program.cs");
         var code = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        var syntaxTree = ParseAndTransformCode(code, path, (CSharpParseOptions)_roslynHost.ParseOptions, cancellationToken: cancellationToken);
+        var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
+        var syntaxTree = ParseAndTransformCode(code, path, parseOptions, cancellationToken: cancellationToken);
         var finalCode = syntaxTree.ToString();
         if (!File.Exists(targetPath) || !string.Equals(await File.ReadAllTextAsync(targetPath, cancellationToken).ConfigureAwait(false), finalCode, StringComparison.Ordinal))
         {
@@ -311,30 +298,56 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
 
         var csprojPath = Path.Combine(BuildPath, UseCache ? "program.csproj" : $"{Name}.csproj");
-        if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
+        if (IsScript)
         {
-            var moduleInitAttributeFile = Path.Combine(BuildPath, BuildCode.ModuleInitAttributeFileName);
-            if (!File.Exists(moduleInitAttributeFile))
+            var scriptInitFile = Path.Combine(BuildPath, MSBuildHelper.ScriptInitFileName);
+            if (!File.Exists(scriptInitFile))
             {
-                await File.WriteAllTextAsync(moduleInitAttributeFile, BuildCode.ModuleInitAttribute, cancellationToken).ConfigureAwait(false);
+                await File.WriteAllTextAsync(scriptInitFile, BuildCode.ScriptInit, cancellationToken).ConfigureAwait(false);
             }
         }
-
-        var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitFileName);
-        if (!File.Exists(moduleInitFile))
+        else
         {
-            await File.WriteAllTextAsync(moduleInitFile, BuildCode.ModuleInit, cancellationToken).ConfigureAwait(false);
+            if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
+            {
+                var moduleInitAttributeFile = Path.Combine(BuildPath, BuildCode.ModuleInitAttributeFileName);
+                if (!File.Exists(moduleInitAttributeFile))
+                {
+                    await File.WriteAllTextAsync(moduleInitAttributeFile, BuildCode.ModuleInitAttribute, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            var moduleInitFile = Path.Combine(BuildPath, BuildCode.ModuleInitFileName);
+            if (!File.Exists(moduleInitFile))
+            {
+                await File.WriteAllTextAsync(moduleInitFile, BuildCode.ModuleInit, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         var buildWarningsPath = Path.Combine(BuildPath, "build-warnings.log");
         var buildErrorsPath = Path.Combine(BuildPath, "build-errors.log");
 
+        var scriptArgs = IsScript
+            ? $"\"-p:RoslynPadWorkingDirectory={_parameters.WorkingDirectory}\" " +
+              $"-p:RoslynPadPrefer32Bit={(Platform.Architecture == Architecture.X86 ? "true" : "false")} " +
+              $"-p:CheckForOverflowUnderflow={(_parameters.CheckOverflow ? "true" : "false")} "
+            : string.Empty;
         var buildArgs =
-            $"-nologo -v:q -p:Configuration={optimizationLevel} \"-p:AssemblyName={Name}\" " +
+            $"-nologo -v:m -p:Configuration={optimizationLevel} \"-p:AssemblyName={Name}\" {scriptArgs}" +
             $"\"-flp1:logfile={buildWarningsPath};warningsonly;Encoding=UTF-8\" \"-flp2:logfile={buildErrorsPath};errorsonly;Encoding=UTF-8\" \"{csprojPath}\" ";
+
         using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
             $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
-        await buildResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+        using (var output = CreateBuildOutputWriter(BuildOutputSource.Compile))
+        {
+            await foreach (var line in buildResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
+            {
+                await output.WriteLineAsync(line).ConfigureAwait(false);
+            }
+
+            await WriteErrorLinesAsync(output, buildResult.StandardError).ConfigureAwait(false);
+        }
 
         var compilationErrors = await ReadBuildLogAsync(buildWarningsPath, "Warning")
             .Concat(ReadBuildLogAsync(buildErrorsPath, "Error"))
@@ -354,6 +367,19 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         CompilationErrors?.Invoke(compilationErrors);
 
         return success;
+    }
+
+    private static async Task WriteErrorLinesAsync(TextWriter output, string? standardError)
+    {
+        if (standardError is not { Length: > 0 })
+        {
+            return;
+        }
+
+        foreach (var line in standardError.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            await output.WriteLineAsync(line).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -431,7 +457,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 Message = match.Groups["message"].Value,
             };
 
-            if (match.Groups["file"].Value.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            if (match.Groups["file"].Value.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ||
+                match.Groups["file"].Value.EndsWith(".csx", StringComparison.OrdinalIgnoreCase))
             {
                 error.LineNumber = int.Parse(match.Groups["line"].ValueSpan, CultureInfo.InvariantCulture);
                 error.Column = int.Parse(match.Groups["column"].ValueSpan, CultureInfo.InvariantCulture);
@@ -439,19 +466,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
             yield return error;
         }
-    }
-
-    private bool CompileInProcess(string path, OptimizationLevel? optimizationLevel, string assemblyPath, CancellationToken cancellationToken)
-    {
-        var code = File.ReadAllText(path);
-        var script = CreateCompiler(code, optimizationLevel, cancellationToken);
-
-        var diagnostics = script.CompileAndSaveAssembly(assemblyPath, cancellationToken);
-        var hasErrors = diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-        _logger.AssemblySaved(_assemblyPath, hasErrors);
-
-        SendDiagnostics(diagnostics);
-        return !hasErrors;
     }
 
     private void NoDotNetError()
@@ -470,54 +484,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         var disassembler = new ReflectionDisassembler(output, false, CancellationToken.None);
         disassembler.WriteModuleContents(assembly.MainModule);
         Disassembled?.Invoke(output.ToString());
-    }
-
-    private Compiler CreateCompiler(string code, OptimizationLevel? optimizationLevel, CancellationToken cancellationToken)
-    {
-        var platform = Platform.Architecture == Architecture.X86
-            ? Microsoft.CodeAnalysis.Platform.AnyCpu32BitPreferred
-            : Microsoft.CodeAnalysis.Platform.AnyCpu;
-
-        var optimization = optimizationLevel ?? OptimizationLevel.Release;
-
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            var referenceDisplays = MetadataReferences.Select(static reference => reference.Display).ToArray();
-            _logger.CreatingScriptRunner(
-                platform,
-                referenceDisplays,
-                _imports,
-                _parameters.WorkingDirectory,
-                optimizationLevel);
-        }
-
-        var parseOptions = ((CSharpParseOptions)_roslynHost.ParseOptions).WithKind(_parameters.SourceCodeKind);
-
-        var syntaxTrees = ImmutableList.Create(ParseAndTransformCode(code, path: "", parseOptions, cancellationToken));
-        if (_parameters.SourceCodeKind == SourceCodeKind.Script)
-        {
-            syntaxTrees = syntaxTrees.Insert(0, _scriptInitSyntax);
-        }
-        else
-        {
-            if (Platform.IsDotNetFramework || Platform.FrameworkVersion?.Major < 5)
-            {
-                syntaxTrees = syntaxTrees.Add(_moduleInitAttributeSyntax);
-            }
-
-            syntaxTrees = syntaxTrees.Add(_moduleInitSyntax).Add(_importsSyntax);
-        }
-
-        return new Compiler(syntaxTrees,
-            parseOptions,
-            OutputKind.ConsoleApplication,
-            platform,
-            MetadataReferences,
-            _imports,
-            _parameters.WorkingDirectory,
-            optimizationLevel: optimization,
-            checkOverflow: _parameters.CheckOverflow,
-            allowUnsafe: _parameters.AllowUnsafe);
     }
 
     private async Task ExecuteAssemblyAsync(string assemblyPath, CancellationToken cancellationToken)
@@ -704,24 +670,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         root = compilationUnit.WithMembers(members);
 
         return tree.WithRootAndOptions(root, parseOptions);
-    }
-
-    private void SendDiagnostics(ImmutableArray<Diagnostic> diagnostics)
-    {
-        if (diagnostics.Length > 0)
-        {
-            CompilationErrors?.Invoke([.. diagnostics.Select(GetCompilationErrorResultObject)]);
-        }
-    }
-
-    private static CompilationErrorResultObject GetCompilationErrorResultObject(Diagnostic diagnostic)
-    {
-        var lineSpan = diagnostic.Location.GetLineSpan();
-
-        var result = CompilationErrorResultObject.Create(diagnostic.Severity.ToString(),
-                diagnostic.Id, diagnostic.GetMessage(CultureInfo.InvariantCulture),
-                lineSpan.StartLinePosition.Line, lineSpan.StartLinePosition.Character);
-        return result;
     }
 
     public Task TerminateAsync()
@@ -961,7 +909,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 var projBuildResult = await BuildCsproj().ConfigureAwait(false);
 
                 var outputPath = Path.Combine(projBuildResult.RestorePath, "output.json");
+                var outputLogPath = Path.Combine(projBuildResult.RestorePath, "output.log");
 
+                var restored = false;
                 if (!projBuildResult.MarkerExists)
                 {
                     var restoreLock = s_restoreLocks.GetOrAdd(projBuildResult.RestorePath, static _ => new SemaphoreSlim(1, 1));
@@ -971,7 +921,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                     if (!projBuildResult.UsesCache || !File.Exists(projBuildResult.MarkerPath))
                     {
                         await Task.Run(() => projBuildResult.Csproj.Save(projBuildResult.CsprojPath), cancellationToken).ConfigureAwait(false);
-                        await File.WriteAllTextAsync(Path.Combine(projBuildResult.RestorePath, "Program.cs"), "_ = 0;", cancellationToken).ConfigureAwait(false);
                         await BuildGlobalJson(projBuildResult.RestorePath).ConfigureAwait(false);
                         File.Copy(_parameters.NuGetConfigPath, Path.Combine(projBuildResult.RestorePath, "nuget.config"), overwrite: true);
 
@@ -980,14 +929,34 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                         cancellationToken.ThrowIfCancellationRequested();
 
+                        // A design-time build (the properties custom targets key off): references and
+                        // analyzers resolve without compiling or producing outputs, and
+                        // -getResultOutputFile keeps the item JSON off stdout so it stays a
+                        // human-readable, streamable log.
                         var buildArgs =
-                            $"--interactive -nologo " +
+                            $"-restore -interactive -nologo -v:m " +
                             $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
-                            $"-getTargetResult:build -getItem:ReferencePathWithRefAssemblies,Analyzer ";
+                            $"-t:Compile -p:DesignTimeBuild=true -p:SkipCompilerExecution=true " +
+                            $"-getItem:ReferencePathWithRefAssemblies,Analyzer \"-getResultOutputFile:{outputPath}\" ";
                         using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
-                            $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
+                            $"msbuild {buildArgs}", cancellationToken).ConfigureAwait(false);
 
-                        await restoreResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                        // The log is persisted next to the cache marker so cache hits can replay it.
+                        using (var output = CreateBuildOutputWriter(BuildOutputSource.Restore))
+                        using (var logWriter = IOUtilities.PerformIO(() => File.CreateText(outputLogPath)))
+                        {
+                            await foreach (var line in restoreResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
+                            {
+                                await output.WriteLineAsync(line).ConfigureAwait(false);
+                                if (logWriter is not null)
+                                {
+                                    await logWriter.WriteLineAsync(line).ConfigureAwait(false);
+                                }
+                            }
+
+                            await WriteErrorLinesAsync(output, restoreResult.StandardError).ConfigureAwait(false);
+                            await WriteErrorLinesAsync(logWriter ?? TextWriter.Null, restoreResult.StandardError).ConfigureAwait(false);
+                        }
 
                         if (restoreResult.ExitCode != 0)
                         {
@@ -997,43 +966,24 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                             return errorResult;
                         }
 
-                        var restoreOutput = JsonSerializer.Deserialize<BuildOutput>(restoreResult.StandardOutput);
-                        using var resultOutputStream = File.OpenWrite(outputPath);
-                        await JsonSerializer.SerializeAsync(resultOutputStream, restoreOutput, cancellationToken: cancellationToken).ConfigureAwait(false);
-
                         if (projBuildResult.UsesCache)
                         {
                             await File.WriteAllTextAsync(projBuildResult.MarkerPath, string.Empty, cancellationToken).ConfigureAwait(false);
                         }
+
+                        restored = true;
                     }
+                }
+
+                if (!restored)
+                {
+                    ReplayRestoreOutput(outputLogPath);
                 }
 
                 if (projBuildResult.UsesCache)
                 {
-                    if (IsScript)
-                    {
-                        IOUtilities.DirectoryCopy(Path.Combine(projBuildResult.RestorePath, "bin"), BuildPath, overwrite: true);
-                    }
-                    else
-                    {
-                        IOUtilities.DirectoryCopy(Path.Combine(projBuildResult.RestorePath), BuildPath, overwrite: true, recursive: false);
-                        File.Delete(Path.Combine(BuildPath, "Program.cs"));
-                    }
-
+                    IOUtilities.DirectoryCopy(projBuildResult.RestorePath, BuildPath, overwrite: true, recursive: false);
                     await File.WriteAllTextAsync(Path.Combine(BuildPath, Path.GetFileName(projBuildResult.RestorePath)), string.Empty, cancellationToken).ConfigureAwait(false);
-
-                    if (IsScript)
-                    {
-                        foreach (var fileToRename in s_binFilesToRename)
-                        {
-                            var originalFile = Path.Combine(BuildPath, string.Format(CultureInfo.InvariantCulture, fileToRename, "program"));
-                            var newFile = Path.Combine(BuildPath, string.Format(CultureInfo.InvariantCulture, fileToRename, Name));
-                            if (File.Exists(originalFile))
-                            {
-                                File.Move(originalFile, newFile, overwrite: true);
-                            }
-                        }
-                    }
                 }
 
                 await ReadReferencesAsync(outputPath, cancellationToken).ConfigureAwait(false);
@@ -1073,6 +1023,25 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))];
         }
 
+        // On a cache hit no restore process runs, so the pane replays the log persisted by the
+        // restore that populated the cache directory (a pre-feature cache has no log).
+        void ReplayRestoreOutput(string outputLogPath)
+        {
+            using var output = CreateBuildOutputWriter(BuildOutputSource.Restore, cached: true);
+            var lines = IOUtilities.PerformIO(() => File.ReadAllLines(outputLogPath), []);
+            if (lines is { Length: > 0 })
+            {
+                foreach (var line in lines)
+                {
+                    output.WriteLine(line);
+                }
+            }
+            else
+            {
+                output.WriteLine("Restore up to date (cached).");
+            }
+        }
+
         async Task BuildGlobalJson(string restorePath)
         {
             if (Platform?.IsDotNet != true)
@@ -1086,12 +1055,28 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         async Task<CsprojBuildResult> BuildCsproj()
         {
-            var csproj = UseFileBasedExecution
-                ? await ConvertFileBasedToCsprojAsync(cancellationToken).ConfigureAwait(false)
-                : MSBuildHelper.CreateCsproj(
-                    Platform.TargetFrameworkMoniker,
-                    _libraries,
-                    _parameters.Imports);
+            XDocument csproj;
+            if (UseFileBasedExecution)
+            {
+                csproj = await ConvertFileBasedToCsprojAsync(cancellationToken).ConfigureAwait(false);
+                if (IsScript)
+                {
+                    MSBuildHelper.ConvertToScriptCsproj(csproj, ScriptCompileTaskAssemblyPath);
+                }
+            }
+            else
+            {
+                csproj = IsScript
+                    ? MSBuildHelper.CreateScriptCsproj(
+                        Platform.TargetFrameworkMoniker,
+                        _libraries,
+                        _parameters.Imports,
+                        ScriptCompileTaskAssemblyPath)
+                    : MSBuildHelper.CreateCsproj(
+                        Platform.TargetFrameworkMoniker,
+                        _libraries,
+                        _parameters.Imports);
+            }
 
             string csprojPath;
             string? markerPath;
@@ -1194,7 +1179,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     [GeneratedRegex(@"(?<=\: error )[^\]]+")]
     private static partial Regex RestoreErrorRegex();
 
-    [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)\): (?<severity>warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
+    // The span is (line,col) from csc and (line,col,endLine,endCol) from ScriptCompileTask
+    [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)(,\d+,\d+)?\): (?<severity>warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
     private static partial Regex MsbuildLogRegex();
 
     private record BuildOutput(BuildOutputItems Items);

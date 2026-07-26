@@ -148,6 +148,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
         _restoreSuccessful = true; // initially set to true so we can immediately start running and wait for restore
         _dispatcher = appDispatcher;
+        BuildOutput = new BuildOutputViewModel(appDispatcher);
 
         OpenBuildPathCommand = commands.Create(OpenBuildPath);
         SaveCommand = commands.CreateAsync(() => SaveAsync(promptSave: false));
@@ -193,6 +194,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
         _executionHost.RestoreStarted += OnRestoreStarted;
         _executionHost.RestoreCompleted += OnRestoreCompleted;
         _executionHost.ProgressChanged += p => ReportedProgress = p.Progress;
+        _executionHost.BuildOutputWriterFactory = BuildOutput.CreateWriter;
     }
 
     private void SetDefaultPlatform()
@@ -668,6 +670,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     public bool HasDocumentId => _documentId is not null;
 
     public MainViewModel MainViewModel { get; }
+    public BuildOutputViewModel BuildOutput { get; }
     public ICommandProvider CommandProvider { get; }
     public NuGetDocumentViewModel NuGet { get; }
     public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : DefaultDocumentName + GetFileExtension();

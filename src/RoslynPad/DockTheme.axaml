@@ -38,25 +38,32 @@
                      DockProperties.IsDockTarget="True"
                      Background="Transparent"
                      ZIndex="1">
-            <DocumentTabStrip x:Name="PART_TabStrip"
-                              DockPanel.Dock="Top"
-                              ItemsSource="{Binding VisibleDockables}"
-                              SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
-                              CanCreateItem="{Binding CanCreateDocument}"
-                              IconTemplate="{TemplateBinding IconTemplate}"
-                              HeaderTemplate="{TemplateBinding HeaderTemplate}"
-                              ModifiedTemplate="{TemplateBinding ModifiedTemplate}"
-                              CloseTemplate="{TemplateBinding CloseTemplate}"
-                              CloseButtonTheme="{TemplateBinding CloseButtonTheme}"
-                              IsActive="{TemplateBinding IsActive}"
-                              DockProperties.IsDropArea="True"
-                              DockProperties.DockAdornerHost="{Binding #PART_DockPanel}">
-              <DocumentTabStrip.Styles>
-                <Style Selector="DocumentTabStripItem">
-                  <Setter Property="IsActive" Value="{Binding $parent[DocumentTabStrip].IsActive}" />
-                </Style>
-              </DocumentTabStrip.Styles>
-            </DocumentTabStrip>
+            <DockPanel DockPanel.Dock="Top">
+              <!-- The active tab's PaneHeader.Content (e.g. the Build pane's source combo)
+                   rendered at the right end of the pill row -->
+              <ContentControl DockPanel.Dock="Right"
+                              VerticalAlignment="Center"
+                              Margin="0,0,8,0"
+                              Content="{Binding ActiveDockable.(rp:PaneHeader.Content)}" />
+              <DocumentTabStrip x:Name="PART_TabStrip"
+                                ItemsSource="{Binding VisibleDockables}"
+                                SelectedItem="{Binding ActiveDockable, Mode=TwoWay}"
+                                CanCreateItem="{Binding CanCreateDocument}"
+                                IconTemplate="{TemplateBinding IconTemplate}"
+                                HeaderTemplate="{TemplateBinding HeaderTemplate}"
+                                ModifiedTemplate="{TemplateBinding ModifiedTemplate}"
+                                CloseTemplate="{TemplateBinding CloseTemplate}"
+                                CloseButtonTheme="{TemplateBinding CloseButtonTheme}"
+                                IsActive="{TemplateBinding IsActive}"
+                                DockProperties.IsDropArea="True"
+                                DockProperties.DockAdornerHost="{Binding #PART_DockPanel}">
+                <DocumentTabStrip.Styles>
+                  <Style Selector="DocumentTabStripItem">
+                    <Setter Property="IsActive" Value="{Binding $parent[DocumentTabStrip].IsActive}" />
+                  </Style>
+                </DocumentTabStrip.Styles>
+              </DocumentTabStrip>
+            </DockPanel>
             <Border x:Name="PART_Border">
               <Grid>
                 <DockableControl DataContext="{Binding ActiveDockable}"

@@ -285,13 +285,14 @@ partial class MainWindow : Window
             return;
         }
 
-        // The code-behind relies on these panes; if any is missing (e.g. corrupted or
-        // incompatible layout), keep the default XAML layout.
+        // The code-behind relies on these panes; if any is missing (e.g. corrupted, incompatible,
+        // or pre-Build-pane layout), keep the default XAML layout.
         if (layout is null ||
             FindDockable(factory, layout, "DocumentsPane") is not DocumentDock documentsPane ||
-            FindDockable(factory, layout, "ResultPane") is not ToolDock resultPane ||
-            FindDockable(factory, layout, "Results") is not Tool results ||
-            FindDockable(factory, layout, "IL") is not Tool il)
+            FindDockable(factory, layout, "ResultPane") is not DocumentDock resultPane ||
+            FindDockable(factory, layout, "Results") is not Document results ||
+            FindDockable(factory, layout, "Build") is not Document build ||
+            FindDockable(factory, layout, "IL") is not Document il)
         {
             return;
         }
@@ -321,6 +322,15 @@ partial class MainWindow : Window
             layout.FocusedDockable = null;
         }
 
+        // Deserialized documents carry stale display state: titles are serialized (so a rename
+        // in XAML wouldn't stick) and the PaneHeader.Content attached value (the Build pane's
+        // source combo) isn't serialized at all — re-apply both from the XAML instances.
+        foreach (var (source, target) in new[] { (Results, results), (Build, build), (IL, il) })
+        {
+            target.Title = source.Title;
+            PaneHeader.SetContent(target, PaneHeader.GetContent(source));
+        }
+
         // Capture the tool/document contents created in XAML by Id, swap in the
         // restored layout, then re-attach the contents to it.
         _dockState.Save(defaultLayout);
@@ -330,6 +340,7 @@ partial class MainWindow : Window
         DocumentsPane = documentsPane;
         ResultPane = resultPane;
         Results = results;
+        Build = build;
         IL = il;
     }
 

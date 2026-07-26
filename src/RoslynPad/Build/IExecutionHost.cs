@@ -23,6 +23,13 @@ internal interface IExecutionHost
     event Action<RestoreResult>? RestoreCompleted;
     event Action<ProgressResultObject>? ProgressChanged;
 
+    /// <summary>
+    /// Supplies the sink build output streams into, called once per phase as it starts producing
+    /// output (the flag indicates a cached replay); the writer is disposed when the phase ends.
+    /// Called from background threads.
+    /// </summary>
+    Func<BuildOutputSource, bool, TextWriter>? BuildOutputWriterFactory { get; set; }
+
     void ClearRestoreCache();
     Task UpdateReferencesAsync(bool alwaysRestore);
     Task SendInputAsync(string input);

@@ -190,15 +190,37 @@
                <ProportionalDockSplitter x:Name="ResultSplitter" Id="ResultSplitter" />
 
 
-                <ToolDock x:Name="ResultPane" Id="ResultPane" Proportion="0.35" Alignment="Bottom">
-                  <Tool x:Name="Results" Id="Results" Title="Results" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                <!-- A DocumentDock styled as VS Code panel pills: tabs on top, no chrome title bar.
+                     The tabs are fixed: not closable, floatable, or draggable into the documents pane. -->
+                <DocumentDock x:Name="ResultPane" Id="ResultPane" Proportion="0.35" IsCollapsable="False" CanDrop="False">
+                  <Document x:Name="Results" Id="Results" Title="Results" x:DataType="Document" CanFloat="False" CanPin="False" CanClose="False" CanDrag="False">
                       <local:ResultsView x:Name="ResultsView" DataContext="{Binding #This.ViewModel.CurrentOpenDocument}" />
-                  </Tool>
-                  <Tool x:Name="IL" Id="IL" Title="IL" x:DataType="Tool" CanFloat="False" CanPin="True" CanClose="False">
+                  </Document>
+                  <Document x:Name="Build" Id="Build" Title="Output" x:DataType="Document" CanFloat="False" CanPin="False" CanClose="False" CanDrag="False">
+                      <local:PaneHeader.Content>
+                        <ComboBox ItemsSource="{Binding #This.ViewModel.CurrentOpenDocument.BuildOutput.Documents}"
+                                  SelectedItem="{Binding #This.ViewModel.CurrentOpenDocument.BuildOutput.SelectedDocument, Mode=TwoWay}"
+                                  MinHeight="24"
+                                  FontSize="12"
+                                  Padding="8 2"
+                                  VerticalAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  ToolTip.Tip="Build output source">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="ui:BuildOutputDocument">
+                              <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                      </local:PaneHeader.Content>
+                      <local:BuildOutputView x:Name="BuildOutputView" DataContext="{Binding #This.ViewModel.CurrentOpenDocument}"
+                                             ViewModel="{Binding #This.ViewModel}" />
+                  </Document>
+                  <Document x:Name="IL" Id="IL" Title="IL" x:DataType="Document" CanFloat="False" CanPin="False" CanClose="False" CanDrag="False">
                       <local:ILViewer x:Name="ILViewer" Text="{Binding #This.ViewModel.CurrentOpenDocument.ILText}"
                                       ViewModel="{Binding #This.ViewModel}" />
-                  </Tool>
-              </ToolDock>
+                  </Document>
+              </DocumentDock>
 
             </ProportionalDock>
 

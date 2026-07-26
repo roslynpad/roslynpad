@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Common/">
     <Project Path="src/RestoreHelper/RestoreHelper.csproj" />
+    <Project Path="src/RoslynPad.BuildTasks/RoslynPad.BuildTasks.csproj" />
     <Project Path="src/RoslynPad.Runtime/RoslynPad.Runtime.csproj" />
     <Project Path="src/RoslynPad.Runtime.Secrets/RoslynPad.Runtime.Secrets.csproj" />
   </Folder>

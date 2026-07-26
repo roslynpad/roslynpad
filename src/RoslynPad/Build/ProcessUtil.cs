@@ -73,11 +73,8 @@ internal class ProcessUtil
                     yield break;
                 }
 
-                if (!string.IsNullOrWhiteSpace(line))
-                {
-                    _standardOutput.AppendLine(line);
-                    yield return line;
-                }
+                _standardOutput.AppendLine(line);
+                yield return line;
             }
         }
 

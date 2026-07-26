@@ -39,12 +39,15 @@ internal static class BuildCode
         compilationUnit.Members.OfType<GlobalStatementSyntax>()
             .LastOrDefault(m => m.Statement is ExpressionStatementSyntax expr && expr.SemicolonToken.IsMissing);
 
+    // The receiver is parenthesized because the rewritten tree round-trips through text
+    // (written to Program.cs/.csx and re-parsed by the build) — without parentheses a binary
+    // trailing expression like "1 + 2" would re-parse as "1 + 2.Dump()".
     public static GlobalStatementSyntax GetDumpCall(ExpressionStatementSyntax statement) =>
         GlobalStatement(
             ExpressionStatement(
             InvocationExpression(
                 MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
-                    statement.Expression,
+                    ParenthesizedExpression(statement.Expression),
                     IdentifierName("Dump")))));
 }

@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RoslynPad.BuildOutputView"
+             xmlns:local="clr-namespace:RoslynPad"
+             xmlns:ui="clr-namespace:RoslynPad.UI"
+             x:DataType="ui:OpenDocumentViewModel">
+  <!-- The source combo lives in the pane's tab pill row via PaneHeader.Content (MainWindow.axaml) -->
+  <local:CodeEditorView Name="Editor" />
+</UserControl>

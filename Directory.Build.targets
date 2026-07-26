@@ -2,21 +2,30 @@
   <ItemGroup Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
     <ProjectReference Include="$(RepoRoot)src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=$(EarliestSupportedTargetFramework)" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier" />
     <ProjectReference Include="$(RepoRoot)src\RoslynPad.Runtime\RoslynPad.Runtime.csproj" SetTargetFramework="TargetFramework=netstandard2.0" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier" />
+    <ProjectReference Include="$(RepoRoot)src\RoslynPad.BuildTasks\RoslynPad.BuildTasks.csproj" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifier" />
   </ItemGroup>
-  <Target Name="CopyRoslynPadRuntimeAssembliesOnBuild" AfterTargets="Build"
+  <Target Name="CollectRoslynPadBuildTasksFiles" Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' ">
+    <ItemGroup>
+      <RoslynPadBuildTasksFiles Include="$(RepoRoot)src\RoslynPad.BuildTasks\bin\$(Configuration)\netstandard2.0\*.dll" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CopyRoslynPadRuntimeAssembliesOnBuild" AfterTargets="Build" DependsOnTargets="CollectRoslynPadBuildTasksFiles"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' And '$(IsMacBuild)' != 'true' ">
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(OutputPath)\runtimes\netfx" />
+    <Copy SourceFiles="@(RoslynPadBuildTasksFiles)" DestinationFolder="$(OutputPath)\BuildTasks" />
   </Target>
-  <Target Name="CopyRoslynPadRuntimeAssembliesIntoAppBundle" BeforeTargets="_CodesignAppBundle"
+  <Target Name="CopyRoslynPadRuntimeAssembliesIntoAppBundle" BeforeTargets="_CodesignAppBundle" DependsOnTargets="CollectRoslynPadBuildTasksFiles"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' And '$(IsMacBuild)' == 'true' ">
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(AppBundleDir)\Contents\MonoBundle\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(AppBundleDir)\Contents\MonoBundle\runtimes\netfx" />
+    <Copy SourceFiles="@(RoslynPadBuildTasksFiles)" DestinationFolder="$(AppBundleDir)\Contents\MonoBundle\BuildTasks" />
   </Target>
-  <Target Name="CopyRoslynPadRuntimeAssembliesOnPublish" AfterTargets="Publish"
+  <Target Name="CopyRoslynPadRuntimeAssembliesOnPublish" AfterTargets="Publish" DependsOnTargets="CollectRoslynPadBuildTasksFiles"
           Condition=" '$(CopyRoslynPadRuntimeAssemblies)' == 'true' And '$(IsMacBuild)' != 'true' ">
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\$(EarliestSupportedTargetFramework)\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\net" />
     <Copy SourceFiles="$(RepoRoot)src\RoslynPad.Runtime\bin\$(Configuration)\netstandard2.0\RoslynPad.Runtime.dll" DestinationFolder="$(PublishDir)\runtimes\netfx" />
+    <Copy SourceFiles="@(RoslynPadBuildTasksFiles)" DestinationFolder="$(PublishDir)\BuildTasks" />
   </Target>
   <!-- hack to make macOS asset packaging (actool) work on non-Catalyst builds -->
   <Target Name="Before_CoreCompileImageAssets" BeforeTargets="_CoreCompileImageAssets">

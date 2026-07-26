@@ -345,6 +345,36 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's colors to the build output pane's classification types (VSColorOutput's
+    /// scheme). The colors resolve through the theme's own palette — severity foregrounds and the
+    /// terminal ANSI colors — so both light and dark themes are correct by construction.
+    /// BuildText stays unstyled and inherits the default foreground.
+    /// </summary>
+    public void ApplyBuildOutput(IClassificationFormatMap formatMap, IClassificationTypeRegistryService registry)
+    {
+        Set(BuildOutputClassificationTypes.BuildHead, "terminal.ansiGreen");
+        Set(BuildOutputClassificationTypes.LogError, "editorError.foreground");
+        Set(BuildOutputClassificationTypes.LogWarning, "editorWarning.foreground");
+        Set(BuildOutputClassificationTypes.LogInformation, "editorInfo.foreground");
+        Set(BuildOutputClassificationTypes.LogCustom1, "terminal.ansiCyan");
+        Set(BuildOutputClassificationTypes.LogCustom2, "terminal.ansiMagenta");
+        Set(BuildOutputClassificationTypes.LogCustom3, "terminal.ansiBrightMagenta");
+        Set(BuildOutputClassificationTypes.LogCustom4, "terminal.ansiBrightYellow");
+
+        void Set(string classification, string colorId)
+        {
+            if (_theme.TryGetColor(colorId) is not { } themeColor ||
+                registry.GetClassificationType(classification) is not { } type)
+            {
+                return;
+            }
+
+            formatMap.SetExplicitTextProperties(type, TextFormattingRunProperties.CreateTextFormattingRunProperties()
+                .SetForeground(ThemeDictionaryBase.ParseThemeColor(themeColor)));
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's editor background to the "TextView Background" editor-format entry
     /// (the standard VS Fonts-and-Colors item; recompiled Roslyn code reads it, e.g. inline
     /// diagnostics adapting severity icons to the background).

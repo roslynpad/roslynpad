@@ -41,7 +41,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
         return Buffer;
     }
 
-    public IWpfTextView CreateView(bool isReadOnly, bool setFocus = true)
+    public IWpfTextView CreateView(bool isReadOnly, bool setFocus = true, bool showLineNumbers = true)
     {
         var mainViewModel = _mainViewModel ?? throw new InvalidOperationException($"{nameof(CreateBuffer)} was not called");
         var exportProvider = mainViewModel.RoslynHost.ExportProvider;
@@ -49,7 +49,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
         var editorFactory = exportProvider.GetExportedValue<ITextEditorFactoryService>();
         var textView = editorFactory.CreateTextView(Buffer!);
         TextView = textView;
-        textView.Options.SetOptionValue(DefaultTextViewHostOptions.LineNumberMarginId, true);
+        textView.Options.SetOptionValue(DefaultTextViewHostOptions.LineNumberMarginId, showLineNumbers);
         if (isReadOnly)
         {
             textView.Options.SetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId, true);
@@ -214,6 +214,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
         var theme = new ThemeClassificationFormats(mainViewModel.Theme);
         theme.Apply(formatMap, registry);
         theme.ApplyInlineDiagnostics(formatMap, registry);
+        theme.ApplyBuildOutput(formatMap, registry);
 
         if (_editorFormatMap is { } editorFormatMap)
         {
