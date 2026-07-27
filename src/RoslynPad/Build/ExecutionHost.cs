@@ -113,7 +113,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    public bool UseFileBasedReferences => Platform.SupportsFileBasedApps && !_hasLegacyPackageDirectives;
+    public bool UseFileBasedReferences => !IsScript && Platform.SupportsFileBasedApps && !_hasLegacyPackageDirectives;
 
     public bool HasPlatform => _platform != null;
 

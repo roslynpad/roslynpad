@@ -877,7 +877,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
     /// <summary>
     /// Formats a package reference using the appropriate syntax for the current platform.
-    /// Uses #:package syntax for .NET 10+ SDK when no legacy #r directives exist, or #r "nuget:" otherwise.
+    /// Uses #:package syntax for .NET 10+ SDK regular documents, or #r "nuget:" for scripts and legacy platforms.
     /// </summary>
     public string FormatPackageReference(string packageId, NuGetVersion version)
     {
