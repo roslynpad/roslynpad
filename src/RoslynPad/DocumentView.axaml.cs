@@ -1,15 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media;
 using DialogHostAvalonia;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 using RoslynPad.Build;
-using RoslynPad.Editor;
+using RoslynPad.Roslyn.FileBasedPrograms;
 using RoslynPad.UI;
 using RoslynPad.Utilities;
 
@@ -84,6 +84,76 @@ partial class DocumentView : UserControl, IDisposable
         viewModel.Initialize(documentId, OnError,
             () => GetSelectionSpan(),
             this);
+
+        await MigrateReferenceDirectivesAsync(viewModel, buffer, documentId).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Rewrites legacy <c>#r</c> directives - illegal in a regular C# file - into their file-based
+    /// app equivalents. Applied as a buffer edit so it joins the undo stack and leaves the document
+    /// dirty; the user decides whether to keep it by saving.
+    /// </summary>
+    private async Task MigrateReferenceDirectivesAsync(OpenDocumentViewModel viewModel, ITextBuffer buffer, DocumentId documentId)
+    {
+        if (!viewModel.MainViewModel.Settings.MigrateReferenceDirectives ||
+            viewModel.SourceCodeKind != SourceCodeKind.Regular ||
+            viewModel.MainViewModel.RoslynHost.GetDocument(documentId) is not { } document)
+        {
+            return;
+        }
+
+        var root = await document.GetSyntaxRootAsync().ConfigureAwait(true);
+        if (root is null)
+        {
+            return;
+        }
+
+        var changes = ReferenceDirectiveHelpers.GetMigrationChanges(root, await document.GetTextAsync().ConfigureAwait(true));
+        if (changes.IsEmpty)
+        {
+            return;
+        }
+
+        using (var edit = buffer.CreateEdit())
+        {
+            foreach (var change in changes)
+            {
+                edit.Replace(new Span(change.Span.Start, change.Span.Length), change.NewText);
+            }
+
+            edit.Apply();
+        }
+
+        await ShowMigrationNoticeAsync(viewModel.MainViewModel.Settings).ConfigureAwait(true);
+    }
+
+    /// <summary>Explains the rewrite; dismissed by clicking anywhere outside it.</summary>
+    private static async Task ShowMigrationNoticeAsync(IApplicationSettingsValues settings)
+    {
+        var content = new StackPanel
+        {
+            MaxWidth = 380,
+            Spacing = 8,
+            Children =
+            {
+                new TextBlock
+                {
+                    TextWrapping = TextWrapping.Wrap,
+                    Text = "This file used #r directives, which aren't valid C# outside scripts. " +
+                        "They were rewritten as file-based app directives. Save the file to keep the change.",
+                },
+                new CheckBox
+                {
+                    Content = "Migrate #r directives when opening a file",
+                    [!ToggleButton.IsCheckedProperty] =
+                        new Binding(nameof(settings.MigrateReferenceDirectives)) { Source = settings },
+                },
+            },
+        };
+
+        await DialogHost.Show(
+            new HeaderedContentControl { Header = "References updated", Content = content },
+            MainWindow.DialogHostIdentifier).ConfigureAwait(true);
     }
 
     /// <summary>

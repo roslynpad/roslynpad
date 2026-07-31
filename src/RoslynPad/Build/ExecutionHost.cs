@@ -733,9 +733,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
         static (List<LibraryRef> libraries, bool hasFileBasedDirectives, bool hasLegacyPackageDirectives) ParseReferences(SyntaxNode syntaxRoot)
         {
-            const string LegacyNuGetPrefix = "$NuGet\\";
-            const string FxPrefix = "framework:";
-
             var libraries = new List<LibraryRef>();
             var hasFileBasedDirectives = false;
             var hasLegacyPackageDirectives = false;
@@ -751,7 +748,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 switch (directive.DirectiveKind)
                 {
                     case "package":
-                        var (id, version) = ParseFileBasedPackageDirective(directive.DirectiveText);
+                        var (id, version) = ReferenceDirectiveHelpers.ParsePackageDirective(directive.DirectiveText);
                         if (!string.IsNullOrEmpty(id))
                         {
                             libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
@@ -777,21 +774,21 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 var value = directive.File.ValueText;
                 string? id, version;
 
-                if (HasPrefix(FxPrefix, value))
+                if (ReferenceDirectiveHelpers.HasPrefix(ReferenceDirectiveHelpers.FrameworkPrefix, value))
                 {
                     libraries.Add(LibraryRef.FrameworkReference(
-                        value.Substring(FxPrefix.Length, value.Length - FxPrefix.Length)));
+                        value[ReferenceDirectiveHelpers.FrameworkPrefix.Length..]));
                     continue;
                 }
 
-                if (HasPrefix(NuGetPrefix, value))
+                if (ReferenceDirectiveHelpers.HasPrefix(ReferenceDirectiveHelpers.NuGetPrefix, value))
                 {
-                    (id, version) = ParseNuGetReference(value);
+                    (id, version) = ReferenceDirectiveHelpers.ParseNuGetReference(value);
                     hasLegacyPackageDirectives = true;
                 }
-                else if (HasPrefix(LegacyNuGetPrefix, value))
+                else if (ReferenceDirectiveHelpers.HasPrefix(ReferenceDirectiveHelpers.LegacyNuGetPrefix, value))
                 {
-                    (id, version) = ParseLegacyNuGetReference(value);
+                    (id, version) = ReferenceDirectiveHelpers.ParseLegacyNuGetReference(value);
                     hasLegacyPackageDirectives = true;
                     if (id == null)
                     {
@@ -814,58 +811,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             }
 
             return (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives);
-
-            static bool HasPrefix(string prefix, string value) =>
-                value.Length > prefix.Length &&
-                value.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
-
-            static (string? id, string? version) ParseLegacyNuGetReference(string value)
-            {
-                var split = value.Split('\\', StringSplitOptions.RemoveEmptyEntries);
-                return split.Length >= 3 ? (split[1], split[2]) : (null, null);
-            }
         }
-    }
-
-    private const string NuGetPrefix = "nuget:";
-
-    private static readonly char[] s_nugetSeparators = ['/', ','];
-
-    private static (string id, string? version) ParseNuGetReference(string value)
-    {
-        string id;
-        string? version;
-
-        var indexOfSlash = value.IndexOfAny(s_nugetSeparators);
-        if (indexOfSlash >= 0)
-        {
-            id = value.Substring(NuGetPrefix.Length, indexOfSlash - NuGetPrefix.Length);
-            version = indexOfSlash != value.Length - 1 ? value.Substring(indexOfSlash + 1) : string.Empty;
-        }
-        else
-        {
-            id = value.Substring(NuGetPrefix.Length);
-            version = null;
-        }
-
-        return (id.Trim(), version?.Trim());
-    }
-
-    /// <summary>
-    /// Parses the directive text of a file-based package reference: Name@Version or Name
-    /// </summary>
-    private static (string id, string? version) ParseFileBasedPackageDirective(string directiveText)
-    {
-        // directiveText is just the value part (e.g., "System.CommandLine@2.0.0-*")
-        var atIndex = directiveText.IndexOf('@');
-        if (atIndex >= 0)
-        {
-            var id = directiveText.Substring(0, atIndex).Trim();
-            var version = directiveText.Substring(atIndex + 1).Trim();
-            return (id, string.IsNullOrEmpty(version) ? null : version);
-        }
-
-        return (directiveText.Trim(), null);
     }
 
     private Task<RestoreResult> RestoreTask { get => field ?? Task.FromResult(RestoreResult.SuccessResult); set; }
