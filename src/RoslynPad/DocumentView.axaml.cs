@@ -145,8 +145,8 @@ partial class DocumentView : UserControl, IDisposable
                 new CheckBox
                 {
                     Content = "Migrate #r directives when opening a file",
-                    [!ToggleButton.IsCheckedProperty] =
-                        new Binding(nameof(settings.MigrateReferenceDirectives)) { Source = settings },
+                    [!ToggleButton.IsCheckedProperty] = CompiledBinding.Create(
+                        (IApplicationSettingsValues s) => s.MigrateReferenceDirectives, settings),
                 },
             },
         };
