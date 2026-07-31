@@ -141,6 +141,7 @@ internal class ApplicationSettings : IApplicationSettings
         public void LoadDefaultSettings()
         {
             FormatDocumentOnComment = true;
+            MigrateReferenceDirectives = true;
             EditorFontSize = DefaultFontSize;
             OutputFontSize = DefaultFontSize;
             LiveModeDelayMs = LiveModeDelayMsDefault;
@@ -334,7 +335,17 @@ internal class ApplicationSettings : IApplicationSettings
             set => SetProperty(ref field, value is > 0 ? value : null);
         }
 
+        // Serialized unconditionally: these default to true, and WhenWritingDefault would drop an
+        // opt-out (false being the CLR default), so it would come back as true on the next load.
+        [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
         public bool FormatDocumentOnComment
+        {
+            get;
+            set => SetProperty(ref field, value);
+        } = true;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+        public bool MigrateReferenceDirectives
         {
             get;
             set => SetProperty(ref field, value);

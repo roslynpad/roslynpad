@@ -64,6 +64,9 @@ public interface IApplicationSettingsValues : INotifyPropertyChanged
     [Description("Automatically format the document after uncommenting code.")]
     bool FormatDocumentOnComment { get; set; }
 
+    [Description("When opening a C# file, rewrite legacy #r directives as file-based app directives (#:package, #:sdk).")]
+    bool MigrateReferenceDirectives { get; set; }
+
     [Browsable(false)]
     string EffectiveDocumentPath { get; }
 
