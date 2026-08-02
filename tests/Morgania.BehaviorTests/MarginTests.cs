@@ -58,6 +58,60 @@ public sealed class MarginTests
     }
 
     [TestMethod]
+    public async Task HorizontalScrollBarDragCeilingMatchesTheViewportClamp()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            // One line far wider than the viewport.
+            var view = HeadlessEditor.CreateView(new string('x', 400), width: 200.0, height: 100.0);
+            var factory = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>();
+            var host = factory.CreateTextViewHost(view, setFocus: false);
+            var scrollBar = (Avalonia.Controls.Primitives.ScrollBar)
+                host.GetTextViewMargin(PredefinedMarginNames.HorizontalScrollBar)!.VisualElement;
+
+            // Scroll as far as the view itself allows (the wheel / keyboard path)...
+            view.ViewportLeft = double.MaxValue;
+
+            // ...and the scrollbar's drag range must end exactly there.
+            Assert.AreEqual(view.ViewportLeft, scrollBar.Maximum, 0.01,
+                "the scrollbar's drag ceiling must be the viewport's own");
+
+            host.Close();
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task HorizontalScrollBarEndsClearOfTheVerticalScrollBar()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            string text = string.Join('\n', Enumerable.Range(0, 100).Select(i => $"line {i}"));
+            var view = HeadlessEditor.CreateView(text, height: 300.0);
+            var factory = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>();
+            var host = factory.CreateTextViewHost(view, setFocus: false);
+            var window = new Avalonia.Controls.Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+                // The bottom row must stay clear of the vertical scrollbar's lane.
+                var right = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Right)!;
+                var bottom = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Bottom)!;
+                Assert.IsTrue(right.VisualElement.Bounds.Width > 0, "the probe needs the vertical bar's lane laid out");
+                Assert.AreEqual(right.VisualElement.Bounds.Width, bottom.VisualElement.Margin.Right, 0.01,
+                    "the bottom row must end where the right container begins");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task VerticalScrollBarMapsBufferPositionsAndScrollsTheView()
     {
         await HeadlessEditor.RunAsync(() =>

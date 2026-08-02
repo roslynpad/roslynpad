@@ -533,7 +533,7 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
             try
             {
                 IsVisible = Enabled;
-                Maximum = Math.Max(0.0, _view.MaxTextRightCoordinate + 20.0 - _view.ViewportWidth);
+                Maximum = Math.Max(0.0, _view.MaxTextRightCoordinate + _view.FormattedLineSource.ColumnWidth - _view.ViewportWidth);
                 ViewportSize = Math.Max(1.0, _view.ViewportWidth);
                 LargeChange = _view.ViewportWidth;
                 SmallChange = 16.0;

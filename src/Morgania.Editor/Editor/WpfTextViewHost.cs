@@ -71,6 +71,8 @@ internal sealed class WpfTextViewHost : IWpfTextViewHost
         right.VisualElement.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
         AddCell(right.VisualElement, row: 1, column: 1);
         bottom.VisualElement.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom;
+        right.VisualElement.SizeChanged += (_, e) =>
+            bottom.VisualElement.Margin = new Avalonia.Thickness(0.0, 0.0, e.NewSize.Width, 0.0);
         AddCell(bottom.VisualElement, row: 1, column: 1);
 
         if (setFocus)
