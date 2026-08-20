@@ -19,6 +19,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: Enable long paths
+      if: matrix.os == 'windows-latest'
+      run: git config --global core.longpaths true
     - uses: actions/checkout@v6
       with:
         submodules: true
