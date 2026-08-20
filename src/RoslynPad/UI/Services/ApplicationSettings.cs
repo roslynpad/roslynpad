@@ -40,7 +40,7 @@ internal class ApplicationSettings : IApplicationSettings
     [ImportingConstructor]
     public ApplicationSettings(
         IKeyBindingService keyBindingService,
-        [Import(AllowDefault = true)] IErrorReporter errorReporter)
+        [Import(AllowDefault = true)] IErrorReporter? errorReporter)
     {
         _keyBindingService = keyBindingService;
         _errorReporter = errorReporter;

@@ -142,6 +142,7 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Copilot/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/**/*.cs" />
     <Compile Include="../../vendor/roslyn/src/EditorFeatures/Core/EditAndContinue/EditAndContinueErrorTypeDefinition.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditorConfigSettings/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ExternalAccess/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/LanguageServer/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SpeculativeEdits/**/*.cs" />
