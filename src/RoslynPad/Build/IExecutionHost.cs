@@ -12,6 +12,7 @@ internal interface IExecutionHost
     string DotNetExecutable { get; set; }
     ImmutableArray<MetadataReference> MetadataReferences { get; }
     ImmutableArray<AnalyzerFileReference> Analyzers { get; }
+    ImmutableArray<UsingItem> Usings { get; }
     DocumentId? DocumentId { get; set; }
 
     event Action<IList<CompilationErrorResultObject>>? CompilationErrors;
