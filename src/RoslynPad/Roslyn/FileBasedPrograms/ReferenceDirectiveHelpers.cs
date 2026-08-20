@@ -109,6 +109,18 @@ public static class ReferenceDirectiveHelpers
         return split.Length >= 3 ? (split[1], split[2]) : (null, null);
     }
 
+    /// <summary>Parses the value of a <c>#:property</c> directive: <c>Name=Value</c>.</summary>
+    public static (string name, string? value) ParsePropertyDirective(string directiveText)
+    {
+        var equalsIndex = directiveText.IndexOf('=');
+        if (equalsIndex < 0)
+        {
+            return (directiveText.Trim(), null);
+        }
+
+        return (directiveText[..equalsIndex].Trim(), directiveText[(equalsIndex + 1)..].Trim());
+    }
+
     /// <summary>Parses the value of a <c>#:package</c> directive: <c>Name@Version</c> or <c>Name</c>.</summary>
     public static (string id, string? version) ParsePackageDirective(string directiveText)
     {
