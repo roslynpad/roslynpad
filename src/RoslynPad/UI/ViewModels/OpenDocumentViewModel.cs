@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
@@ -244,6 +245,19 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
             project = project
                 .WithMetadataReferences(_executionHost.MetadataReferences)
                 .WithAnalyzerReferences(_executionHost.Analyzers);
+
+            if (project.CompilationOptions is CSharpCompilationOptions options)
+            {
+                project = project.WithCompilationOptions(options.WithUsings(
+                    _executionHost.Usings.Select(u => u.CompilationOption).OfType<string>()));
+            }
+
+            var generatedUsings = project.Documents.FirstOrDefault(d => d.Name == "RoslynPadGeneratedUsings");
+            if (generatedUsings is not null)
+            {
+                project = generatedUsings.WithText(SourceText.From(string.Join(" ",
+                    _executionHost.Usings.Select(u => u.GlobalUsingDirective)))).Project;
+            }
 
             document = project.GetDocument(DocumentId);
 

@@ -160,6 +160,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
     public ImmutableArray<MetadataReference> MetadataReferences { get; private set; } = [];
     public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; } = [];
+    public ImmutableArray<UsingItem> Usings { get; private set; } = [];
 
     public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost, ILogger logger)
     {
@@ -340,7 +341,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         var buildErrorsPath = Path.Combine(BuildPath, "build-errors.log");
 
         var scriptArgs = IsScript
-            ? $"\"-p:RoslynPadWorkingDirectory={_parameters.WorkingDirectory}\" " +
+            ? $"\"-p:RoslynPadImports={string.Join(";", Usings.Select(u => u.CompilationOption).Where(u => u is not null))}\" " +
+              $"\"-p:RoslynPadWorkingDirectory={_parameters.WorkingDirectory}\" " +
               $"-p:RoslynPadPrefer32Bit={(Platform.Architecture == Architecture.X86 ? "true" : "false")} " +
               $"-p:CheckForOverflowUnderflow={(_parameters.CheckOverflow ? "true" : "false")} "
             : string.Empty;
@@ -906,15 +908,15 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        // A design-time build (the properties custom targets key off): references and
-                        // analyzers resolve without compiling or producing outputs, and
+                        // A design-time build (the properties custom targets key off): references,
+                        // analyzers, and usings resolve without compiling or producing outputs, and
                         // -getResultOutputFile keeps the item JSON off stdout so it stays a
                         // human-readable, streamable log.
                         var buildArgs =
                             $"-restore -interactive -nologo -v:m " +
                             $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
                             $"-t:Compile -p:DesignTimeBuild=true -p:SkipCompilerExecution=true " +
-                            $"-getItem:ReferencePathWithRefAssemblies,Analyzer \"-getResultOutputFile:{outputPath}\" ";
+                            $"-getItem:ReferencePathWithRefAssemblies,Analyzer,Using \"-getResultOutputFile:{outputPath}\" ";
                         using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
                             $"msbuild {buildArgs}", cancellationToken).ConfigureAwait(false);
 
@@ -998,6 +1000,13 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 .Select(r => r.FullPath)
                 .Where(r => !string.IsNullOrWhiteSpace(r))
                 .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))];
+
+            var usings = (output.Items.Using ?? [])
+                .Where(u => !string.IsNullOrWhiteSpace(u.Identity))
+                .Select(u => new UsingItem(u.Identity, u.Static, u.Alias));
+            Usings = IsScript
+                ? [.. _parameters.Imports.Select(UsingItem.Create).Concat(usings).Distinct()]
+                : [.. usings.Distinct()];
         }
 
         // On a cache hit no restore process runs, so the pane replays the log persisted by the
@@ -1161,8 +1170,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private static partial Regex MsbuildLogRegex();
 
     private record BuildOutput(BuildOutputItems Items);
-    private record BuildOutputItems(BuildOutputReferenceItem[] ReferencePathWithRefAssemblies, BuildOutputReferenceItem[] Analyzer);
+    private record BuildOutputItems(
+        BuildOutputReferenceItem[] ReferencePathWithRefAssemblies,
+        BuildOutputReferenceItem[] Analyzer,
+        BuildOutputUsingItem[]? Using);
     private record BuildOutputReferenceItem(string FullPath);
+    private record BuildOutputUsingItem(string Identity, bool Static, string? Alias);
     private record CsprojBuildResult(string RestorePath, string CsprojPath, string? MarkerPath, bool MarkerExists, XDocument Csproj)
     {
         [MemberNotNullWhen(true, nameof(MarkerPath))]
