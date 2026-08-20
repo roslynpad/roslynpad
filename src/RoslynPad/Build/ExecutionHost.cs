@@ -73,6 +73,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private bool _initializeBuildPathAfterRun;
     private bool _hasFileBasedDirectives;
     private bool _hasLegacyPackageDirectives;
+    private ImmutableArray<string> _fileBasedDirectives = [];
+    private string? _targetFrameworkOverride;
     private TextWriter? _processInputStream;
     private string? _dotNetExecutable;
 
@@ -87,6 +89,16 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     }
 
     private bool IsScript => _parameters.SourceCodeKind == SourceCodeKind.Script;
+
+    private const string TargetFrameworkPropertyName = "TargetFramework";
+
+    /// <summary>
+    /// The target framework the code is compiled against: the platform's, unless the code
+    /// overrides it with <c>#:property TargetFramework=...</c> (e.g. to target
+    /// <c>net10.0-windows</c>). The selected SDK - and with it <c>global.json</c> - is unaffected;
+    /// a newer SDK can compile an older or platform-specific framework.
+    /// </summary>
+    private string TargetFrameworkMoniker => _targetFrameworkOverride ?? Platform.TargetFrameworkMoniker;
 
     public bool UseCache => Platform.FrameworkVersion?.Major >= 6;
 
@@ -397,7 +409,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             var sourceText = document is not null ? await document.GetTextAsync(cancellationToken).ConfigureAwait(false) : null;
             if (sourceText is null)
             {
-                return MSBuildHelper.CreateCsproj(Platform.TargetFrameworkMoniker, _libraries, _parameters.Imports);
+                return MSBuildHelper.CreateCsproj(TargetFrameworkMoniker, _libraries, _parameters.Imports);
             }
             await File.WriteAllTextAsync(tempFile, sourceText.ToString(), cancellationToken).ConfigureAwait(false);
 
@@ -422,7 +434,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             var csproj = XDocument.Load(csprojPath);
 
             MSBuildHelper.PatchConvertedCsproj(csproj,
-                Platform.TargetFrameworkMoniker,
+                TargetFrameworkMoniker,
                 _runtimeAssemblyLibraryRef.Value,
                 _parameters.Imports);
 
@@ -688,9 +700,9 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return;
         }
 
-        var (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives) = ParseReferences(syntaxRoot);
-        var allLibraries = libraries.Append(Platform.IsDotNet ? _runtimeAssemblyLibraryRef : _runtimeNetFxAssemblyLibraryRef);
-        if (UpdateLibraries(allLibraries, hasFileBasedDirectives, hasLegacyPackageDirectives))
+        var parsed = ParseReferences(syntaxRoot);
+        var allLibraries = parsed.Libraries.Append(Platform.IsDotNet ? _runtimeAssemblyLibraryRef : _runtimeNetFxAssemblyLibraryRef);
+        if (UpdateLibraries(allLibraries, parsed))
         {
             await RestoreAsync().ConfigureAwait(false);
         }
@@ -706,20 +718,24 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return document != null ? await document.GetSyntaxRootAsync().ConfigureAwait(false) : null;
         }
 
-        bool UpdateLibraries(IEnumerable<LibraryRef> libraries, bool hasFileBased, bool hasLegacyPackage)
+        bool UpdateLibraries(IEnumerable<LibraryRef> libraries, ParsedReferences parsed)
         {
             lock (_libraries)
             {
                 var librariesChanged = !_libraries.SetEquals(libraries);
-                var fileBasedChanged = _hasFileBasedDirectives != hasFileBased;
-                var legacyChanged = _hasLegacyPackageDirectives != hasLegacyPackage;
-                
-                if (librariesChanged || fileBasedChanged || legacyChanged)
+                // Directives that don't map to a library (#:property, #:sdk) still change the
+                // generated csproj, so any change in the directive list must trigger a restore.
+                var directivesChanged = !_fileBasedDirectives.SequenceEqual(parsed.Directives, StringComparer.Ordinal);
+                var legacyChanged = _hasLegacyPackageDirectives != parsed.HasLegacyPackageDirectives;
+
+                if (librariesChanged || directivesChanged || legacyChanged)
                 {
                     _libraries.Clear();
                     _libraries.UnionWith(libraries);
-                    _hasFileBasedDirectives = hasFileBased;
-                    _hasLegacyPackageDirectives = hasLegacyPackage;
+                    _fileBasedDirectives = parsed.Directives;
+                    _hasFileBasedDirectives = parsed.Directives.Length > 0;
+                    _hasLegacyPackageDirectives = parsed.HasLegacyPackageDirectives;
+                    _targetFrameworkOverride = parsed.TargetFramework;
                     return true;
                 }
                 else if (alwaysRestore)
@@ -731,18 +747,19 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return false;
         }
 
-        static (List<LibraryRef> libraries, bool hasFileBasedDirectives, bool hasLegacyPackageDirectives) ParseReferences(SyntaxNode syntaxRoot)
+        static ParsedReferences ParseReferences(SyntaxNode syntaxRoot)
         {
             var libraries = new List<LibraryRef>();
-            var hasFileBasedDirectives = false;
+            var directives = ImmutableArray.CreateBuilder<string>();
             var hasLegacyPackageDirectives = false;
+            string? targetFramework = null;
 
             if (syntaxRoot is not CompilationUnitSyntax compilation)
             {
-                return (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives);
+                return new(libraries, [], hasLegacyPackageDirectives, targetFramework);
             }
 
-            // Parse file-level directives (#:package, #:framework) using syntax tree
+            // Parse file-level directives (#:package, #:property, ...) using syntax tree
             foreach (var directive in syntaxRoot.SyntaxTree.FindFileLevelDirectives())
             {
                 switch (directive.DirectiveKind)
@@ -752,19 +769,27 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                         if (!string.IsNullOrEmpty(id))
                         {
                             libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
-                            hasFileBasedDirectives = true;
                         }
                         break;
                     case "framework":
                         if (!string.IsNullOrEmpty(directive.DirectiveText))
                         {
                             libraries.Add(LibraryRef.FrameworkReference(directive.DirectiveText));
-                            hasFileBasedDirectives = true;
                         }
                         break;
-                    case "sdk":
-                        hasFileBasedDirectives = true;
+                    case "property":
+                        var (name, value) = ReferenceDirectiveHelpers.ParsePropertyDirective(directive.DirectiveText);
+                        if (string.Equals(name, TargetFrameworkPropertyName, StringComparison.OrdinalIgnoreCase) &&
+                            !string.IsNullOrEmpty(value))
+                        {
+                            targetFramework = value;
+                        }
                         break;
+                }
+
+                if (directive.DirectiveKind is not ("" or "shebang"))
+                {
+                    directives.Add($"{directive.DirectiveKind} {directive.DirectiveText}");
                 }
             }
 
@@ -810,9 +835,15 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 libraries.Add(LibraryRef.PackageReference(id, version ?? string.Empty));
             }
 
-            return (libraries, hasFileBasedDirectives, hasLegacyPackageDirectives);
+            return new(libraries, directives.ToImmutable(), hasLegacyPackageDirectives, targetFramework);
         }
     }
+
+    private sealed record ParsedReferences(
+        List<LibraryRef> Libraries,
+        ImmutableArray<string> Directives,
+        bool HasLegacyPackageDirectives,
+        string? TargetFramework);
 
     private Task<RestoreResult> RestoreTask { get => field ?? Task.FromResult(RestoreResult.SuccessResult); set; }
 
@@ -1014,12 +1045,12 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             {
                 csproj = IsScript
                     ? MSBuildHelper.CreateScriptCsproj(
-                        Platform.TargetFrameworkMoniker,
+                        TargetFrameworkMoniker,
                         _libraries,
                         _parameters.Imports,
                         ScriptCompileTaskAssemblyPath)
                     : MSBuildHelper.CreateCsproj(
-                        Platform.TargetFrameworkMoniker,
+                        TargetFrameworkMoniker,
                         _libraries,
                         _parameters.Imports);
             }
