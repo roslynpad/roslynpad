@@ -50,19 +50,22 @@ Prefer the least invasive fix, in this order:
   reference, so those files compile unmodified. E.g. `CopilotGenerateDocumentationCommentManager`
   no-ops exactly like the real one does when the VS Copilot suggestion service is absent. Prefer a
   stub over excluding-and-copying the referencing file — copies rot on upgrades, stubs don't.
-- **`PatchedCompile` items** — build-time text patches for vendor files whose only incompatibility
-  cannot be fixed from the outside: the IgnoresAccessChecksTo publicizer makes `internal virtual`
-  package members `public` in reference assemblies, so upstream `internal override`s fail with
-  CS0507 and the modifier must be widened to `public`. The `GeneratePatchedCompile` target
+- **`PatchedCompile` items** — build-time text patches for narrow vendor incompatibilities that
+  cannot be fixed from the outside: for example, the IgnoresAccessChecksTo publicizer makes
+  `internal virtual` package members `public` in reference assemblies, so upstream `internal
+  override`s fail with CS0507 and must be widened; the semantic-token schema is patched to use its
+  standalone modifier enum; and `GetVsImageData` is regex-extracted from the dependency-heavy LSP
+  `Extensions.cs` so its mapping stays synchronized without compiling the rest. `GeneratePatchedCompile`
   generates a patched copy into the intermediate directory and adds the copy to the `Compile` list;
   the original is excluded via a **static `<Compile Remove="@(PatchedCompile)" />`** (outside the
   target) so that the remove is evaluated during static item evaluation and reliably matches the
   glob-expanded items on all platforms (including Windows CI). The patch task **fails the build if
   the expected text is missing**, so upgrades can't silently drift.
-- **`RestoreHelper`** — packages that exist only on the Azure DevOps feeds (not nuget.org), e.g.
-  `Microsoft.CodeAnalysis.LanguageServer.Protocol` and `Microsoft.CodeAnalysis.Remote.Workspaces`,
-  are restored there at `$(RoslynPrivateVersion)` and injected as raw `Reference` items via the
-  `GetLibReferences` target.
+- **Language-server and remote-workspace sources** — the small set of editor helpers formerly
+  supplied by Roslyn's private packages is compiled directly from `vendor/roslyn`: options,
+  suggestions, code cleanup, semantic-token mappings, glyph identifiers, the remote synchronization
+  contract, the VS-MEF host adapter, and the app's decompiler. Keep these source includes synchronized
+  with the submodule during Roslyn upgrades; do not reintroduce private-feed binary references.
 - **Morgania API additions** — newer VS editor APIs that Morgania's snapshot lacks but that are
   faithful platform APIs (not VS-shell/Copilot internals) have been added to Morgania itself, e.g.
   `IAsyncCompletionItemManager2`/`CompletionList<T>`, NavigateTo interfaces,

@@ -14,29 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
-  </ItemGroup>
-
-  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
-    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
-      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
-    </MSBuild>
-    <ItemGroup>
-      <Reference Include="@(LibReference)" />
-      <Content Include="@(LibReference)" PackagePath="lib/$(TargetFramework)" Pack="true" />
-    </ItemGroup>
-  </Target>
-
-  <ItemGroup>
     <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.Features" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
     <PackageReference Include="System.ComponentModel.Composition" />
-    <!-- Deliberately newer than $(MessagePackVersion) (what the private Remote.Workspaces binaries
-         bind to): 3.1.6 has known vulnerabilities (NU1903). The version mismatch would surface as
-         MSB3243, but the RestoreHelper references are marked ExternallyResolved so RAR does not
-         walk their dependencies. -->
-    <PackageReference Include="MessagePack" />
     <ProjectReference Include="../Morgania.Editor/Morgania.Editor.csproj" />
   </ItemGroup>
 
@@ -54,14 +35,23 @@
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Features" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="../../vendor/roslyn/src/EditorFeatures/Text/**/*.cs" />
     <Compile Include="../../vendor/roslyn/src/EditorFeatures/Core/**/*.cs" />
     <Compile Include="../../vendor/roslyn/src/EditorFeatures/CSharp/**/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Features/CodeCleanup/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Features/Options/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Features/ReferenceHighlighting/ReferenceHighlightingConstants.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Features/Suggestions/*.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Extensions/Extensions.KnownImageIds.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/LspOptionsStorage.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Handler/SemanticTokens/CustomLspSemanticTokenNames.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Handler/SemanticTokens/TokenModifiers.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Protocol/SemanticTokens/SemanticTokenModifiers.cs" />
+    <Compile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Protocol/SemanticTokens/SemanticTokenTypes.cs" />
+    <Compile Include="../../vendor/roslyn/src/Workspaces/Remote/Core/IRemoteAssetSynchronizationService.cs" />
     <EmbeddedResource Include="../../vendor/roslyn/src/EditorFeatures/Text/TextEditorResources.resx"
       LogicalName="Microsoft.CodeAnalysis.Text.TextEditorResources.resources"
       StronglyTypedFileName="$(IntermediateOutputPath)TextEditorResources.Designer.cs"
@@ -145,6 +135,7 @@
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/EditorConfigSettings/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/ExternalAccess/**/*.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/LanguageServer/**/*.cs" />
+    <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/Extensions/LSPExtensions.cs" />
     <Compile Remove="../../vendor/roslyn/src/EditorFeatures/Core/SpeculativeEdits/**/*.cs" />
   </ItemGroup>
 
@@ -174,12 +165,13 @@
   </ItemGroup>
 
   <!--
-    Build-time source patches: vendor files whose only incompatibility is the accessibility of
-    overrides. The IgnoresAccessChecksTo publicizer makes internal/private-protected virtual
-    members of CodeAction(Operation) public in the reference assemblies, so the overrides in these
-    files fail with CS0507 and must be widened to public. A patched copy is generated into the
-    intermediate directory and compiled instead of the original. The patch task fails the build if
-    the expected text is not found (e.g. after a Roslyn upgrade). File names must be unique.
+    Build-time source patches for narrow incompatibilities that cannot be fixed from outside the
+    vendor file. Most widen overrides because the IgnoresAccessChecksTo publicizer makes their base
+    members public; the semantic-token schema substitutes its standalone modifier enum; and a regex
+    patch extracts GetVsImageData from the otherwise dependency-heavy LSP Extensions file. A patched
+    copy is generated into the intermediate directory and compiled instead of the original. The
+    patch task fails the build if the expected text is not found (e.g. after a Roslyn upgrade). File
+    names must be unique.
     NOTE: The Compile Remove must be in a static ItemGroup (not inside a Target) so that MSBuild
     correctly matches the glob-expanded items on all platforms, including Windows CI.
   -->
@@ -193,6 +185,13 @@
     <PatchedCompile Include="../../vendor/roslyn/src/EditorFeatures/Core/Suggestions/RefineUsingCopilot/RefineUsingCopilotCodeAction.cs"
                     Find="internal override async Task&lt;bool&gt; TryApplyAsync"
                     ReplaceWith="public override async Task&lt;bool&gt; TryApplyAsync" />
+    <PatchedCompile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Handler/SemanticTokens/SemanticTokensSchema.cs"
+                    Find="SemanticTokens.TokenModifiers."
+                    ReplaceWith="global::Microsoft.CodeAnalysis.LanguageServer.Handler.SemanticTokens.TokenModifiers." />
+    <PatchedCompile Include="../../vendor/roslyn/src/LanguageServer/Protocol/Extensions/Extensions.cs"
+                    UseRegex="true"
+                    Find="(?s)\A.*?(?=    /// &lt;summary&gt;\r?\n    /// Retrieves the &lt;see cref=&quot;Guid&quot;/&gt; and id that can represent a particular &lt;see cref=&quot;Glyph&quot;/&gt;)"
+                    ReplaceWith="using System;&#xA;&#xA;namespace Microsoft.CodeAnalysis.LanguageServer;&#xA;&#xA;internal static partial class Extensions&#xA;{&#xA;" />
   </ItemGroup>
 
   <!-- Remove the originals from Compile statically (outside any Target) so the Remove reliably
@@ -208,6 +207,7 @@
     </ParameterGroup>
     <Task>
       <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
       <Code Type="Fragment" Language="cs"><![CDATA[
         Directory.CreateDirectory(OutputDirectory);
         foreach (var file in Files)
@@ -215,12 +215,15 @@
             var find = file.GetMetadata("Find");
             var replaceWith = file.GetMetadata("ReplaceWith");
             var text = File.ReadAllText(file.ItemSpec);
-            if (!text.Contains(find))
+            var useRegex = bool.TryParse(file.GetMetadata("UseRegex"), out var value) && value;
+            var found = useRegex ? Regex.IsMatch(text, find) : text.Contains(find);
+            if (!found)
             {
                 Log.LogError("PatchedCompile pattern not found in '{0}': {1}", file.ItemSpec, find);
                 continue;
             }
-            text = "// Auto-generated from " + file.ItemSpec + " (see PatchedCompile in the project file). Do not edit.\n" + text.Replace(find, replaceWith);
+            text = useRegex ? Regex.Replace(text, find, replaceWith) : text.Replace(find, replaceWith);
+            text = "// Auto-generated from " + file.ItemSpec + " (see PatchedCompile in the project file). Do not edit.\n" + text;
             var destination = Path.Combine(OutputDirectory, Path.GetFileName(file.ItemSpec));
             if (!File.Exists(destination) || File.ReadAllText(destination) != text)
             {

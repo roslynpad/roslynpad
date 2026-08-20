@@ -8,9 +8,8 @@ using Microsoft.CodeAnalysis.Host.Mef;
 namespace RoslynPad.Roslyn;
 
 /// <summary>
-/// Exposes the ILSpy-backed decompiler that ships in Microsoft.CodeAnalysis.LanguageServer.Protocol
-/// (referenced, but deliberately not part-scanned into the MEF catalog) so metadata-as-source
-/// can decompile symbols without Source Link/PDB sources.
+/// Exposes Roslyn's vendored ILSpy-backed decompiler so metadata-as-source can decompile symbols
+/// without Source Link/PDB sources.
 /// </summary>
 [ExportLanguageService(typeof(IDecompilationService), LanguageNames.CSharp), Shared]
 internal sealed class DecompilationService : IDecompilationService

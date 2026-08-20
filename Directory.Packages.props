@@ -6,10 +6,8 @@
   <PropertyGroup>
     <DotNetExtensionsVersion>10.0.11</DotNetExtensionsVersion>
     <RoslynVersion>5.9.0</RoslynVersion>
-    <RoslynPrivateVersion>5.9.0-1.26357.3</RoslynPrivateVersion>
     <AvaloniaVersion>12.1.1</AvaloniaVersion>
     <NuGetVersion>7.9.0</NuGetVersion>
-    <MessagePackVersion>2.5.302</MessagePackVersion>
     <DockAvaloniaVersion>12.1.0.1</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -24,7 +22,6 @@
     <PackageVersion Include="Dock.Model.Avalonia" Version="$(DockAvaloniaVersion)" />
     <PackageVersion Include="ICSharpCode.Decompiler" Version="11.0.0.9375" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="1.0.0" />
-    <PackageVersion Include="MessagePack" Version="$(MessagePackVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" />

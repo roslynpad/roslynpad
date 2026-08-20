@@ -6,8 +6,8 @@
 public static class SemanticTokensSchema
 {
     public static IReadOnlyDictionary<string, string> ClassificationTypeNameToTokenName =>
-        Microsoft.CodeAnalysis.LanguageServer.Handler.SemanticTokens.SemanticTokensSchema.GetSchema(clientSupportsVisualStudioExtensions: false).TokenTypeMap;
+        EditorFeatures.SemanticTokensSchemaAccessor.ClassificationTypeNameToTokenName;
 
     public static IReadOnlyDictionary<string, string> ClassificationTypeNameToCustomTokenName =>
-        Microsoft.CodeAnalysis.LanguageServer.Handler.SemanticTokens.CustomLspSemanticTokenNames.ClassificationTypeNameToCustomTokenName;
+        EditorFeatures.SemanticTokensSchemaAccessor.ClassificationTypeNameToCustomTokenName;
 }

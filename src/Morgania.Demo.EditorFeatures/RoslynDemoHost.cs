@@ -2,10 +2,10 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.Text;
+using Morgania.CodeAnalysis.Editor;
 
 namespace Morgania.Demo.EditorFeatures;
 
@@ -18,7 +18,7 @@ internal static class RoslynDemoHost
 {
     public static DemoWorkspace OpenDocument(ExportProvider exportProvider, ITextBuffer buffer, string documentName)
     {
-        var hostServices = VisualStudioMefHostServices.Create(exportProvider);
+        var hostServices = MorganiaMefHostServices.Create(exportProvider);
         var workspace = new DemoWorkspace(hostServices);
 
         var projectId = ProjectId.CreateNewId("RoslynPadDemo");

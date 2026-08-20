@@ -8,18 +8,6 @@
     <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
-  </ItemGroup>
-  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
-    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
-      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
-    </MSBuild>
-    <ItemGroup>
-      <Reference Include="@(LibReference)" />
-      <Content Include="@(LibReference)" PackagePath="lib/$(TargetFramework)" Pack="true" />
-    </ItemGroup>
-  </Target>
-  <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
@@ -29,10 +17,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" />
     <PackageReference Include="Microsoft.VisualStudio.Threading" />
     <PackageReference Include="System.Composition" />
-    <!-- Deliberately newer than $(MessagePackVersion) (what the private Remote.Workspaces binaries
-         bind to): 3.1.6 has known vulnerabilities (NU1902/NU1903). See
-         Morgania.CodeAnalysis.EditorFeatures.csproj for the full story. -->
-    <PackageReference Include="MessagePack" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Morgania.CodeAnalysis.EditorFeatures/Morgania.CodeAnalysis.EditorFeatures.csproj" />
@@ -46,8 +30,5 @@
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
-    <!-- VisualStudioMefHostServices (the VS-MEF HostServices adapter) is internal. -->
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
   </ItemGroup>
 </Project>

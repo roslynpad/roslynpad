@@ -38,20 +38,6 @@
     <AvaloniaXaml Remove="bin\**\*.axaml;obj\**\*.axaml" />
     <EmbeddedResource Include="Editor\Resources\*.json" LogicalName="RoslynPad.Editor.Resources.%(Filename)%(Extension)" />
   </ItemGroup>
-  <!-- Microsoft.CodeAnalysis.Remote.Workspaces (VisualStudioMefHostServices) and
-       Microsoft.CodeAnalysis.LanguageServer.Protocol are only on the Azure DevOps feeds;
-       RestoreHelper restores them and hands back raw Reference items. -->
-  <ItemGroup>
-    <ProjectReference Include="..\RestoreHelper\RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
-  </ItemGroup>
-  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
-    <MSBuild Projects="..\RestoreHelper\RestoreHelper.csproj" Targets="GetLibReferences">
-      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
-    </MSBuild>
-    <ItemGroup>
-      <Reference Include="@(LibReference)" />
-    </ItemGroup>
-  </Target>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
@@ -82,7 +68,7 @@
     <ProjectReference Include="..\Morgania.CodeAnalysis.Editor\Morgania.CodeAnalysis.Editor.csproj" />
   </ItemGroup>
   <!-- Roslyn internals used by the host layer (Roslyn/) and the editor integration:
-       parse/compilation internals, Roslyn.Utilities, VisualStudioMefHostServices, … -->
+       parse/compilation internals and Roslyn.Utilities. -->
   <ItemGroup>
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
@@ -91,8 +77,12 @@
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.LanguageServer.Protocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\vendor\roslyn\src\LanguageServer\Protocol\Features\DecompiledSource\AssemblyResolver.cs"
+             Link="Roslyn\DecompiledSource\AssemblyResolver.cs" />
+    <Compile Include="..\..\vendor\roslyn\src\LanguageServer\Protocol\Features\DecompiledSource\CSharpCodeDecompilerDecompilationService.cs"
+             Link="Roslyn\DecompiledSource\CSharpCodeDecompilerDecompilationService.cs" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="RoslynPad.Tests" />

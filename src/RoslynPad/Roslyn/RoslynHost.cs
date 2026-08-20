@@ -46,7 +46,7 @@ public class RoslynHost : IRoslynHost, IDisposable
             .CreateExportProviderFactory()
             .CreateExportProvider();
 
-        HostServices = VisualStudioMefHostServices.Create(ExportProvider);
+        HostServices = MorganiaMefHostServices.Create(ExportProvider);
 
         ParseOptions = CreateDefaultParseOptions();
 

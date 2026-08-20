@@ -9,22 +9,6 @@
     <IgnoresAccessChecksToOmitAttributeDefinition>true</IgnoresAccessChecksToOmitAttributeDefinition>
   </PropertyGroup>
 
-  <!-- Microsoft.CodeAnalysis.Remote.Workspaces (VisualStudioMefHostServices) and
-       Microsoft.CodeAnalysis.LanguageServer.Protocol are only on the Azure DevOps feeds;
-       RestoreHelper restores them and hands back raw Reference items. -->
-  <ItemGroup>
-    <ProjectReference Include="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences" PrivateAssets="All" />
-  </ItemGroup>
-
-  <Target Name="GetLibReferences" AfterTargets="ResolveFrameworkReferences">
-    <MSBuild Projects="../RestoreHelper/RestoreHelper.csproj" Targets="GetLibReferences">
-      <Output ItemName="LibReference" TaskParameter="TargetOutputs" />
-    </MSBuild>
-    <ItemGroup>
-      <Reference Include="@(LibReference)" />
-    </ItemGroup>
-  </Target>
-
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Headless" />
@@ -44,7 +28,6 @@
   <ItemGroup>
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Workspaces" />
     <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Features" />
-    <IgnoresAccessChecksTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
   </ItemGroup>
 
 </Project>

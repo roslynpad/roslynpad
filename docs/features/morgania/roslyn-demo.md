@@ -36,11 +36,9 @@ rejected. Anything else appearing there is a bug to fix.
 
 `RoslynDemoHost.OpenDocument` mirrors RoslynPad's `RoslynHost`:
 
-1. `VisualStudioMefHostServices.Create(exportProvider)` bridges the VS-MEF `ExportProvider` to
+1. `MorganiaMefHostServices.Create(exportProvider)` bridges the VS-MEF `ExportProvider` to
    Roslyn `HostServices`, so workspace services and language services resolve from the same
-   graph as the editor parts. (The type is internal to
-   `Microsoft.CodeAnalysis.Remote.Workspaces`, reached via the `IgnoresAccessChecksTo`
-   publicizer; that package comes from the Azure DevOps feeds through `RestoreHelper`.)
+   graph as the editor parts. The adapter lives in `Morgania.CodeAnalysis.Editor`.
 2. A `DemoWorkspace` (plain `Workspace` subclass) gets one C# project (preview language
    version, nullable enabled, framework references taken from `TRUSTED_PLATFORM_ASSEMBLIES`)
    and one document. Solution-level analyzer references to the compiler + Features assemblies

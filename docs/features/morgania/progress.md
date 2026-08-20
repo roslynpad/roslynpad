@@ -590,9 +590,7 @@ Verification: full `RoslynPad.slnx` build clean; demo `--smoke` passes (now also
 Ctrl+Alt+Down + multi-caret typing through the commanding bridge); all `tests/Morgania.*`
 suites green (the completion-presenter test now composes the presenter's new
 imports); a headless render of the glyph grid confirmed the light/dark imagery; the app
-composed on the desktop with only the 4 expected MEF rejections. Note: 10 MSB3243
-MessagePack 3.1.6/3.1.7 warnings on solution-level builds pre-date this work
-(RestoreHelper raw refs vs the 3.1.7 pin).
+composed on the desktop with only the 4 expected MEF rejections.
 
 Remaining M6 gaps: find/replace UI, folding margin, jump-to-error-line; ILViewer still
 uses AvaloniaEdit. (Brace-match highlight closed below.)
