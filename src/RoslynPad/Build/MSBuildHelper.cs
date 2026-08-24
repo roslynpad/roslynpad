@@ -176,6 +176,7 @@ internal static class MSBuildHelper
         SetOrAdd(props, "UseAppHost", "false");
         SetOrAdd(props, "AllowUnsafeBlocks", "true");
         SetOrAdd(props, "LangVersion", "preview");
+        SetOrAdd(props, "Features", "updated-memory-safety-rules");
         SetOrAdd(props, "Nullable", "enable");
         SetOrAdd(props, "AppendTargetFrameworkToOutputPath", "false");
         SetOrAdd(props, "AppendRuntimeIdentifierToOutputPath", "false");

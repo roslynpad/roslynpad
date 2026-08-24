@@ -145,7 +145,10 @@ public class RoslynHost : IRoslynHost, IDisposable
     protected virtual ParseOptions CreateDefaultParseOptions() => new CSharpParseOptions(
         preprocessorSymbols: PreprocessorSymbols,
         languageVersion: LanguageVersion.Preview)
-        .WithFeatures([new(nameof(CSharpParseOptions.FileBasedProgram), bool.TrueString)]);
+        .WithFeatures([
+            new(nameof(CSharpParseOptions.FileBasedProgram), bool.TrueString),
+            new("updated-memory-safety-rules", bool.TrueString)
+        ]);
 
     public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
         documentation: _documentationProviderService.GetDocumentationProvider(location));
