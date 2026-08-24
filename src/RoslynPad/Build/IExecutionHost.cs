@@ -13,6 +13,8 @@ internal interface IExecutionHost
     ImmutableArray<MetadataReference> MetadataReferences { get; }
     ImmutableArray<AnalyzerFileReference> Analyzers { get; }
     ImmutableArray<UsingItem> Usings { get; }
+    ImmutableArray<string> CompilerArguments { get; }
+    string? CompilerArgumentsBaseDirectory { get; }
     DocumentId? DocumentId { get; set; }
 
     event Action<IList<CompilationErrorResultObject>>? CompilationErrors;

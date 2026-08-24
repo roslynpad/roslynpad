@@ -242,6 +242,11 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
             var project = document.Project;
 
+            if (_executionHost.CompilerArgumentsBaseDirectory is { } baseDirectory)
+            {
+                project = host.ApplyCommandLineArguments(project, _executionHost.CompilerArguments, baseDirectory);
+            }
+
             project = project
                 .WithMetadataReferences(_executionHost.MetadataReferences)
                 .WithAnalyzerReferences(_executionHost.Analyzers);
@@ -261,7 +266,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
             document = project.GetDocument(DocumentId);
 
-            host.UpdateDocument(document!);
+            host.UpdateProjectFromBuild(document!);
             OnDocumentUpdated();
         }
         else

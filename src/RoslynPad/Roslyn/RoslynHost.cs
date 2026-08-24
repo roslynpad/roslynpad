@@ -1,12 +1,12 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
-using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.VisualStudio.Composition;
 using Morgania.CodeAnalysis.Editor;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using AnalyzerReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerReference;
 using AnalyzerFileReference = Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference;
 using Microsoft.CodeAnalysis.Text;
@@ -153,6 +153,39 @@ public class RoslynHost : IRoslynHost, IDisposable
     public MetadataReference CreateMetadataReference(string location) => MetadataReference.CreateFromFile(location,
         documentation: _documentationProviderService.GetDocumentationProvider(location));
 
+    public Project ApplyCommandLineArguments(Project project, IEnumerable<string> arguments, string baseDirectory)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentException.ThrowIfNullOrEmpty(baseDirectory);
+
+        var parser = project.Solution.Workspace.Services
+            .GetLanguageServices(LanguageNames.CSharp)
+            .GetRequiredService<ICommandLineParserService>();
+        var parsedArguments = parser.Parse(arguments, baseDirectory, isInteractive: false, RuntimeEnvironment.GetRuntimeDirectory());
+
+        var currentParseOptions = (CSharpParseOptions)project.ParseOptions!;
+        var parsedParseOptions = (CSharpParseOptions)parsedArguments.ParseOptions;
+        var hostFeatures = currentParseOptions.Features
+            .Where(feature => !parsedParseOptions.Features.ContainsKey(feature.Key));
+        parsedParseOptions = parsedParseOptions
+            .WithKind(currentParseOptions.Kind)
+            .WithDocumentationMode(DocumentationMode.Parse)
+            .WithFeatures(parsedParseOptions.Features.Concat(hostFeatures));
+
+        var currentCompilationOptions = (CSharpCompilationOptions)project.CompilationOptions!;
+        var parsedCompilationOptions = (CSharpCompilationOptions)parsedArguments.CompilationOptions;
+        parsedCompilationOptions = parsedCompilationOptions
+            .WithUsings(currentCompilationOptions.Usings)
+            .WithSourceReferenceResolver(currentCompilationOptions.SourceReferenceResolver)
+            .WithMetadataReferenceResolver(currentCompilationOptions.MetadataReferenceResolver)
+            .WithXmlReferenceResolver(currentCompilationOptions.XmlReferenceResolver);
+
+        return project
+            .WithParseOptions(parsedParseOptions)
+            .WithCompilationOptions(parsedCompilationOptions);
+    }
+
     public TService GetService<TService>() => ExportProvider.GetExportedValue<TService>()!;
     public TService GetWorkspaceService<TService>(DocumentId documentId) where TService : IWorkspaceService =>
         _workspaces[documentId].Services.GetRequiredService<TService>();
@@ -290,6 +323,18 @@ public class RoslynHost : IRoslynHost, IDisposable
         }
 
         workspace.TryApplyChanges(document.Project.Solution);
+    }
+
+    public void UpdateProjectFromBuild(Document document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        if (!_workspaces.TryGetValue(document.Id, out var workspace))
+        {
+            return;
+        }
+
+        workspace.SetCurrentProject(document.Project);
     }
 
     protected virtual CompilationOptions CreateCompilationOptions(DocumentCreationArgs args, bool addDefaultImports)

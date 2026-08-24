@@ -36,6 +36,7 @@ namespace RoslynPad.Build;
 internal partial class ExecutionHost : IExecutionHost, IDisposable
 {
     private static readonly string s_version = typeof(ExecutionContext).Assembly.GetName().Version?.ToString() ?? string.Empty;
+    private const string RestoreCacheFormatVersion = "2";
 
     private static readonly JsonSerializerOptions s_serializerOptions = new()
     {
@@ -161,6 +162,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     public ImmutableArray<MetadataReference> MetadataReferences { get; private set; } = [];
     public ImmutableArray<AnalyzerFileReference> Analyzers { get; private set; } = [];
     public ImmutableArray<UsingItem> Usings { get; private set; } = [];
+    public ImmutableArray<string> CompilerArguments { get; private set; } = [];
+    public string? CompilerArgumentsBaseDirectory { get; private set; }
 
     public ExecutionHost(ExecutionHostParameters parameters, IRoslynHost roslynHost, ILogger logger)
     {
@@ -909,14 +912,15 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                         cancellationToken.ThrowIfCancellationRequested();
 
                         // A design-time build (the properties custom targets key off): references,
-                        // analyzers, and usings resolve without compiling or producing outputs, and
+                        // analyzers, usings, and the effective compiler arguments resolve without
+                        // compiling or producing outputs, and
                         // -getResultOutputFile keeps the item JSON off stdout so it stays a
                         // human-readable, streamable log.
                         var buildArgs =
                             $"-restore -interactive -nologo -v:m " +
                             $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
-                            $"-t:Compile -p:DesignTimeBuild=true -p:SkipCompilerExecution=true " +
-                            $"-getItem:ReferencePathWithRefAssemblies,Analyzer,Using \"-getResultOutputFile:{outputPath}\" ";
+                            $"-t:Compile -p:DesignTimeBuild=true -p:SkipCompilerExecution=true -p:ProvideCommandLineArgs=true " +
+                            $"-getItem:ReferencePathWithRefAssemblies,Analyzer,Using,CscCommandLineArgs \"-getResultOutputFile:{outputPath}\" ";
                         using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
                             $"msbuild {buildArgs}", cancellationToken).ConfigureAwait(false);
 
@@ -1001,12 +1005,24 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 .Where(r => !string.IsNullOrWhiteSpace(r))
                 .Select(r => new AnalyzerFileReference(r, _analyzerAssemblyLoader))];
 
-            var usings = (output.Items.Using ?? [])
+            var usings = output.Items.Using
                 .Where(u => !string.IsNullOrWhiteSpace(u.Identity))
                 .Select(u => new UsingItem(u.Identity, u.Static, u.Alias));
             Usings = IsScript
                 ? [.. _parameters.Imports.Select(UsingItem.Create).Concat(usings).Distinct()]
                 : [.. usings.Distinct()];
+
+            CompilerArguments = IsScript
+                ? []
+                : [.. output.Items.CscCommandLineArgs
+                    .Select(item => item.Identity)
+                    .Where(argument => !string.IsNullOrWhiteSpace(argument))];
+            CompilerArgumentsBaseDirectory = !CompilerArguments.IsEmpty ? Path.GetDirectoryName(path) : null;
+
+            if (!IsScript && CompilerArguments.IsEmpty)
+            {
+                _logger.MissingCompilerArguments();
+            }
         }
 
         // On a cache hit no restore process runs, so the pane replays the log persisted by the
@@ -1070,7 +1086,11 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
             if (UseCache)
             {
-                var hash = GetHash(csproj.ToString(SaveOptions.DisableFormatting), Platform.Description, s_version);
+                var hash = GetHash(
+                    csproj.ToString(SaveOptions.DisableFormatting),
+                    Platform.Description,
+                    s_version,
+                    RestoreCacheFormatVersion);
                 var hashedRestorePath = Path.Combine(_restoreCachePath, hash);
                 Directory.CreateDirectory(hashedRestorePath);
 
@@ -1140,13 +1160,14 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         }
     }
 
-    private static string GetHash(string a, string b, string c)
+    private static string GetHash(params ReadOnlySpan<string> values)
     {
         Span<byte> hashBuffer = stackalloc byte[32];
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        hash.AppendData(MemoryMarshal.AsBytes(a.AsSpan()));
-        hash.AppendData(MemoryMarshal.AsBytes(b.AsSpan()));
-        hash.AppendData(MemoryMarshal.AsBytes(c.AsSpan()));
+        foreach (var value in values)
+        {
+            hash.AppendData(MemoryMarshal.AsBytes(value.AsSpan()));
+        }
         hash.TryGetHashAndReset(hashBuffer, out _);
         return Convert.ToHexString(hashBuffer);
     }
@@ -1169,13 +1190,30 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     [GeneratedRegex(@"(?<file>[\\/][^\\/(]+)?\((?<line>\d+),(?<column>\d+)(,\d+,\d+)?\): (?<severity>warning|error) (?<code>\w+): ((?<message>.+)\s*\[.+\]|(?<message>.+))", RegexOptions.ExplicitCapture)]
     private static partial Regex MsbuildLogRegex();
 
-    private record BuildOutput(BuildOutputItems Items);
-    private record BuildOutputItems(
-        BuildOutputReferenceItem[] ReferencePathWithRefAssemblies,
-        BuildOutputReferenceItem[] Analyzer,
-        BuildOutputUsingItem[]? Using);
-    private record BuildOutputReferenceItem(string FullPath);
-    private record BuildOutputUsingItem(string Identity, bool Static, string? Alias);
+    private sealed record BuildOutput(BuildOutputItems Items);
+
+    private sealed record BuildOutputItems
+    {
+        public BuildOutputItem[] ReferencePathWithRefAssemblies { get; init; } = [];
+        public BuildOutputItem[] Analyzer { get; init; } = [];
+        public BuildOutputItem[] CscCommandLineArgs { get; init; } = [];
+        public BuildOutputUsingItem[] Using { get; init; } = [];
+    }
+
+    private sealed record BuildOutputItem
+    {
+        public string Identity { get; init; } = string.Empty;
+        public string FullPath { get; init; } = string.Empty;
+    }
+
+    private sealed record BuildOutputUsingItem
+    {
+        public string Identity { get; init; } = string.Empty;
+        public bool Static { get; init; }
+        public string? Alias { get; init; }
+    }
+
+
     private record CsprojBuildResult(string RestorePath, string CsprojPath, string? MarkerPath, bool MarkerExists, XDocument Csproj)
     {
         [MemberNotNullWhen(true, nameof(MarkerPath))]

@@ -21,4 +21,7 @@ internal static partial class BuildLoggerExtensions
 
     [LoggerMessage(EventId = 8, Level = LogLevel.Warning, Message = "Restore error")]
     public static partial void RestoreError(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 9, Level = LogLevel.Warning, Message = "Design-time build returned no C# compiler arguments; retaining the current editor project options")]
+    public static partial void MissingCompilerArguments(this ILogger logger);
 }

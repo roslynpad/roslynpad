@@ -18,16 +18,25 @@ public class RoslynWorkspace(HostServices hostServices, string workspaceKind = W
         RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
     }
 
+    public void SetCurrentProject(Project project)
+    {
+        var oldSolution = CurrentSolution;
+        var newSolution = base.SetCurrentSolution(project.Solution);
+        RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.ProjectChanged, oldSolution, newSolution, project.Id);
+    }
+
     public override bool CanOpenDocuments => true;
 
-    public override bool CanApplyChange(ApplyChangesKind feature)
+    public override bool CanApplyChange(ApplyChangesKind feature) => feature switch
     {
-        return feature switch
-        {
-            ApplyChangesKind.ChangeDocument or ApplyChangesKind.ChangeDocumentInfo or ApplyChangesKind.AddMetadataReference or ApplyChangesKind.RemoveMetadataReference or ApplyChangesKind.AddAnalyzerReference or ApplyChangesKind.RemoveAnalyzerReference => true,
-            _ => false,
-        };
-    }
+        ApplyChangesKind.ChangeDocument or
+        ApplyChangesKind.ChangeDocumentInfo or
+        ApplyChangesKind.AddMetadataReference or
+        ApplyChangesKind.RemoveMetadataReference or
+        ApplyChangesKind.AddAnalyzerReference or
+        ApplyChangesKind.RemoveAnalyzerReference => true,
+        _ => false,
+    };
 
     public void OpenDocument(DocumentId documentId, SourceTextContainer textContainer)
     {

@@ -76,9 +76,11 @@ auto-switches to Compile when compilation starts.
   `-p:DesignTimeBuild=true -p:SkipCompilerExecution=true`. Reference resolution runs before
   compilation, so `-getItem` still yields the same items; csc and copy-to-output are skipped.
   `DesignTimeBuild=true` is also the documented contract that tells custom targets in user-added
-  NuGet packages to skip their expensive/output-producing work. `ProvideCommandLineArgs` is not
-  needed — RoslynPad authors the csproj, so it already knows langversion/defines; references +
-  analyzers are the only harvest.
+  NuGet packages to skip their expensive/output-producing work. `ProvideCommandLineArgs=true`
+  also exposes `CscCommandLineArgs`; regular documents parse those arguments through Roslyn's
+  command-line parser after restore so editor parse/compilation options match the evaluated
+  project. Scripts retain their host-authored options because their custom `CoreCompile` target
+  does not invoke `Csc`.
 - **The restore cache stays and composes with this.** The cache is agnostic to how the restore
   payload is produced — it hashes the csproj and stores whatever the invocation leaves in the
   hashed directory. With a design-time restore, the `Program.cs` = `_ = 0;` stub is no longer
@@ -313,10 +315,10 @@ document VM:
 - **`-getResultOutputFile`** — verified working (MSBuild 18.6); the JSON lands in
   `output.json` with the same `Items` shape the parser already read.
 - **Design-time restore** — verified: `dotnet msbuild -restore -interactive -t:Compile
-  -p:DesignTimeBuild=true -p:SkipCompilerExecution=true -getItem:…` yields identical
-  `ReferencePathWithRefAssemblies`/`Analyzer` items (`-getTargetResult` was dropped — exit code
-  + the errors file logger carry success/failure), stdout is a clean streamable log, and no
-  outputs are produced.
+  -p:DesignTimeBuild=true -p:SkipCompilerExecution=true -p:ProvideCommandLineArgs=true
+  -getItem:…` yields `ReferencePathWithRefAssemblies`, `Analyzer`, `Using`, and `CscCommandLineArgs`
+  (`-getTargetResult` was dropped — exit code + the errors file logger carry success/failure),
+  stdout is a clean streamable log, and no outputs are produced.
 - **Unified script compile** — verified end-to-end (restore → task compile → execute → Dump)
   in both script and regular modes, including the cached-restore replay. Two bugs found and
   fixed on the way: the trailing-expression Dump rewrite needed a parenthesized receiver
