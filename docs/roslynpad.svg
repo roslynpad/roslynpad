@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="2.4 20.5 145.2 105.7">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
 <title>RoslynPad</title>
 <g>
-	<path fill="#FFFFFF" stroke="#FFFFFF" stroke-width="15" stroke-linejoin="miter" d="M20,34Q75,22 130,34L139,54C121.47,80.73 97.1,95.7 75,116C52.9,95.7 28.53,80.73 11,54Z"/>
-	<path fill="none" stroke="#2A6727" stroke-width="4" stroke-linejoin="miter" d="M22.27,37.5Q75,26 127.74,37.5L134.8,53.2C118.96,78.29 94.59,93.26 75,111.13C55.41,93.26 31.04,78.29 15.2,53.2Z"/>
+	<path fill="#FFFFFF" stroke="#FFFFFF" stroke-width="124.47" stroke-linejoin="miter" d="M 150.5 136.96 Q 512 58.04 873.5 136.96 L 923.22 359.53 C 811.3 588.38 654.03 716.59 512 890.36 C 369.97 716.59 212.7 588.38 100.78 359.53 Z"/>
+	<path fill="none" stroke="#2A6727" stroke-width="33.22" stroke-linejoin="miter" d="M 176.52 163.12 Q 512 94.22 847.48 163.12 L 890.5 355.65 C 788.1 559.39 648.39 682.24 512 841.2 C 375.61 682.24 235.9 559.39 133.5 355.65 Z"/>
 	<g fill="#2A6727">
-		<path fill="none" stroke="#2A6727" stroke-width="13" d="M101.71,83.19A31.5,31.5 0 1 1 101.71,49.81"/>
-		<rect x="78.75" y="49.75" width="9" height="33.5"/>
-		<rect x="90.25" y="49.75" width="9" height="33.5"/>
-		<rect x="72.25" y="56.25" width="33.5" height="9"/>
-		<rect x="72.25" y="67.75" width="33.5" height="9"/>
+		<path fill="none" stroke="#2A6727" stroke-width="107.9" d="M 733.09 556.71 A 261.43 261.43 0 1 1 733.09 277.51"/>
+		<rect x="543.1" y="278.07" width="74.68" height="278.07"/>
+		<rect x="638.59" y="278.07" width="74.68" height="278.07"/>
+		<rect x="489.15" y="332.02" width="278.07" height="74.68"/>
+		<rect x="489.15" y="427.44" width="278.07" height="74.68"/>
 	</g>
-	<path fill="none" stroke="#388934" stroke-width="7" stroke-linejoin="miter" d="M20,34Q75,22 130,34L139,54C121.47,80.73 97.1,95.7 75,116C52.9,95.7 28.53,80.73 11,54Z"/>
+	<path fill="none" stroke="#388934" stroke-width="58.11" stroke-linejoin="miter" d="M 150.5 136.96 Q 512 58.04 873.5 136.96 L 923.22 359.53 C 811.3 588.38 654.03 716.59 512 890.36 C 369.97 716.59 212.7 588.38 100.78 359.53 Z"/>
 	<g fill="#388934">
-		<path fill="none" stroke="#388934" stroke-width="10" d="M100.8,84.57A31.5,31.5 0 1 1 100.8,48.43"/>
-		<rect x="80.25" y="51.25" width="6" height="30.5"/>
-		<rect x="91.75" y="51.25" width="6" height="30.5"/>
-		<rect x="73.75" y="57.75" width="30.5" height="6"/>
-		<rect x="73.75" y="69.25" width="30.5" height="6"/>
+		<path fill="none" stroke="#388934" stroke-width="83.01" d="M 726.18 567.08 A 261.43 261.43 0 1 1 726.18 267.14"/>
+		<rect x="555.58" y="290.49" width="49.79" height="253.18"/>
+		<rect x="651" y="290.49" width="49.79" height="253.18"/>
+		<rect x="501.63" y="344.44" width="253.18" height="49.79"/>
+		<rect x="501.63" y="439.93" width="253.18" height="49.79"/>
 	</g>
 </g>
 </svg>

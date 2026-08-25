@@ -149,6 +149,7 @@ Scripts in `deploy/` handle release packaging:
 - `dotnet publish -r <rid>` with `ContinuousIntegrationBuild=true` for reproducible builds
 - Version is centrally defined as `RoslynPadVersion` in `Directory.Build.props`; download URLs use `Get-ReleaseTag`, which drops trailing zero components to match the release tag (`22.0.0` → `22`, `21.1.0` → `21.1`)
 - `deploy/brew/roslynpad.rb` is the Homebrew cask (distributed through the `roslynpad/homebrew-tap` repo). `CreatePackages.ps1` rewrites its version and both architecture hashes after notarization — stapling changes the image, so the hash must come last — and copies it into a `homebrew-tap` checkout sitting next to the repo, if there is one
+- All logo assets are generated from `docs/roslynpad.svg` by `node deploy/GenerateIcons.js` — don't hand-edit them. That includes the macOS Icon Composer layer under `src/RoslynPad/Resources/RoslynPad.icon` (only its `icon.json` is hand-authored); the `actool` constraints on that layer are documented in the generator
 
 ## Important Files
 

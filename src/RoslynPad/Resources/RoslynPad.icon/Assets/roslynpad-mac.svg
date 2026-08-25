@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="900" height="900">
+<g>
+	<path fill="none" stroke="#388934" stroke-width="58.11" stroke-linejoin="miter" d="M 150.5 136.96 Q 512 58.04 873.5 136.96 L 923.22 359.53 C 811.3 588.38 654.03 716.59 512 890.36 C 369.97 716.59 212.7 588.38 100.78 359.53 Z"/>
+	<g fill="#388934">
+		<path fill="none" stroke="#388934" stroke-width="83.01" d="M 726.18 567.08 A 261.43 261.43 0 1 1 726.18 267.14"/>
+		<rect x="555.58" y="290.49" width="49.79" height="253.18"/>
+		<rect x="651" y="290.49" width="49.79" height="253.18"/>
+		<rect x="501.63" y="344.44" width="253.18" height="49.79"/>
+		<rect x="501.63" y="439.93" width="253.18" height="49.79"/>
+	</g>
+</g>
+</svg>

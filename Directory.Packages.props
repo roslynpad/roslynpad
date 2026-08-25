@@ -34,7 +34,6 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.87.0" />
-    <PackageVersion Include="Microsoft.Maui.Resizetizer" Version="10.0.90" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="18.3.36" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="18.7.23" />

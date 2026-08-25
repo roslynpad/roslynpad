@@ -7,3 +7,6 @@
 *.tgz
 *.pri
 *.dmg
+
+# icon tooling (deploy/GenerateIcons.js)
+.tools/
