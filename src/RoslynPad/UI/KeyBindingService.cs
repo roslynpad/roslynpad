@@ -5,8 +5,8 @@ namespace RoslynPad.UI;
 [Export(typeof(IKeyBindingService)), Shared]
 internal sealed class KeyBindingService : IKeyBindingService
 {
-    private readonly Dictionary<string, string> _currentBindings = new();
-    private readonly object _lock = new();
+    private readonly Dictionary<string, string> _currentBindings = [];
+    private readonly Lock _lock = new();
 
     public KeyBindingService()
     {

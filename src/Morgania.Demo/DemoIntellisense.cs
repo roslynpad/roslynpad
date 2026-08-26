@@ -59,11 +59,11 @@ public sealed class DemoCompletionSourceProvider : IAsyncCompletionSourceProvide
 
 internal sealed class DemoCompletionSource : IAsyncCompletionSource
 {
-    private static readonly string[] Keywords =
+    private static readonly string[] s_keywords =
         ["namespace", "public", "private", "static", "class", "struct", "interface", "return", "string", "double", "int", "bool", "void", "var", "new", "true", "false"];
 
-    private static readonly CompletionFilter KeywordFilter = new("Keywords", "K", new ImageElement(default));
-    private static readonly CompletionFilter IdentifierFilter = new("Identifiers", "I", new ImageElement(default));
+    private static readonly CompletionFilter s_keywordFilter = new("Keywords", "K", new ImageElement(default));
+    private static readonly CompletionFilter s_identifierFilter = new("Identifiers", "I", new ImageElement(default));
 
     public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         => new(CompletionParticipation.ProvidesItems, DemoWords.WordSpanAt(triggerLocation));
@@ -77,7 +77,7 @@ internal sealed class DemoCompletionSource : IAsyncCompletionSource
     {
         // Every identifier in the document plus a keyword list — the flavor of a word
         // completion provider, enough to see filtering, selection, and commit at work.
-        var words = new SortedSet<string>(Keywords, StringComparer.Ordinal);
+        var words = new SortedSet<string>(s_keywords, StringComparer.Ordinal);
         var identifiers = new SortedSet<string>(StringComparer.Ordinal);
         foreach (Match match in DemoWords.Identifier.Matches(triggerLocation.Snapshot.GetText()))
         {
@@ -85,14 +85,14 @@ internal sealed class DemoCompletionSource : IAsyncCompletionSource
         }
 
         var items = ImmutableArray.CreateBuilder<CompletionItem>();
-        foreach (string keyword in Keywords)
+        foreach (string keyword in s_keywords)
         {
-            items.Add(new CompletionItem(keyword, this, new ImageElement(default), [KeywordFilter], suffix: "keyword"));
+            items.Add(new CompletionItem(keyword, this, new ImageElement(default), [s_keywordFilter], suffix: "keyword"));
         }
 
         foreach (string identifier in identifiers)
         {
-            items.Add(new CompletionItem(identifier, this, new ImageElement(default), [IdentifierFilter]));
+            items.Add(new CompletionItem(identifier, this, new ImageElement(default), [s_identifierFilter]));
         }
 
         return Task.FromResult(new CompletionContext(items.ToImmutable()));

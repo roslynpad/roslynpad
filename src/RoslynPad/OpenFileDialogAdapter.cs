@@ -41,6 +41,6 @@ internal class OpenFileDialogAdapter : IOpenFileDialog
 
         var files = await window.StorageProvider.OpenFilePickerAsync(options).ConfigureAwait(false);
 
-        return files.Select(file => file.Path.ToString()).ToArray();
+        return [.. files.Select(file => file.Path.ToString())];
     }
 }

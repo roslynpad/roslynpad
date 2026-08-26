@@ -37,7 +37,7 @@ public abstract class ThemeDictionaryBase : ResourceDictionary
 
     /// <summary>
     /// Parses a VS Code theme color, which uses CSS #RRGGBBAA ordering for 8-digit hex values
-    /// (Avalonia's <see cref="Color.Parse"/> would read those as #AARRGGBB).
+    /// (Avalonia's <see cref="Avalonia.Media.Color.Parse(string)"/> would read those as #AARRGGBB).
     /// </summary>
     internal static Color ParseThemeColor(string color)
     {

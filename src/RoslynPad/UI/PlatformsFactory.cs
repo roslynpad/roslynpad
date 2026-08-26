@@ -11,7 +11,7 @@ namespace RoslynPad;
 internal class PlatformsFactory : IPlatformsFactory
 {
     private readonly IApplicationSettings _appSettings;
-    IReadOnlyList<ExecutionPlatform>? _executionPlatforms;
+    private IReadOnlyList<ExecutionPlatform>? _executionPlatforms;
     private (string dotnetExe, string sdkPath) _dotnetPaths;
 
     [ImportingConstructor]

@@ -1,2 +1,9 @@
 [*.cs]
 generated_code = true
+# Doc comments inherited from upstream carry unresolved crefs, stray tags and typo'd param
+# names; the repo builds with GenerateDocumentationFile on, and generated_code only silences
+# analyzers, not the compiler, so these have to be turned off explicitly.
+dotnet_diagnostic.CS1572.severity = none
+dotnet_diagnostic.CS1574.severity = none
+dotnet_diagnostic.CS1587.severity = none
+dotnet_diagnostic.CS1734.severity = none

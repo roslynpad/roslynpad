@@ -14,11 +14,11 @@ using Microsoft.VisualStudio.Text.Classification;
 /// </summary>
 internal sealed class SelectionLayer : Control
 {
-    private static readonly IBrush DefaultActiveBrush = new SolidColorBrush(Color.FromRgb(0x26, 0x4F, 0x78));
-    private static readonly IBrush DefaultInactiveBrush = new SolidColorBrush(Color.FromArgb(0x80, 0x26, 0x4F, 0x78));
+    private static readonly IBrush s_defaultActiveBrush = new SolidColorBrush(Color.FromRgb(0x26, 0x4F, 0x78));
+    private static readonly IBrush s_defaultInactiveBrush = new SolidColorBrush(Color.FromArgb(0x80, 0x26, 0x4F, 0x78));
 
-    private IBrush _activeBrush = DefaultActiveBrush;
-    private IBrush _inactiveBrush = DefaultInactiveBrush;
+    private IBrush _activeBrush = s_defaultActiveBrush;
+    private IBrush _inactiveBrush = s_defaultInactiveBrush;
 
     private readonly WpfTextView _view;
 
@@ -35,8 +35,8 @@ internal sealed class SelectionLayer : Control
     /// </summary>
     public void UpdateBrushes(IEditorFormatMap formatMap)
     {
-        _activeBrush = ReadBackground(formatMap, SelectionFormatNames.Active) ?? DefaultActiveBrush;
-        _inactiveBrush = ReadBackground(formatMap, SelectionFormatNames.Inactive) ?? DefaultInactiveBrush;
+        _activeBrush = ReadBackground(formatMap, SelectionFormatNames.Active) ?? s_defaultActiveBrush;
+        _inactiveBrush = ReadBackground(formatMap, SelectionFormatNames.Inactive) ?? s_defaultInactiveBrush;
         InvalidateVisual();
     }
 

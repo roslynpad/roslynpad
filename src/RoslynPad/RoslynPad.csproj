@@ -19,11 +19,6 @@
     <TargetFramework>$(DefaultTargetFramework)-macos</TargetFramework>
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
     <AppIcon>RoslynPad</AppIcon>
-    <CompileImageAssetsDependsOn>
-      CompileIconComposerAppIcon;
-      CollectIconComposerAppIcon;
-      $(CompileImageAssetsDependsOn)
-    </CompileImageAssetsDependsOn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(IsMacBuild)' == 'true' and '$(SignMacBundle)' == 'true'">
     <EnableCodeSigning>true</EnableCodeSigning>
@@ -81,6 +76,15 @@
     <Compile Include="..\..\vendor\roslyn\src\LanguageServer\Protocol\Features\DecompiledSource\CSharpCodeDecompilerDecompilationService.cs"
              Link="Roslyn\DecompiledSource\CSharpCodeDecompilerDecompilationService.cs" />
   </ItemGroup>
+
+  <!-- Compiling the two files above makes the Roslyn submodule's own root .editorconfig part of
+       this compilation, which shadows ours for them. Drop it so the repo's .editorconfig (and its
+       [vendor/roslyn/**] opt-out) governs those files instead. -->
+  <Target Name="RemoveRoslynSubmoduleEditorConfig" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <EditorConfigFiles Remove="$(RepoRoot)vendor\roslyn\**\.editorconfig" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <InternalsVisibleTo Include="RoslynPad.Tests" />
   </ItemGroup>
@@ -90,31 +94,22 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <!-- macOS bundle only: the app reads themes from Contents/Resources/Themes. Other platforms get
+         them from the RoslynPad.Themes project reference's own CopyToOutputDirectory. The macOS SDK
+         no longer infers a bundle location for content it doesn't recognize, so state it explicitly. -->
     <Content Include="..\RoslynPad.Themes\Themes\*.json"
-      Exclude="..\RoslynPad.Themes\Themes\vs2019*.json" />
+      Exclude="..\RoslynPad.Themes\Themes\vs2019*.json"
+      Link="Themes\%(Filename)%(Extension)"
+      PublishFolderType="Resource" />
   </ItemGroup>
 
-  <!-- Microsoft.macOS.Sdk 26.5 does not recognize Icon Composer bundles as ImageAsset items. -->
-  <Target Name="CompileIconComposerAppIcon"
-    Condition="'$(IsMacBuild)' == 'true'"
-    Inputs="@(IconComposerAppIconSource)"
-    Outputs="$(DeviceSpecificIntermediateOutputPath)iconcomposer/Assets.car;$(DeviceSpecificIntermediateOutputPath)iconcomposer/$(AppIcon).icns;$(DeviceSpecificIntermediateOutputPath)iconcomposer/partial-info.plist">
-    <MakeDir Directories="$(DeviceSpecificIntermediateOutputPath)iconcomposer" />
-    <Exec Command="xcrun --sdk macosx actool --compile &quot;$(DeviceSpecificIntermediateOutputPath)iconcomposer&quot; --platform macosx --minimum-deployment-target &quot;$(SupportedOSPlatformVersion)&quot; --app-icon &quot;$(AppIcon)&quot; --output-partial-info-plist &quot;$(DeviceSpecificIntermediateOutputPath)iconcomposer/partial-info.plist&quot; &quot;$(MSBuildProjectDirectory)/Resources/RoslynPad.icon&quot;" />
-  </Target>
-
-  <Target Name="CollectIconComposerAppIcon"
-    Condition="'$(IsMacBuild)' == 'true'"
-    DependsOnTargets="CompileIconComposerAppIcon">
+  <!-- The Themes project reference surfaces the same files a second time, and that copy carries no
+       bundle location. The Content items above already place them, so drop the duplicates rather
+       than let the macOS SDK warn about every one of them. -->
+  <Target Name="DropDuplicateThemeBundleFiles" BeforeTargets="_ComputePublishLocation">
     <ItemGroup>
-      <_PostCompilePartialAppManifest Include="$(DeviceSpecificIntermediateOutputPath)iconcomposer/partial-info.plist" />
-      <_BundleResourceWithLogicalName Include="$(DeviceSpecificIntermediateOutputPath)iconcomposer/Assets.car">
-        <LogicalName>Assets.car</LogicalName>
-      </_BundleResourceWithLogicalName>
-      <_BundleResourceWithLogicalName Include="$(DeviceSpecificIntermediateOutputPath)iconcomposer/$(AppIcon).icns">
-        <LogicalName>$(AppIcon).icns</LogicalName>
-      </_BundleResourceWithLogicalName>
-      <FileWrites Include="$(DeviceSpecificIntermediateOutputPath)iconcomposer/Assets.car;$(DeviceSpecificIntermediateOutputPath)iconcomposer/$(AppIcon).icns;$(DeviceSpecificIntermediateOutputPath)iconcomposer/partial-info.plist" />
+      <ResolvedFileToPublish PublishFolderType="None"
+        Condition="'%(ResolvedFileToPublish.PublishFolderType)' == '' And '%(ResolvedFileToPublish.Extension)' == '.json' And $([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').StartsWith('Themes'))" />
     </ItemGroup>
   </Target>
 </Project>

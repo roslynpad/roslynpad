@@ -83,7 +83,7 @@ internal static class DockLayoutSerializer
         TypeInfoResolver = DockLayoutContext.Default.WithAddedModifier(Customize),
     };
 
-    private static readonly JsonTypeInfo<RootDock> s_rootDockTypeInfo = (JsonTypeInfo<RootDock>)s_options.GetTypeInfo(typeof(RootDock));
+    private static readonly JsonTypeInfo<RootDock> s_rootDockTypeInfo = s_options.GetTypeInfo<RootDock>();
 
     public static string Serialize(RootDock layout) => JsonSerializer.Serialize(layout, s_rootDockTypeInfo);
 

@@ -1,5 +1,4 @@
 ﻿using System.Windows.Input;
-using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System.Composition;
 using Microsoft.CodeAnalysis.Editor.Shared.Extensions;

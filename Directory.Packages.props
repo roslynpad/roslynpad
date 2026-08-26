@@ -4,11 +4,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetExtensionsVersion>10.0.11</DotNetExtensionsVersion>
+    <DotNetExtensionsVersion>11.0.0-preview.7.26381.103</DotNetExtensionsVersion>
     <RoslynVersion>5.9.0</RoslynVersion>
     <AvaloniaVersion>12.1.1</AvaloniaVersion>
     <NuGetVersion>7.9.0</NuGetVersion>
-    <DockAvaloniaVersion>12.1.0.1</DockAvaloniaVersion>
+    <DockAvaloniaVersion>12.1.0.4</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />

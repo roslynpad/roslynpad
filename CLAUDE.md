@@ -73,7 +73,12 @@ dotnet run --project src/Morgania.Demo.EditorFeatures -- --smoke
 dotnet test tests/Morgania.IntellisenseTests   # also: BehaviorTests, CompositionTests, GeometryTests
 ```
 
-Requires **.NET 10 SDK** (see `global.json`). Also install .NET 8 SDK for LTS library targets.
+Requires **.NET 11 SDK** (see `global.json`). Also install .NET 10 for the earliest-supported and netstandard library targets.
+
+`AnalysisMode=Recommended` + `EnforceCodeStyleInBuild` + `TreatWarningsAsErrors` make every `IDExxxx` style rule a build error. Two non-obvious dependencies:
+
+- `GenerateDocumentationFile=true` is repo-wide only because IDE0005 needs it to run during build; `Directory.Build.targets` keeps the `.xml` out of non-packable output.
+- Vendored code opts out by owner: `vendor/roslyn` (submodule) via the root `.editorconfig`, which works only while `RoslynPad.csproj`'s `RemoveRoslynSubmoduleEditorConfig` drops the submodule's own `root = true` config — don't widen that target, other projects compile vendor files under `AnalysisMode=None`. `vendor/vs-editor-api` (our fork) opts out in its own `.editorconfig`. Naming rules ignore the bulk category severity and need disabling by id.
 
 ## Dependency Injection
 

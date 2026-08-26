@@ -15,30 +15,24 @@ internal enum InterfaceDestination
 
 internal class ExtractInterfaceDialogViewModel : NotificationObject
 {
-    private readonly object _syntaxFactsService;
     private readonly ImmutableArray<string> _conflictingTypeNames;
     private readonly string _defaultNamespace;
     private readonly string _generatedNameTypeParameterSuffix;
-    private readonly string _languageName;
     private readonly string _fileExtension;
 
     internal ExtractInterfaceDialogViewModel(
-        object syntaxFactsService,
         string defaultInterfaceName,
         ImmutableArray<ISymbol> extractableMembers,
         ImmutableArray<string> conflictingTypeNames,
         string defaultNamespace,
-        string generatedNameTypeParameterSuffix,
-        string languageName)
+        string generatedNameTypeParameterSuffix)
     {
-        _syntaxFactsService = syntaxFactsService;
         _interfaceName = defaultInterfaceName;
         _conflictingTypeNames = conflictingTypeNames;
         _fileExtension = ".cs";
         _fileName = $"{defaultInterfaceName}{_fileExtension}";
         _defaultNamespace = defaultNamespace;
         _generatedNameTypeParameterSuffix = generatedNameTypeParameterSuffix;
-        _languageName = languageName;
 
         MemberContainers = [.. extractableMembers.Select(m => new MemberSymbolViewModel(m)).OrderBy(s => s.MemberName)];
     }
@@ -59,12 +53,6 @@ internal class ExtractInterfaceDialogViewModel : NotificationObject
             SendFailureNotification("InterfaceNameConflictsWithTypeName");
             return false;
         }
-
-        //if (!_syntaxFactsService.IsValidIdentifier(trimmedInterfaceName))
-        //{
-        //    SendFailureNotification($"InterfaceNameIsNotAValidIdentifier {_languageName}");
-        //    return false;
-        //}
 
         if (trimmedFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {

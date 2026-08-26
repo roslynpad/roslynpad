@@ -17,7 +17,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
 
     private readonly Stream _stream;
 
-    private readonly object _lock;
+    private readonly Lock _lock;
 
     private int _dumpCount;
 
@@ -25,7 +25,7 @@ internal class JsonConsoleDumper : IConsoleDumper, IDisposable
     {
         _stream = Console.OpenStandardOutput();
 
-        _lock = new object();
+        _lock = new Lock();
     }
 
     private Utf8JsonWriter CreateJsonWriter() => new(_stream);

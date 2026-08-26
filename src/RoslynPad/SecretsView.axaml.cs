@@ -14,7 +14,7 @@ public partial class SecretsView : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
-    void OnCopyingToClipboard(object? sender, RoutedEventArgs e)
+    private void OnCopyingToClipboard(object? sender, RoutedEventArgs e)
     {
         e.Handled = true;
     }

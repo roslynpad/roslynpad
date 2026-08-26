@@ -12,7 +12,7 @@ namespace RoslynPad;
 /// Interaction logic for RenameDocumentDialog.axaml
 /// </summary>
 [Export(typeof(IRenameDocumentDialog))]
-partial class RenameDocumentDialog : UserControl, IRenameDocumentDialog, INotifyPropertyChanged
+internal partial class RenameDocumentDialog : UserControl, IRenameDocumentDialog, INotifyPropertyChanged
 {
     private static readonly char[] s_invalidFileChars = Path.GetInvalidFileNameChars();
 

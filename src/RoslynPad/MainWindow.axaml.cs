@@ -14,14 +14,16 @@ using Dock.Model.Core;
 using Dock.Model.Core.Events;
 using Avalonia.VisualTree;
 using Microsoft.Extensions.DependencyInjection;
+#if DEBUG
 using Microsoft.Extensions.Logging;
+#endif
 using RoslynPad.Themes;
 using RoslynPad.UI;
 using SourceCodeKind = Microsoft.CodeAnalysis.SourceCodeKind;
 
 namespace RoslynPad;
 
-partial class MainWindow : Window
+internal partial class MainWindow : Window
 {
     public const string DialogHostIdentifier = "Main";
     private readonly DockState _dockState = new();
@@ -35,7 +37,7 @@ partial class MainWindow : Window
     {
         var services = new ServiceCollection();
         services.AddLogging(
-#if DEBUG    
+#if DEBUG
         l => l.AddDebug()
 #endif
         );

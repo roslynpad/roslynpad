@@ -2,7 +2,7 @@
 
 namespace RoslynPad;
 
-partial class NewDocumentView : UserControl
+internal partial class NewDocumentView : UserControl
 {
     public NewDocumentView()
     {

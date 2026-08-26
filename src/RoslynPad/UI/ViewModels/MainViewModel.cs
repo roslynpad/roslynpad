@@ -672,7 +672,7 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
     public const double MinimumFontSize = 8;
     public const double MaximumFontSize = 72;
 
-    public static bool IsValidFontSize(double value) => value >= MinimumFontSize && value <= MaximumFontSize;
+    public static bool IsValidFontSize(double value) => value is >= MinimumFontSize and <= MaximumFontSize;
 
     public double EditorFontSize
     {
@@ -1048,7 +1048,7 @@ public class MainViewModel : NotificationObject, IDisposable, INavigationHost
                     {
                         var currentPath = isLast && data.Type == DocumentFileChangeType.Renamed
                             ? data.NewPath
-                            : Path.Combine(_documentRoot.Path, Path.Combine(pathParts.Take(index + 1).ToArray()));
+                            : Path.Combine([_documentRoot.Path, .. pathParts.Take(index + 1)]);
 
                         var newDocument = DocumentViewModel.FromPath(currentPath!);
                         if (!newDocument.IsAutoSave &&

@@ -21,7 +21,7 @@ internal static class SourceRepositoryExtensions
 
             if (searchResults != null)
             {
-                return searchResults.ToArray();
+                return [.. searchResults];
             }
         }
 

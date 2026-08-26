@@ -39,8 +39,8 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
 
         _declarationParts = symbol.ToDisplayParts(s_symbolDeclarationDisplayFormat);
 
-        _parametersWithoutDefaultValues = parameters.ParametersWithoutDefaultValues.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p)).ToList();
-        _parametersWithDefaultValues = parameters.RemainingEditableParameters.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p)).ToList();
+        _parametersWithoutDefaultValues = [.. parameters.ParametersWithoutDefaultValues.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p))];
+        _parametersWithDefaultValues = [.. parameters.RemainingEditableParameters.OfType<ExistingParameter>().Select(p => new ParameterViewModel(this, p))];
         SelectedIndex = startingSelectedIndex;
     }
 
@@ -121,8 +121,8 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
     {
         return new ParameterConfiguration(
             _originalParameterConfiguration.ThisParameter,
-            _parametersWithoutDefaultValues.Where(p => !p.IsRemoved).Select(p => (Parameter)new ExistingParameter(p.ParameterSymbol)).ToImmutableArray(),
-            _parametersWithDefaultValues.Where(p => !p.IsRemoved).Select(p => (Parameter)new ExistingParameter(p.ParameterSymbol)).ToImmutableArray(),
+            [.. _parametersWithoutDefaultValues.Where(p => !p.IsRemoved).Select(p => (Parameter)new ExistingParameter(p.ParameterSymbol))],
+            [.. _parametersWithDefaultValues.Where(p => !p.IsRemoved).Select(p => (Parameter)new ExistingParameter(p.ParameterSymbol))],
             (_paramsParameter == null || _paramsParameter.IsRemoved) ? null : new ExistingParameter(_paramsParameter.ParameterSymbol),
             selectedIndex: -1);
     }
@@ -290,13 +290,6 @@ internal class ChangeSignatureDialogViewModel : NotificationObject
     private bool IsDisabled(ParameterViewModel parameterViewModel)
     {
         return _disabledParameters.Contains(parameterViewModel);
-    }
-
-    private List<ParameterViewModel> GetSelectedGroup()
-    {
-        var index = SelectedIndex;
-        index = _thisParameter == null ? index : index - 1;
-        return index < _parametersWithoutDefaultValues.Count ? _parametersWithoutDefaultValues : index < _parametersWithoutDefaultValues.Count + _parametersWithDefaultValues.Count ? _parametersWithDefaultValues : [];
     }
 
     public bool IsOkButtonEnabled

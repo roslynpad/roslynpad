@@ -615,7 +615,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
         double? viewportHeightOverride)
     {
         ThrowIfClosed();
-        if (relativeTo != ViewRelativePosition.Top && relativeTo != ViewRelativePosition.Bottom)
+        if (relativeTo is not ViewRelativePosition.Top and not ViewRelativePosition.Bottom)
         {
             throw new ArgumentOutOfRangeException(nameof(relativeTo));
         }

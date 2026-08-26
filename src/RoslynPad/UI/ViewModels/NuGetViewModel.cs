@@ -133,10 +133,12 @@ public sealed class NuGetViewModel : NotificationObject
             _resourceProviders = [.. Repository.Provider.GetCoreV3()];
 
             // Create repositories
-            _repositories = PackageSourceProvider.LoadPackageSources()
-                .Where(s => s.IsEnabled)
-                .Select(CreateRepository)
-                .ToList();
+            _repositories =
+            [
+                .. PackageSourceProvider.LoadPackageSources()
+                    .Where(s => s.IsEnabled)
+                    .Select(CreateRepository)
+            ];
         }
 
         public IEnumerable<SourceRepository> GetRepositories()

@@ -6,7 +6,7 @@ namespace RoslynPad.Roslyn;
 
 public class DummyScriptMetadataResolver : MetadataReferenceResolver
 {
-    public static DummyScriptMetadataResolver Instance {  get; } = new DummyScriptMetadataResolver();
+    public static DummyScriptMetadataResolver Instance { get; } = new DummyScriptMetadataResolver();
 
     private DummyScriptMetadataResolver() { }
 

@@ -15,7 +15,7 @@ using Microsoft.VisualStudio.Text.Editor;
 /// </summary>
 public static class EditorHost
 {
-    private static readonly string[] AssemblyNames =
+    private static readonly string[] s_assemblyNames =
     [
         // The abstractions assembly carries parts too (option/format definitions).
         "Morgania.Editor.Abstractions",
@@ -24,7 +24,7 @@ public static class EditorHost
 
     public static CompositionHost Create() =>
         new ContainerConfiguration()
-            .WithAssemblies(AssemblyNames.Select(static name => Assembly.Load(name)))
+            .WithAssemblies(s_assemblyNames.Select(static name => Assembly.Load(name)))
             .WithAssembly(typeof(EditorHost).Assembly)
             .CreateContainer();
 

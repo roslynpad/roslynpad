@@ -5,7 +5,7 @@ using RoslynPad.UI;
 
 namespace RoslynPad;
 
-partial class MetadataDocumentView : UserControl, IDisposable
+internal partial class MetadataDocumentView : UserControl, IDisposable
 {
     private readonly CodeEditorView _editor;
 

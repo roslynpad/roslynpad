@@ -435,10 +435,12 @@ public sealed partial class ThemeClassificationFormats
             tokensMap[classification.Key] = classification.Value;
         }
 
-        return tokensMap
-            .Where(t => scopes.ContainsKey(t.Value))
-            .Select(t => (classification: t.Key, scopes: scopes[t.Value]))
-            .ToImmutableArray();
+        return
+        [
+            .. tokensMap
+                .Where(t => scopes.ContainsKey(t.Value))
+                .Select(t => (classification: t.Key, scopes: scopes[t.Value]))
+        ];
     }
 
     private static Dictionary<string, string[]> ReadScopes(string name)

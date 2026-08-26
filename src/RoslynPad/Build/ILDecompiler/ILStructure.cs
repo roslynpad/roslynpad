@@ -165,7 +165,7 @@ internal class ILStructure
         LoopEntryPoint = loopEntryPoint;
     }
 
-    bool AddNestedStructure(ILStructure newStructure)
+    private bool AddNestedStructure(ILStructure newStructure)
     {
         // special case: don't consider the loop-like structure of "continue;" statements to be nested loops
         if (Type == ILStructureType.Loop && newStructure.Type == ILStructureType.Loop && newStructure.StartOffset == StartOffset)
@@ -209,7 +209,7 @@ internal class ILStructure
     /// Multiple entries for the same source offset are possible (switch statements).
     /// The result is sorted by source offset.
     /// </summary>
-    List<KeyValuePair<Instruction, Instruction>> FindAllBranches(MethodBody body)
+    private static List<KeyValuePair<Instruction, Instruction>> FindAllBranches(MethodBody body)
     {
         var result = new List<KeyValuePair<Instruction, Instruction>>();
         foreach (var inst in body.Instructions)
@@ -229,7 +229,7 @@ internal class ILStructure
         return result;
     }
 
-    void SortChildren()
+    private void SortChildren()
     {
         Children.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
         foreach (var child in Children)

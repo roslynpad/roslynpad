@@ -40,8 +40,8 @@ public sealed class SignatureHelpBroker : ISignatureHelpBroker
         [ImportMany] IEnumerable<Lazy<ISignatureHelpSourceProvider, OrderableContentTypeMetadata>> sourceProviders,
         [ImportMany] IEnumerable<Lazy<IIntellisensePresenterProvider, OrderableContentTypeMetadata>> presenterProviders)
     {
-        _sourceProviders = Orderer.Order(sourceProviders.ToList()).ToList();
-        _presenterProviders = Orderer.Order(presenterProviders.ToList()).ToList();
+        _sourceProviders = [.. Orderer.Order(sourceProviders.ToList())];
+        _presenterProviders = [.. Orderer.Order(presenterProviders.ToList())];
     }
 
     public ISignatureHelpSession? TriggerSignatureHelp(ITextView textView)

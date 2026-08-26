@@ -14,12 +14,12 @@ using Microsoft.VisualStudio.Text.Classification;
 /// </summary>
 internal sealed class CaretLayer : Control
 {
-    private static readonly IBrush DefaultPrimaryBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0));
-    private static readonly IBrush DefaultSecondaryBrush = new SolidColorBrush(Color.FromArgb(0xA0, 0xE0, 0xE0, 0xE0));
-    private static readonly TimeSpan BlinkInterval = TimeSpan.FromMilliseconds(530);
+    private static readonly IBrush s_defaultPrimaryBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0));
+    private static readonly IBrush s_defaultSecondaryBrush = new SolidColorBrush(Color.FromArgb(0xA0, 0xE0, 0xE0, 0xE0));
+    private static readonly TimeSpan s_blinkInterval = TimeSpan.FromMilliseconds(530);
 
-    private IBrush _primaryBrush = DefaultPrimaryBrush;
-    private IBrush _secondaryBrush = DefaultSecondaryBrush;
+    private IBrush _primaryBrush = s_defaultPrimaryBrush;
+    private IBrush _secondaryBrush = s_defaultSecondaryBrush;
 
     private readonly WpfTextView _view;
     private readonly DispatcherTimer _blinkTimer;
@@ -31,7 +31,7 @@ internal sealed class CaretLayer : Control
         _view = view;
         IsHitTestVisible = false;
         ClipToBounds = true;
-        _blinkTimer = new DispatcherTimer(BlinkInterval, DispatcherPriority.Background, OnBlink);
+        _blinkTimer = new DispatcherTimer(s_blinkInterval, DispatcherPriority.Background, OnBlink);
     }
 
     /// <summary>
@@ -41,11 +41,11 @@ internal sealed class CaretLayer : Control
     /// </summary>
     public void UpdateBrushes(IEditorFormatMap formatMap)
     {
-        _primaryBrush = ReadForeground(formatMap, CaretFormatNames.Primary) ?? DefaultPrimaryBrush;
+        _primaryBrush = ReadForeground(formatMap, CaretFormatNames.Primary) ?? s_defaultPrimaryBrush;
         _secondaryBrush = ReadForeground(formatMap, CaretFormatNames.Secondary)
             ?? (_primaryBrush is ISolidColorBrush { Color: var primary }
                 ? new SolidColorBrush(Color.FromArgb(0xA0, primary.R, primary.G, primary.B))
-                : DefaultSecondaryBrush);
+                : s_defaultSecondaryBrush);
         InvalidateVisual();
     }
 
@@ -97,7 +97,7 @@ internal sealed class CaretLayer : Control
     public override void Render(DrawingContext context)
     {
         base.Render(context);
-        if (_view.IsClosed || _view.InLayout || (_view.Caret.IsHidden))
+        if (_view.IsClosed || _view.InLayout || _view.Caret.IsHidden)
         {
             return;
         }

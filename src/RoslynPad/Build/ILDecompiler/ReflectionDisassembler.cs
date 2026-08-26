@@ -333,7 +333,7 @@ internal sealed class ReflectionDisassembler(ITextOutput output, bool detectCont
     private void WriteSecurityDeclarationArgument(CustomAttributeNamedArgument na)
     {
         var type = na.Argument.Type;
-        if (type.MetadataType == MetadataType.Class || type.MetadataType == MetadataType.ValueType)
+        if (type.MetadataType is MetadataType.Class or MetadataType.ValueType)
         {
             _output.Write("enum ");
             if (type.Scope != type.Module)
@@ -657,7 +657,7 @@ internal sealed class ReflectionDisassembler(ITextOutput output, bool detectCont
         else
         {
             var typeName = DisassemblerHelpers.PrimitiveTypeName(constant.GetType().FullName!);
-            if (typeName != null && typeName != "string")
+            if (typeName is not null and not "string")
             {
                 _output.Write(typeName);
                 _output.Write('(');

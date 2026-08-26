@@ -12,7 +12,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad;
 
-partial class ResultsView : UserControl
+internal partial class ResultsView : UserControl
 {
     public static readonly StyledProperty<IDelegateCommand?> CopyValueProperty =
         AvaloniaProperty.Register<ResultsView, IDelegateCommand?>(nameof(CopyValue));

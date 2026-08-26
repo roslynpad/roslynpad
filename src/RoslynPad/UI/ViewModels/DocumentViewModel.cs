@@ -194,8 +194,10 @@ public partial class DocumentViewModel : NotificationObject
     }
 
     [AllowNull]
-    private string OrderByName { get =>
-        field ??= NumberRegex().Replace(Name, m => m.Value.PadLeft(100, '0')); set;
+    private string OrderByName
+    {
+        get => field ??= NumberRegex().Replace(Name, m => m.Value.PadLeft(100, '0'));
+        set;
     }
 
     internal void AddChild(DocumentViewModel documentViewModel)

@@ -21,7 +21,7 @@ public sealed class ToolTipService : IToolTipService
     [ImportingConstructor]
     public ToolTipService([ImportMany] IEnumerable<Lazy<IToolTipPresenterFactory, Orderable>> factories)
     {
-        _factories = Orderer.Order(factories.ToList()).ToList();
+        _factories = [.. Orderer.Order(factories.ToList())];
     }
 
     public IToolTipPresenter CreatePresenter(ITextView textView, ToolTipParameters? parameters = null)

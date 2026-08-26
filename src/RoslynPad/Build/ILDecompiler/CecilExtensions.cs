@@ -112,14 +112,14 @@ internal static class CecilExtensions
 
     public static bool IsVoid(this TypeReference type)
     {
-        while (type is OptionalModifierType || type is RequiredModifierType)
+        while (type is OptionalModifierType or RequiredModifierType)
             type = ((TypeSpecification)type).ElementType;
         return type.MetadataType == MetadataType.Void;
     }
 
     public static bool IsValueTypeOrVoid(this TypeReference type)
     {
-        while (type is OptionalModifierType || type is RequiredModifierType)
+        while (type is OptionalModifierType or RequiredModifierType)
             type = ((TypeSpecification)type).ElementType;
         if (type is ArrayType)
             return false;
@@ -132,11 +132,11 @@ internal static class CecilExtensions
     /// </summary>
     public static bool IsSignedIntegralType(this TypeReference type)
     {
-        return type.MetadataType == MetadataType.SByte ||
-               type.MetadataType == MetadataType.Int16 ||
-               type.MetadataType == MetadataType.Int32 ||
-               type.MetadataType == MetadataType.Int64 ||
-               type.MetadataType == MetadataType.IntPtr;
+        return type.MetadataType is MetadataType.SByte
+                                 or MetadataType.Int16
+                                 or MetadataType.Int32
+                                 or MetadataType.Int64
+                                 or MetadataType.IntPtr;
     }
 
     /// <summary>

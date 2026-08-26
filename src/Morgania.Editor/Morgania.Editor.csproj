@@ -9,6 +9,7 @@
     <RootNamespace>Microsoft.VisualStudio</RootNamespace>
     <Description>The Morgania code editor for Avalonia, based on the vs-editor-api repo: text model, projection, classification, tagging, IntelliSense, and multi-caret, with an Avalonia rendering, input, and popup layer.</Description>
     <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- The vendored majority predates repo conventions: nullable is off at project level
          (with upstream's NoWarn baseline, carried from the retired vendor
          Directory.Build.props); Morgania-authored files opt back in with #nullable enable.

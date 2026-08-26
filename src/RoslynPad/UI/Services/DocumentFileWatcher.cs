@@ -35,7 +35,7 @@ public class DocumentFileWatcher : IDisposable, IObservable<DocumentFileChanged>
         _fileSystemWatcher.Deleted += OnChanged;
         _fileSystemWatcher.IncludeSubdirectories = true;
     }
-    
+
     public string Path
     {
         get => _fileSystemWatcher.Path;

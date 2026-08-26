@@ -14,7 +14,6 @@ namespace RoslynPad.Roslyn.FileBasedPrograms;
 public static partial class FileLevelDirectiveHelpers
 {
     /// <summary>Finds file-level directives in the leading trivia list of a compilation unit and reports diagnostics on them.</summary>
-    /// <param name="builder">The builder to store the parsed directives in, or null if the parsed directives are not needed.</param>
     public static ImmutableArray<FileLevelDirective> FindFileLevelDirectives(this SyntaxTree syntaxTree)
     {
         var builder = ImmutableArray.CreateBuilder<FileLevelDirective>();

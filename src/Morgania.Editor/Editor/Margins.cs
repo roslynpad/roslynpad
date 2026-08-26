@@ -133,7 +133,7 @@ public sealed class LineNumberMarginProvider : IWpfTextViewMarginProvider
 
     private sealed class LineNumberMargin : Control, IWpfTextViewMargin
     {
-        private static readonly IBrush NumberBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
+        private static readonly IBrush s_numberBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
 
         private readonly IWpfTextView _view;
         private bool _isDisposed;
@@ -196,7 +196,7 @@ public sealed class LineNumberMarginProvider : IWpfTextViewMarginProvider
                     FlowDirection.LeftToRight,
                     properties.Typeface,
                     properties.FontRenderingEmSize * zoom,
-                    NumberBrush);
+                    s_numberBrush);
                 context.DrawText(text, new Point(Bounds.Width - text.Width - 6.0 * zoom, (line.TextTop - _view.ViewportTop) * zoom));
             }
         }

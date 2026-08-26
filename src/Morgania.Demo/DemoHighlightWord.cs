@@ -21,8 +21,8 @@ public sealed class HighlightWordListener : IWpfTextViewCreationListener
 {
     public const string LayerName = "DemoHighlightWord";
 
-    private static readonly IBrush FillBrush = new SolidColorBrush(Color.FromArgb(0x48, 0x26, 0x4F, 0x78));
-    private static readonly IBrush StrokeBrush = new SolidColorBrush(Color.FromArgb(0x90, 0x45, 0x6F, 0x9A));
+    private static readonly IBrush s_fillBrush = new SolidColorBrush(Color.FromArgb(0x48, 0x26, 0x4F, 0x78));
+    private static readonly IBrush s_strokeBrush = new SolidColorBrush(Color.FromArgb(0x90, 0x45, 0x6F, 0x9A));
 
     private readonly ITextSearchService _textSearch;
     private readonly ITextStructureNavigatorSelectorService _navigatorSelector;
@@ -87,8 +87,8 @@ public sealed class HighlightWordListener : IWpfTextViewCreationListener
             var marker = new Path
             {
                 Data = geometry,
-                Fill = FillBrush,
-                Stroke = StrokeBrush,
+                Fill = s_fillBrush,
+                Stroke = s_strokeBrush,
                 StrokeThickness = 1.0,
             };
             Canvas.SetLeft(marker, -textView.ViewportLeft);

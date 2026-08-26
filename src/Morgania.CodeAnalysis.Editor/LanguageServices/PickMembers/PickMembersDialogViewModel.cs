@@ -18,8 +18,8 @@ internal class PickMembersDialogViewModel : NotificationObject
         ImmutableArray<ISymbol> members,
         ImmutableArray<PickMembersOption> options)
     {
-        MemberContainers = members.Select(m => new MemberSymbolViewModel(m)).ToList();
-        Options = options.Select(o => new OptionViewModel(o)).ToList();
+        MemberContainers = [.. members.Select(m => new MemberSymbolViewModel(m))];
+        Options = [.. options.Select(o => new OptionViewModel(o))];
     }
 
     internal void DeselectAll()
@@ -95,7 +95,7 @@ internal class PickMembersDialogViewModel : NotificationObject
             {
                 return false;
             }
-            
+
             var index = SelectedIndex.Value;
             return index > 0;
         }
@@ -109,7 +109,7 @@ internal class PickMembersDialogViewModel : NotificationObject
             {
                 return false;
             }
-            
+
             var index = SelectedIndex.Value;
             return index < MemberContainers.Count - 1;
         }

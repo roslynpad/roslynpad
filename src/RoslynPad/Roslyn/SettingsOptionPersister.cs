@@ -35,7 +35,7 @@ public sealed class SettingsOptionPersister : IOptionPersisterProvider, IOptionP
             return false;
         }
 
-        var roslyn = settings.Roslyn?.DeepClone().AsObject() ?? new JsonObject();
+        var roslyn = settings.Roslyn?.DeepClone().AsObject() ?? [];
         roslyn[optionKey.Option.Definition.ConfigName] = optionKey.Option.Definition.Serializer.Serialize(value);
         settings.Roslyn = roslyn; // reassigned (not mutated) so the settings file is saved
         return true;

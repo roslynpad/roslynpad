@@ -63,7 +63,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
     private readonly LibraryRef _runtimeAssemblyLibraryRef;
     private readonly LibraryRef _runtimeNetFxAssemblyLibraryRef;
     private readonly string _restoreCachePath;
-    private readonly object _ctsLock;
+    private readonly Lock _ctsLock;
     private CancellationTokenSource? _executeCts;
     private CancellationTokenSource? _restoreCts;
     private ExecutionPlatform? _platform;
@@ -174,7 +174,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         _analyzerAssemblyLoader = _roslynHost.GetService<IAnalyzerAssemblyLoader>();
         _libraries = [];
 
-        _ctsLock = new object();
+        _ctsLock = new Lock();
         _lock = new SemaphoreSlim(1, 1);
 
         MetadataReferences = [];
@@ -360,7 +360,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         {
             await foreach (var line in buildResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                await output.WriteLineAsync(line).ConfigureAwait(false);
+                await output.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
             }
 
             await WriteErrorLinesAsync(output, buildResult.StandardError).ConfigureAwait(false);
@@ -930,10 +930,10 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                         {
                             await foreach (var line in restoreResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
                             {
-                                await output.WriteLineAsync(line).ConfigureAwait(false);
+                                await output.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
                                 if (logWriter is not null)
                                 {
-                                    await logWriter.WriteLineAsync(line).ConfigureAwait(false);
+                                    await logWriter.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
                                 }
                             }
 

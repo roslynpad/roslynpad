@@ -5,7 +5,7 @@ using RoslynPad.Resources;
 
 namespace RoslynPad;
 
-class App : Application
+internal class App : Application
 {
     public override void OnFrameworkInitializationCompleted()
     {

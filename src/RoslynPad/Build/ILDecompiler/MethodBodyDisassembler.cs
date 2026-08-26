@@ -181,10 +181,11 @@ internal sealed class MethodBodyDisassembler(ITextOutput output, bool detectCont
                 inst.WriteTo(_output);
                 _output.WriteLine();
 
-                prevInstructionWasBranch = inst.OpCode.FlowControl == FlowControl.Branch
-                    || inst.OpCode.FlowControl == FlowControl.Cond_Branch
-                    || inst.OpCode.FlowControl == FlowControl.Return
-                    || inst.OpCode.FlowControl == FlowControl.Throw;
+                prevInstructionWasBranch = inst.OpCode.FlowControl
+                    is FlowControl.Branch
+                    or FlowControl.Cond_Branch
+                    or FlowControl.Return
+                    or FlowControl.Throw;
 
                 inst = inst.Next;
             }

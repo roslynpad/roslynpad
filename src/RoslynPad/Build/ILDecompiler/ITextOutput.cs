@@ -21,37 +21,37 @@ using System.Globalization;
 namespace RoslynPad.Build.ILDecompiler;
 
 internal interface ITextOutput
-	{
-		void Indent();
-		void Unindent();
-		void Write(char ch);
-		void Write(string? text);
-		void WriteLine();
-		void WriteDefinition(string text, object definition, bool isLocal = true);
-		void WriteReference(string text, object reference, bool isLocal = false);
+{
+    void Indent();
+    void Unindent();
+    void Write(char ch);
+    void Write(string? text);
+    void WriteLine();
+    void WriteDefinition(string text, object definition, bool isLocal = true);
+    void WriteReference(string text, object reference, bool isLocal = false);
 
     void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
-		void MarkFoldEnd();
-	}
-	
-	internal static class TextOutputExtensions
-	{
-		public static void Write(this ITextOutput output, string format, params object[] args)
-		{
-			output.Write(string.Format(CultureInfo.InvariantCulture, format, args));
-		}
-		
-		public static void WriteLine(this ITextOutput output, string text)
-		{
-			output.Write(text);
-			output.WriteLine();
-		}
-		
-		public static void WriteLine(this ITextOutput output, string format, params object[] args)
-		{
-			output.WriteLine(string.Format(CultureInfo.InvariantCulture, format, args));
-		}
-	}
+    void MarkFoldEnd();
+}
+
+internal static class TextOutputExtensions
+{
+    public static void Write(this ITextOutput output, string format, params object[] args)
+    {
+        output.Write(string.Format(CultureInfo.InvariantCulture, format, args));
+    }
+
+    public static void WriteLine(this ITextOutput output, string text)
+    {
+        output.Write(text);
+        output.WriteLine();
+    }
+
+    public static void WriteLine(this ITextOutput output, string format, params object[] args)
+    {
+        output.WriteLine(string.Format(CultureInfo.InvariantCulture, format, args));
+    }
+}
 
 internal sealed class PlainTextOutput : ITextOutput, IDisposable
 {
@@ -68,7 +68,7 @@ internal sealed class PlainTextOutput : ITextOutput, IDisposable
     {
         _writer = new StringWriter();
     }
-    
+
     public override string ToString()
     {
         return _writer.ToString()!;

@@ -13,7 +13,7 @@ namespace RoslynPad;
 /// Writes arrive on background threads; updates are coalesced into single pulls on the UI
 /// thread that append only the new text to the buffer.
 /// </summary>
-partial class BuildOutputView : UserControl
+internal partial class BuildOutputView : UserControl
 {
     private readonly CodeEditorView _editor;
     private BuildOutputViewModel? _buildOutput;

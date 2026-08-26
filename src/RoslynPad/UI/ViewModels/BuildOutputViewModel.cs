@@ -59,7 +59,7 @@ public class BuildOutputViewModel : NotificationObject
 public sealed class BuildOutputDocument(string name) : NotificationObject
 {
     private readonly StringBuilder _text = new();
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
     private int _generation = 1;
 
     public string Name { get; } = name;

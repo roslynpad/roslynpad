@@ -47,10 +47,12 @@ public sealed class IntellisenseTests
     }
 
     private static TextBlock[] OverlayTextBlocks(IWpfTextView view)
-        => OverlayLayer.GetOverlayLayer(view.VisualElement)!
-            .GetVisualDescendants()
-            .OfType<TextBlock>()
-            .ToArray();
+        =>
+        [
+            .. OverlayLayer.GetOverlayLayer(view.VisualElement)!
+                .GetVisualDescendants()
+                .OfType<TextBlock>()
+        ];
 
     /// <summary>Text of a block whether it uses Text or classified-run Inlines.</summary>
     private static string BlockText(TextBlock block)

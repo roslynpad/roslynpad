@@ -2,7 +2,7 @@
 
 internal class DirectConsoleDumper : IConsoleDumper
 {
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
     public bool SupportsRedirect => false;
 

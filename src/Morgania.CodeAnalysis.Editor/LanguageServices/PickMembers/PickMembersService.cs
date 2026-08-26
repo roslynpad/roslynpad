@@ -26,9 +26,8 @@ internal class PickMembersService(ExportFactory<IPickMembersDialog> dialogFactor
         if (dialog.Show() == true)
         {
             return new PickMembersResult(
-                viewModel.MemberContainers.Where(c => c.IsChecked)
-                                          .Select(c => c.MemberSymbol)
-                                          .ToImmutableArray(), 
+                [.. viewModel.MemberContainers.Where(c => c.IsChecked)
+                                              .Select(c => c.MemberSymbol)],
                 options, selectAll);
         }
         else

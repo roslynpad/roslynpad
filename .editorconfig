@@ -198,3 +198,16 @@ end_of_line = crlf
 # project files
 [{*.*proj,*.props,*.targets}]
 indent_size = 2
+
+# vendor/roslyn is a submodule we don't control, but some of its sources are compiled into our projects
+[vendor/roslyn/**/*.cs]
+dotnet_analyzer_diagnostic.category-Style.severity = none
+# Naming diagnostics take their severity from the matching dotnet_naming_rule above rather
+# than from the bulk category option, so IDE1006 has to be turned off by id.
+dotnet_diagnostic.IDE1006.severity = none
+dotnet_diagnostic.IDE0005.severity = none
+# Upstream doc comments carry unresolved crefs and stray param tags.
+dotnet_diagnostic.CS1572.severity = none
+dotnet_diagnostic.CS1574.severity = none
+dotnet_diagnostic.CS1587.severity = none
+dotnet_diagnostic.CS1734.severity = none

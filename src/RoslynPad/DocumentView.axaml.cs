@@ -15,7 +15,7 @@ using RoslynPad.Utilities;
 
 namespace RoslynPad;
 
-partial class DocumentView : UserControl, IDisposable
+internal partial class DocumentView : UserControl, IDisposable
 {
     private readonly TextBox _nuGetSearch;
     private readonly CodeEditorView _editor;
@@ -55,7 +55,6 @@ partial class DocumentView : UserControl, IDisposable
         viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
         viewModel.ReadInput += OnReadInput;
-        viewModel.EditorFocus += (o, e) => FocusEditor();
         viewModel.RenameRequested += (o, e) => _editor.InvokeRename();
         viewModel.NavigationRequested += span => _editor.NavigateToSpan(span);
         viewModel.FindRequested += (o, e) => _editor.InvokeFindReplace(showReplace: false);
@@ -205,7 +204,7 @@ partial class DocumentView : UserControl, IDisposable
 
     private void NuGetSearch_OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Down && ViewModel.NuGet.Packages?.Any() == true)
+        if (e.Key == Key.Down && ViewModel.NuGet.Packages is { Count: > 0 })
         {
             if (!ViewModel.NuGet.IsPackagesMenuOpen)
             {

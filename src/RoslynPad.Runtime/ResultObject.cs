@@ -93,7 +93,7 @@ internal class ResultObject
                     PopulateChildren(o, targetQuotas, members, headerPrefix);
                     var enumerable = new ResultObject(o, targetQuotas, headerPrefix);
                     enumerable.InitializeEnumerable(headerPrefix, e, targetQuotas);
-                    Children = (Children ?? Enumerable.Empty<ResultObject>()).Concat([enumerable]).ToList();
+                    Children = [.. Children ?? [], enumerable];
                 }
                 else
                 {
@@ -113,11 +113,13 @@ internal class ResultObject
         PopulateChildren(o, targetQuotas, GetMembers(type), headerPrefix);
     }
 
-    private static MemberInfo[] GetMembers(Type type) => ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
-        .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
-        .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
-        .OrderBy(m => m.Name)
-        .ToArray();
+    private static MemberInfo[] GetMembers(Type type) =>
+    [
+        .. ((IEnumerable<MemberInfo>)type.GetRuntimeProperties()
+            .Where(m => m.GetMethod?.IsPublic == true && !m.GetMethod.IsStatic))
+            .Concat(type.GetRuntimeFields().Where(m => m.IsPublic && !m.IsStatic))
+            .OrderBy(m => m.Name)
+    ];
 
     private static IEnumerable? GetEnumerable(object o, Type type) =>
         o is IEnumerable e && !s_doNotTreatAsEnumerableTypeNames.Contains(type.Name) ? e : null;

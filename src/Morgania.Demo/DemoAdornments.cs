@@ -32,7 +32,7 @@ public sealed partial class ColorSwatchTaggerProvider : IViewTaggerProvider
 
     private sealed partial class ColorSwatchTagger : ITagger<IntraTextAdornmentTag>
     {
-        private readonly Dictionary<ITrackingSpan, IntraTextAdornmentTag> _cache = new();
+        private readonly Dictionary<ITrackingSpan, IntraTextAdornmentTag> _cache = [];
 
 #pragma warning disable CS0067 // Static content: the tags never change after load.
         public event EventHandler<SnapshotSpanEventArgs>? TagsChanged;
@@ -89,7 +89,7 @@ public sealed partial class ColorSwatchTaggerProvider : IViewTaggerProvider
 [ContentType("code")]
 public sealed class BraceHighlightListener : IWpfTextViewCreationListener
 {
-    private static readonly IBrush MarkerBrush = new SolidColorBrush(Color.FromArgb(0x60, 0x77, 0x77, 0x30));
+    private static readonly IBrush s_markerBrush = new SolidColorBrush(Color.FromArgb(0x60, 0x77, 0x77, 0x30));
 
     public void TextViewCreated(IWpfTextView textView)
     {
@@ -152,7 +152,7 @@ public sealed class BraceHighlightListener : IWpfTextViewCreationListener
         var marker = new Path
         {
             Data = geometry,
-            Fill = MarkerBrush,
+            Fill = s_markerBrush,
         };
         // The geometry is in text-rendering coordinates; owner-controlled placement with an
         // explicit viewport offset (markers are rebuilt on every caret/layout change).

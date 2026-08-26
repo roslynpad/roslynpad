@@ -172,7 +172,7 @@ internal static class DisassemblerHelpers
 
     private static bool IsValidIdentifierCharacter(char c)
     {
-        return c == '_' || c == '$' || c == '@' || c == '?' || c == '`';
+        return c is '_' or '$' or '@' or '?' or '`';
     }
 
     private static bool IsValidIdentifier(string identifier)
@@ -182,7 +182,7 @@ internal static class DisassemblerHelpers
         if (!(char.IsLetter(identifier[0]) || IsValidIdentifierCharacter(identifier[0])))
         {
             // As a special case, .ctor and .cctor are valid despite starting with a dot
-            return identifier == ".ctor" || identifier == ".cctor";
+            return identifier is ".ctor" or ".cctor";
         }
         for (var i = 1; i < identifier.Length; i++)
         {
@@ -322,7 +322,7 @@ internal static class DisassemblerHelpers
                 }
                 else
                 {
-                    if (syntax == ILNameSyntax.Signature || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
+                    if (syntax is ILNameSyntax.Signature or ILNameSyntax.SignatureNoNamedTypeParameters)
                         writer.Write(type.IsValueType ? "valuetype " : "class ");
 
                     if (type.DeclaringType != null)

@@ -531,7 +531,7 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
 
             do
             {
-                path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName(("Program" + index++) + GetFileExtension()));
+                path = Path.Combine(WorkingDirectory, DocumentViewModel.GetAutoSaveName("Program" + index++ + GetFileExtension()));
             }
             while (File.Exists(path));
 
@@ -800,23 +800,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     private void UpdatePackages(bool alwaysRestore = true) =>
         _ = _executionHost?.UpdateReferencesAsync(alwaysRestore);
 
-    private async Task<string> GetCodeAsync(CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrWhiteSpace(SelectedText))
-        {
-            return SelectedText;
-        }
-
-        var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
-        if (document == null)
-        {
-            return string.Empty;
-        }
-
-        return (await document.GetTextAsync(cancellationToken)
-            .ConfigureAwait(false)).ToString();
-    }
-
     private CancellationToken ResetCancellation()
     {
         if (_runCts != null)
@@ -868,13 +851,6 @@ public class OpenDocumentViewModel : NotificationObject, IDisposable, IDocumentC
     public bool HasReportedProgress => ReportedProgress.HasValue;
 
     public bool ShowIL { get; set; }
-
-    public event EventHandler? EditorFocus;
-
-    private void OnEditorFocus()
-    {
-        EditorFocus?.Invoke(this, EventArgs.Empty);
-    }
 
     /// <summary>Raised when the user invokes rename outside the editor (toolbar, app menu);
     /// the view dispatches it into the editor's inline rename session.</summary>

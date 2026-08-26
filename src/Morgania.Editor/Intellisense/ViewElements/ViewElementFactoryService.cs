@@ -45,7 +45,7 @@ public sealed class ViewElementFactoryService : IViewElementFactoryService
 
         // A control is already a view element (the platform passthrough the contract
         // documents for the native UI element type).
-        if (model is Control && model is TView direct)
+        if (model is Control and TView direct)
         {
             return direct;
         }

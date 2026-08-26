@@ -13,8 +13,7 @@ namespace Morgania.CodeAnalysis.Editor;
 public sealed class MorganiaMefHostServices : HostServices, IMefHostExportProvider
 {
     private readonly ExportProvider _exportProvider;
-    private ImmutableDictionary<ExportKey, IEnumerable> _exportsMap =
-        ImmutableDictionary<ExportKey, IEnumerable>.Empty;
+    private ImmutableDictionary<ExportKey, IEnumerable> _exportsMap = [];
 
     private MorganiaMefHostServices(ExportProvider exportProvider)
     {

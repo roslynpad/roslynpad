@@ -13,7 +13,7 @@ namespace RoslynPad;
 /// Interaction logic for SaveDocumentDialog.xaml
 /// </summary>
 [Export(typeof(ISaveDocumentDialog))]
-partial class SaveDocumentDialog : UserControl, ISaveDocumentDialog, INotifyPropertyChanged
+internal partial class SaveDocumentDialog : UserControl, ISaveDocumentDialog, INotifyPropertyChanged
 {
     private static readonly char[] s_invalidFileChars = Path.GetInvalidFileNameChars();
 

@@ -8,7 +8,7 @@ namespace Morgania.CodeAnalysis.Editor.Diagnostics;
 internal class AnalyzerAssemblyLoaderWrapper : IAnalyzerAssemblyLoader, IDisposable
 {
     private readonly AnalyzerAssemblyLoader _inner = new();
-    
+
     public void Dispose() => _inner.Dispose();
 
     public void AddDependencyLocation(string fullPath) => _inner.AddDependencyLocation(fullPath);

@@ -6,7 +6,7 @@ using RoslynPad.UI;
 
 namespace RoslynPad;
 
-partial class ILViewer : UserControl
+internal partial class ILViewer : UserControl
 {
     private readonly CodeEditorView _editor;
 
