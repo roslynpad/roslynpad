@@ -35,7 +35,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.87.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="18.3.36" />
+    <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="18.9.63" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="18.7.23" />
     <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="18.7.19" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
