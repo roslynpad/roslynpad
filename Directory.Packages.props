@@ -28,7 +28,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Features" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(RoslynVersion)" />
-    <PackageVersion Include="Microsoft.Build.Framework" Version="17.11.4" />
+    <PackageVersion Include="Microsoft.Build.Framework" Version="18.9.6" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(DotNetExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(DotNetExtensionsVersion)" />
