@@ -8,7 +8,7 @@
     <RoslynVersion>5.9.0</RoslynVersion>
     <AvaloniaVersion>12.1.1</AvaloniaVersion>
     <NuGetVersion>7.9.0</NuGetVersion>
-    <DockAvaloniaVersion>12.1.0.4</DockAvaloniaVersion>
+    <DockAvaloniaVersion>12.1.0.6</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
