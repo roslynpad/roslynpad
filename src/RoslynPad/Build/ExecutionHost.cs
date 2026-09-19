@@ -353,16 +353,16 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             $"-nologo -v:m -p:Configuration={optimizationLevel} \"-p:AssemblyName={Name}\" {scriptArgs}" +
             $"\"-flp1:logfile={buildWarningsPath};warningsonly;Encoding=UTF-8\" \"-flp2:logfile={buildErrorsPath};errorsonly;Encoding=UTF-8\" \"{csprojPath}\" ";
 
-        using var buildResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
-            $"build {buildArgs}", cancellationToken).ConfigureAwait(false);
-
+        ProcessTextOutput buildResult;
         using (var output = CreateBuildOutputWriter(BuildOutputSource.Compile))
         {
-            await foreach (var line in buildResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
-            {
-                await output.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
-            }
-
+            buildResult = await RunProcessAsync(
+                BuildPath,
+                $"build {buildArgs}",
+                output,
+                cancellationToken,
+                captureStandardOutput: true)
+                .ConfigureAwait(false);
             await WriteErrorLinesAsync(output, buildResult.StandardError).ConfigureAwait(false);
         }
 
@@ -370,15 +370,15 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             .Concat(ReadBuildLogAsync(buildErrorsPath, "Error"))
             .ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        var success = buildResult.ExitCode == 0;
+        var success = buildResult.ExitStatus.ExitCode == 0;
         if (!success && compilationErrors.Length == 0)
         {
-            var output = buildResult.StandardError;
-            if (string.IsNullOrWhiteSpace(output))
+            var error = buildResult.StandardError;
+            if (string.IsNullOrWhiteSpace(error))
             {
-                output = buildResult.StandardOutput;
+                error = buildResult.StandardOutput;
             }
-            compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + output }];
+            compilationErrors = [new CompilationErrorResultObject { Severity = "Error", Message = "Build failed: " + error }];
         }
 
         CompilationErrors?.Invoke(compilationErrors);
@@ -425,15 +425,17 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             await File.WriteAllTextAsync(Path.Combine(tempDir, "Directory.Build.props"), "<Project/>", cancellationToken).ConfigureAwait(false);
             await File.WriteAllTextAsync(Path.Combine(tempDir, "Directory.Build.targets"), "<Project/>", cancellationToken).ConfigureAwait(false);
 
-            using var convertResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, tempDir,
-                $"project convert \"{tempFile}\" --output \"{outputDir}\"", cancellationToken).ConfigureAwait(false);
-            await convertResult.GetStandardOutputLinesAsync().LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            var convertResult = await Process.RunAndCaptureTextAsync(
+                CreateProcessStartInfo(tempDir, $"project convert \"{tempFile}\" --output \"{outputDir}\""),
+                cancellationToken).ConfigureAwait(false);
 
             var csprojPath = Path.Combine(outputDir, "Program.csproj");
-            if (convertResult.ExitCode != 0 || !File.Exists(csprojPath))
+            if (convertResult.ExitStatus.ExitCode != 0 || !File.Exists(csprojPath))
             {
-                var error = convertResult.StandardError ?? convertResult.StandardOutput;
-                throw new InvalidOperationException($"dotnet project convert failed (exit code {convertResult.ExitCode}): {error}");
+                var error = string.IsNullOrWhiteSpace(convertResult.StandardError)
+                    ? convertResult.StandardOutput
+                    : convertResult.StandardError;
+                throw new InvalidOperationException($"dotnet project convert failed (exit code {convertResult.ExitStatus.ExitCode}): {error}");
             }
 
             var csproj = XDocument.Load(csprojPath);
@@ -508,15 +510,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         using var process = new Process { StartInfo = GetProcessStartInfo(assemblyPath) };
         using var _ = cancellationToken.Register(() =>
         {
-            try
-            {
-                _processInputStream = null;
-                process.Kill();
-            }
-            catch (Exception ex)
-            {
-                _logger.ErrorKillingProcess(ex);
-            }
+            _processInputStream = null;
+            TryKillProcess(process);
         });
 
         _logger.StartingProcess(process.StartInfo.FileName, process.StartInfo.Arguments);
@@ -529,8 +524,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
         _processInputStream = new StreamWriter(process.StandardInput.BaseStream, Encoding.UTF8);
 
         await Task.WhenAll(
-            Task.Run(() => ReadObjectProcessStreamAsync(process.StandardOutput), cancellationToken),
-            Task.Run(() => ReadProcessStreamAsync(process.StandardError), cancellationToken)).ConfigureAwait(false);
+            ReadObjectProcessStreamAsync(process.StandardOutput),
+            ReadProcessStreamAsync(process.StandardError)).ConfigureAwait(false);
 
         ProcessStartInfo GetProcessStartInfo(string assemblyPath) => new()
         {
@@ -891,7 +886,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                 var projBuildResult = await BuildCsproj().ConfigureAwait(false);
 
                 var outputPath = Path.Combine(projBuildResult.RestorePath, "output.json");
-                var outputLogPath = Path.Combine(projBuildResult.RestorePath, "output.log");
 
                 var restored = false;
                 if (!projBuildResult.MarkerExists)
@@ -921,27 +915,18 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
                             $"-flp:errorsonly;logfile=\"{restoreErrorsPath}\";Encoding=UTF-8 \"{projBuildResult.CsprojPath}\" " +
                             $"-t:Compile -p:DesignTimeBuild=true -p:SkipCompilerExecution=true -p:ProvideCommandLineArgs=true " +
                             $"-getItem:ReferencePathWithRefAssemblies,Analyzer,Using,CscCommandLineArgs \"-getResultOutputFile:{outputPath}\" ";
-                        using var restoreResult = await ProcessUtil.RunProcessAsync(DotNetExecutable, BuildPath,
-                            $"msbuild {buildArgs}", cancellationToken).ConfigureAwait(false);
-
-                        // The log is persisted next to the cache marker so cache hits can replay it.
+                        ProcessTextOutput restoreResult;
                         using (var output = CreateBuildOutputWriter(BuildOutputSource.Restore))
-                        using (var logWriter = IOUtilities.PerformIO(() => File.CreateText(outputLogPath)))
                         {
-                            await foreach (var line in restoreResult.GetStandardOutputLinesAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
-                            {
-                                await output.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
-                                if (logWriter is not null)
-                                {
-                                    await logWriter.WriteLineAsync(line.AsMemory(), cancellationToken).ConfigureAwait(false);
-                                }
-                            }
-
+                            restoreResult = await RunProcessAsync(
+                                BuildPath,
+                                $"msbuild {buildArgs}",
+                                output,
+                                cancellationToken).ConfigureAwait(false);
                             await WriteErrorLinesAsync(output, restoreResult.StandardError).ConfigureAwait(false);
-                            await WriteErrorLinesAsync(logWriter ?? TextWriter.Null, restoreResult.StandardError).ConfigureAwait(false);
                         }
 
-                        if (restoreResult.ExitCode != 0)
+                        if (restoreResult.ExitStatus.ExitCode != 0)
                         {
                             var errors = await GetRestoreErrorsAsync(restoreErrorsPath, restoreResult, cancellationToken).ConfigureAwait(false);
                             var errorResult = RestoreResult.FromErrors(errors);
@@ -960,7 +945,8 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
 
                 if (!restored)
                 {
-                    ReplayRestoreOutput(outputLogPath);
+                    using var output = CreateBuildOutputWriter(BuildOutputSource.Restore, cached: true);
+                    await output.WriteLineAsync("Restore up to date (cached).".AsMemory(), cancellationToken).ConfigureAwait(false);
                 }
 
                 if (projBuildResult.UsesCache)
@@ -1022,25 +1008,6 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             if (!IsScript && CompilerArguments.IsEmpty)
             {
                 _logger.MissingCompilerArguments();
-            }
-        }
-
-        // On a cache hit no restore process runs, so the pane replays the log persisted by the
-        // restore that populated the cache directory (a pre-feature cache has no log).
-        void ReplayRestoreOutput(string outputLogPath)
-        {
-            using var output = CreateBuildOutputWriter(BuildOutputSource.Restore, cached: true);
-            var lines = IOUtilities.PerformIO(() => File.ReadAllLines(outputLogPath), []);
-            if (lines is { Length: > 0 })
-            {
-                foreach (var line in lines)
-                {
-                    output.WriteLine(line);
-                }
-            }
-            else
-            {
-                output.WriteLine("Restore up to date (cached).");
             }
         }
 
@@ -1110,7 +1077,7 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return new(_restorePath, csprojPath, markerPath, markerExists, csproj);
         }
 
-        static async Task<string[]> GetRestoreErrorsAsync(string errorsPath, ProcessUtil.ProcessResult result, CancellationToken cancellationToken)
+        static async Task<string[]> GetRestoreErrorsAsync(string errorsPath, ProcessTextOutput result, CancellationToken cancellationToken)
         {
             string[] errors;
             try
@@ -1140,8 +1107,75 @@ internal partial class ExecutionHost : IExecutionHost, IDisposable
             return errors;
         }
 
-        static string[] GetErrorsFromResult(ProcessUtil.ProcessResult result) =>
-            [result.StandardError ?? string.Empty];
+        static string[] GetErrorsFromResult(ProcessTextOutput result) => [result.StandardError];
+    }
+
+    private ProcessStartInfo CreateProcessStartInfo(string workingDirectory, string arguments) => new()
+    {
+        FileName = DotNetExecutable,
+        WorkingDirectory = workingDirectory,
+        Arguments = arguments,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true,
+        UseShellExecute = false,
+        StandardOutputEncoding = Encoding.UTF8,
+        StandardErrorEncoding = Encoding.UTF8,
+    };
+
+    private async Task<ProcessTextOutput> RunProcessAsync(
+        string workingDirectory,
+        string arguments,
+        TextWriter outputWriter,
+        CancellationToken cancellationToken,
+        bool captureStandardOutput = false)
+    {
+        using var process = Process.Start(CreateProcessStartInfo(workingDirectory, arguments))
+            ?? throw new InvalidOperationException($"Failed to start process '{DotNetExecutable}'.");
+        var capturedStandardOutput = captureStandardOutput ? new StringBuilder() : null;
+        var standardError = new StringBuilder();
+
+        try
+        {
+            await foreach (var line in process.ReadAllLinesAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (line.StandardError)
+                {
+                    standardError.AppendLine(line.Content);
+                    continue;
+                }
+
+                capturedStandardOutput?.AppendLine(line.Content);
+                await outputWriter.WriteLineAsync(line.Content.AsMemory(), cancellationToken).ConfigureAwait(false);
+            }
+
+            var exitStatus = await process.WaitForExitStatusAsync(cancellationToken).ConfigureAwait(false);
+            return new ProcessTextOutput(
+                exitStatus,
+                capturedStandardOutput?.ToString() ?? string.Empty,
+                standardError.ToString(),
+                process.Id);
+        }
+        catch
+        {
+            TryKillProcess(process);
+            throw;
+        }
+    }
+
+    private void TryKillProcess(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.ErrorKillingProcess(ex);
+        }
     }
 
     private CancellationTokenSource CancelAndCreateNew(ref CancellationTokenSource? cts, CancellationToken cancellationToken)

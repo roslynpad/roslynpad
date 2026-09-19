@@ -43,7 +43,7 @@ public class RoslynHost : IRoslynHost, IDisposable
         _workspaces = [];
 
         ExportProvider = EditorComposition.CreateConfiguration(additionalAssemblies)
-            .CreateExportProviderFactory()
+            .CreateExportProviderFactory(HostServiceExports.MainThreadJoinableTaskFactory)
             .CreateExportProvider();
 
         HostServices = MorganiaMefHostServices.Create(ExportProvider);

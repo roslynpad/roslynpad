@@ -22,9 +22,15 @@ public sealed class HostServiceExports
         s_joinableTaskContext = new JoinableTaskContext(Thread.CurrentThread, SynchronizationContext.Current);
     }
 
+    public static JoinableTaskFactory MainThreadJoinableTaskFactory =>
+        GetJoinableTaskContext().Factory;
+
     [Export]
-    public JoinableTaskContext JoinableTaskContext => s_joinableTaskContext
-        ?? throw new InvalidOperationException($"{nameof(HostServiceExports)}.{nameof(InitializeMainThread)} was not called on the UI thread");
+    public JoinableTaskContext JoinableTaskContext => GetJoinableTaskContext();
+
+    private static JoinableTaskContext GetJoinableTaskContext() =>
+        s_joinableTaskContext
+            ?? throw new InvalidOperationException($"{nameof(HostServiceExports)}.{nameof(InitializeMainThread)} was not called on the UI thread");
 }
 
 [Shared]

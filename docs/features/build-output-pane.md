@@ -110,26 +110,23 @@ Instead of start/line/completed events, the host asks for a phase-scoped `TextWr
 phase starts producing output: obtaining the writer marks the start (the view model clears the
 phase's document and switches the combo), `WriteLine` is the line stream, and `Dispose` is
 completion. `DoRestoreAsync` and `CompileWithMsbuild` stream by replacing
-`.LastOrDefaultAsync(ct)` with `await foreach` over `GetStandardOutputLinesAsync()`, writing
+`.LastOrDefaultAsync(ct)` with `await foreach` over `Process.ReadAllLinesAsync()`, writing
 each line. Existing events (`RestoreStarted/Completed`, `CompilationErrors`) are unchanged.
 If `StandardError` is non-empty at exit, its lines are appended to the same writer (the
 classifier's error patterns color them naturally).
 
 ### 4.3 Restore cache
 
-- On a cache **miss**, the streamed restore lines are also written to `output.log` in the hashed
-  restore cache directory (next to the `.restored` marker).
-- On a cache **hit** (`MarkerExists`, where no process runs), the host replays `output.log` —
-  `BuildOutputStarted(Restore)` with a *cached* flag (either an extra event arg or a distinct
-  event), the file's lines, `BuildOutputCompleted`. Missing/unreadable log (pre-feature caches)
-  degrades to a single synthetic line: `Restore up to date (cached).` No auto-switch to Restore
-  on a cache hit — the interesting output is the compile that follows.
+- On a cache **miss**, restore output streams directly to the Output pane.
+- On a cache **hit** (`MarkerExists`, where no process runs), the host emits the synthetic line
+  `Restore up to date (cached).` No auto-switch to Restore on a cache hit — the interesting
+  output is the compile that follows.
 
 ### 4.4 Special paths
 
 - **Script mode (`.csx`)** needs no special handling: with the unified compile (§4.5), scripts
   build through `dotnet build` like everything else and stream genuine MSBuild output.
-- `ProcessUtil.GetStandardOutputLinesAsync` used to drop whitespace-only lines; the filter was
+- `Process.ReadAllLinesAsync` preserves whitespace-only lines; the filter was
   removed outright (the execution protocol reads the raw stream and never used this path), so
   build output keeps its blank lines (MSBuild uses them as section separators).
 
@@ -303,12 +300,11 @@ document VM:
    `CompileInProcess`. Independent of the pane; unblocks the design-time restore for scripts.
 2. **Plumbing**: command-line changes (design-time restore for both modes, stub-source and
    `bin`-copy removal), `-getResultOutputFile` JSON relocation, streaming events, restore-cache
-   `output.log`, `ProcessUtil` whitespace-filter move. Verifiable headless (run a build, assert
-   event stream).
+   status, and whitespace preservation. Verifiable headless (run a build, assert event stream).
 3. **View + classification + theming**: content type, classifier, `ApplyBuildOutput`,
    `BuildOutputView`/`BuildOutputViewModel`, combo + auto-switch.
-4. **Dock + polish**: pane registration, layout-migration guard, tail auto-scroll,
-   `Restore (cached)` replay.
+4. **Dock + polish**: pane registration, layout-migration guard, tail auto-scroll, cached-restore
+   status.
 
 ## 11. Resolved risks / notes
 
