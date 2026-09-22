@@ -5,6 +5,11 @@
     extensions compile against this assembly only (see Morgania.ExtensionConformance).
   -->
   <PropertyGroup>
+    <!-- Both frameworks: the packages are consumed by hosts that have not moved to the newest one yet.
+         TargetFramework is cleared because Directory.Build.props sets it before this body runs, and a
+         project that carries both properties builds the single one. -->
+    <TargetFramework />
+    <TargetFrameworks>$(DefaultTargetFramework);$(EarliestSupportedTargetFramework)</TargetFrameworks>
     <AssemblyName>Morgania.Editor.Abstractions</AssemblyName>
     <RootNamespace>Microsoft.VisualStudio</RootNamespace>
     <Description>The Morgania editor's contract surface, based on the vs-editor-api repo: the Text, Language, and Core "Def" assemblies merged into a single cross-platform assembly. Editor extensions compile against this package only.</Description>

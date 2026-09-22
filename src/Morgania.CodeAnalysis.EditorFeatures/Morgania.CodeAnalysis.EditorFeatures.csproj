@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Both frameworks: the packages are consumed by hosts that have not moved to the newest one yet.
+         TargetFramework is cleared because Directory.Build.props sets it before this body runs, and a
+         project that carries both properties builds the single one. -->
+    <TargetFramework />
+    <TargetFrameworks>$(DefaultTargetFramework);$(EarliestSupportedTargetFramework)</TargetFrameworks>
     <RootNamespace>Microsoft.CodeAnalysis.EditorFeatures</RootNamespace>
     <Description>Roslyn's EditorFeatures layer for the Morgania editor: completion, quick info, signature help, inline rename, brace matching, tagging, and editor commanding for C#.</Description>
     <IsPackable>true</IsPackable>

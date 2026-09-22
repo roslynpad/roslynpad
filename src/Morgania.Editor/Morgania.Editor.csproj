@@ -5,6 +5,11 @@
     Vendored sources stay in place under vendor/ (upstream diffability) and are compiled here.
   -->
   <PropertyGroup>
+    <!-- Both frameworks: the packages are consumed by hosts that have not moved to the newest one yet.
+         TargetFramework is cleared because Directory.Build.props sets it before this body runs, and a
+         project that carries both properties builds the single one. -->
+    <TargetFramework />
+    <TargetFrameworks>$(DefaultTargetFramework);$(EarliestSupportedTargetFramework)</TargetFrameworks>
     <AssemblyName>Morgania.Editor</AssemblyName>
     <RootNamespace>Microsoft.VisualStudio</RootNamespace>
     <Description>The Morgania code editor for Avalonia, based on the vs-editor-api repo: text model, projection, classification, tagging, IntelliSense, and multi-caret, with an Avalonia rendering, input, and popup layer.</Description>
