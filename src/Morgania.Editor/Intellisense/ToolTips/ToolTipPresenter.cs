@@ -79,11 +79,20 @@ internal sealed class ToolTipPresenter : IToolTipPresenter, IToolTipPresenter2
             Background = brushes.Background,
             BorderBrush = brushes.BorderBrush,
             BorderThickness = new Thickness(1.0),
-            CornerRadius = new CornerRadius(3.0),
-            Padding = new Thickness(8.0, 5.0),
+            CornerRadius = brushes.CornerRadius,
+            Padding = brushes.Padding,
             MaxWidth = maxTipWidth,
         };
         _container.SetValue(TextElement.ForegroundProperty, brushes.Foreground);
+        if (brushes.FontFamily is { } face)
+        {
+            _container.SetValue(TextElement.FontFamilyProperty, face);
+        }
+
+        if (brushes.FontSize is { } size)
+        {
+            _container.SetValue(TextElement.FontSizeProperty, size);
+        }
     }
 
     public event EventHandler? Dismissed;
