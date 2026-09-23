@@ -77,6 +77,7 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     private bool _isClosed;
     private bool _hasAggregateFocus;
     private bool _layoutQueued;
+    private bool _remeasureTextRight;
     private ITrackingSpan? _provisionalTextHighlight;
     private readonly SpaceReservationStack _spaceReservationStack;
 
@@ -689,6 +690,12 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
             lines = BuildLines(source, anchorPosition, verticalDistance, relativeTo);
 
             double oldMaxTextRight = _maxTextRightCoordinate;
+            if (_remeasureTextRight)
+            {
+                _maxTextRightCoordinate = 0.0;
+                _remeasureTextRight = false;
+            }
+
             var visibleArea = new Rect(_viewportLeft, ViewportTop, _viewportWidth, _viewportHeight);
             foreach (var line in lines)
             {
@@ -996,7 +1003,11 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
     private void InvalidateLineSource()
     {
         _lineSource = null;
-        _maxTextRightCoordinate = 0.0;
+
+        // Measured afresh by the next layout. Until then the old measure stands: what reads it in between — a
+        // horizontal scroll bar syncing on the same option change — would otherwise see the text collapse to
+        // nothing and its thumb jump to the full track and back.
+        _remeasureTextRight = true;
     }
 
     private void EnsureInitialLayout()

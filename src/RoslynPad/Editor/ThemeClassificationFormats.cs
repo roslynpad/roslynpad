@@ -157,6 +157,33 @@ public sealed partial class ThemeClassificationFormats
     }
 
     /// <summary>
+    /// Feeds the theme's minimap colors (VS Code's <c>minimap.*</c> and <c>minimapSlider.*</c> keys) to the Morgania
+    /// minimap through the editor format map's minimap palette; <c>minimap.background</c> only where the theme sets it,
+    /// as VS Code draws the minimap on the editor's ground otherwise.
+    /// </summary>
+    public void ApplyMinimap(IEditorFormatMap formatMap)
+    {
+        var properties = new Avalonia.Controls.ResourceDictionary();
+        Set(MinimapFormatNames.Background, "minimap.background");
+        Set(MinimapFormatNames.Viewport, "minimapSlider.background");
+        Set(MinimapFormatNames.ViewportHover, "minimapSlider.hoverBackground");
+        Set(MinimapFormatNames.ViewportActive, "minimapSlider.activeBackground");
+        Set(MinimapFormatNames.FindMatch, "minimap.findMatchHighlight");
+        Set(MinimapFormatNames.Selection, "minimap.selectionHighlight");
+        Set(MinimapFormatNames.Added, "minimapGutter.addedBackground");
+        Set(MinimapFormatNames.Modified, "minimapGutter.modifiedBackground");
+        formatMap.SetProperties(MinimapFormatNames.Name, properties);
+
+        void Set(string property, string colorId)
+        {
+            if (_theme.TryGetColor(colorId) is { } color)
+            {
+                properties[property] = new SolidColorBrush(ThemeDictionaryBase.ParseThemeColor(color));
+            }
+        }
+    }
+
+    /// <summary>
     /// Feeds the theme's progress bar color to the background-work indicator (the indeterminate
     /// bar shown at the top of the view during async operations like go-to-definition into
     /// decompiled or Source Link sources).
