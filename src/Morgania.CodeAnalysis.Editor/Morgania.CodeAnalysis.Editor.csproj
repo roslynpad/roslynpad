@@ -1,10 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Both frameworks: the packages are consumed by hosts that have not moved to the newest one yet.
-         TargetFramework is cleared because Directory.Build.props sets it before this body runs, and a
-         project that carries both properties builds the single one. -->
-    <TargetFramework />
-    <TargetFrameworks>$(DefaultTargetFramework);$(EarliestSupportedTargetFramework)</TargetFrameworks>
     <RootNamespace>Morgania.CodeAnalysis.Editor</RootNamespace>
     <Description>The Roslyn-powered C# editor for Avalonia: VS-MEF composition plus the editor-host services (classification, squiggles, light bulb, key bridge, glyphs, refactoring dialogs) for the Morgania editor.</Description>
     <IsPackable>true</IsPackable>

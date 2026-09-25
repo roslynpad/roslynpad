@@ -3,6 +3,7 @@
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
     <DefaultTargetFramework>net11.0</DefaultTargetFramework>
     <EarliestSupportedTargetFramework>net10.0</EarliestSupportedTargetFramework>
+    <TargetFrameworks Condition=" $(MSBuildProjectName.StartsWith('Morgania.')) and !$(MSBuildProjectName.StartsWith('Morgania.Demo')) ">$(DefaultTargetFramework);$(EarliestSupportedTargetFramework)</TargetFrameworks>
     <TargetFramework Condition=" '$(TargetFramework)' == '' and '$(TargetFrameworks)' == '' ">$(DefaultTargetFramework)</TargetFramework>
     <IsMacOS>$([System.OperatingSystem]::IsMacOS())</IsMacOS>
     <IsLinux>$([System.OperatingSystem]::IsLinux())</IsLinux>
