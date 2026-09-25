@@ -823,11 +823,20 @@ internal sealed class MinimapMargin : Control, IWpfTextViewMargin, IReservingMar
         double labelSize = options.GetOptionValue(MinimapOptions.MarkersScaleId) * _layout.Pitch;
         var labelTypeface = new Typeface(_classificationFormatMap.DefaultTextProperties.Typeface.FontFamily, FontStyle.Normal, FontWeight.Bold);
 
-        var clock = Stopwatch.StartNew();
+        // Only building counts against the budget: were drawing counted too, a picture whose built lines take longer
+        // than the budget to draw would build nothing more and schedule the same pass forever.
+        var building = new Stopwatch();
         bool pending = false;
         for (int line = first; line <= last; line++)
         {
-            var ink = _ink!.Get(visual, line, build: clock.ElapsedMilliseconds < InkBudgetMilliseconds);
+            var ink = _ink!.Get(visual, line, build: false);
+            if (ink is null && building.ElapsedMilliseconds < InkBudgetMilliseconds)
+            {
+                building.Start();
+                ink = _ink.Get(visual, line, build: true);
+                building.Stop();
+            }
+
             if (ink is null)
             {
                 pending = true;
