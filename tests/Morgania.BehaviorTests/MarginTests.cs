@@ -1,3 +1,5 @@
+using Avalonia;
+
 using Microsoft.VisualStudio.GeometryTests;
 using Microsoft.VisualStudio.Text.Editor;
 
@@ -10,6 +12,8 @@ namespace Microsoft.VisualStudio.BehaviorTests;
 [TestClass]
 public sealed class MarginTests
 {
+    private static readonly bool[] s_onAndOff = [true, false];
+
     [TestMethod]
     public async Task MarginsAreDiscoveredOrderedAndRemovable()
     {
@@ -32,14 +36,17 @@ public sealed class MarginTests
             Assert.IsNotNull(verticalScrollBar);
             Assert.IsNotNull(horizontalScrollBar);
 
-            // Ordering: within the Left container, Glyph precedes LineNumber precedes
-            // Outlining per [Order].
+            // Ordering: within the Left container, the left minimap stands outside, then Glyph
+            // precedes LineNumber precedes Outlining per [Order].
             var leftContainer = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Left)!;
             var panel = (Avalonia.Controls.StackPanel)leftContainer.VisualElement;
-            Assert.AreEqual(3, panel.Children.Count);
-            Assert.AreEqual(glyph.VisualElement, panel.Children[0], "Glyph margin is ordered before LineNumber.");
-            Assert.AreEqual(lineNumbers.VisualElement, panel.Children[1]);
-            Assert.AreEqual(outlining.VisualElement, panel.Children[2], "Outlining margin is ordered after LineNumber.");
+            var leftMinimap = host.GetTextViewMargin(MinimapMarginNames.LeftMinimap);
+            Assert.IsNotNull(leftMinimap);
+            Assert.AreEqual(4, panel.Children.Count);
+            Assert.AreEqual(leftMinimap.VisualElement, panel.Children[0], "The left minimap is ordered before Glyph.");
+            Assert.AreEqual(glyph.VisualElement, panel.Children[1], "Glyph margin is ordered before LineNumber.");
+            Assert.AreEqual(lineNumbers.VisualElement, panel.Children[2]);
+            Assert.AreEqual(outlining.VisualElement, panel.Children[3], "Outlining margin is ordered after LineNumber.");
 
             // Removable: the line-number margin follows its option (vendored default: off).
             view.Options.SetOptionValue(DefaultTextViewHostOptions.LineNumberMarginId, true);
@@ -94,14 +101,19 @@ public sealed class MarginTests
 
             try
             {
-                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-                // The bottom row must stay clear of the vertical scrollbar's lane.
+                // The bottom row must stay clear of the vertical scrollbar's lane: with the minimap
+                // beside the view, and with the scrollbars alone floating over it.
                 var right = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Right)!;
                 var bottom = (IWpfTextViewMargin)host.GetTextViewMargin(PredefinedMarginNames.Bottom)!;
-                Assert.IsTrue(right.VisualElement.Bounds.Width > 0, "the probe needs the vertical bar's lane laid out");
-                Assert.AreEqual(right.VisualElement.Bounds.Width, bottom.VisualElement.Margin.Right, 0.01,
-                    "the bottom row must end where the right container begins");
+                foreach (bool minimap in s_onAndOff)
+                {
+                    view.Options.SetOptionValue(MinimapOptions.EnabledId, minimap);
+                    Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                    Assert.IsTrue(right.VisualElement.Bounds.Width > 0, "the probe needs the vertical bar's lane laid out");
+                    var rightStart = right.VisualElement.TranslatePoint(default, window)!.Value;
+                    var bottomEnd = bottom.VisualElement.TranslatePoint(new Point(bottom.VisualElement.Bounds.Width, 0.0), window)!.Value;
+                    Assert.AreEqual(rightStart.X, bottomEnd.X, 0.01, "the bottom row must end where the right container begins");
+                }
             }
             finally
             {

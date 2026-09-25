@@ -60,9 +60,19 @@ internal class VsCodeColorRegistry : IColorRegistry
         RegisterColor("badge.foreground", new ColorDefaults(Dark: "#ffffff", Light: "#333"));
 
         RegisterColor("scrollbar.shadow", new ColorDefaults(Dark: "#000000", Light: "#DDDDDD"));
-        RegisterColor("scrollbarSlider.background", new ColorDefaults(Dark: Transparent("#797979", 0.4), Light: Transparent("#646464", 0.4)));
-        RegisterColor("scrollbarSlider.hoverBackground", new ColorDefaults(Dark: Transparent("#646464", 0.7), Light: Transparent("#646464", 0.7)));
-        RegisterColor("scrollbarSlider.activeBackground", new ColorDefaults(Dark: Transparent("#BFBFBF", 0.4), Light: Transparent("#000000", 0.6)));
+        var scrollbarSliderBackground = RegisterColor("scrollbarSlider.background", new ColorDefaults(Dark: Transparent("#797979", 0.4), Light: Transparent("#646464", 0.4)));
+        var scrollbarSliderHoverBackground = RegisterColor("scrollbarSlider.hoverBackground", new ColorDefaults(Dark: Transparent("#646464", 0.7), Light: Transparent("#646464", 0.7)));
+        var scrollbarSliderActiveBackground = RegisterColor("scrollbarSlider.activeBackground", new ColorDefaults(Dark: Transparent("#BFBFBF", 0.4), Light: Transparent("#000000", 0.6)));
+
+        RegisterColor("minimapSlider.background", new ColorDefaults(Dark: Transparent(scrollbarSliderBackground, 0.5), Light: Transparent(scrollbarSliderBackground, 0.5)));
+        RegisterColor("minimapSlider.hoverBackground", new ColorDefaults(Dark: Transparent(scrollbarSliderHoverBackground, 0.5), Light: Transparent(scrollbarSliderHoverBackground, 0.5)));
+        RegisterColor("minimapSlider.activeBackground", new ColorDefaults(Dark: Transparent(scrollbarSliderActiveBackground, 0.5), Light: Transparent(scrollbarSliderActiveBackground, 0.5)));
+        RegisterColor("minimap.findMatchHighlight", new ColorDefaults(Dark: "#D18616", Light: "#D18616"));
+        RegisterColor("minimap.selectionHighlight", new ColorDefaults(Dark: "#264F78", Light: "#ADD6FF"));
+        var editorGutterAddedBackground = RegisterColor("editorGutter.addedBackground", new ColorDefaults(Dark: "#487E02", Light: "#48985D"));
+        var editorGutterModifiedBackground = RegisterColor("editorGutter.modifiedBackground", new ColorDefaults(Dark: "#1B81A8", Light: "#2090D3"));
+        RegisterColor("minimapGutter.addedBackground", editorGutterAddedBackground);
+        RegisterColor("minimapGutter.modifiedBackground", editorGutterModifiedBackground);
 
         RegisterColor("progressBar.background", new ColorDefaults(Dark: "#0E70C0", Light: "#0E70C0"));
         RegisterColor("editorError.foreground", new ColorDefaults(Dark: "#F14C4C", Light: "#E51400"));
