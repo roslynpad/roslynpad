@@ -5,7 +5,6 @@ namespace Microsoft.VisualStudio.Text.Editor.Implementation;
 using System.Composition;
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -26,7 +25,8 @@ internal sealed record MinimapServices(
     IViewClassifierAggregatorService Classifiers,
     IClassificationFormatMapService ClassificationFormatMaps,
     IEditorFormatMapService EditorFormatMaps,
-    IViewTagAggregatorFactoryService TagAggregators);
+    IViewTagAggregatorFactoryService TagAggregators,
+    ITextEditorFactoryService Editors);
 
 /// <summary>
 /// The minimap on the right of the text, before the vertical scroll bar (<see cref="MinimapOptions"/>). It shows while
@@ -48,9 +48,10 @@ public sealed class MinimapMarginProvider : IWpfTextViewMarginProvider
         IViewClassifierAggregatorService classifiers,
         IClassificationFormatMapService classificationFormatMaps,
         IEditorFormatMapService editorFormatMaps,
-        IViewTagAggregatorFactoryService tagAggregators)
+        IViewTagAggregatorFactoryService tagAggregators,
+        ITextEditorFactoryService editors)
     {
-        _services = new MinimapServices(classifiers, classificationFormatMaps, editorFormatMaps, tagAggregators);
+        _services = new MinimapServices(classifiers, classificationFormatMaps, editorFormatMaps, tagAggregators, editors);
     }
 
     public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
@@ -79,9 +80,10 @@ public sealed class LeftMinimapMarginProvider : IWpfTextViewMarginProvider
         IViewClassifierAggregatorService classifiers,
         IClassificationFormatMapService classificationFormatMaps,
         IEditorFormatMapService editorFormatMaps,
-        IViewTagAggregatorFactoryService tagAggregators)
+        IViewTagAggregatorFactoryService tagAggregators,
+        ITextEditorFactoryService editors)
     {
-        _services = new MinimapServices(classifiers, classificationFormatMaps, editorFormatMaps, tagAggregators);
+        _services = new MinimapServices(classifiers, classificationFormatMaps, editorFormatMaps, tagAggregators, editors);
     }
 
     public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
@@ -119,7 +121,6 @@ internal sealed class MinimapMargin : Control, IWpfTextViewMargin, IReservingMar
 
     private const int HideDelayMilliseconds = 300;
     private const int PreviewWheelLines = 3;
-    private const int MaxPreviewCharacters = 500;
 
     private static Cursor? s_resizeCursor;
 
@@ -1229,34 +1230,44 @@ internal sealed class MinimapMargin : Control, IWpfTextViewMargin, IReservingMar
         int count = _view.Options.GetOptionValue(MinimapOptions.PreviewLineCountId);
         centerLine = Math.Clamp(centerLine, 0, visual.LineCount - 1);
         int first = Math.Clamp(centerLine - (count / 2), 0, Math.Max(0, visual.LineCount - count));
-        int last = Math.Min(visual.LineCount - 1, first + count - 1);
-        var lines = new List<PreviewLine>(last - first + 1);
-        for (int number = first; number <= last; number++)
-        {
-            lines.Add(PreviewLineOf(visual.GetLineFromLineNumber(number)));
-        }
 
-        // Set as the editor sets its text, zoom included, with the numbers and the text where the editor's own stand.
+        // The text is the preview view's own, set as the editor sets it; the frame puts the numbers and the text where
+        // the editor's own stand.
         var properties = _classificationFormatMap.DefaultTextProperties;
         var popup = PopupBrushes.Read(_formatMap);
         double zoom = _view.ZoomLevel / 100.0;
         var page = PreviewPage();
-        _preview ??= new MinimapPreview();
+        _preview ??= new MinimapPreview(CreatePreviewView());
         _preview.SetContent(
             centerLine,
-            lines,
-            centerLine - first,
+            EditPoint(visual.GetLineFromLineNumber(first).Start),
+            EditPoint(visual.GetLineFromLineNumber(centerLine).Start),
+            Math.Min(count, visual.LineCount),
+            page.Width,
             new PreviewStyle(
                 properties.Typeface,
                 properties.FontRenderingEmSize * zoom,
-                _view.LineHeight * zoom,
-                properties.ForegroundBrush ?? popup.Foreground,
                 LineNumberMarginProvider.NumberBrush,
                 MinimapInkSource.ColorOf(_view.Background) is { A: > 0 } ? _view.Background : popup.Background,
                 popup.BorderBrush,
                 _palette.ViewportHover,
                 NumbersRight: LineNumbersEnd(zoom) is { } numbersEnd ? numbersEnd - page.Left : 0.0,
                 TextLeft: LeftOf(_view.VisualElement) - page.Left));
+    }
+
+    /// <summary>
+    /// The view the preview shows: over the editor's own view model, so its text and its elision are the editor's, and
+    /// with the editor's options beneath its own, so it is set, zoomed and wrapped as the editor is. Without the
+    /// interactive and editable roles it takes no input, shows no caret, and nothing that edits or commands attaches to
+    /// it; without a host it has no margins. It is read-only besides.
+    /// </summary>
+    private IWpfTextView CreatePreviewView()
+    {
+        var editors = _services.Editors;
+        var roles = editors.CreateTextViewRoleSet(PredefinedTextViewRoles.Document, PredefinedTextViewRoles.Analyzable, PredefinedTextViewRoles.Zoomable);
+        var view = editors.CreateTextView(new PreviewTextViewModel(_view.TextViewModel), roles, _view.Options);
+        view.Options.SetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId, true);
+        return view;
     }
 
     /// <summary>
@@ -1293,43 +1304,6 @@ internal sealed class MinimapMargin : Control, IWpfTextViewMargin, IReservingMar
             : null;
 
     private double LeftOf(Visual visual) => visual.TranslatePoint(default, this)?.X ?? 0.0;
-
-    private PreviewLine PreviewLineOf(ITextSnapshotLine line)
-    {
-        string text = line.Length > MaxPreviewCharacters ? line.Snapshot.GetText(line.Start, MaxPreviewCharacters) : line.GetText();
-        int number = EditPoint(line.Start).GetContainingLine().LineNumber + 1;
-        var runs = new List<(string, IBrush?)>();
-        if (_ink is not { } ink)
-        {
-            return new PreviewLine(number, runs);
-        }
-
-        // Tabs are expanded here: a text block's own tab stops are not the editor's.
-        int column = 0;
-        var builder = new StringBuilder();
-        foreach (var span in ink.Classify(line, text.Length))
-        {
-            builder.Clear();
-            for (int i = span.Start; i < span.End; i++)
-            {
-                if (text[i] == '\t')
-                {
-                    int width = ink.TabSize - (column % ink.TabSize);
-                    builder.Append(' ', width);
-                    column += width;
-                }
-                else
-                {
-                    builder.Append(text[i]);
-                    column++;
-                }
-            }
-
-            runs.Add((builder.ToString(), span.Brush));
-        }
-
-        return new PreviewLine(number, runs);
-    }
 
     private void PlacePreview(double y) => _preview?.Place(this, PreviewPage(), y);
 

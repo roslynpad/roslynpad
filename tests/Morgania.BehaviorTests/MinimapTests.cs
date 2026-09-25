@@ -294,15 +294,22 @@ public sealed class MinimapTests
                 Assert.AreEqual(LeftInWindow(host.HostControl, window), LeftInWindow(preview.Root, window), 0.5);
                 Assert.AreEqual(LeftInWindow(minimap, window) - MinimapPreview.Gap, RightInWindow(preview.Root, window), 0.5);
 
-                // ...with its numbers and its text where the editor's own stand.
-                var rows = ((StackPanel)((Border)preview.Root).Child!).Children;
-                Assert.AreEqual(10, rows.Count);
-                var first = (Panel)rows[0];
-                var number = (TextBlock)first.Children[0];
+                // ...showing the editor's text in a view of its own that takes no input, with its numbers and its text
+                // where the editor's own stand, and the line under the pointer on the highlight.
+                var shown = preview.View;
+                Assert.AreSame(view.TextBuffer, shown.TextBuffer);
+                Assert.IsTrue(shown.Options.GetOptionValue(DefaultTextViewOptions.ViewProhibitUserInputId));
+                Assert.IsFalse(shown.VisualElement.Focusable, "without the interactive role the view takes no input");
+                Assert.AreEqual(115, shown.TextViewLines.FirstVisibleLine.Start.GetContainingLine().LineNumber);
+                Assert.AreEqual(10, preview.Numbers.Children.Count);
+                var number = (TextBlock)preview.Numbers.Children[0];
                 Assert.AreEqual("116", number.Text);
                 var lineNumbers = host.GetTextViewMargin(PredefinedMarginNames.LineNumber)!;
                 Assert.AreEqual(RightInWindow(lineNumbers.VisualElement, window) - LineNumberMarginProvider.NumberInset, RightInWindow(number, window), 0.5);
-                Assert.AreEqual(LeftInWindow(view.VisualElement, window), LeftInWindow(first.Children[1], window), 0.5);
+                Assert.AreEqual(LeftInWindow(view.VisualElement, window), LeftInWindow(shown.VisualElement, window), 0.5);
+                var highlighted = shown.TextViewLines.GetTextViewLineContainingBufferPosition(shown.TextSnapshot.GetLineFromLineNumber(120).Start);
+                Assert.AreEqual(highlighted.Top - shown.ViewportTop, Canvas.GetTop(preview.Highlight), 0.01);
+                Assert.AreEqual(highlighted.Height, preview.Highlight.Height, 0.01);
 
                 window.MouseMove(new Point(100.0, 100.0));
                 Assert.IsFalse(preview.IsOpen, "leaving the minimap closes the preview");
@@ -315,6 +322,31 @@ public sealed class MinimapTests
             {
                 Close(host, window);
             }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task PreviewViewSharesTheEditorsTextFollowsItsEditsAndClosesWithIt()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            var (view, host, window, minimap) = Open(Lines(300), configure: options => options.SetOptionValue(MinimapOptions.PreviewDelayId, 0));
+            var layout = minimap.Layout;
+            window.MouseMove(InWindow(minimap, new Point(40.0, layout.YOf(120) + (layout.Pitch / 2.0)), window));
+            Dispatcher.UIThread.RunJobs();
+            var shown = minimap.Preview!.View;
+
+            // The editor's own buffers, behind a model the preview's view may dispose without taking the editor's along.
+            Assert.IsInstanceOfType<PreviewTextViewModel>(shown.TextViewModel);
+            Assert.AreSame(view.TextViewModel.VisualBuffer, shown.TextViewModel.VisualBuffer);
+
+            view.TextBuffer.Insert(view.TextSnapshot.GetLineFromLineNumber(120).Start, "edited ");
+            Dispatcher.UIThread.RunJobs();
+            var line = shown.TextViewLines.GetTextViewLineContainingBufferPosition(shown.TextSnapshot.GetLineFromLineNumber(120).Start);
+            StringAssert.StartsWith(line.Extent.GetText(), "edited ", "the preview shows the edit");
+
+            Close(host, window);
+            Assert.IsTrue(shown.IsClosed, "the preview's view closes with the editor");
         }).ConfigureAwait(false);
     }
 
