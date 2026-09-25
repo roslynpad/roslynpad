@@ -796,6 +796,40 @@ public sealed class MinimapTests
         }
     }
 
+    [TestMethod]
+    public async Task PictureCompletesWhereDrawingTheBuiltLinesTakesLongerThanTheInkBudget()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            // Fit squeezes the whole document into the minimap, so every pass draws every line built so far. The passes
+            // are driven here rather than by the dispatcher, so one that never ends fails the test instead of hanging it.
+            var (view, host, window, minimap) = Open(
+                Lines(19000),
+                options => options.SetOptionValue(MinimapOptions.SizingId, MinimapSizing.Fit),
+                backgroundPasses: false);
+            try
+            {
+                int last = view.VisualSnapshot.LineCount - 1;
+                int passes = 0;
+                bool inked;
+                do
+                {
+                    minimap.RasterizeForTest();
+                    passes++;
+                    double scale = minimap.Picture.Width / minimap.Bounds.Width;
+                    inked = minimap.Picture.GetPixel((int)((MinimapMargin.Inset + 3.0) * scale), RowOf(minimap, last)).A > 0;
+                }
+                while (!inked && passes < 400);
+
+                Assert.IsTrue(inked, $"the last line is inked after {passes} passes");
+            }
+            finally
+            {
+                Close(host, window);
+            }
+        }).ConfigureAwait(false);
+    }
+
     private static async Task SettledAsync(MinimapMargin minimap)
     {
         await Task.Delay(700).ConfigureAwait(true);
@@ -829,7 +863,7 @@ public sealed class MinimapTests
         return (int)((layout.YOf(line) + (layout.Pitch / 3.0)) * (minimap.Picture.Width / minimap.Bounds.Width));
     }
 
-    private static (IWpfTextView View, IWpfTextViewHost Host, Window Window, MinimapMargin Minimap) Open(string text, Action<IEditorOptions>? configure = null)
+    private static (IWpfTextView View, IWpfTextViewHost Host, Window Window, MinimapMargin Minimap) Open(string text, Action<IEditorOptions>? configure = null, bool backgroundPasses = true)
     {
         var view = HeadlessEditor.CreateView(text, WindowWidth, WindowHeight);
         configure?.Invoke(view.Options);
@@ -842,7 +876,7 @@ public sealed class MinimapTests
             Content = new VisualLayerManager { EnableOverlayLayer = true, Child = host.HostControl },
         };
         window.Show();
-        Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs(backgroundPasses ? null : DispatcherPriority.Input);
         return (view, host, window, (MinimapMargin)host.GetTextViewMargin(MinimapMarginNames.Minimap)!);
     }
 
