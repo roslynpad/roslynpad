@@ -12,6 +12,7 @@ using Avalonia.Threading;
 
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Text.Outlining;
 using Microsoft.VisualStudio.Utilities;
 
@@ -33,8 +34,9 @@ public static class OutliningMarginFormatNames
 /// The outlining (code folding) margin: one chevron per collapsible region, on the line
 /// where the region starts — pointing right when the region is collapsed (always shown),
 /// down when expanded (shown while the pointer is over the margin, the VS Code gutter
-/// behavior). Clicking collapses the innermost region starting on the line, or expands a
-/// collapsed one.
+/// behavior, or always, per <see cref="OutliningMarginOptions.ChevronVisibilityId"/>).
+/// Clicking collapses the innermost region starting on the line, or expands a collapsed
+/// one; the pointer is a hand over a line that has a chevron.
 /// </summary>
 [Export(typeof(IWpfTextViewMarginProvider))]
 [Name(PredefinedMarginNames.Outlining)]
@@ -71,11 +73,17 @@ public sealed class OutliningMarginProvider : IWpfTextViewMarginProvider
     {
         private static readonly IBrush s_fallbackBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
 
+        private static readonly Cursor s_hand = new(StandardCursorType.Hand);
+
         private readonly IWpfTextView _view;
         private readonly IOutliningManager _manager;
         private readonly IEditorFormatMap _formatMap;
         private bool _pointerOver;
         private bool _isDisposed;
+
+        // The cursor the margin had before the hand replaced it over a chevron, which may be one a host set.
+        private Cursor? _restingCursor;
+        private bool _showsHand;
 
         public OutliningMargin(IWpfTextView view, IOutliningManager manager, IEditorFormatMap formatMap)
         {
@@ -133,11 +141,13 @@ public sealed class OutliningMarginProvider : IWpfTextViewMarginProvider
 
             double zoom = _view.ZoomLevel / 100.0;
             var pen = new Pen(GetBrush(), 1.2 * zoom, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+            bool showsExpanded = _pointerOver
+                || _view.Options.GetOptionValue(OutliningMarginOptions.ChevronVisibilityId) == OutliningChevronVisibility.Always;
             foreach (var line in textViewLines)
             {
                 if (!line.IsFirstTextViewLineForSnapshotLine
                     || !states.TryGetValue(line.Start.GetContainingLine().LineNumber, out bool isCollapsed)
-                    || (!isCollapsed && !_pointerOver))
+                    || (!isCollapsed && !showsExpanded))
                 {
                     continue;
                 }
@@ -185,23 +195,71 @@ public sealed class OutliningMarginProvider : IWpfTextViewMarginProvider
         {
             base.OnPointerExited(e);
             _pointerOver = false;
+            ShowHand(false);
             InvalidateVisual();
+        }
+
+        protected override void OnPointerMoved(PointerEventArgs e)
+        {
+            base.OnPointerMoved(e);
+            ShowHand(LineAt(e.GetPosition(this).Y) is { } line && StartsRegion(line.Start.GetContainingLine()));
         }
 
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             base.OnPointerPressed(e);
-            if (_isDisposed || _view.IsClosed || _view is not ITextView2 view2 || !view2.TryGetTextViewLines(out var textViewLines))
-            {
-                return;
-            }
-
-            double y = (e.GetPosition(this).Y / (_view.ZoomLevel / 100.0)) + _view.ViewportTop;
-            if (textViewLines.GetTextViewLineContainingYCoordinate(y) is { } line)
+            if (LineAt(e.GetPosition(this).Y) is { } line)
             {
                 ToggleRegionsOnLine(line.Start.GetContainingLine());
                 e.Handled = true;
             }
+        }
+
+        /// <summary>The text line beside <paramref name="y"/>, in the margin's own coordinates; null outside the text.</summary>
+        private ITextViewLine? LineAt(double y)
+        {
+            if (_isDisposed || _view.IsClosed || _view is not ITextView2 view2 || !view2.TryGetTextViewLines(out var textViewLines))
+            {
+                return null;
+            }
+
+            return textViewLines.GetTextViewLineContainingYCoordinate((y / (_view.ZoomLevel / 100.0)) + _view.ViewportTop);
+        }
+
+        /// <summary>Whether a region starts on the line, which is what gives it a chevron.</summary>
+        private bool StartsRegion(ITextSnapshotLine snapshotLine)
+        {
+            var snapshot = snapshotLine.Snapshot;
+            foreach (var region in _manager.GetAllRegions(snapshotLine.ExtentIncludingLineBreak))
+            {
+                var start = region.Extent.GetStartPoint(snapshot);
+                if (start >= snapshotLine.Start && start <= snapshotLine.End)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ShowHand(bool hand)
+        {
+            if (hand == _showsHand)
+            {
+                return;
+            }
+
+            if (hand)
+            {
+                _restingCursor = Cursor;
+                Cursor = s_hand;
+            }
+            else
+            {
+                Cursor = _restingCursor;
+            }
+
+            _showsHand = hand;
         }
 
         private void ToggleRegionsOnLine(ITextSnapshotLine snapshotLine)
