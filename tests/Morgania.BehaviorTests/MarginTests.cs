@@ -10,6 +10,8 @@ namespace Microsoft.VisualStudio.BehaviorTests;
 [TestClass]
 public sealed class MarginTests
 {
+    private static readonly double[] s_narrowerWidths = [350.0, 300.0];
+
     [TestMethod]
     public async Task MarginsAreDiscoveredOrderedAndRemovable()
     {
@@ -102,6 +104,44 @@ public sealed class MarginTests
                 Assert.IsTrue(right.VisualElement.Bounds.Width > 0, "the probe needs the vertical bar's lane laid out");
                 Assert.AreEqual(right.VisualElement.Bounds.Width, bottom.VisualElement.Margin.Right, 0.01,
                     "the bottom row must end where the right container begins");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task DisabledScrollBarsStayHiddenWhenTheirRangeChanges()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            string text = string.Join('\n', Enumerable.Range(0, 100).Select(i => $"line {i} " + new string('x', 120)));
+            var view = HeadlessEditor.CreateView(text, height: 300.0, wordWrap: true);
+            var factory = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>();
+            var host = factory.CreateTextViewHost(view, setFocus: false);
+            var window = new Avalonia.Controls.Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var horizontal = host.GetTextViewMargin(PredefinedMarginNames.HorizontalScrollBar)!.VisualElement;
+                var vertical = host.GetTextViewMargin(PredefinedMarginNames.VerticalScrollBar)!.VisualElement;
+                view.Options.SetOptionValue(DefaultTextViewHostOptions.VerticalScrollBarId, false);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsFalse(vertical.IsVisible, "the vertical scroll bar follows its option at once");
+
+                // A new width gives both bars a new range, which a scroll bar answers by showing
+                // itself again unless its own Visibility says otherwise.
+                foreach (double width in s_narrowerWidths)
+                {
+                    window.Width = width;
+                    Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                    Assert.IsFalse(horizontal.IsVisible, "wrapped lines need no horizontal scroll bar");
+                    Assert.IsFalse(vertical.IsVisible, "the vertical scroll bar stays off");
+                }
             }
             finally
             {
