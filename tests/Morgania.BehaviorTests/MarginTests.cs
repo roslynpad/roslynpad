@@ -152,6 +152,44 @@ public sealed class MarginTests
     }
 
     [TestMethod]
+    public async Task ScrollBarsShowOnlyWhileThereIsSomethingToScrollWhereAsked()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            var view = HeadlessEditor.CreateView("one\ntwo\nthree", height: 300.0);
+            var host = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>().CreateTextViewHost(view, setFocus: false);
+            var window = new Avalonia.Controls.Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var vertical = host.GetTextViewMargin(PredefinedMarginNames.VerticalScrollBar)!.VisualElement;
+                var horizontal = host.GetTextViewMargin(PredefinedMarginNames.HorizontalScrollBar)!.VisualElement;
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(vertical.IsVisible, "By default a bar shows whenever its margin is enabled.");
+
+                view.Options.SetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId, true);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsFalse(vertical.IsVisible, "Three lines fit: nothing to scroll.");
+                Assert.IsFalse(horizontal.IsVisible, "And none runs past the viewport.");
+
+                view.TextBuffer.Insert(view.TextBuffer.CurrentSnapshot.Length, string.Concat(Enumerable.Range(0, 100).Select(i => $"\nline {i}")));
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(vertical.IsVisible, "A hundred lines more do not fit.");
+
+                view.TextBuffer.Insert(0, new string('x', 400) + "\n");
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(horizontal.IsVisible, "And a line longer than the viewport runs past it.");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task VerticalScrollBarMapsBufferPositionsAndScrollsTheView()
     {
         await HeadlessEditor.RunAsync(() =>
