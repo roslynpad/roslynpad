@@ -73,9 +73,11 @@ internal sealed class FormattedLineSource : IFormattedLineSource
         // Word wrap cannot be narrower than a few columns, or formatting cannot make progress.
         WordWrapWidth = wordWrapWidth <= 0.0 ? 0.0 : Math.Max(wordWrapWidth, 4.0 * ColumnWidth);
 
+        // Wrap rather than WrapWithOverflow: a word longer than the line — a path, a URL — is broken where the
+        // line ends instead of running on past the edge, where nothing could scroll it into view.
         _paragraphProperties = new EditorTextParagraphProperties(
             DefaultTextProperties,
-            WordWrapWidth > 0.0 ? TextWrapping.WrapWithOverflow : TextWrapping.NoWrap,
+            WordWrapWidth > 0.0 ? TextWrapping.Wrap : TextWrapping.NoWrap,
             defaultIncrementalTab: TabSize * ColumnWidth,
             indent: 0.0);
         _defaultBaseline = TextHeightAboveBaseline;

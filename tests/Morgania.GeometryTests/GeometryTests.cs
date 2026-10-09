@@ -152,6 +152,28 @@ public sealed class GeometryTests
     }
 
     [TestMethod]
+    public async Task WordWrapBreaksAWordLongerThanTheViewport()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            // A path without a blank, as a log line holds one: nothing in it is a place to break a line.
+            string text = @"before D:\PROSTEP\" + string.Concat(Enumerable.Range(0, 30).Select(i => $@"folder{i}\")) + "file.xml after";
+            var view = HeadlessEditor.CreateView(text, width: 300.0, height: 300.0, wordWrap: true);
+
+            var lines = view.TextViewLines;
+            Assert.IsTrue(lines.Count > 2, "The line wraps.");
+            foreach (var line in lines)
+            {
+                Assert.IsTrue(
+                    line.TextRight <= view.ViewportRight + 0.01,
+                    $"The row at {line.Start.Position} ends at {line.TextRight}, past the viewport's {view.ViewportRight}.");
+            }
+
+            view.Close();
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task LayoutIsDenseAndFillsTheViewport()
     {
         await HeadlessEditor.RunAsync(() =>
