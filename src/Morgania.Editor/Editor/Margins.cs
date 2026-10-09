@@ -284,6 +284,7 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
             Minimum = 0.0;
             SmallChange = 1.0;
             view.LayoutChanged += (_, _) => SynchronizeFromView();
+            view.Options.OptionChanged += (_, _) => ShowIfEnabled();
             Scroll += (_, e) =>
             {
                 // While the thumb is being dragged the drag owns Value: the layout sync must
@@ -298,6 +299,7 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
                         _map.GetBufferPositionAtCoordinate(e.NewValue), 0.0, ViewRelativePosition.Top);
                 }
             };
+            ShowIfEnabled();
             SynchronizeFromView();
         }
 
@@ -324,6 +326,13 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
 
         public ITextViewMargin? GetTextViewMargin(string marginName)
             => string.Equals(marginName, PredefinedMarginNames.VerticalScrollBar, StringComparison.OrdinalIgnoreCase) ? this : null;
+
+        /// <summary>
+        /// Shows the bar while it is enabled. Through <see cref="ScrollBar.Visibility"/> rather than IsVisible: a scroll
+        /// bar derives IsVisible from its Visibility whenever its range changes, so a bar hidden directly came back at
+        /// the next layout.
+        /// </summary>
+        private void ShowIfEnabled() => Visibility = Enabled ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
 
         public void Dispose()
         {
@@ -384,7 +393,7 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
             _synchronizing = true;
             try
             {
-                IsVisible = Enabled;
+                ShowIfEnabled();
                 // The scrollbar tracks the visual buffer: collapsed regions shrink the
                 // scrollable range rather than leaving unreachable dead space.
                 int firstLine = (int)_map.GetCoordinateAtBufferPosition(lines.FirstVisibleLine.Start);
@@ -494,6 +503,7 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
                     _view.ViewportLeft = e.NewValue;
                 }
             };
+            ShowIfEnabled();
         }
 
         protected override Type StyleKeyOverride => typeof(ScrollBar);
@@ -522,6 +532,9 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
         {
         }
 
+        /// <summary>Shows the bar while it is enabled, through its Visibility as the vertical bar does.</summary>
+        private void ShowIfEnabled() => Visibility = Enabled ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+
         private void SynchronizeFromView()
         {
             if (_view.IsClosed)
@@ -532,7 +545,7 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
             _synchronizing = true;
             try
             {
-                IsVisible = Enabled;
+                ShowIfEnabled();
                 Maximum = Math.Max(0.0, _view.MaxTextRightCoordinate + _view.FormattedLineSource.ColumnWidth - _view.ViewportWidth);
                 ViewportSize = Math.Max(1.0, _view.ViewportWidth);
                 LargeChange = _view.ViewportWidth;
