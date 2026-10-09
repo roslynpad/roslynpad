@@ -41,7 +41,7 @@ public static class CollapsedAdornmentFormatNames
 /// its space inline, including when visible text follows the collapse on the same line.
 /// Clicking expands the region; resting the pointer on the pill shows the collapsed hint
 /// form through the Modern ToolTip presenter (so a classified hint renders colorized),
-/// on the editor's own background ("TextView Background") rather than the popup gray —
+/// on the editor's own background (the view's, else "TextView Background") rather than the popup gray —
 /// the hint is a preview of editor content, the way the VS hint hosts a mini editor view.
 /// Text hover does not fire over the pill (adornment-replaced spans are not text), so the
 /// hint is the only popup there.
@@ -255,10 +255,18 @@ public sealed class CollapsedRegionAdornmentProvider : IViewTaggerProvider
                 [hint]);
         }
 
-        /// <summary>The editor background from the standard "TextView Background"
-        /// Fonts-and-Colors entry (the same one hosts theme for the view itself).</summary>
-        private IBrush GetEditorBackground(IBrush fallback)
+        /// <summary>The editor background: the view's own where its host set one — the ground
+        /// the hint's lines are read on in the view itself — else the standard "TextView
+        /// Background" Fonts-and-Colors entry (the one hosts theme the view with), else
+        /// <paramref name="fallback"/>.</summary>
+        internal IBrush GetEditorBackground(IBrush fallback)
         {
+            var own = _view.Background;
+            if (own is not ISolidColorBrush { Color.A: 0 })
+            {
+                return own;
+            }
+
             var properties = _formatMap.GetProperties("TextView Background");
             if (properties.TryGetValue(EditorFormatDefinition.BackgroundColorId, out var color) && color is Color background)
             {

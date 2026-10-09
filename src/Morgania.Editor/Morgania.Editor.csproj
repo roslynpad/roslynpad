@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Morgania.IntellisenseTests" />
+    <InternalsVisibleTo Include="Morgania.BehaviorTests" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
