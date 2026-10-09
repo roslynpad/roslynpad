@@ -229,6 +229,7 @@ internal sealed class CodeEditorView : ContentControl, IDisposable
             theme.ApplyBackgroundWorkIndicator(editorFormatMap);
             theme.ApplyBlockStructure(editorFormatMap);
             theme.ApplyOutlining(editorFormatMap);
+            theme.ApplyMinimap(editorFormatMap);
         }
 
         // Glyph drawings (completion icons, quick info symbols, the light bulb) adapt their

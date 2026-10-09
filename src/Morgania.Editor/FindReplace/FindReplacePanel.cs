@@ -99,6 +99,7 @@ public sealed class FindReplacePanel
     private readonly Avalonia.Controls.Shapes.Path _closeGlyph;
 
     private FindReplaceBrushes _brushes;
+    private List<SnapshotSpan> _matches = [];
     private bool _isOpen;
     private bool _patternValid = true;
     private bool _isDisposed;
@@ -233,6 +234,15 @@ public sealed class FindReplacePanel
         ArgumentNullException.ThrowIfNull(textView);
         return textView.Properties.TryGetProperty(typeof(FindReplacePanel), out FindReplacePanel panel) ? panel : null;
     }
+
+    /// <summary>
+    /// The matches of the term in the whole document, the first <c>1000</c> of them; empty while the panel is closed or
+    /// the term is empty or does not parse.
+    /// </summary>
+    internal IReadOnlyList<SnapshotSpan> Matches => _matches;
+
+    /// <summary>Raised when <see cref="Matches"/> changes.</summary>
+    internal event EventHandler? MatchesChanged;
 
     /// <summary>The term in the search box.</summary>
     public string? SearchText
@@ -522,19 +532,24 @@ public sealed class FindReplacePanel
             return;
         }
 
-        int count = 0;
+        List<SnapshotSpan> matches = [];
         try
         {
             var snapshot = _view.TextBuffer.CurrentSnapshot;
-            count = _searchService
-                .FindAll(new SnapshotSpan(snapshot, 0, snapshot.Length), term, BuildOptions(reverse: false) & ~FindOptions.Wrap)
-                .Take(MaxCountedMatches)
-                .Count();
+            matches =
+            [
+                .. _searchService
+                    .FindAll(new SnapshotSpan(snapshot, 0, snapshot.Length), term, BuildOptions(reverse: false) & ~FindOptions.Wrap)
+                    .Take(MaxCountedMatches),
+            ];
         }
         catch (ArgumentException)
         {
             _patternValid = false;
         }
+
+        SetMatches(matches);
+        int count = matches.Count;
 
         _statusText.Text = !_patternValid ? "Invalid pattern"
             : count == 0 ? "No results"
@@ -605,6 +620,19 @@ public sealed class FindReplacePanel
         {
             _view.GetAdornmentLayer(HighlightLayerName).RemoveAllAdornments();
         }
+
+        SetMatches([]);
+    }
+
+    private void SetMatches(List<SnapshotSpan> matches)
+    {
+        if (matches.Count == 0 && _matches.Count == 0)
+        {
+            return;
+        }
+
+        _matches = matches;
+        MatchesChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnLayoutChanged(object? sender, TextViewLayoutChangedEventArgs e)
