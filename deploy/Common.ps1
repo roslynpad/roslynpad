@@ -50,6 +50,7 @@ function Get-PackageFiles($RootPath) {
 
     $files += Get-AdditionalDirectory $RootPath 'runtimes'
     $files += Get-AdditionalDirectory $RootPath 'Themes'
+    $files += Get-AdditionalDirectory $RootPath 'BuildTasks'
 
     return $files
 }
