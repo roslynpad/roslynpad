@@ -1,4 +1,11 @@
 using System.Composition;
+using System.Runtime.InteropServices;
+
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
+using Avalonia.Threading;
 
 using Microsoft.VisualStudio.GeometryTests;
 using Microsoft.VisualStudio.Text;
@@ -108,5 +115,97 @@ public sealed class OutliningTests
 
             view.Close();
         }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task ExpandedChevronsShowOnHoverOrAlwaysAsTheOptionSays()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            var view = HeadlessEditor.CreateView("header <<\nhidden one\nhidden two >>\nfooter", height: 300.0);
+            var host = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>().CreateTextViewHost(view, setFocus: false);
+            var window = new Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var margin = host.GetTextViewMargin(PredefinedMarginNames.Outlining)!.VisualElement;
+                Assert.AreEqual(0, InkBeside(margin, window, view, 0), "An expanded region's chevron waits for the pointer by default.");
+
+                view.Options.SetOptionValue(OutliningMarginOptions.ChevronVisibilityId, OutliningChevronVisibility.Always);
+                Assert.IsTrue(InkBeside(margin, window, view, 0) > 0, "Asked to, it shows without the pointer.");
+                Assert.AreEqual(0, InkBeside(margin, window, view, 3), "A line no region starts on stays clear.");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task ThePointerIsAHandOverAChevronAndTheHostsCursorBesideIt()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            var view = HeadlessEditor.CreateView("header <<\nhidden one\nhidden two >>\nfooter", height: 300.0);
+            var host = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>().CreateTextViewHost(view, setFocus: false);
+            var window = new Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var margin = host.GetTextViewMargin(PredefinedMarginNames.Outlining)!.VisualElement;
+                var hostCursor = new Cursor(StandardCursorType.Arrow);
+                margin.Cursor = hostCursor;
+                Dispatcher.UIThread.RunJobs();
+
+                window.MouseMove(Beside(margin, window, view, 0));
+                Assert.AreNotSame(hostCursor, margin.Cursor, "The hand over the line a region starts on.");
+
+                window.MouseMove(Beside(margin, window, view, 3));
+                Assert.AreSame(hostCursor, margin.Cursor, "The host's cursor again beside a line without one.");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>The middle of the margin beside view line <paramref name="line"/>, in the window.</summary>
+    private static Point Beside(Control margin, Window window, IWpfTextView view, int line)
+    {
+        var row = view.TextViewLines[line];
+        return margin.TranslatePoint(new Point(margin.Bounds.Width / 2.0, row.Top - view.ViewportTop + (row.Height / 2.0)), window)!.Value;
+    }
+
+    /// <summary>How many pixels of the margin beside view line <paramref name="line"/> differ from the margin's ground.</summary>
+    private static int InkBeside(Control margin, Window window, IWpfTextView view, int line)
+    {
+        Dispatcher.UIThread.RunJobs();
+        using var frame = window.CaptureRenderedFrame()!;
+        var row = view.TextViewLines[line];
+        var corner = margin.TranslatePoint(new Point(0.0, row.Top - view.ViewportTop), window)!.Value;
+        using var buffer = frame.Lock();
+        int Pixel(int x, int y) => Marshal.ReadInt32(buffer.Address + (y * buffer.RowBytes) + (x * 4));
+
+        // The row's corner is clear of the chevron, which stands in the middle of the margin.
+        int ground = Pixel((int)corner.X, (int)corner.Y);
+        int ink = 0;
+        for (int y = (int)corner.Y; y < (int)(corner.Y + row.Height); y++)
+        {
+            for (int x = (int)corner.X; x < (int)(corner.X + margin.Bounds.Width); x++)
+            {
+                if (Pixel(x, y) != ground)
+                {
+                    ink++;
+                }
+            }
+        }
+
+        return ink;
     }
 }
