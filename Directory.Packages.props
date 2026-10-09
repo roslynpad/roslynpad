@@ -6,7 +6,7 @@
   <PropertyGroup>
     <DotNetExtensionsVersion>11.0.0-rc.1.26425.128</DotNetExtensionsVersion>
     <RoslynVersion>5.9.0</RoslynVersion>
-    <AvaloniaVersion>12.1.2</AvaloniaVersion>
+    <AvaloniaVersion>12.1.3</AvaloniaVersion>
     <NuGetVersion>7.9.0</NuGetVersion>
     <DockAvaloniaVersion>12.1.0.6</DockAvaloniaVersion>
   </PropertyGroup>
