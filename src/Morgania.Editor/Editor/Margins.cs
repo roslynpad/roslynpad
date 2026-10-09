@@ -294,13 +294,14 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         return new VerticalScrollBarMargin(wpfTextViewHost.TextView);
     }
 
-    internal sealed class VerticalScrollBarMargin : ScrollBar, IWpfTextViewMargin, IVerticalScrollBar
+    internal sealed class VerticalScrollBarMargin : ScrollBar, IWpfTextViewMargin, IVerticalScrollBar, IReservingMargin
     {
         private readonly IWpfTextView _view;
         private readonly LineScrollMap _map;
         private readonly HashSet<object> _replacedBy = [];
         private bool _synchronizing;
         private bool _thumbDragging;
+        private bool _reserves;
 
         public VerticalScrollBarMargin(IWpfTextView view)
         {
@@ -353,6 +354,14 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         public bool Enabled
             => _view.Options.GetOptionValue(DefaultTextViewHostOptions.VerticalScrollBarId) && _replacedBy.Count == 0;
 
+        /// <summary>
+        /// Whether the bar takes room beside the text instead of floating over it: while it shows beside wrapped lines,
+        /// which never scroll sideways, so what it covered could never be brought out from under it.
+        /// </summary>
+        public bool ReservesSpace => _reserves;
+
+        public event EventHandler? ReservesSpaceChanged;
+
         public ITextViewMargin? GetTextViewMargin(string marginName)
             => string.Equals(marginName, PredefinedMarginNames.VerticalScrollBar, StringComparison.OrdinalIgnoreCase) ? this : null;
 
@@ -373,7 +382,17 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         /// bar derives IsVisible from its Visibility whenever its range changes, so a bar hidden directly came back at
         /// the next layout.
         /// </summary>
-        private void ShowIfEnabled() => Visibility = Enabled ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+        private void ShowIfEnabled()
+        {
+            bool shown = Enabled;
+            Visibility = shown ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+            bool reserves = shown && (_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) != 0;
+            if (reserves != _reserves)
+            {
+                _reserves = reserves;
+                ReservesSpaceChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
 
         public void Dispose()
         {

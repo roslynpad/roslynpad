@@ -11,8 +11,8 @@ using Microsoft.VisualStudio.Utilities;
 /// margins are MEF-discovered per container, filtered by content type and view roles, and
 /// stacked in definition order (M4 acceptance). The top/left containers reserve space;
 /// the right/bottom containers overlay the view's cell (VS Code-style scrollbars), unless a
-/// right margin takes room of its own (<see cref="IReservingMargin"/>, the minimap): then the
-/// right container stands beside the view.
+/// right margin takes room of its own (<see cref="IReservingMargin"/>: the minimap, or the
+/// vertical scroll bar beside wrapped lines): then the right container stands beside the view.
 /// </summary>
 internal sealed class WpfTextViewHost : IWpfTextViewHost
 {

@@ -12,8 +12,9 @@ namespace Microsoft.VisualStudio.BehaviorTests;
 [TestClass]
 public sealed class MarginTests
 {
-    private static readonly double[] s_narrowerWidths = [350.0, 300.0];
     private static readonly bool[] s_onAndOff = [true, false];
+
+    private static readonly double[] s_narrowerWidths = [350.0, 300.0];
 
     [TestMethod]
     public async Task MarginsAreDiscoveredOrderedAndRemovable()
@@ -153,6 +154,38 @@ public sealed class MarginTests
                     Assert.IsFalse(horizontal.IsVisible, "wrapped lines need no horizontal scroll bar");
                     Assert.IsFalse(vertical.IsVisible, "the vertical scroll bar stays off");
                 }
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task TheVerticalScrollBarTakesRoomBesideWrappedLinesAndFloatsOverTheRest()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            string text = string.Join('\n', Enumerable.Range(0, 100).Select(i => $"line {i} " + new string('x', 120)));
+            var view = HeadlessEditor.CreateView(text, height: 300.0, wordWrap: true);
+            view.Options.SetOptionValue(MinimapOptions.EnabledId, false);
+            var host = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>().CreateTextViewHost(view, setFocus: false);
+            var window = new Avalonia.Controls.Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var bar = host.GetTextViewMargin(PredefinedMarginNames.VerticalScrollBar)!.VisualElement;
+                double BarLeft() => bar.TranslatePoint(default, window)!.Value.X;
+                double TextRight() => view.VisualElement.TranslatePoint(new Point(view.VisualElement.Bounds.Width, 0.0), window)!.Value.X;
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(TextRight() <= BarLeft() + 0.01, "Wrapped lines end where the bar begins: nothing of them lies under it.");
+
+                view.Options.SetOptionValue(DefaultTextViewOptions.WordWrapStyleId, WordWrapStyles.None);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(TextRight() > BarLeft() + 0.01, "Lines that scroll sideways run on under the floating bar.");
             }
             finally
             {
