@@ -17,6 +17,7 @@ using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Editor.Implementation;
+using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Text.Outlining;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
@@ -222,6 +223,47 @@ public sealed class MinimapTests
                 int after = FirstVisibleLine(view);
                 Assert.IsTrue(after > before, $"dragging down scrolls down ({before} -> {after})");
                 Assert.AreEqual(before + (60.0 * layout.MaxFirstLine / (layout.Height - layout.BandHeight)), after, 2.0);
+            }
+            finally
+            {
+                Close(host, window);
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task DraggingTheBandToTheBottomShowsTheLastLineWhole(bool wrapped)
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            // wrapped, the lines at the end take several rows each, so the end holds fewer lines than the start shows
+            string text = string.Join('\n', Enumerable.Range(0, 400).Select(i => $"line {i} " + string.Join(' ', Enumerable.Repeat("word", wrapped && i >= 380 ? 60 : 2))));
+            var (view, host, window, minimap) = Open(text, configure: options =>
+                options.SetOptionValue(DefaultTextViewOptions.WordWrapStyleId, wrapped ? WordWrapStyles.WordWrap : WordWrapStyles.None));
+            try
+            {
+                // a viewport seven tenths of a line over a whole number of lines, which a first line rounded to a whole
+                // one falls short of
+                double rows = view.ViewportHeight / view.LineHeight;
+                window.Height += (0.7 - rows % 1.0 + 1.0) % 1.0 * view.LineHeight;
+                Dispatcher.UIThread.RunJobs();
+                Assert.AreEqual(0.7, view.ViewportHeight / view.LineHeight % 1.0, 0.1, "the viewport is no whole number of lines tall");
+
+                // Act: the band dragged past the bottom of the minimap
+                var layout = minimap.Layout;
+                var grab = InWindow(minimap, new Point(50.0, layout.BandTop + (layout.BandHeight / 2.0)), window);
+                var drop = new Point(grab.X, grab.Y + layout.Height + 100.0);
+                window.MouseDown(grab, MouseButton.Left);
+                window.MouseMove(drop);
+                window.MouseUp(drop, MouseButton.Left);
+                Dispatcher.UIThread.RunJobs();
+
+                // Assert
+                var last = view.TextViewLines.LastVisibleLine;
+                Assert.AreEqual(view.TextSnapshot.Length, last.End.Position, "the document's last line is in view");
+                Assert.AreEqual(VisibilityState.FullyVisible, last.VisibilityState, "and whole, not cut off under the bottom edge");
             }
             finally
             {
@@ -782,6 +824,37 @@ public sealed class MinimapTests
             {
                 Close(host, window);
             }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task AFileTakenAnewIsNotMarkedWhileItsTextFollowsItsSavedText()
+    {
+        await HeadlessEditor.RunAsync(async () =>
+        {
+            // Arrange: a host that opens another file says what the file holds before it hands over the text, so for a
+            // moment the saved text is the new file's while the buffer still holds the old one
+            var view = HeadlessEditor.CreateView(Lines(400));
+            var buffer = view.TextBuffer;
+            var tracker = LineChangeTracker.For(buffer);
+            var marked = new List<int>();
+            tracker.Changed += (_, _) => marked.Add(tracker.Kinds.Count(kind => kind != LineChangeKind.None));
+            TextChangeBaseline.For(buffer).MarkSaved();
+            await Task.Delay(700).ConfigureAwait(true);
+            Dispatcher.UIThread.RunJobs();
+            marked.Clear();
+
+            // Act
+            string other = string.Join('\n', Enumerable.Range(0, 400).Select(i => $"another line {i}"));
+            TextChangeBaseline.For(buffer).MarkSaved(other);
+            buffer.Replace(new Span(0, buffer.CurrentSnapshot.Length), other);
+            await Task.Delay(700).ConfigureAwait(true);
+            Dispatcher.UIThread.RunJobs();
+
+            // Assert: the diff of the old text against the new file was never shown
+            Assert.IsTrue(marked.Count > 0, "the changes were measured");
+            Assert.IsTrue(marked.All(count => count == 0), $"and no line was marked ({string.Join(", ", marked)})");
+            view.Close();
         }).ConfigureAwait(false);
     }
 

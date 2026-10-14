@@ -256,6 +256,9 @@ internal sealed class LineChangeTracker
 
     private void OnBufferChanged(object? sender, TextContentChangedEventArgs e)
     {
+        // a diff still on its way measured an older text: shown, it would mark lines the buffer no longer has — all of
+        // them where the host took another file, its saved text first and the text after it
+        _generation++;
         _settle.Stop();
         _settle.Start();
     }

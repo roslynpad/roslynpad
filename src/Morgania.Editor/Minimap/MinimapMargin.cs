@@ -1122,6 +1122,15 @@ internal sealed class MinimapMargin : Control, IWpfTextViewMargin, IReservingMar
 
     private void ScrollToFirstLine(double line)
     {
+        // the band at the end of its range is the document's end; its first line rounded and put at the top would leave
+        // the last line cut off under the bottom edge
+        if (_layout.MaxFirstLine > 0.0 && line >= _layout.MaxFirstLine)
+        {
+            _view.DisplayTextLineContainingBufferPosition(
+                new SnapshotPoint(_view.TextSnapshot, _view.TextSnapshot.Length), 0.0, ViewRelativePosition.Bottom);
+            return;
+        }
+
         var visual = _view.VisualSnapshot;
         int number = Math.Clamp((int)Math.Round(line), 0, visual.LineCount - 1);
         _view.DisplayTextLineContainingBufferPosition(EditPoint(visual.GetLineFromLineNumber(number).Start), 0.0, ViewRelativePosition.Top);
