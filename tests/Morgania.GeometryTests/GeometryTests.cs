@@ -319,4 +319,22 @@ public sealed class GeometryTests
             view.Close();
         }).ConfigureAwait(false);
     }
+
+    [TestMethod]
+    public async Task ALineWithATabIsAsTallAsOneWithout()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            var view = HeadlessEditor.CreateView("plain\n\tindented by a tab\n    indented by spaces\n\t\t\nend");
+            var lines = view.TextViewLines;
+            string heights = string.Join(", ", lines.Select(line => $"{line.Height}/{line.Baseline}"));
+
+            Assert.AreEqual(lines[0].Height, lines[1].Height, 0.01, $"A tab adds nothing to its line's height ({heights}).");
+            Assert.AreEqual(lines[0].Baseline, lines[1].Baseline, 0.01, "Nor moves the baseline.");
+            Assert.AreEqual(lines[0].Height, lines[2].Height, 0.01, "Spaces add nothing either.");
+            Assert.AreEqual(lines[0].Height, lines[2].Top - lines[1].Top, 0.01, "So the lines stand evenly apart.");
+            Assert.AreEqual(lines[0].Height, lines[3].Height, 0.01, "A line of tabs alone is a line's height too.");
+            view.Close();
+        }).ConfigureAwait(false);
+    }
 }

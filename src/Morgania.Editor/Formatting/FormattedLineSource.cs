@@ -290,7 +290,7 @@ internal sealed class FormattedLineSource : IFormattedLineSource
             double advance = tabWidth - (x - (Math.Floor(x / tabWidth) * tabWidth));
             embeddedRuns ??= [];
             embeddedSpans ??= adornmentSpans = [];
-            embeddedRuns.Add(new TabRun(advance, _defaultTextHeight, _defaultBaseline, PropertiesAt(runs, i)));
+            embeddedRuns.Add(new TabRun(advance, PropertiesAt(runs, i)));
             embeddedSpans.Add((i, i + 1));
             x += advance;
             segmentStart = i + 1;
