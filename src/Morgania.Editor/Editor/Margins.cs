@@ -295,10 +295,9 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
                 // pointer. Any other scroll (EndScroll on release, paging, line steps) hands
                 // Value back to the sync, which settles it on a line boundary.
                 _thumbDragging = e.ScrollEventType == ScrollEventType.ThumbTrack;
-                if (!_synchronizing && !_view.IsClosed)
+                if (!_synchronizing)
                 {
-                    _view.DisplayTextLineContainingBufferPosition(
-                        _map.GetBufferPositionAtCoordinate(e.NewValue), 0.0, ViewRelativePosition.Top);
+                    ScrollTo(e.NewValue);
                 }
             };
             ShowIfEnabled();
@@ -343,6 +342,35 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         public void Dispose()
         {
         }
+
+        /// <summary>
+        /// Scrolls the view to <paramref name="value"/> of the bar's range: the line it maps to at the top, and at the end
+        /// of the range the end of the document. The range counts whole lines, so the line its end maps to, put at the
+        /// top, would leave the last line cut off under the bottom edge wherever the viewport is not a whole number of
+        /// lines tall or wraps them.
+        /// </summary>
+        internal void ScrollTo(double value)
+        {
+            if (_view.IsClosed)
+            {
+                return;
+            }
+
+            if (Maximum > 0.0 && value >= Maximum)
+            {
+                ShowEnd(_view);
+            }
+            else
+            {
+                _view.DisplayTextLineContainingBufferPosition(
+                    _map.GetBufferPositionAtCoordinate(value), 0.0, ViewRelativePosition.Top);
+            }
+        }
+
+        /// <summary>Scrolls <paramref name="view"/> to its end: the document's last line whole at the bottom of the viewport.</summary>
+        internal static void ShowEnd(ITextView view)
+            => view.DisplayTextLineContainingBufferPosition(
+                new SnapshotPoint(view.TextSnapshot, view.TextSnapshot.Length), 0.0, ViewRelativePosition.Bottom);
 
         #region IVerticalScrollBar
 
@@ -411,19 +439,39 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
                 // The scrollbar tracks the visual buffer: collapsed regions shrink the
                 // scrollable range rather than leaving unreachable dead space.
                 int firstLine = (int)_map.GetCoordinateAtBufferPosition(lines.FirstVisibleLine.Start);
-                double viewportLines = Math.Max(1.0, _view.ViewportHeight / _view.LineHeight);
+                double viewportLines = ViewportLines(lines, firstLine);
                 Maximum = Math.Max(0.0, _view.VisualSnapshot.LineCount - viewportLines);
                 ViewportSize = viewportLines;
                 LargeChange = viewportLines;
                 if (!_thumbDragging)
                 {
-                    Value = firstLine;
+                    // the document's end in view puts the thumb at the end of the track, whichever line heads it
+                    bool atEnd = last.EndIncludingLineBreak.Position == last.Snapshot.Length
+                        && last.VisibilityState == VisibilityState.FullyVisible;
+                    Value = atEnd ? Maximum : firstLine;
                 }
             }
             finally
             {
                 _synchronizing = false;
             }
+        }
+
+        /// <summary>
+        /// How many lines of the range the viewport shows. The range is counted in snapshot lines, so a viewport that
+        /// wraps them shows the lines it lays out, from the first to the last it reaches: counted as the viewport's
+        /// height in lines instead, a few wrapped lines would fill the range and the thumb the whole track.
+        /// </summary>
+        private double ViewportLines(ITextViewLineCollection lines, int firstLine)
+        {
+            double tall = Math.Max(1.0, _view.ViewportHeight / _view.LineHeight);
+            if ((_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) == 0)
+            {
+                return tall;
+            }
+
+            int lastLine = (int)_map.GetCoordinateAtBufferPosition(lines.LastVisibleLine.Start);
+            return Math.Max(1.0, Math.Min(tall, lastLine - firstLine + 1));
         }
 
         private sealed class LineScrollMap : IScrollMap
