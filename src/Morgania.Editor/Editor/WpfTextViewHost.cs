@@ -11,8 +11,10 @@ using Microsoft.VisualStudio.Utilities;
 /// margins are MEF-discovered per container, filtered by content type and view roles, and
 /// stacked in definition order (M4 acceptance). The top/left containers reserve space;
 /// the right/bottom containers overlay the view's cell (VS Code-style scrollbars), unless a
-/// right margin takes room of its own (<see cref="IReservingMargin"/>: the minimap, or the
-/// vertical scroll bar beside wrapped lines): then the right container stands beside the view.
+/// margin of theirs takes room of its own (<see cref="IReservingMargin"/>): the minimap, or the
+/// vertical scroll bar beside wrapped lines, stands the right container beside the view; the
+/// horizontal scroll bar of a view that does not scroll beyond its last line puts the bottom
+/// container under it.
 /// </summary>
 internal sealed class WpfTextViewHost : IWpfTextViewHost
 {
@@ -71,9 +73,9 @@ internal sealed class WpfTextViewHost : IWpfTextViewHost
         // The right/bottom containers (the scrollbars) float over the view's cell instead of
         // reserving space beside it, so content flows under them (VS Code overlay scrollbars).
         // A right margin that takes room moves the right container into the column beside
-        // the view; the bottom row then ends at the view's edge by itself.
+        // the view; the bottom row then ends at the view's edge by itself. A bottom margin that
+        // takes room moves the bottom container into the row under the view.
         AddCell(right.VisualElement, row: 1, column: 1);
-        bottom.VisualElement.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom;
         AddCell(bottom.VisualElement, row: 1, column: 1);
         void PlaceRight(double rightWidth)
         {
@@ -85,9 +87,20 @@ internal sealed class WpfTextViewHost : IWpfTextViewHost
             bottom.VisualElement.Margin = new Avalonia.Thickness(0.0, 0.0, beside ? 0.0 : rightWidth, 0.0);
         }
 
+        void PlaceBottom()
+        {
+            bool under = bottom.ReservesSpace;
+            Grid.SetRow(bottom.VisualElement, under ? 2 : 1);
+            bottom.VisualElement.VerticalAlignment = under
+                ? Avalonia.Layout.VerticalAlignment.Stretch
+                : Avalonia.Layout.VerticalAlignment.Bottom;
+        }
+
         PlaceRight(0.0);
+        PlaceBottom();
         right.VisualElement.SizeChanged += (_, e) => PlaceRight(e.NewSize.Width);
         right.ReservesSpaceChanged += (_, _) => PlaceRight(right.VisualElement.Bounds.Width);
+        bottom.ReservesSpaceChanged += (_, _) => PlaceBottom();
 
         if (setFocus)
         {

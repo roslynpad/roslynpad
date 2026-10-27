@@ -272,6 +272,46 @@ public sealed class MarginTests
     }
 
     [TestMethod]
+    public async Task TheHorizontalScrollBarTakesRoomUnderAViewThatEndsAtItsLastLineAndFloatsOverOneThatScrollsBeyond()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            string text = string.Join('\n', Enumerable.Range(0, 100).Select(i => $"line {i} " + new string('x', 120)));
+            var view = HeadlessEditor.CreateView(text, height: 300.0);
+            view.Options.SetOptionValue(MinimapOptions.EnabledId, false);
+            view.Options.SetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId, false);
+            var host = HeadlessEditor.Container.GetExport<ITextEditorFactoryService>().CreateTextViewHost(view, setFocus: false);
+            var window = new Avalonia.Controls.Window { Width = 400, Height = 300, Content = host.HostControl };
+            window.Show();
+
+            try
+            {
+                var bar = host.GetTextViewMargin(PredefinedMarginNames.HorizontalScrollBar)!.VisualElement;
+                double BarTop() => bar.TranslatePoint(default, window)!.Value.Y;
+                double TextBottom() => view.VisualElement.TranslatePoint(new Point(0.0, view.VisualElement.Bounds.Height), window)!.Value.Y;
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                view.DisplayTextLineContainingBufferPosition(
+                    new Microsoft.VisualStudio.Text.SnapshotPoint(view.TextSnapshot, view.TextSnapshot.Length), 0.0, ViewRelativePosition.Bottom);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                double lastLineBottom = view.TextViewLines[^1].Bottom - view.ViewportTop;
+                Assert.IsTrue(TextBottom() <= BarTop() + 0.01, "The text ends where the bar begins: nothing of it lies under it.");
+                Assert.IsTrue(
+                    lastLineBottom <= view.ViewportHeight + 0.01,
+                    $"The last line stands whole above the bar (its bottom {lastLineBottom}, the viewport {view.ViewportHeight}).");
+
+                view.Options.SetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId, true);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                Assert.IsTrue(TextBottom() > BarTop() + 0.01, "A view that scrolls beyond its last line runs on under the floating bar.");
+            }
+            finally
+            {
+                window.Close();
+                host.Close();
+            }
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task TheVerticalScrollBarOverWrappedLinesHasAThumbThatLeavesTheTrackAndReachesTheEnd()
     {
         await HeadlessEditor.RunAsync(() =>

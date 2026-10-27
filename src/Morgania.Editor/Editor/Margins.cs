@@ -598,11 +598,12 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
         return new HorizontalScrollBarMargin(wpfTextViewHost.TextView);
     }
 
-    private sealed class HorizontalScrollBarMargin : ScrollBar, IWpfTextViewMargin
+    private sealed class HorizontalScrollBarMargin : ScrollBar, IWpfTextViewMargin, IReservingMargin
     {
         private readonly IWpfTextView _view;
         private bool _synchronizing;
         private bool _scrollable = true;
+        private bool _reserves;
 
         public HorizontalScrollBarMargin(IWpfTextView view)
         {
@@ -645,6 +646,15 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
             => _view.Options.GetOptionValue(DefaultTextViewHostOptions.HorizontalScrollBarId)
                && (_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) == 0;
 
+        /// <summary>
+        /// Whether the bar takes room under the text instead of floating over it: while it shows in a view that does not
+        /// scroll beyond its last line (<see cref="TextViewScrollOptions.ScrollBeyondLastLineId"/>), which stops with
+        /// that line at the viewport's bottom, so a bar over it would hide it for good.
+        /// </summary>
+        public bool ReservesSpace => _reserves;
+
+        public event EventHandler? ReservesSpaceChanged;
+
         public ITextViewMargin? GetTextViewMargin(string marginName)
             => string.Equals(marginName, PredefinedMarginNames.HorizontalScrollBar, StringComparison.OrdinalIgnoreCase) ? this : null;
 
@@ -654,9 +664,16 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
 
         /// <summary>Shows the bar while it is enabled, and while a line runs past the viewport where asked, as the vertical bar does.</summary>
         private void ShowIfEnabled()
-            => Visibility = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId))
-                ? ScrollBarVisibility.Visible
-                : ScrollBarVisibility.Hidden;
+        {
+            bool shown = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId));
+            Visibility = shown ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+            bool reserves = shown && !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId);
+            if (reserves != _reserves)
+            {
+                _reserves = reserves;
+                ReservesSpaceChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
 
         private void SynchronizeFromView()
         {
