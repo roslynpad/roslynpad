@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
 
 namespace Microsoft.VisualStudio.GeometryTests;
 
@@ -247,6 +248,36 @@ public sealed class GeometryTests
                 "Scrolling up from the clamp works.");
 
             view.Close();
+        }).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task WithoutScrollingBeyondTheLastLineTheViewStopsWithItAtTheBottom()
+    {
+        await HeadlessEditor.RunAsync(() =>
+        {
+            string text = string.Join('\n', Enumerable.Range(0, 200).Select(i => $"line {i}"));
+            var view = HeadlessEditor.CreateView(text, height: 300.0);
+            view.Options.SetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId, false);
+
+            for (int i = 0; i < 100; i++)
+            {
+                view.ViewScroller.ScrollViewportVerticallyByPixels(-3.0 * view.LineHeight);
+            }
+
+            var last = view.TextViewLines[^1];
+            Assert.AreEqual(view.TextSnapshot.Length, last.End.Position, "The last line is in the layout.");
+            Assert.AreEqual(view.ViewportBottom, last.Bottom, 0.01, "Scrolling stops with the last line at the bottom of the viewport.");
+
+            // A document shorter than the viewport does not scroll at all.
+            var shortView = HeadlessEditor.CreateView(string.Join('\n', Enumerable.Range(0, 5).Select(i => $"line {i}")), height: 300.0);
+            shortView.Options.SetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId, false);
+            shortView.ViewScroller.ScrollViewportVerticallyByPixels(-3.0 * shortView.LineHeight);
+            Assert.AreEqual(0, shortView.TextViewLines.FirstVisibleLine.Start.Position, "The first line stays first.");
+            Assert.AreEqual(shortView.ViewportTop, shortView.TextViewLines.FirstVisibleLine.Top, 0.01, "And at the top.");
+
+            view.Close();
+            shortView.Close();
         }).ConfigureAwait(false);
     }
 

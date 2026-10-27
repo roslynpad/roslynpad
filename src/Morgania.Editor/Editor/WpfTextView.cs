@@ -842,14 +842,18 @@ internal sealed class WpfTextView : Panel, IWpfTextView, ITextView2
 
         // Gap prevention (the repositioning rules): the view never scrolls above the
         // start of the buffer, and scrolling past the end clamps with the last line
-        // still visible at the top of the viewport (the VS over-scroll limit).
+        // still visible at the top of the viewport (the VS over-scroll limit) — or at
+        // its bottom, where the view does not scroll beyond the last line.
         double shift = 0.0;
         var first = lines[0];
         var last = lines[^1];
         bool atBufferEnd = last.EndsAtEndOfVisualBuffer && last.IsLastTextViewLineForSnapshotLine;
-        if (atBufferEnd && last.Top < ViewportTop)
+        double lowestTop = _options.GetOptionValue(TextViewScrollOptions.ScrollBeyondLastLineId)
+            ? ViewportTop
+            : ViewportTop + _viewportHeight - last.Height;
+        if (atBufferEnd && last.Top < lowestTop)
         {
-            shift = ViewportTop - last.Top;
+            shift = lowestTop - last.Top;
         }
 
         if (shift != 0.0)
