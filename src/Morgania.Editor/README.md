@@ -18,8 +18,10 @@ instead.
   undo, classification and tagging machinery, brace completion, editor
   operations, completion session brokers, and cross-platform multi-caret.
 - The Avalonia view layer: text view and view host (how far it scrolls:
-  `TextViewScrollOptions`), caret/selection/adornment layers, margins, IME
-  support, clipboard bridging, completion, quick info, and signature help.
+  `TextViewScrollOptions`), caret/selection/adornment layers, margins (among
+  them a minimap, configured through `MinimapOptions`, and the outlining margin,
+  `OutliningMarginOptions`), IME support, clipboard bridging, completion, quick
+  info, and signature help.
 
 ## Usage
 

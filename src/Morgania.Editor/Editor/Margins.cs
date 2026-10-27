@@ -44,6 +44,17 @@ public sealed class MarginProviderMetadata : IOrderable
 }
 
 /// <summary>
+/// A margin that takes room beside the view while it shows, where its container otherwise floats over the view's text
+/// (the right container, see <see cref="WpfTextViewHost"/>).
+/// </summary>
+internal interface IReservingMargin
+{
+    bool ReservesSpace { get; }
+
+    event EventHandler? ReservesSpaceChanged;
+}
+
+/// <summary>
 /// A margin container edge (Left/Right/Top/Bottom): stacks its MEF-discovered child margins
 /// in definition order and answers <c>GetTextViewMargin</c> recursively.
 /// </summary>
@@ -52,6 +63,9 @@ internal sealed class MarginContainer : IWpfTextViewMargin
     private readonly StackPanel _panel;
     private readonly List<(string Name, IWpfTextViewMargin Margin)> _children = [];
     private bool _isDisposed;
+
+    /// <summary>Raised when <see cref="ReservesSpace"/> may have changed.</summary>
+    public event EventHandler? ReservesSpaceChanged;
 
     public MarginContainer(string name, bool horizontal)
     {
@@ -72,11 +86,18 @@ internal sealed class MarginContainer : IWpfTextViewMargin
 
     public bool Enabled => true;
 
+    /// <summary>Whether one of the margins takes room beside the view (<see cref="IReservingMargin"/>).</summary>
+    public bool ReservesSpace => _children.Any(child => child.Margin is IReservingMargin { ReservesSpace: true });
+
     public void AddMargin(string name, IWpfTextViewMargin margin)
     {
         _children.Add((name, margin));
         margin.VisualElement.IsVisible = margin.Enabled;
         _panel.Children.Add(margin.VisualElement);
+        if (margin is IReservingMargin reserving)
+        {
+            reserving.ReservesSpaceChanged += (_, _) => ReservesSpaceChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public ITextViewMargin? GetTextViewMargin(string marginName)
@@ -126,6 +147,14 @@ internal sealed class MarginContainer : IWpfTextViewMargin
 [Order(After = PredefinedMarginNames.Glyph)]
 public sealed class LineNumberMarginProvider : IWpfTextViewMarginProvider
 {
+    /// <summary>How far a number ends before the margin's right edge, at 100% zoom.</summary>
+    internal const double NumberInset = 6.0;
+
+    private static readonly IBrush s_numberBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
+
+    /// <summary>The numbers' colour.</summary>
+    internal static IBrush NumberBrush => s_numberBrush;
+
     public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
     {
         ArgumentNullException.ThrowIfNull(wpfTextViewHost);
@@ -134,8 +163,6 @@ public sealed class LineNumberMarginProvider : IWpfTextViewMarginProvider
 
     private sealed class LineNumberMargin : Control, IWpfTextViewMargin
     {
-        private static readonly IBrush s_numberBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x85, 0x85));
-
         private readonly IWpfTextView _view;
         private bool _isDisposed;
 
@@ -198,7 +225,7 @@ public sealed class LineNumberMarginProvider : IWpfTextViewMarginProvider
                     properties.Typeface,
                     properties.FontRenderingEmSize * zoom,
                     s_numberBrush);
-                context.DrawText(text, new Point(Bounds.Width - text.Width - 6.0 * zoom, (line.TextTop - _view.ViewportTop) * zoom));
+                context.DrawText(text, new Point(Bounds.Width - text.Width - (NumberInset * zoom), (line.TextTop - _view.ViewportTop) * zoom));
             }
         }
 
@@ -268,12 +295,14 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         return new VerticalScrollBarMargin(wpfTextViewHost.TextView);
     }
 
-    internal sealed class VerticalScrollBarMargin : ScrollBar, IWpfTextViewMargin, IVerticalScrollBar
+    internal sealed class VerticalScrollBarMargin : ScrollBar, IWpfTextViewMargin, IVerticalScrollBar, IReservingMargin
     {
         private readonly IWpfTextView _view;
         private readonly LineScrollMap _map;
+        private readonly HashSet<object> _replacedBy = [];
         private bool _synchronizing;
         private bool _thumbDragging;
+        private bool _reserves;
         private bool _scrollable = true;
 
         public VerticalScrollBarMargin(IWpfTextView view)
@@ -323,10 +352,31 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
 
         public double MarginSize => Width;
 
-        public bool Enabled => _view.Options.GetOptionValue(DefaultTextViewHostOptions.VerticalScrollBarId);
+        public bool Enabled
+            => _view.Options.GetOptionValue(DefaultTextViewHostOptions.VerticalScrollBarId) && _replacedBy.Count == 0;
+
+        /// <summary>
+        /// Whether the bar takes room beside the text instead of floating over it: while it shows beside wrapped lines,
+        /// which never scroll sideways, so what it covered could never be brought out from under it.
+        /// </summary>
+        public bool ReservesSpace => _reserves;
+
+        public event EventHandler? ReservesSpaceChanged;
 
         public ITextViewMargin? GetTextViewMargin(string marginName)
             => string.Equals(marginName, PredefinedMarginNames.VerticalScrollBar, StringComparison.OrdinalIgnoreCase) ? this : null;
+
+        /// <summary>
+        /// Steps the scroll bar aside while <paramref name="owner"/> stands in for it (a minimap that is the view's scroll
+        /// bar), and back once no owner does.
+        /// </summary>
+        internal void SetReplaced(object owner, bool replaced)
+        {
+            if (replaced ? _replacedBy.Add(owner) : _replacedBy.Remove(owner))
+            {
+                ShowIfEnabled();
+            }
+        }
 
         /// <summary>
         /// Shows the bar while it is enabled — and, where <see cref="TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId"/>
@@ -335,9 +385,16 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         /// directly came back at the next layout.
         /// </summary>
         private void ShowIfEnabled()
-            => Visibility = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId))
-                ? ScrollBarVisibility.Visible
-                : ScrollBarVisibility.Hidden;
+        {
+            bool shown = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId));
+            Visibility = shown ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+            bool reserves = shown && (_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) != 0;
+            if (reserves != _reserves)
+            {
+                _reserves = reserves;
+                ReservesSpaceChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
 
         public void Dispose()
         {
