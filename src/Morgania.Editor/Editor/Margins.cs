@@ -11,6 +11,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Utilities;
 
 /// <summary>
@@ -302,6 +303,7 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         private bool _synchronizing;
         private bool _thumbDragging;
         private bool _reserves;
+        private bool _scrollable = true;
 
         public VerticalScrollBarMargin(IWpfTextView view)
         {
@@ -322,10 +324,9 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
                 // pointer. Any other scroll (EndScroll on release, paging, line steps) hands
                 // Value back to the sync, which settles it on a line boundary.
                 _thumbDragging = e.ScrollEventType == ScrollEventType.ThumbTrack;
-                if (!_synchronizing && !_view.IsClosed)
+                if (!_synchronizing)
                 {
-                    _view.DisplayTextLineContainingBufferPosition(
-                        _map.GetBufferPositionAtCoordinate(e.NewValue), 0.0, ViewRelativePosition.Top);
+                    ScrollTo(e.NewValue);
                 }
             };
             ShowIfEnabled();
@@ -378,13 +379,14 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         }
 
         /// <summary>
-        /// Shows the bar while it is enabled. Through <see cref="ScrollBar.Visibility"/> rather than IsVisible: a scroll
-        /// bar derives IsVisible from its Visibility whenever its range changes, so a bar hidden directly came back at
-        /// the next layout.
+        /// Shows the bar while it is enabled — and, where <see cref="TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId"/>
+        /// asks for it, while there is something to scroll. Through <see cref="ScrollBar.Visibility"/> rather than
+        /// IsVisible: a scroll bar derives IsVisible from its Visibility whenever its range changes, so a bar hidden
+        /// directly came back at the next layout.
         /// </summary>
         private void ShowIfEnabled()
         {
-            bool shown = Enabled;
+            bool shown = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId));
             Visibility = shown ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
             bool reserves = shown && (_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) != 0;
             if (reserves != _reserves)
@@ -397,6 +399,35 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
         public void Dispose()
         {
         }
+
+        /// <summary>
+        /// Scrolls the view to <paramref name="value"/> of the bar's range: the line it maps to at the top, and at the end
+        /// of the range the end of the document. The range counts whole lines, so the line its end maps to, put at the
+        /// top, would leave the last line cut off under the bottom edge wherever the viewport is not a whole number of
+        /// lines tall or wraps them.
+        /// </summary>
+        internal void ScrollTo(double value)
+        {
+            if (_view.IsClosed)
+            {
+                return;
+            }
+
+            if (Maximum > 0.0 && value >= Maximum)
+            {
+                ShowEnd(_view);
+            }
+            else
+            {
+                _view.DisplayTextLineContainingBufferPosition(
+                    _map.GetBufferPositionAtCoordinate(value), 0.0, ViewRelativePosition.Top);
+            }
+        }
+
+        /// <summary>Scrolls <paramref name="view"/> to its end: the document's last line whole at the bottom of the viewport.</summary>
+        internal static void ShowEnd(ITextView view)
+            => view.DisplayTextLineContainingBufferPosition(
+                new SnapshotPoint(view.TextSnapshot, view.TextSnapshot.Length), 0.0, ViewRelativePosition.Bottom);
 
         #region IVerticalScrollBar
 
@@ -453,23 +484,51 @@ public sealed class VerticalScrollBarMarginProvider : IWpfTextViewMarginProvider
             _synchronizing = true;
             try
             {
+                // Something to scroll unless the document stands whole in the viewport; counted in the
+                // lines laid out rather than in snapshot lines, which wrapping makes taller.
+                var first = lines.FirstVisibleLine;
+                var last = lines.LastVisibleLine;
+                _scrollable = first.Start.Position != 0
+                    || first.VisibilityState != VisibilityState.FullyVisible
+                    || last.EndIncludingLineBreak.Position != last.Snapshot.Length
+                    || last.VisibilityState != VisibilityState.FullyVisible;
                 ShowIfEnabled();
                 // The scrollbar tracks the visual buffer: collapsed regions shrink the
                 // scrollable range rather than leaving unreachable dead space.
                 int firstLine = (int)_map.GetCoordinateAtBufferPosition(lines.FirstVisibleLine.Start);
-                double viewportLines = Math.Max(1.0, _view.ViewportHeight / _view.LineHeight);
+                double viewportLines = ViewportLines(lines, firstLine);
                 Maximum = Math.Max(0.0, _view.VisualSnapshot.LineCount - viewportLines);
                 ViewportSize = viewportLines;
                 LargeChange = viewportLines;
                 if (!_thumbDragging)
                 {
-                    Value = firstLine;
+                    // the document's end in view puts the thumb at the end of the track, whichever line heads it
+                    bool atEnd = last.EndIncludingLineBreak.Position == last.Snapshot.Length
+                        && last.VisibilityState == VisibilityState.FullyVisible;
+                    Value = atEnd ? Maximum : firstLine;
                 }
             }
             finally
             {
                 _synchronizing = false;
             }
+        }
+
+        /// <summary>
+        /// How many lines of the range the viewport shows. The range is counted in snapshot lines, so a viewport that
+        /// wraps them shows the lines it lays out, from the first to the last it reaches: counted as the viewport's
+        /// height in lines instead, a few wrapped lines would fill the range and the thumb the whole track.
+        /// </summary>
+        private double ViewportLines(ITextViewLineCollection lines, int firstLine)
+        {
+            double tall = Math.Max(1.0, _view.ViewportHeight / _view.LineHeight);
+            if ((_view.Options.GetOptionValue(DefaultTextViewOptions.WordWrapStyleId) & WordWrapStyles.WordWrap) == 0)
+            {
+                return tall;
+            }
+
+            int lastLine = (int)_map.GetCoordinateAtBufferPosition(lines.LastVisibleLine.Start);
+            return Math.Max(1.0, Math.Min(tall, lastLine - firstLine + 1));
         }
 
         private sealed class LineScrollMap : IScrollMap
@@ -543,6 +602,7 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
     {
         private readonly IWpfTextView _view;
         private bool _synchronizing;
+        private bool _scrollable = true;
 
         public HorizontalScrollBarMargin(IWpfTextView view)
         {
@@ -592,8 +652,11 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
         {
         }
 
-        /// <summary>Shows the bar while it is enabled, through its Visibility as the vertical bar does.</summary>
-        private void ShowIfEnabled() => Visibility = Enabled ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+        /// <summary>Shows the bar while it is enabled, and while a line runs past the viewport where asked, as the vertical bar does.</summary>
+        private void ShowIfEnabled()
+            => Visibility = Enabled && (_scrollable || !_view.Options.GetOptionValue(TextViewScrollOptions.ScrollBarsOnlyWhenScrollableId))
+                ? ScrollBarVisibility.Visible
+                : ScrollBarVisibility.Hidden;
 
         private void SynchronizeFromView()
         {
@@ -605,8 +668,10 @@ public sealed class HorizontalScrollBarMarginProvider : IWpfTextViewMarginProvid
             _synchronizing = true;
             try
             {
+                double maximum = Math.Max(0.0, _view.MaxTextRightCoordinate + _view.FormattedLineSource.ColumnWidth - _view.ViewportWidth);
+                _scrollable = maximum > 0.0 || _view.ViewportLeft > 0.0;
                 ShowIfEnabled();
-                Maximum = Math.Max(0.0, _view.MaxTextRightCoordinate + _view.FormattedLineSource.ColumnWidth - _view.ViewportWidth);
+                Maximum = maximum;
                 ViewportSize = Math.Max(1.0, _view.ViewportWidth);
                 LargeChange = _view.ViewportWidth;
                 SmallChange = 16.0;
