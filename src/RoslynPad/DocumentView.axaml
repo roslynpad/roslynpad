@@ -33,11 +33,10 @@
         <ToggleButton Classes="tool"
                       Command="{Binding ToggleLiveModeCommand, Mode=OneTime}"
                       IsChecked="{Binding IsLiveMode, Mode=OneWay}"
-                      Content="Live"
-                      Width="40"
-                      Padding="6 0"
                       AutomationProperties.Name="Live Mode"
-                      ToolTip.Tip="Toggle Live Mode (Alt+F5)" />
+                      ToolTip.Tip="Toggle Live Mode (Alt+F5)">
+          <Image Source="{StaticResource Rocket}" />
+        </ToggleButton>
         <Button Classes="tool"
                 Command="{Binding TerminateCommand, Mode=OneTime}"
                 ToolTip.Tip="{OnPlatform Terminate process (Shift+F5), macOS=Terminate process (⇧ F5)}"
