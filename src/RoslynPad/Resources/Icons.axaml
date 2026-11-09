@@ -14,23 +14,6 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-    <DrawingImage x:Key="NewDocument">
-        <DrawingImage.Drawing>
-            <DrawingGroup>
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="#00FFFFFF"
-                                     Geometry="F1M16,16L0,16 0,0 16,0z" />
-                    <GeometryDrawing Brush="#FFF0EFF1"
-                                     Geometry="M3,1 H9 L13,5 V15 H3 Z" />
-                    <GeometryDrawing Brush="#FF424242"
-                                     Geometry="M2,0 H9 L14,5 V16 H2 Z M3,1 V15 H13 V6 H8 V1 Z M9,1.5 V5 H12.5 Z" />
-                    <GeometryDrawing Brush="#FF388934"
-                                     Geometry="M7,7 H9 V9 H11 V11 H9 V13 H7 V11 H5 V9 H7 Z" />
-                </DrawingGroup.Children>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
-
     <DrawingImage x:Key="Bulb">
         <DrawingImage.Drawing>
             <DrawingGroup>

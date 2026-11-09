@@ -79,7 +79,7 @@
                 CommandParameter="{Binding SourceCodeKind}"
                 AutomationProperties.Name="New Document"
                 ToolTip.Tip="New Document">
-          <Image Source="{StaticResource NewDocument}" />
+          <Image Source="{Binding Converter={x:Static local:DocumentIconConverter.Instance}}" />
         </Button>
         <Button Classes="tool"
                 Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
