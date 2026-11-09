@@ -31,6 +31,7 @@ public static class KeyBindingCommands
     public const string NewDocument = "roslynpad.newDocument";
     public const string NewScript = "roslynpad.newScript";
     public const string ToggleOptimization = "roslynpad.toggleOptimization";
+    public const string ToggleLiveMode = "roslynpad.toggleLiveMode";
     public const string ResultsCopyValue = "roslynpad.results.copy";
     public const string ResultsCopyValueWithChildren = "roslynpad.results.copyWithChildren";
     public const string SearchNuGet = "roslynpad.searchNuGet";
@@ -66,6 +67,7 @@ public static class KeyBindingCommands
         [NewDocument] = new(NewDocument, "New File-Based App", "Ctrl+N", "Cmd+N"),
         [NewScript] = new(NewScript, "New Script", "Ctrl+Shift+N", "Cmd+Shift+N"),
         [ToggleOptimization] = new(ToggleOptimization, "Toggle Optimization", "Ctrl+Shift+O", "Cmd+Shift+O"),
+        [ToggleLiveMode] = new(ToggleLiveMode, "Toggle Live Mode", "Alt+F5", "Alt+F5"),
         [ResultsCopyValue] = new(ResultsCopyValue, "Copy Value", "Ctrl+C", "Cmd+C"),
         [ResultsCopyValueWithChildren] = new(ResultsCopyValueWithChildren, "Copy Value with Children", "Ctrl+Shift+C", "Cmd+Shift+C"),
         [SearchNuGet] = new(SearchNuGet, "Search NuGet", "Ctrl+T", "Cmd+T"),
