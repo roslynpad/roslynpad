@@ -193,6 +193,7 @@ internal partial class DocumentView : UserControl, IDisposable
     private void InitializeKeyBindings(OpenDocumentViewModel viewModel)
     {
         this.AddKeyBinding(KeyBindingCommands.RunScript, viewModel.RunCommand);
+        this.AddKeyBinding(KeyBindingCommands.ToggleLiveMode, viewModel.ToggleLiveModeCommand);
         this.AddKeyBinding(KeyBindingCommands.TerminateRunningScript, viewModel.TerminateCommand);
         this.AddKeyBinding(KeyBindingCommands.SaveDocument, viewModel.SaveCommand);
         this.AddKeyBinding(KeyBindingCommands.FormatDocument, viewModel.FormatDocumentCommand);

@@ -30,6 +30,14 @@
                          IsVisible="{Binding IsRunning}" />
           </Grid>
         </Button>
+        <ToggleButton Classes="tool"
+                      Command="{Binding ToggleLiveModeCommand, Mode=OneTime}"
+                      IsChecked="{Binding IsLiveMode, Mode=OneWay}"
+                      Content="Live"
+                      Width="40"
+                      Padding="6 0"
+                      AutomationProperties.Name="Live Mode"
+                      ToolTip.Tip="Toggle Live Mode (Alt+F5)" />
         <Button Classes="tool"
                 Command="{Binding TerminateCommand, Mode=OneTime}"
                 ToolTip.Tip="{OnPlatform Terminate process (Shift+F5), macOS=Terminate process (⇧ F5)}"
