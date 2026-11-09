@@ -75,6 +75,13 @@
           <Image Source="{StaticResource Save}" />
         </Button>
         <Button Classes="tool"
+                Command="{Binding MainViewModel.NewDocumentCommand, Mode=OneTime}"
+                CommandParameter="{Binding SourceCodeKind}"
+                AutomationProperties.Name="New Document"
+                ToolTip.Tip="New Document">
+          <Image Source="{StaticResource NewDocument}" />
+        </Button>
+        <Button Classes="tool"
                 Command="{Binding OpenBuildPathCommand, Mode=OneTime}"
                 ToolTip.Tip="Open Build Folder">
           <Image Source="{StaticResource PackageFolder}" />
