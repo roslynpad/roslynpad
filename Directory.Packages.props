@@ -4,11 +4,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <DotNetVersion>11.0.0-rc.3.26522.148</DotNetVersion>
+    <DotNetVersion>11.0.0</DotNetVersion>
     <RoslynVersion>5.9.0</RoslynVersion>
-    <AvaloniaVersion>12.1.4</AvaloniaVersion>
+    <AvaloniaVersion>12.1.6</AvaloniaVersion>
     <NuGetVersion>7.9.0</NuGetVersion>
-    <DockAvaloniaVersion>12.1.0.13</DockAvaloniaVersion>
+    <DockAvaloniaVersion>12.1.5</DockAvaloniaVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
@@ -35,7 +35,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetVersion)" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.92.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="18.9.99" />
+    <PackageVersion Include="Microsoft.VisualStudio.Composition" Version="18.9.108" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading" Version="18.13.4" />
     <PackageVersion Include="Microsoft.VisualStudio.Validation" Version="18.7.19" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />

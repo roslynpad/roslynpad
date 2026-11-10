@@ -1,8 +1,6 @@
 {
   "sdk": {
-    "version": "11.0.0",
-    "rollForward": "minor",
-    "allowPrerelease": true
+    "version": "11.0.100"
   },
   "msbuild-sdks": {
     "Microsoft.Build.NoTargets": "3.7.134",
