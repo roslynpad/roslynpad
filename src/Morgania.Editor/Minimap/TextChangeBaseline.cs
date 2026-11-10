@@ -270,26 +270,17 @@ internal static class GitHead
         {
             string full = Path.GetFullPath(path);
             if (Path.GetDirectoryName(full) is not { } directory || !Directory.Exists(directory)
-                || Run(directory, "rev-parse", "--show-toplevel", "--absolute-git-dir") is not { } located)
+                || Run(directory, "rev-parse", "--absolute-git-dir") is not { } located
+                || located.Trim() is not { Length: > 0 } gitDirectory)
             {
                 return default;
             }
 
-            string[] parts = located.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (parts.Length < 2)
-            {
-                return default;
-            }
-
-            string relative = Path.GetRelativePath(parts[0], full).Replace('\\', '/');
-            if (relative.StartsWith("../", StringComparison.Ordinal) || Path.IsPathRooted(relative))
-            {
-                return default;
-            }
-
-            // The blob as stored, without the filters a checkout would run.
-            string? text = Run(parts[0], "cat-file", "blob", "HEAD:" + relative);
-            return text is null ? default : (text, Path.GetFullPath(parts[1]));
+            // The blob as stored, without the filters a checkout would run. The path is relative to the file's own
+            // directory, so git resolves it against its real work tree: a path through a symlink (macOS's /var for
+            // /private/var) never measures against the top level git reports.
+            string? text = Run(directory, "cat-file", "blob", "HEAD:./" + Path.GetFileName(full));
+            return text is null ? default : (text, Path.GetFullPath(gitDirectory));
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
